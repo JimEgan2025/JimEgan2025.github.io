@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Weather Hub (Live)</title>
+    <!-- SunCalc.js library for accurate sunrise/sunset times -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #121212; /* Dark background */
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header Styling */
+        .header {
+            background-color: #1F1F1F;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #007BFF;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #ffffff;
+        }
+        .header p {
+            margin: 5px 0 0;
+            font-size: 1.1em;
+            color: #b0b0b0;
+        }
+        
+        /* Live Data Header Styling */
+        .live-data-header {
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #00BFFF;
+        }
+        .live-data-header .time {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+        }
+        .live-data-header .sun-info {
+            font-size: 0.9em;
+            color: #b0b0b0;
+            margin-top: 5px;
+        }
+
+        /* Main Content Container */
+        .container {
+            padding: 25px;
+        }
+
+        /* Weather Station Widget Styling */
+        .weather-station-widget {
+            background-color: #2A2A2A;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px; /* Space between widget and the grid */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .weather-station-widget h2 {
+            margin-top: 0;
+            font-size: 1.6em;
+            color: #00BFFF;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .weather-station-widget iframe {
+            width: 100%;
+            height: 700px; /* Adjust height as needed */
+            border: 0;
+        }
+        
+        /* Section Header Styling */
+        .section-header {
+            font-size: 2em;
+            color: #00BFFF;
+            border-bottom: 2px solid #007BFF;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 25px;
+        }
+        hr.section-divider {
+            border: 0;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(0, 123, 255, 0), rgba(0, 123, 255, 0.75), rgba(0, 123, 255, 0));
+            margin: 50px 0;
+        }
+
+        /* Grid Styling */
+        .image-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Mobile first: 1 column */
+            gap: 25px;
+        }
+        @media (min-width: 768px) {
+            .image-grid { grid-template-columns: repeat(2, 1fr); } /* 2 columns for tablets */
+        }
+        @media (min-width: 1200px) {
+            .image-grid { grid-template-columns: repeat(3, 1fr); } /* 3 columns for desktops */
+        }
+
+        /* Individual Image Card Styling */
+        .grid-item {
+            background-color: #2A2A2A;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .grid-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
+        }
+        .grid-item h2 {
+            margin-top: 0;
+            font-size: 1.4em;
+            color: #00BFFF;
+        }
+        .grid-item img, .grid-item iframe {
+            max-width: 100%;
+            height: auto;
+            flex-grow: 1;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #1c1c1c; 
+            object-fit: contain; /* Prevents images from stretching */
+        }
+        .grid-item iframe {
+            height: 400px; /* Specific height for embedded widgets */
+            object-fit: initial; /* Reset for iframes */
+        }
+        .grid-item a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        
+        /* Custom Season Widget Styling */
+        .season-widget-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-size: 1.1em;
+        }
+        .season-list {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+        .season-list li {
+            margin-bottom: 10px;
+        }
+        .countdown {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #00BFFF;
+        }
+        
+        /* Footer Styling */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            color: #888;
+            font-size: 0.9em;
+            border-top: 1px solid #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>Vizcaya Weather Hub</h1>
+        <p>A centralized dashboard of live NWS and NOAA satellite and forecast imagery.</p>
+        
+        <div class="live-data-header">
+            <div id="currentDate"></div>
+            <div id="currentTime" class="time"></div>
+            <div id="sunInfo" class="sun-info"></div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Full-Width Weather Station -->
+        <div class="weather-station-widget">
+            <h2>Live from the Vizcaya Weather Station</h2>
+            <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"></iframe>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 1: Hyper-Local Conditions -->
+        <h2 class="section-header">Hyper-Local Conditions</h2>
+        <div class="image-grid">
+            <div class="grid-item">
+                <h2>Williamson County Alerts</h2>
+                <iframe src="https://alerts.weather.gov/search?zone=TXC491" title="NWS Alerts for Williamson County, TX"></iframe>
+            </div>
+            <div class="grid-item">
+                <h2>Live Weather Summary</h2>
+                <iframe src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" title="Live Weather Summary from Vizcaya Station"></iframe>
+            </div>
+            <div class="grid-item">
+                <h2>Vizcaya 7-Day Forecast</h2>
+                <iframe src="https://forecast.weather.gov/MapClick.php?lat=30.6476&lon=-97.6863&unit=0&lg=english&FcstType=text&TextType=1" title="7-Day Forecast for Vizcaya, TX"></iframe>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
+                    <h2>Local Graphicast - 1</h2>
+                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/1.png" alt="NWS Austin/San Antonio Graphicast 1">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
+                    <h2>Local Graphicast - 2</h2>
+                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/2.png" alt="NWS Austin/San Antonio Graphicast 2">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
+                    <h2>Local Graphicast - 3</h2>
+                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/3.png" alt="NWS Austin/San Antonio Graphicast 3">
+                </a>
+            </div>
+            <!-- ===== NEW SEASONS COUNTDOWN WIDGET ===== -->
+            <div class="grid-item">
+                <h2>Seasons & Countdown</h2>
+                <div class="season-widget-content">
+                    <ul class="season-list">
+                        <li><strong>Spring:</strong> <span id="springDate"></span></li>
+                        <li><strong>Summer:</strong> <span id="summerDate"></span></li>
+                        <li><strong>Fall:</strong> <span id="fallDate"></span></li>
+                        <li><strong>Winter:</strong> <span id="winterDate"></span></li>
+                    </ul>
+                    <div id="nextSeasonCountdown" class="countdown"></div>
+                </div>
+            </div>
+            <!-- ======================================= -->
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 2: Live Satellite Imagery -->
+        <h2 class="section-header">Live Satellite Imagery</h2>
+        <div class="image-grid">
+            <div class="grid-item">
+                <a href="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" target="_blank">
+                    <h2>GOES-19 - Southern Plains</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" alt="GOES-19 Southern Plains Satellite Image">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/latest.jpg" target="_blank">
+                    <h2>GOES-19 - Water Vapor</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/latest.jpg" alt="GOES-19 Water Vapor Satellite Image">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/latest.jpg" target="_blank">
+                    <h2>GOES-19 - Infrared</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/latest.jpg" alt="GOES-19 Infrared Satellite Image">
+                </a>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 3: Tropical & Marine -->
+        <h2 class="section-header">Tropical & Marine</h2>
+        <div class="image-grid">
+            <div class="grid-item">
+                <a href="https://www.nhc.noaa.gov/" target="_blank">
+                    <h2>Tropical Weather Outlook</h2>
+                    <img class="weather-image" src="https://www.nhc.noaa.gov/xgtwo/two_atl_7d0.png" alt="National Hurricane Center Tropical Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <h2>Latest Tropical Discussion</h2>
+                <iframe src="https://www.nhc.noaa.gov/text/refresh/MIATWDAT+shtml/latest.shtml" title="Latest Tropical Weather Discussion"></iframe>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19&sector=ga" target="_blank">
+                    <h2>GOES-19 - Gulf & Atlantic</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ga/GEOCOLOR/2000x2000.jpg" alt="GOES-19 Gulf and Atlantic Satellite Image">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghazards/ghaz.shtml" target="_blank">
+                    <h2>Global Tropics Hazards Outlook</h2>
+                    <img class="weather-image" src="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png" alt="Global Tropics Hazards and Benefits Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full_TConly.png" target="_blank">
+                    <h2>Tropical Cyclone Outlook (Weeks 1-2)</h2>
+                    <img class="weather-image" src="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full_TConly.png" alt="Tropical Cyclone Formation Outlook">
+                </a>
+            </div>
+        </div>
+        
+        <hr class="section-divider">
+
+        <!-- Section 4: Severe Weather Outlooks -->
+        <h2 class="section-header">Severe Weather Outlooks</h2>
+        <div class="image-grid">
+            <!-- National -->
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day1otlk.gif" target="_blank">
+                    <h2>National Outlook - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day1otlk.gif" alt="Day 1 Convective Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day2otlk.gif" target="_blank">
+                    <h2>National Outlook - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day2otlk.gif" alt="Day 2 Convective Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day3otlk.gif" target="_blank">
+                    <h2>National Outlook - Day 3</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day3otlk.gif" alt="Day 3 Convective Outlook">
+                </a>
+            </div>
+            <!-- Regional -->
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/region/SR/" target="_blank">
+                    <h2>Southern Region Outlook - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/region/images/SR_swody1.png" alt="Southern Region Day 1 Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/region/SR/" target="_blank">
+                    <h2>Southern Region Outlook - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/region/images/SR_swody2.png" alt="Southern Region Day 2 Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/region/SR/" target="_blank">
+                    <h2>Southern Region Outlook - Day 3</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/region/images/SR_swody3.png" alt="Southern Region Day 3 Outlook">
+                </a>
+            </div>
+            <!-- Local -->
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/cwa/EWX/" target="_blank">
+                    <h2>Local Outlook - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" alt="Local CWA Day 1 Severe Weather Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/cwa/EWX/" target="_blank">
+                    <h2>Local Outlook - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png" alt="Local CWA Day 2 Severe Weather Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/partners/outlooks/cwa/EWX/" target="_blank">
+                    <h2>Local Outlook - Day 3</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody3.png" alt="Local CWA Day 3 Severe Weather Outlook">
+                </a>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 5: Severe Weather Hazard Probabilities -->
+        <h2 class="section-header">Severe Weather Hazard Probabilities</h2>
+        <div class="image-grid">
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day1probotlk_torn.gif" target="_blank">
+                    <h2>Tornado Probability - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day1probotlk_torn.gif" alt="Tornado Probability">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day1probotlk_wind.gif" target="_blank">
+                    <h2>Damaging Wind Probability - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day1probotlk_wind.gif" alt="Damaging Wind Probability">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day1probotlk_hail.gif" target="_blank">
+                    <h2>Hail Probability - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day1probotlk_hail.gif" alt="Hail Probability">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day2probotlk_torn.gif" target="_blank">
+                    <h2>Tornado Probability - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day2probotlk_torn.gif" alt="Tornado Probability Day 2">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day2probotlk_wind.gif" target="_blank">
+                    <h2>Damaging Wind Probability - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day2probotlk_wind.gif" alt="Damaging Wind Probability Day 2">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/outlook/day2probotlk_hail.gif" target="_blank">
+                    <h2>Hail Probability - Day 2</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/outlook/day2probotlk_hail.gif" alt="Hail Probability Day 2">
+                </a>
+            </div>
+        </div>
+        
+        <hr class="section-divider">
+
+        <!-- Section 6: National Forecasts & Hazards -->
+        <h2 class="section-header">National Forecasts & Hazards</h2>
+        <div class="image-grid">
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/sfc/usfntsfc21wbg.gif" target="_blank">
+                    <h2>Current Frontal Positions</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/sfc/usfntsfc21wbg.gif" alt="Current Frontal Positions">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/basicwx/bwxloop_ndfd.html" target="_blank">
+                    <h2>48-Hour Surface Forecast Loop</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/basicwx/92fndfd.gif" alt="48-Hour Surface Forecast Loop">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/qpf/ero.shtml" target="_blank">
+                    <h2>Excessive Rainfall - Day 1</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif" alt="Day 1 Excessive Rainfall Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/qpf/ero.shtml" target="_blank">
+                    <h2>Excessive Rainfall - Day 2</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/qpf/98ewbg.gif" alt="Day 2 Excessive Rainfall Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/threats/threats.php" target="_blank">
+                    <h2>Days 3-7 Hazards Outlook</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/threats/final/hazards_d3_7_contours.png" alt="WPC Days 3-7 Hazards Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/fire_wx/" target="_blank">
+                    <h2>Fire Weather Outlook - Day 1</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/fire_wx/day1otlk_fire.gif" alt="SPC Day 1 Fire Weather Outlook">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://droughtmonitor.unl.edu/" target="_blank">
+                    <h2>U.S. Drought Monitor</h2>
+                    <img class="weather-image" src="https://droughtmonitor.unl.edu/data/png/current/current_usdm.png" alt="U.S. Drought Monitor">
+                </a>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Section 7: Discussions & Reports -->
+        <h2 class="section-header">Discussions & Reports</h2>
+        <div class="image-grid">
+             <div class="grid-item">
+                <h2>Area Forecast Discussion</h2>
+                <iframe src="https://kamala.cod.edu/tx/latest.fxus64.KEWX.html" title="NWS Austin/San Antonio Area Forecast Discussion"></iframe>
+            </div>
+            <div class="grid-item">
+                <h2>National Storm Summary</h2>
+                <iframe src="https://kamala.cod.edu/HPC/latest.fxus01.KWBC.html" title="WPC National Storm Summary Discussion"></iframe>
+            </div>
+            <div class="grid-item">
+                <h2>Extended Forecast Discussion</h2>
+                <iframe src="https://kamala.cod.edu/HPC/latest.fxus02.KWNH.html" title="WPC Extended Forecast Discussion"></iframe>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/metwatch/metwatch_mpd.php" target="_blank">
+                    <h2>Mesoscale Precipitation Discussions</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/metwatch/latest_mdmap.gif" alt="WPC Mesoscale Precipitation Discussions Map">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/md/" target="_blank">
+                    <h2>Mesoscale Discussions (SPC)</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/md/validmd.png" alt="SPC Mesoscale Discussions">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/climo/reports/today.html" target="_blank">
+                    <h2>Today's Storm Reports</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/climo/reports/today.gif" alt="Today's Storm Reports">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/wwa/" target="_blank">
+                    <h2>National Hazard Map</h2>
+                    <img class="weather-image" src="https://forecast.weather.gov/wwamap/png/US.png" alt="NWS National Hazard Map">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/watch/" target="_blank">
+                    <h2>Current Watches (SPC)</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/watch/validww.png" alt="Current SPC Watches">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/" target="_blank">
+                    <h2>SPC Activity Loop</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/activity_loop.gif" alt="SPC Activity Loop">
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>This is a non-commercial dashboard for the Vizcaya community. All images are provided by and linked directly from the National Weather Service (NWS), Storm Prediction Center (SPC), and NOAA.</p>
+    </footer>
+
+    <!-- ===== JAVASCRIPT FOR AUTO-UPDATE AND TIME ===== -->
+    <script>
+        // TIME AND SUN DATA SCRIPT
+        function updateTimeAndSun() {
+            const lat = 30.6476;
+            const lon = -97.6863;
+            const now = new Date();
+            
+            // Time and Date Formatting
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Chicago' };
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+
+            // SunCalc
+            const times = SunCalc.getTimes(now, lat, lon);
+            const sunrise = times.sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const sunset = times.sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            
+            const dayLengthMs = times.sunset - times.sunrise;
+            const dayLengthHours = Math.floor(dayLengthMs / 3600000);
+            const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
+
+            document.getElementById('sunInfo').innerHTML = `Sunrise: ${sunrise} &nbsp;&nbsp;&nbsp; Sunset: ${sunset} &nbsp;&nbsp;&nbsp; Day Length: ${dayLengthHours}h ${dayLengthMinutes}m`;
+        }
+
+        // SEASONS COUNTDOWN SCRIPT
+        function updateSeasons() {
+            const now = new Date();
+            const year = now.getFullYear();
+
+            // Approximate dates for seasons in North America (UTC)
+            const seasons = [
+                { name: "Spring", date: new Date(Date.UTC(year, 2, 20, 3, 6)) },
+                { name: "Summer", date: new Date(Date.UTC(year, 5, 20, 20, 51)) },
+                { name: "Fall", date: new Date(Date.UTC(year, 8, 22, 12, 44)) },
+                { name: "Winter", date: new Date(Date.UTC(year, 11, 21, 9, 20)) }
+            ];
+
+            const nextYearSeasons = [
+                { name: "Spring", date: new Date(Date.UTC(year + 1, 2, 20, 9, 2)) }
+            ];
+
+            const dateFormatOptions = { month: 'long', day: 'numeric' };
+            document.getElementById('springDate').textContent = seasons[0].date.toLocaleDateString('en-US', dateFormatOptions);
+            document.getElementById('summerDate').textContent = seasons[1].date.toLocaleDateString('en-US', dateFormatOptions);
+            document.getElementById('fallDate').textContent = seasons[2].date.toLocaleDateString('en-US', dateFormatOptions);
+            document.getElementById('winterDate').textContent = seasons[3].date.toLocaleDateString('en-US', dateFormatOptions);
+
+            let nextSeason = seasons.find(season => season.date > now);
+
+            if (!nextSeason) {
+                nextSeason = nextYearSeasons[0];
+            }
+
+            const diff = nextSeason.date - now;
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('nextSeasonCountdown').textContent = `${days} days until ${nextSeason.name}`;
+        }
+
+        // IMAGE REFRESH SCRIPT
+        function refreshImages() {
+            const images = document.querySelectorAll('.weather-image');
+            const timestamp = new Date().getTime();
+            // console.log('Refreshing images at: ' + new Date().toLocaleTimeString()); // Optional: uncomment for debugging
+            images.forEach(image => {
+                let baseSrc = image.src.split('?')[0];
+                image.src = baseSrc + '?t=' + timestamp;
+            });
+        }
+
+        // INITIALIZE AND SET INTERVALS
+        window.onload = function() {
+            updateTimeAndSun();
+            updateSeasons();
+            setInterval(updateTimeAndSun, 1000); // Update time every second
+            setInterval(updateSeasons, 3600000); // Update seasons every hour (more than enough)
+
+            refreshImages(); // Initial call
+            setInterval(refreshImages, 300000); // Update images every 5 minutes
+        };
+    </script>
+    <!-- ===================================== -->
+
+</body>
+</html>
