@@ -51,6 +51,81 @@
             margin-top: 5px;
         }
 
+        /* Hourly Forecast Strip Styling */
+        #forecast-strip {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            overflow-x: auto;
+            background: #1F1F1F;
+            border-bottom: 1px solid #444;
+            scrollbar-color: #555 #2A2A2A;
+            -webkit-overflow-scrolling: touch;
+        }
+        .hour-block {
+            min-width: 90px;
+            text-align: center;
+            padding: 10px;
+            background: #2A2A2A;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .hour-block .time {
+            font-size: 1em;
+            font-weight: bold;
+            color: #00BFFF;
+        }
+        .hour-block .icon {
+            font-size: 2em;
+            margin: 5px 0;
+        }
+        .hour-block .temp {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .hour-block .rain {
+            font-size: 0.9em;
+            color: #b0b0b0;
+            margin-top: 4px;
+        }
+
+        /* Live Threat Bar Styling */
+        .threat-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background-color: #1F1F1F;
+            border-bottom: 1px solid #444;
+        }
+        .threat-item {
+            flex: 1;
+            min-width: 300px;
+            background-color: #2A2A2A;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            height: 250px; 
+            overflow-y: auto; 
+            scrollbar-color: #555 #2A2A2A;
+        }
+        .threat-item h2 {
+            margin-top: 0;
+            font-size: 1.4em;
+            color: #00BFFF;
+            text-align: center;
+        }
+        .threat-item div, .threat-item div a { /* Target the div created by the script */
+            color: #eee !important;
+            font-size: 0.9em;
+        }
+        .threat-item div a {
+            text-decoration: underline;
+        }
+        .threat-item div b {
+            color: #00BFFF !important;
+        }
+
         /* Main Content Container */
         .container {
             padding: 25px;
@@ -62,7 +137,7 @@
             border: 1px solid #444;
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 25px; /* Space between widget and the grid */
+            margin-bottom: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
         .weather-station-widget h2 {
@@ -74,7 +149,7 @@
         }
         .weather-station-widget iframe {
             width: 100%;
-            height: 700px; /* Adjust height as needed */
+            height: 700px;
             border: 0;
         }
         
@@ -97,14 +172,14 @@
         /* Grid Styling */
         .image-grid {
             display: grid;
-            grid-template-columns: 1fr; /* Mobile first: 1 column */
+            grid-template-columns: 1fr;
             gap: 25px;
         }
         @media (min-width: 768px) {
-            .image-grid { grid-template-columns: repeat(2, 1fr); } /* 2 columns for tablets */
+            .image-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 1200px) {
-            .image-grid { grid-template-columns: repeat(3, 1fr); } /* 3 columns for desktops */
+            .image-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         /* Individual Image Card Styling */
@@ -135,11 +210,11 @@
             border-radius: 5px;
             border: 1px solid #555;
             background-color: #1c1c1c; 
-            object-fit: contain; /* Prevents images from stretching */
+            object-fit: contain;
         }
         .grid-item iframe {
-            height: 400px; /* Specific height for embedded widgets */
-            object-fit: initial; /* Reset for iframes */
+            height: 400px;
+            object-fit: initial;
         }
         .grid-item a {
             text-decoration: none;
@@ -172,7 +247,7 @@
             margin-top: 20px;
             color: #00BFFF;
         }
-        
+
         /* Footer Styling */
         .footer {
             text-align: center;
@@ -190,13 +265,29 @@
     <header class="header">
         <h1>Vizcaya Weather Hub</h1>
         <p>A centralized dashboard of live NWS and NOAA satellite and forecast imagery.</p>
-        
         <div class="live-data-header">
             <div id="currentDate"></div>
             <div id="currentTime" class="time"></div>
             <div id="sunInfo" class="sun-info"></div>
         </div>
     </header>
+
+    <div id="forecast-strip">Loading Hourly Forecast...</div>
+
+    <div class="threat-bar">
+        <div class="threat-item">
+            <h2>Local NWS Alerts</h2>
+            <script src="//rss.bloople.net/?url=https%3A%2F%2Falerts.weather.gov%2Fcap%2Fwwaatmget.php%3Fx%3DTXC491%26y%3D0&detail=100&limit=5&showtitle=false&type=js"></script>
+        </div>
+        <div class="threat-item">
+            <h2>NHC Advisories</h2>
+            <script src="//rss.bloople.net/?url=https%3A%2F%2Fwww.nhc.noaa.gov%2Findex-at.xml&detail=100&limit=5&showtitle=false&type=js"></script>
+        </div>
+        <div class="threat-item">
+            <h2>SPC Products</h2>
+            <script src="//rss.bloople.net/?url=https%3A%2F%2Fwww.spc.noaa.gov%2Fproducts%2Fspcrss.xml&detail=100&limit=5&showtitle=false&type=js"></script>
+        </div>
+    </div>
 
     <div class="container">
 
@@ -211,10 +302,6 @@
         <!-- Section 1: Hyper-Local Conditions -->
         <h2 class="section-header">Hyper-Local Conditions</h2>
         <div class="image-grid">
-            <div class="grid-item">
-                <h2>Williamson County Alerts</h2>
-                <iframe src="https://alerts.weather.gov/search?zone=TXC491" title="NWS Alerts for Williamson County, TX"></iframe>
-            </div>
             <div class="grid-item">
                 <h2>Live Weather Summary</h2>
                 <iframe src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" title="Live Weather Summary from Vizcaya Station"></iframe>
@@ -241,9 +328,8 @@
                     <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/3.png" alt="NWS Austin/San Antonio Graphicast 3">
                 </a>
             </div>
-            <!-- ===== NEW SEASONS COUNTDOWN WIDGET ===== -->
             <div class="grid-item">
-                <h2>Seasons & Countdown</h2>
+                <h2>Seasons Countdown</h2>
                 <div class="season-widget-content">
                     <ul class="season-list">
                         <li><strong>Spring:</strong> <span id="springDate"></span></li>
@@ -254,14 +340,19 @@
                     <div id="nextSeasonCountdown" class="countdown"></div>
                 </div>
             </div>
-            <!-- ======================================= -->
         </div>
 
         <hr class="section-divider">
 
-        <!-- Section 2: Live Satellite Imagery -->
-        <h2 class="section-header">Live Satellite Imagery</h2>
+        <!-- Section 2: Live Satellite & Radar -->
+        <h2 class="section-header">Live Satellite & Radar</h2>
         <div class="image-grid">
+             <div class="grid-item">
+                <a href="https://radar.weather.gov/?settings=v1_eyJhZ2VuZGEiOnsiaWQiOiJsb2NhbCIsImNlbnRlciI6[-97.67,30.51],"bG9jYXRpb24iOltdLCJ6b29tIjo5fSwiYW5pbWF0aW5nIjpmYWxzZSwiYmFzZSI6InN0YW5kYXJkIiwiYXJ0Y2MiOmZhbHNlLCJjb3VudHkiOmZhbHNlLCJjd2EiOmZhbHNlLCJyaXZlcl9wcm9qIjpmYWxzZSwicmZjIjpmYWxzZSwic3RhdGUiOmZhbHNlLCJ0aW1lIjowLCJkZXRhaWwiOmZhbHNlLCJzaG9ydF9mdXNlZE9ubHkiOnRydWUsIm9wYWNpdHkiOnsiYWxlcnRzIjowLjgsImxvY2FsIjowLjYsImxvY2FsU3RhdGlvbnMiOjAuOCwibmF0aW9uYWwiOjAuNn19" target="_blank">
+                    <h2>Live Local Radar Loop</h2>
+                    <img class="weather-image" src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif" alt="Live Austin/San Antonio Radar Loop">
+                </a>
+            </div>
             <div class="grid-item">
                 <a href="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" target="_blank">
                     <h2>GOES-19 - Southern Plains</h2>
@@ -294,11 +385,7 @@
                 </a>
             </div>
             <div class="grid-item">
-                <h2>Latest Tropical Discussion</h2>
-                <iframe src="https://www.nhc.noaa.gov/text/refresh/MIATWDAT+shtml/latest.shtml" title="Latest Tropical Weather Discussion"></iframe>
-            </div>
-            <div class="grid-item">
-                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19&sector=ga" target="_blank">
+                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19§or=ga" target="_blank">
                     <h2>GOES-19 - Gulf & Atlantic</h2>
                     <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ga/GEOCOLOR/2000x2000.jpg" alt="GOES-19 Gulf and Atlantic Satellite Image">
                 </a>
@@ -536,19 +623,83 @@
 
     <!-- ===== JAVASCRIPT FOR AUTO-UPDATE AND TIME ===== -->
     <script>
+        // HOURLY FORECAST STRIP SCRIPT
+        function updateHourlyForecast() {
+            const lat = 30.5871;
+            const lon = -97.641;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,weathercode&temperature_unit=fahrenheit&forecast_days=1&timezone=${timezone}`)
+              .then(res => res.json())
+              .then(data => {
+                const now = new Date();
+                const forecastDiv = document.getElementById('forecast-strip');
+                forecastDiv.innerHTML = ''; // Clear "Loading..."
+
+                const hourly = data.hourly;
+                const hourlyTimes = hourly.time.map(t => new Date(t));
+                let startIndex = hourlyTimes.findIndex(forecastTime => forecastTime > now);
+
+                if (startIndex === -1) { startIndex = hourly.time.length -1; }
+
+                for (let i = 0; i < 12 && (startIndex + i) < hourly.time.length; i++) {
+                  const index = startIndex + i;
+                  const time = new Date(hourly.time[index]);
+                  const hour = time.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+                  const temp = Math.round(hourly.temperature_2m[index]);
+                  const precip = hourly.precipitation[index];
+                  const code = hourly.weathercode[index];
+                  const icon = getIcon(code, precip);
+                  const rainChance = estimateRainChance(precip);
+
+                  const block = document.createElement('div');
+                  block.className = 'hour-block';
+                  block.innerHTML = `
+                    <div class="time">${hour}</div>
+                    <div class="icon">${icon}</div>
+                    <div class="temp">${temp}°F</div>
+                    <div class="rain">${rainChance}% rain</div>
+                  `;
+                  forecastDiv.appendChild(block);
+                }
+              }).catch(error => {
+                  document.getElementById('forecast-strip').textContent = 'Could not load hourly forecast.';
+                  console.error("Hourly forecast error:", error);
+              });
+        }
+
+        function getIcon(code, precip) {
+            if (precip > 0.2) return '🌧️';
+            if (code === 0) return '☀️';
+            if (code === 1 || code === 2) return '⛅';
+            if (code === 3) return '☁️';
+            if (code >= 45 && code <= 48) return '🌫️';
+            if (code >= 51 && code <= 67) return '🌦️';
+            if (code >= 71 && code <= 77) return '❄️';
+            if (code >= 80 && code <= 82) return '🌧️';
+            if (code >= 95) return '⛈️';
+            return '❓';
+        }
+
+        function estimateRainChance(mm) {
+            if (mm === 0) return 0;
+            if (mm < 0.2) return 20;
+            if (mm < 1.0) return 50;
+            if (mm < 2.5) return 70;
+            return 90;
+        }
+
         // TIME AND SUN DATA SCRIPT
         function updateTimeAndSun() {
             const lat = 30.6476;
             const lon = -97.6863;
             const now = new Date();
             
-            // Time and Date Formatting
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Chicago' };
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
             document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
 
-            // SunCalc
             const times = SunCalc.getTimes(now, lat, lon);
             const sunrise = times.sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             const sunset = times.sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -557,7 +708,7 @@
             const dayLengthHours = Math.floor(dayLengthMs / 3600000);
             const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
 
-            document.getElementById('sunInfo').innerHTML = `Sunrise: ${sunrise} &nbsp;&nbsp;&nbsp; Sunset: ${sunset} &nbsp;&nbsp;&nbsp; Day Length: ${dayLengthHours}h ${dayLengthMinutes}m`;
+            document.getElementById('sunInfo').innerHTML = `Sunrise: ${sunrise}     Sunset: ${sunset}     Day Length: ${dayLengthHours}h ${dayLengthMinutes}m`;
         }
 
         // SEASONS COUNTDOWN SCRIPT
@@ -565,17 +716,13 @@
             const now = new Date();
             const year = now.getFullYear();
 
-            // Approximate dates for seasons in North America (UTC)
             const seasons = [
                 { name: "Spring", date: new Date(Date.UTC(year, 2, 20, 3, 6)) },
                 { name: "Summer", date: new Date(Date.UTC(year, 5, 20, 20, 51)) },
                 { name: "Fall", date: new Date(Date.UTC(year, 8, 22, 12, 44)) },
                 { name: "Winter", date: new Date(Date.UTC(year, 11, 21, 9, 20)) }
             ];
-
-            const nextYearSeasons = [
-                { name: "Spring", date: new Date(Date.UTC(year + 1, 2, 20, 9, 2)) }
-            ];
+            const nextYearSeasons = [{ name: "Spring", date: new Date(Date.UTC(year + 1, 2, 20, 9, 2)) }];
 
             const dateFormatOptions = { month: 'long', day: 'numeric' };
             document.getElementById('springDate').textContent = seasons[0].date.toLocaleDateString('en-US', dateFormatOptions);
@@ -584,7 +731,6 @@
             document.getElementById('winterDate').textContent = seasons[3].date.toLocaleDateString('en-US', dateFormatOptions);
 
             let nextSeason = seasons.find(season => season.date > now);
-
             if (!nextSeason) {
                 nextSeason = nextYearSeasons[0];
             }
@@ -598,7 +744,6 @@
         function refreshImages() {
             const images = document.querySelectorAll('.weather-image');
             const timestamp = new Date().getTime();
-            // console.log('Refreshing images at: ' + new Date().toLocaleTimeString()); // Optional: uncomment for debugging
             images.forEach(image => {
                 let baseSrc = image.src.split('?')[0];
                 image.src = baseSrc + '?t=' + timestamp;
@@ -609,11 +754,13 @@
         window.onload = function() {
             updateTimeAndSun();
             updateSeasons();
+            updateHourlyForecast();
             setInterval(updateTimeAndSun, 1000); // Update time every second
-            setInterval(updateSeasons, 3600000); // Update seasons every hour (more than enough)
+            setInterval(updateSeasons, 3600000); // Update seasons every hour
 
-            refreshImages(); // Initial call
+            refreshImages();
             setInterval(refreshImages, 300000); // Update images every 5 minutes
+            setInterval(updateHourlyForecast, 900000); // Update hourly every 15 minutes
         };
     </script>
     <!-- ===================================== -->
