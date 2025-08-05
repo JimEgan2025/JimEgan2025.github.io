@@ -115,12 +115,13 @@
             color: #00BFFF;
             text-align: center;
         }
-        .threat-item div, .threat-item div a { /* Target the div created by the script */
+        .threat-item div, .threat-item div a, .threat-item div b {
             color: #eee !important;
-            font-size: 0.9em;
+            font-size: 0.9em !important;
+            background-color: transparent !important;
         }
         .threat-item div a {
-            text-decoration: underline;
+            text-decoration: underline !important;
         }
         .threat-item div b {
             color: #00BFFF !important;
@@ -299,9 +300,27 @@
 
         <hr class="section-divider">
 
-        <!-- Section 1: Hyper-Local Conditions -->
-        <h2 class="section-header">Hyper-Local Conditions</h2>
+        <!-- Section 1: Live Threats & Local Conditions -->
+        <h2 class="section-header">Live Threats & Local Conditions</h2>
         <div class="image-grid">
+            <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/md/" target="_blank">
+                    <h2>Mesoscale Discussions (SPC)</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/md/validmd.png" alt="SPC Mesoscale Discussions">
+                </a>
+            </div>
+             <div class="grid-item">
+                <a href="https://www.spc.noaa.gov/products/watch/" target="_blank">
+                    <h2>Current Watches (SPC)</h2>
+                    <img class="weather-image" src="https://www.spc.noaa.gov/products/watch/validww.png" alt="Current SPC Watches">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/metwatch/metwatch_mpd.php" target="_blank">
+                    <h2>Mesoscale Precipitation Discussions</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/metwatch/latest_mdmap.gif" alt="WPC Mesoscale Precipitation Discussions Map">
+                </a>
+            </div>
             <div class="grid-item">
                 <h2>Live Weather Summary</h2>
                 <iframe src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" title="Live Weather Summary from Vizcaya Station"></iframe>
@@ -529,6 +548,24 @@
                 </a>
             </div>
             <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" target="_blank">
+                    <h2>Surface Analysis - Day 1</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" alt="WPC Surface Analysis Day 1">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" target="_blank">
+                    <h2>Surface Analysis - Day 2</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" alt="WPC Surface Analysis Day 2">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif" target="_blank">
+                    <h2>Surface Analysis - Day 3</h2>
+                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif" alt="WPC Surface Analysis Day 3">
+                </a>
+            </div>
+            <div class="grid-item">
                 <a href="https://www.wpc.ncep.noaa.gov/qpf/ero.shtml" target="_blank">
                     <h2>Excessive Rainfall - Day 1</h2>
                     <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif" alt="Day 1 Excessive Rainfall Outlook">
@@ -584,12 +621,6 @@
                 </a>
             </div>
              <div class="grid-item">
-                <a href="https://www.spc.noaa.gov/products/md/" target="_blank">
-                    <h2>Mesoscale Discussions (SPC)</h2>
-                    <img class="weather-image" src="https://www.spc.noaa.gov/products/md/validmd.png" alt="SPC Mesoscale Discussions">
-                </a>
-            </div>
-             <div class="grid-item">
                 <a href="https://www.spc.noaa.gov/climo/reports/today.html" target="_blank">
                     <h2>Today's Storm Reports</h2>
                     <img class="weather-image" src="https://www.spc.noaa.gov/climo/reports/today.gif" alt="Today's Storm Reports">
@@ -599,12 +630,6 @@
                 <a href="https://www.spc.noaa.gov/products/wwa/" target="_blank">
                     <h2>National Hazard Map</h2>
                     <img class="weather-image" src="https://forecast.weather.gov/wwamap/png/US.png" alt="NWS National Hazard Map">
-                </a>
-            </div>
-             <div class="grid-item">
-                <a href="https://www.spc.noaa.gov/products/watch/" target="_blank">
-                    <h2>Current Watches (SPC)</h2>
-                    <img class="weather-image" src="https://www.spc.noaa.gov/products/watch/validww.png" alt="Current SPC Watches">
                 </a>
             </div>
              <div class="grid-item">
