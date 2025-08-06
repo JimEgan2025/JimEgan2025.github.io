@@ -51,44 +51,6 @@
             margin-top: 5px;
         }
 
-        /* Hourly Forecast Strip Styling */
-        #forecast-strip {
-            display: flex;
-            gap: 15px;
-            padding: 15px;
-            overflow-x: auto;
-            background: #1F1F1F;
-            border-bottom: 1px solid #444;
-            scrollbar-color: #555 #2A2A2A;
-            -webkit-overflow-scrolling: touch;
-        }
-        .hour-block {
-            min-width: 90px;
-            text-align: center;
-            padding: 10px;
-            background: #2A2A2A;
-            border-radius: 10px;
-            border: 1px solid #444;
-        }
-        .hour-block .time {
-            font-size: 1em;
-            font-weight: bold;
-            color: #00BFFF;
-        }
-        .hour-block .icon {
-            font-size: 2em;
-            margin: 5px 0;
-        }
-        .hour-block .temp {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        .hour-block .rain {
-            font-size: 0.9em;
-            color: #b0b0b0;
-            margin-top: 4px;
-        }
-
         /* Live Threat Bar Styling */
         .threat-bar {
             display: flex;
@@ -273,8 +235,6 @@
         </div>
     </header>
 
-    <div id="forecast-strip">Loading Hourly Forecast...</div>
-
     <div class="threat-bar">
         <div class="threat-item">
             <h2>Local NWS Alerts</h2>
@@ -330,24 +290,6 @@
                 <iframe src="https://forecast.weather.gov/MapClick.php?lat=30.6476&lon=-97.6863&unit=0&lg=english&FcstType=text&TextType=1" title="7-Day Forecast for Vizcaya, TX"></iframe>
             </div>
             <div class="grid-item">
-                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
-                    <h2>Local Graphicast - 1</h2>
-                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/1.png" alt="NWS Austin/San Antonio Graphicast 1">
-                </a>
-            </div>
-            <div class="grid-item">
-                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
-                    <h2>Local Graphicast - 2</h2>
-                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/2.png" alt="NWS Austin/San Antonio Graphicast 2">
-                </a>
-            </div>
-            <div class="grid-item">
-                <a href="https://www.weather.gov/ewx/graphicast" target="_blank">
-                    <h2>Local Graphicast - 3</h2>
-                    <img class="weather-image" src="https://www.weather.gov/images/ewx/graphicast/3.png" alt="NWS Austin/San Antonio Graphicast 3">
-                </a>
-            </div>
-            <div class="grid-item">
                 <h2>Seasons Countdown</h2>
                 <div class="season-widget-content">
                     <ul class="season-list">
@@ -369,7 +311,19 @@
              <div class="grid-item">
                 <a href="https://radar.weather.gov/?settings=v1_eyJhZ2VuZGEiOnsiaWQiOiJsb2NhbCIsImNlbnRlciI6[-97.67,30.51],"bG9jYXRpb24iOltdLCJ6b29tIjo5fSwiYW5pbWF0aW5nIjpmYWxzZSwiYmFzZSI6InN0YW5kYXJkIiwiYXJ0Y2MiOmZhbHNlLCJjb3VudHkiOmZhbHNlLCJjd2EiOmZhbHNlLCJyaXZlcl9wcm9qIjpmYWxzZSwicmZjIjpmYWxzZSwic3RhdGUiOmZhbHNlLCJ0aW1lIjowLCJkZXRhaWwiOmZhbHNlLCJzaG9ydF9mdXNlZE9ubHkiOnRydWUsIm9wYWNpdHkiOnsiYWxlcnRzIjowLjgsImxvY2FsIjowLjYsImxvY2FsU3RhdGlvbnMiOjAuOCwibmF0aW9uYWwiOjAuNn19" target="_blank">
                     <h2>Live Local Radar Loop</h2>
-                    <img class="weather-image" src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif" alt="Live Austin/San Antonio Radar Loop">
+                    <img class="weather-image" src="https://radar.weather.gov/ridge/standard/KGRK_0.gif" alt="Live Austin/San Antonio Radar Loop">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://www.wunderground.com/maps/radar/current" target="_blank">
+                    <h2>U.S. Satellite & Radar Loop</h2>
+                    <img class="weather-image" src="https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/ussat/animate.png" alt="Weather Underground U.S. Satellite and Radar">
+                </a>
+            </div>
+            <div class="grid-item">
+                <a href="https://radar.weather.gov/ridge/radar.php?rid=STR&product=N0R&overlay=11101111&loop=yes" target="_blank">
+                    <h2>Southern Plains Radar Loop</h2>
+                    <img class="weather-image" src="https://radar.weather.gov/ridge/standard/SOUTHPLAINS_0.gif" alt="Southern Plains Radar Loop">
                 </a>
             </div>
             <div class="grid-item">
@@ -404,9 +358,9 @@
                 </a>
             </div>
             <div class="grid-item">
-                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19§or=ga" target="_blank">
-                    <h2>GOES-19 - Gulf & Atlantic</h2>
-                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ga/GEOCOLOR/2000x2000.jpg" alt="GOES-19 Gulf and Atlantic Satellite Image">
+                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19§or=taw" target="_blank">
+                    <h2>GOES-19 - Full Atlantic</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/taw/GEOCOLOR/900x540.jpg" alt="GOES-19 Full Atlantic Satellite Image">
                 </a>
             </div>
             <div class="grid-item">
@@ -607,7 +561,7 @@
                 <iframe src="https://kamala.cod.edu/tx/latest.fxus64.KEWX.html" title="NWS Austin/San Antonio Area Forecast Discussion"></iframe>
             </div>
             <div class="grid-item">
-                <h2>National Storm Summary</h2>
+                <h2>Short-Range National Forecast</h2>
                 <iframe src="https://kamala.cod.edu/HPC/latest.fxus01.KWBC.html" title="WPC National Storm Summary Discussion"></iframe>
             </div>
             <div class="grid-item">
@@ -673,8 +627,7 @@
                   const hour = time.toLocaleTimeString([], { hour: 'numeric', hour12: true });
                   const temp = Math.round(hourly.temperature_2m[index]);
                   const precip = hourly.precipitation[index];
-                  const code = hourly.weathercode[index];
-                  const icon = getIcon(code, precip);
+                  const code = getIcon(hourly.weathercode[index], precip);
                   const rainChance = estimateRainChance(precip);
 
                   const block = document.createElement('div');
@@ -792,3 +745,5 @@
 
 </body>
 </html>
+
+
