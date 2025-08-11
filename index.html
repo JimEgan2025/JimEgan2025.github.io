@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -316,14 +317,8 @@
             </div>
             <div class="grid-item">
                 <a href="https://www.wunderground.com/maps/radar/current" target="_blank">
-                    <h2>U.S. Satellite & Radar Loop</h2>
-                    <img class="weather-image" src="https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/ussat/animate.png" alt="Weather Underground U.S. Satellite and Radar">
-                </a>
-            </div>
-            <div class="grid-item">
-                <a href="https://radar.weather.gov/ridge/radar.php?rid=STR&product=N0R&overlay=11101111&loop=yes" target="_blank">
-                    <h2>Southern Plains Radar Loop</h2>
-                    <img class="weather-image" src="https://radar.weather.gov/ridge/standard/SOUTHPLAINS_0.gif" alt="Southern Plains Radar Loop">
+                    <h2>Texas Radar</h2>
+                    <img class="weather-image" src="https://s.w-x.co/staticmaps/wu/wu/wxtype1200_cur/usbro/animate.png" alt="Texas Radar Loop">
                 </a>
             </div>
             <div class="grid-item">
@@ -358,13 +353,13 @@
                 </a>
             </div>
             <div class="grid-item">
-                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19§or=taw" target="_blank">
-                    <h2>GOES-19 - Full Atlantic</h2>
-                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/taw/GEOCOLOR/900x540.jpg" alt="GOES-19 Full Atlantic Satellite Image">
+                <a href="https://www.star.nesdis.noaa.gov/GOES/sector.php?sat=G19&sector=ga" target="_blank">
+                    <h2>GOES-19 - Gulf & Atlantic</h2>
+                    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ga/GEOCOLOR/2000x2000.jpg" alt="GOES-19 Gulf and Atlantic Satellite Image">
                 </a>
             </div>
             <div class="grid-item">
-                <a href="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghazards/ghaz.shtml" target="_blank">
+                <a href="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghazards/index.php" target="_blank">
                     <h2>Global Tropics Hazards Outlook</h2>
                     <img class="weather-image" src="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png" alt="Global Tropics Hazards and Benefits Outlook">
                 </a>
@@ -502,24 +497,6 @@
                 </a>
             </div>
             <div class="grid-item">
-                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" target="_blank">
-                    <h2>Surface Analysis - Day 1</h2>
-                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" alt="WPC Surface Analysis Day 1">
-                </a>
-            </div>
-            <div class="grid-item">
-                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" target="_blank">
-                    <h2>Surface Analysis - Day 2</h2>
-                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" alt="WPC Surface Analysis Day 2">
-                </a>
-            </div>
-            <div class="grid-item">
-                <a href="https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif" target="_blank">
-                    <h2>Surface Analysis - Day 3</h2>
-                    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad3.gif" alt="WPC Surface Analysis Day 3">
-                </a>
-            </div>
-            <div class="grid-item">
                 <a href="https://www.wpc.ncep.noaa.gov/qpf/ero.shtml" target="_blank">
                     <h2>Excessive Rainfall - Day 1</h2>
                     <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif" alt="Day 1 Excessive Rainfall Outlook">
@@ -635,7 +612,7 @@
                   block.innerHTML = `
                     <div class="time">${hour}</div>
                     <div class="icon">${icon}</div>
-                    <div class="temp">${temp}°F</div>
+                    <div class="temp">${temp}&deg;F</div>
                     <div class="rain">${rainChance}% rain</div>
                   `;
                   forecastDiv.appendChild(block);
@@ -686,7 +663,7 @@
             const dayLengthHours = Math.floor(dayLengthMs / 3600000);
             const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
 
-            document.getElementById('sunInfo').innerHTML = `Sunrise: ${sunrise}     Sunset: ${sunset}     Day Length: ${dayLengthHours}h ${dayLengthMinutes}m`;
+            document.getElementById('sunInfo').innerHTML = `Sunrise: ${sunrise} &nbsp;&nbsp;&nbsp; Sunset: ${sunset} &nbsp;&nbsp;&nbsp; Day Length: ${dayLengthHours}h ${dayLengthMinutes}m`;
         }
 
         // SEASONS COUNTDOWN SCRIPT
