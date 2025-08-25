@@ -64,14 +64,22 @@
     }
     iframe { min-height: 300px; }
 
-    /* Increased heights */
-    #forecast iframe {
-        height: 60vh; 
-        min-height: 450px;
-    }
     #vizcaya-station iframe {
-        height: 70vh;
-        min-height: 500px;
+        height: 500px;
+        max-height: 60vh;
+    }
+    @media screen and (max-width: 480px) {
+        #vizcaya-station iframe {
+            height: 300px;
+        }
+    }
+
+    /* Text Forecast Styling */
+    #forecast-container div {
+        margin-bottom: 12px;
+        padding: 8px;
+        border-bottom: 1px solid #444;
+        color: #fff;
     }
 
     .footer {
@@ -113,10 +121,10 @@
     <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen" loading="lazy"></iframe>
 </div>
 
-<!-- Vizcaya 7-Day Forecast -->
+<!-- 7-Day Text Forecast -->
 <div class="card" id="forecast">
     <h2>7-Day Forecast</h2>
-    <iframe src="https://forecast.weather.gov/MapClick.php?lat=30.6476&lon=-97.6863&unit=0&lg=english&FcstType=text&TextType=1" loading="lazy"></iframe>
+    <div id="forecast-container"></div>
 </div>
 
 <!-- Central Texas Radar Loop -->
@@ -129,7 +137,7 @@
 <!-- GLM - Southern Plains -->
 <div class="card">
     <h2>GLM - Southern Plains</h2>
-    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg" 
+    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/300x300.jpg" 
          alt="GLM Southern Plains" loading="lazy">
 </div>
 
@@ -188,11 +196,39 @@ function refreshImages() {
     });
 }
 
+async function fetchTextForecast() {
+    const lat = 30.5871;
+    const lon = -97.641;
+    try {
+        const gridRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+        const gridData = await gridRes.json();
+        const forecastUrl = gridData.properties.forecast;
+
+        const forecastRes = await fetch(forecastUrl);
+        const forecastData = await forecastRes.json();
+        const periods = forecastData.properties.periods;
+
+        const container = document.getElementById('forecast-container');
+        container.innerHTML = '';
+
+        periods.forEach(period => {
+            const block = document.createElement('div');
+            block.innerHTML = `<strong>${period.name}:</strong> ${period.detailedForecast}`;
+            container.appendChild(block);
+        });
+
+    } catch (error) {
+        document.getElementById('forecast-container').textContent = "Forecast data unavailable. Try weather.gov for your location.";
+        console.error(error);
+    }
+}
+
 window.onload = function() {
     updateTimeAndSun();
-    setInterval(updateTimeAndSun, 60000); // update every minute
+    setInterval(updateTimeAndSun, 60000);
     refreshImages();
-    setInterval(refreshImages, 300000);   // refresh images every 5 min
+    setInterval(refreshImages, 300000);
+    fetchTextForecast();
 };
 </script>
 
