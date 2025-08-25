@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vizcaya Weather on the Run</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #121212;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+    }
+    .header {
+        background-color: #1F1F1F;
+        padding: 15px;
+        text-align: center;
+        border-bottom: 2px solid #007BFF;
+    }
+    .header h1 {
+        margin: 0;
+        font-size: 1.8em;
+        color: #00BFFF;
+    }
+    .live-data-header {
+        margin-top: 8px;
+        font-size: 0.95em;
+        color: #b0b0b0;
+    }
+    .live-data-header .time {
+        font-weight: bold;
+        color: #fff;
+    }
+    .card {
+        background-color: #2A2A2A;
+        border: 1px solid #444;
+        border-radius: 8px;
+        margin: 15px;
+        padding: 15px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+    }
+    .card h2 {
+        color: #00BFFF;
+        font-size: 1.2em;
+        margin-top: 0;
+        text-align: center;
+    }
+    .card img, .card iframe {
+        width: 100%;
+        border-radius: 5px;
+        border: 1px solid #555;
+    }
+    iframe {
+        min-height: 350px;
+    }
+    .footer {
+        text-align: center;
+        padding: 15px;
+        font-size: 0.85em;
+        color: #888;
+        border-top: 1px solid #333;
+    }
+</style>
+</head>
+<body>
+
+<header class="header">
+    <h1>Vizcaya Weather on the Run</h1>
+    <div class="live-data-header">
+        <div id="currentDate"></div>
+        <div id="currentTime" class="time"></div>
+        <div id="sunInfo"></div>
+    </div>
+</header>
+
+<!-- Local NWS Alerts -->
+<div class="card">
+    <h2>Local NWS Alerts</h2>
+    <script src="//rss.bloople.net/?url=https%3A%2F%2Falerts.weather.gov%2Fcap%2Fwwaatmget.php%3Fx%3DTXC491%26y%3D0&detail=100&limit=5&showtitle=false&type=js"></script>
+</div>
+
+<!-- Vizcaya Weather Station -->
+<div class="card">
+    <h2>Live from Vizcaya Weather Station</h2>
+    <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen" loading="lazy"></iframe>
+</div>
+
+<!-- Live Weather Summary -->
+<div class="card">
+    <h2>Live Weather Summary</h2>
+    <iframe src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" loading="lazy"></iframe>
+</div>
+
+<!-- Vizcaya 7-Day Forecast -->
+<div class="card">
+    <h2>Vizcaya 7-Day Forecast</h2>
+    <iframe src="https://forecast.weather.gov/MapClick.php?lat=30.6476&lon=-97.6863&unit=0&lg=english&FcstType=text&TextType=1" loading="lazy"></iframe>
+</div>
+
+<!-- Central Texas Radar Loop -->
+<div class="card">
+    <h2>Central Texas Radar Loop</h2>
+    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif" alt="Central Texas Radar Loop">
+</div>
+
+<!-- GLM - Southern Plains -->
+<div class="card">
+    <h2>GLM - Southern Plains</h2>
+    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg" alt="GLM Southern Plains">
+</div>
+
+<!-- Local Outlook Day 1 -->
+<div class="card">
+    <h2>Local Outlook - Day 1</h2>
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" alt="Local Outlook Day 1">
+</div>
+
+<!-- Local Outlook Day 2 -->
+<div class="card">
+    <h2>Local Outlook - Day 2</h2>
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png" alt="Local Outlook Day 2">
+</div>
+
+<!-- Surface Analysis Day 1 -->
+<div class="card">
+    <h2>Surface Analysis - Day 1</h2>
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" alt="Surface Analysis Day 1">
+</div>
+
+<!-- Surface Analysis Day 2 -->
+<div class="card">
+    <h2>Surface Analysis - Day 2</h2>
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" alt="Surface Analysis Day 2">
+</div>
+
+<footer class="footer">
+    <p>Non-commercial dashboard. Data from NWS, SPC, NOAA.</p>
+</footer>
+
+<script>
+function updateTimeAndSun() {
+    const lat = 30.6476, lon = -97.6863;
+    const now = new Date();
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Chicago' };
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+
+    const times = SunCalc.getTimes(now, lat, lon);
+    const sunrise = times.sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const sunset = times.sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dayLengthMs = times.sunset - times.sunrise;
+    const dayLengthHours = Math.floor(dayLengthMs / 3600000);
+    const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
+    document.getElementById('sunInfo').textContent = `Sunrise: ${sunrise} | Sunset: ${sunset} | Day: ${dayLengthHours}h ${dayLengthMinutes}m`;
+}
+
+function refreshImages() {
+    const images = document.querySelectorAll('.weather-image');
+    const timestamp = new Date().getTime();
+    images.forEach(image => {
+        let baseSrc = image.src.split('?')[0];
+        image.src = baseSrc + '?t=' + timestamp;
+    });
+}
+
+window.onload = function() {
+    updateTimeAndSun();
+    setInterval(updateTimeAndSun, 1000);
+    refreshImages();
+    setInterval(refreshImages, 300000);
+};
+</script>
+
+</body>
+</html>
