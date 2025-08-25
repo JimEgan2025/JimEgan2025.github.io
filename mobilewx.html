@@ -9,7 +9,7 @@
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         background-color: #121212;
-        color: #ffffff;
+        color: #fff;
         margin: 0;
         padding: 0;
     }
@@ -17,48 +17,67 @@
         background-color: #1F1F1F;
         padding: 15px;
         text-align: center;
-        border-bottom: 2px solid #007BFF;
+        border-bottom: 2px solid #00BFFF;
     }
     .header h1 {
         margin: 0;
-        font-size: 1.8em;
+        font-size: 1.6em;
         color: #00BFFF;
     }
     .live-data-header {
-        margin-top: 8px;
-        font-size: 0.95em;
+        margin-top: 5px;
+        font-size: 0.9em;
         color: #b0b0b0;
     }
-    .live-data-header .time {
-        font-weight: bold;
-        color: #fff;
+    .live-data-header .time { color: #fff; font-weight: bold; }
+    .quick-nav {
+        background: #1F1F1F;
+        padding: 10px;
+        text-align: center;
+    }
+    .quick-nav a {
+        color: #00BFFF;
+        margin: 0 5px;
+        text-decoration: none;
+        font-size: 0.9em;
     }
     .card {
         background-color: #2A2A2A;
         border: 1px solid #444;
         border-radius: 8px;
-        margin: 15px;
-        padding: 15px;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        margin: 12px;
+        padding: 12px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .card h2 {
         color: #00BFFF;
-        font-size: 1.2em;
+        font-size: 1.1em;
         margin-top: 0;
         text-align: center;
     }
     .card img, .card iframe {
         width: 100%;
+        max-width: 100%;
+        height: auto;
         border-radius: 5px;
         border: 1px solid #555;
     }
-    iframe {
-        min-height: 350px;
+    iframe { min-height: 300px; }
+
+    /* Increased heights */
+    #forecast iframe {
+        height: 60vh; 
+        min-height: 450px;
     }
+    #vizcaya-station iframe {
+        height: 70vh;
+        min-height: 500px;
+    }
+
     .footer {
         text-align: center;
-        padding: 15px;
-        font-size: 0.85em;
+        padding: 12px;
+        font-size: 0.8em;
         color: #888;
         border-top: 1px solid #333;
     }
@@ -75,64 +94,67 @@
     </div>
 </header>
 
+<nav class="quick-nav">
+    <a href="#nws-alerts">Alerts</a>
+    <a href="#vizcaya-station">Station</a>
+    <a href="#forecast">7-Day</a>
+    <a href="#radar">Radar</a>
+</nav>
+
 <!-- Local NWS Alerts -->
-<div class="card">
+<div class="card" id="nws-alerts">
     <h2>Local NWS Alerts</h2>
     <script src="//rss.bloople.net/?url=https%3A%2F%2Falerts.weather.gov%2Fcap%2Fwwaatmget.php%3Fx%3DTXC491%26y%3D0&detail=100&limit=5&showtitle=false&type=js"></script>
 </div>
 
 <!-- Vizcaya Weather Station -->
-<div class="card">
+<div class="card" id="vizcaya-station">
     <h2>Live from Vizcaya Weather Station</h2>
     <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen" loading="lazy"></iframe>
 </div>
 
-<!-- Live Weather Summary -->
-<div class="card">
-    <h2>Live Weather Summary</h2>
-    <iframe src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" loading="lazy"></iframe>
-</div>
-
 <!-- Vizcaya 7-Day Forecast -->
-<div class="card">
-    <h2>Vizcaya 7-Day Forecast</h2>
+<div class="card" id="forecast">
+    <h2>7-Day Forecast</h2>
     <iframe src="https://forecast.weather.gov/MapClick.php?lat=30.6476&lon=-97.6863&unit=0&lg=english&FcstType=text&TextType=1" loading="lazy"></iframe>
 </div>
 
 <!-- Central Texas Radar Loop -->
-<div class="card">
+<div class="card" id="radar">
     <h2>Central Texas Radar Loop</h2>
-    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif" alt="Central Texas Radar Loop">
+    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif" 
+         alt="Central Texas Radar Loop" loading="lazy">
 </div>
 
 <!-- GLM - Southern Plains -->
 <div class="card">
     <h2>GLM - Southern Plains</h2>
-    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg" alt="GLM Southern Plains">
+    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg" 
+         alt="GLM Southern Plains" loading="lazy">
 </div>
 
-<!-- Local Outlook Day 1 -->
+<!-- Local Outlook Day 1 & 2 -->
 <div class="card">
     <h2>Local Outlook - Day 1</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" alt="Local Outlook Day 1">
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" 
+         alt="Outlook Day 1" loading="lazy">
 </div>
-
-<!-- Local Outlook Day 2 -->
 <div class="card">
     <h2>Local Outlook - Day 2</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png" alt="Local Outlook Day 2">
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png" 
+         alt="Outlook Day 2" loading="lazy">
 </div>
 
-<!-- Surface Analysis Day 1 -->
+<!-- Surface Analysis Day 1 & 2 -->
 <div class="card">
     <h2>Surface Analysis - Day 1</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" alt="Surface Analysis Day 1">
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" 
+         alt="Surface Analysis Day 1" loading="lazy">
 </div>
-
-<!-- Surface Analysis Day 2 -->
 <div class="card">
     <h2>Surface Analysis - Day 2</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" alt="Surface Analysis Day 2">
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" 
+         alt="Surface Analysis Day 2" loading="lazy">
 </div>
 
 <footer class="footer">
@@ -168,9 +190,9 @@ function refreshImages() {
 
 window.onload = function() {
     updateTimeAndSun();
-    setInterval(updateTimeAndSun, 1000);
+    setInterval(updateTimeAndSun, 60000); // update every minute
     refreshImages();
-    setInterval(refreshImages, 300000);
+    setInterval(refreshImages, 300000);   // refresh images every 5 min
 };
 </script>
 
