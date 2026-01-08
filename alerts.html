@@ -1,50 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Texas Weather Alerts</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texas Weather Situation Room</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .alert-card { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 8px solid #cc0000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .severity-Minor { border-left-color: #ffcc00; }
-        .severity-Moderate { border-left-color: #ff8800; }
-        h1 { color: #333; }
+        :root {
+            --extreme: #d73a49; /* Red */
+            --severe: #f66a0a;  /* Orange */
+            --moderate: #ffc107; /* Yellow */
+            --minor: #0366d6;    /* Blue */
+            --bg: #f6f8fa;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            line-height: 1.6; color: #24292e; max-width: 900px; 
+            margin: 0 auto; padding: 20px; background-color: var(--bg); 
+        }
+        .header { border-bottom: 2px solid #e1e4e8; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav-back { text-decoration: none; color: var(--minor); font-weight: bold; font-size: 0.9em; }
+        
+        #as-of-time { font-size: 1.4em; font-weight: 800; color: #d73a49; margin: 10px 0 5px 0; }
+        #update-status { font-size: 0.85em; color: #586069; font-style: italic; }
+
+        /* Filter Controls */
+        .controls { margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { 
+            padding: 8px 15px; border-radius: 20px; border: 1px solid #d1d5da; 
+            background: white; cursor: pointer; font-weight: 600; font-size: 0.9em;
+        }
+        .filter-btn.active { background: #24292e; color: white; border-color: #24292e; }
+
+        .alert-card { 
+            background: white; border: 1px solid #d1d5da; border-left: 12px solid var(--minor); 
+            border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .severity-Extreme { border-left-color: var(--extreme); background-color: #fff5f5; }
+        .severity-Severe { border-left-color: var(--severe); }
+        .severity-Moderate { border-left-color: var(--moderate); }
+        
+        .alert-title { font-size: 1.5em; font-weight: 900; color: #1b1f23; display: block; margin-bottom: 5px; }
+        .alert-headline { display: block; margin-bottom: 15px; font-weight: 600; color: #444; }
+        .alert-areas { font-size: 0.95em; background: #f1f1f1; padding: 12px; border-radius: 6px; border: 1px solid #e1e4e8; }
+        .alert-meta { font-size: 0.85em; color: #6a737d; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
     </style>
 </head>
 <body>
-    <h1>Active Texas Weather Alerts</h1>
-    <div id="alerts-container">Loading latest alerts...</div>
+
+    <div class="header">
+        <a href="index.html" class="nav-back">← Back to Main Page</a>
+        <h1>Texas Weather Alerts</h1>
+        <p id="as-of-time">As of: Loading...</p>
+        <div id="update-status">Connecting to NWS...</div>
+    </div>
+
+    <div class="controls">
+        <span>Filter:</span>
+        <button class="filter-btn active" onclick="setFilter('All', this)">All Alerts</button>
+        <button class="filter-btn" onclick="setFilter('Extreme', this)">⚠️ Extremes Only</button>
+        <button class="filter-btn" onclick="setFilter('Severe', this)">Warnings Only</button>
+    </div>
+
+    <div id="alerts-container">
+        <p style="text-align: center; padding: 40px;">Fetching live data...</p>
+    </div>
 
     <script>
-        async function getTexasAlerts() {
-            const container = document.getElementById('alerts-container');
+        let currentFilter = 'All';
+        let allAlerts = [];
+
+        async function updateDashboard() {
+            const status = document.getElementById('update-status');
+            const asOfDisplay = document.getElementById('as-of-time');
+
+            // Sorting Weight (Lower number = Higher position)
+            const severityWeights = { "Extreme": 1, "Severe": 2, "Moderate": 3, "Minor": 4, "Unknown": 5 };
+
             try {
-                // The NWS API endpoint for active alerts in Texas
                 const response = await fetch('https://api.weather.gov/alerts/active?area=TX');
+                if (!response.ok) throw new Error('NWS API Unreachable');
                 const data = await response.json();
                 
-                if (data.features.length === 0) {
-                    container.innerHTML = "<p>No active alerts for Texas right now.</p>";
-                    return;
-                }
-
-                container.innerHTML = ''; // Clear loading text
-                data.features.forEach(alert => {
-                    const props = alert.properties;
-                    const div = document.createElement('div');
-                    div.className = `alert-card severity-${props.severity}`;
-                    div.innerHTML = `
-                        <h3>${props.event}</h3>
-                        <p><strong>Areas:</strong> ${props.areaDesc}</p>
-                        <p>${props.headline}</p>
-                        <small>Expires: ${new Date(props.expires).toLocaleString()}</small>
-                    `;
-                    container.appendChild(div);
+                // 1. Sort by Severity first
+                allAlerts = data.features.sort((a, b) => {
+                    return (severityWeights[a.properties.severity] || 99) - (severityWeights[b.properties.severity] || 99);
                 });
+
+                // 2. Update Timestamps
+                const now = new Date();
+                asOfDisplay.innerText = `As of: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+                status.innerText = "System Live. Next auto-check in 5 minutes.";
+
+                renderAlerts();
+
             } catch (error) {
-                container.innerHTML = "<p>Error loading weather data. Please try again later.</p>";
+                status.innerHTML = `<span style="color:red;">⚠️ Error: ${error.message}. Retrying...</span>`;
             }
         }
-        getTexasAlerts();
+
+        function renderAlerts() {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '';
+
+            // 3. Apply Filter
+            const filtered = allAlerts.filter(item => {
+                if (currentFilter === 'All') return true;
+                if (currentFilter === 'Extreme') return item.properties.severity === 'Extreme';
+                if (currentFilter === 'Severe') return item.properties.severity === 'Extreme' || item.properties.severity === 'Severe';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 50px; background:white; border-radius:8px;"><h2>☀️ No alerts in this category</h2></div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const p = item.properties;
+                const card = document.createElement('div');
+                card.className = `alert-card severity-${p.severity}`;
+                card.innerHTML = `
+                    <span class="alert-title">${p.event}</span>
+                    <span class="alert-headline">${p.headline || 'Active Statement'}</span>
+                    <div class="alert-areas"><strong>Areas:</strong> ${p.areaDesc}</div>
+                    <div class="alert-meta">
+                        <strong>Expires:</strong> ${new Date(p.expires).toLocaleString()} | 
+                        <strong>Severity:</strong> ${p.severity}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function setFilter(type, btn) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAlerts();
+        }
+
+        // Run and set interval
+        updateDashboard();
+        setInterval(updateDashboard, 300000);
     </script>
 </body>
 </html>
