@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TX Radar Wall</title>
+    <style>
+        :root { --bg: #0b0e14; --panel: #1c2128; --accent: #58a6ff; --text: #adbac7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        
+        h1 { text-align: center; font-size: 1.4rem; letter-spacing: 3px; margin-bottom: 20px; color: white; }
+
+        /* Strict Two-Column Grid */
+        .radar-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            max-width: 1600px; 
+            margin: 0 auto;
+        }
+
+        .panel { 
+            background: var(--panel); 
+            border: 1px solid #444c56; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            background: #22272e;
+            border-bottom: 1px solid #444c56;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header span { color: var(--accent); font-family: monospace; }
+
+        /* Each Radar Frame */
+        .radar-box { width: 100%; height: 550px; background: #000; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* Responsive: Drops to 1 column on tablets/phones */
+        @media (max-width: 1000px) { .radar-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <h1>TEXAS RADAR WALL</h1>
+
+    <div class="radar-grid" id="wall">
+        </div>
+
+    <script>
+        // Data for all Texas NWS Radar Sites
+        const sites = [
+            { id: "kewx", name: "Austin / San Antonio" },
+            { id: "kgrk", name: "Central Texas (Ft. Cavazos)" },
+            { id: "kfws", name: "Dallas / Ft. Worth" },
+            { id: "khgx", name: "Houston / Galveston" },
+            { id: "kama", name: "Amarillo (Panhandle)" },
+            { id: "klbb", name: "Lubbock" },
+            { id: "kmaf", name: "Midland / Odessa" },
+            { id: "ksjt", name: "San Angelo" },
+            { id: "kepz", name: "El Paso" },
+            { id: "kdyx", name: "Abilene" },
+            { id: "kdfx", name: "Del Rio" },
+            { id: "kcrp", name: "Corpus Christi" },
+            { id: "kbro", name: "Brownsville" },
+            { id: "klch", name: "Lake Charles (East TX Border)" },
+            { id: "kshv", name: "Shreveport (East TX Border)" },
+            { id: "kfdr", name: "Altus (North TX Border)" }
+        ];
+
+        const wall = document.getElementById('wall');
+
+        sites.forEach(site => {
+            const div = document.createElement('div');
+            div.className = 'panel';
+            div.innerHTML = `
+                <div class="header">
+                    ${site.name} <span>${site.id.toUpperCase()}</span>
+                </div>
+                <div class="radar-box">
+                    <iframe src="https://radar.weather.gov/station/${site.id}/standard" loading="lazy"></iframe>
+                </div>
+            `;
+            wall.appendChild(div);
+        });
+    </script>
+</body>
+</html>
+
+Satellite
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TX Satellite - GOES-19 Update</title>
+    <style>
+        :root { --bg: #0b0e14; --panel: #1c2128; --accent: #58a6ff; --text: #adbac7; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .sat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1600px; margin: 0 auto; }
+        .panel { background: var(--panel); border: 1px solid #444c56; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .header { padding: 12px 15px; font-size: 0.9rem; font-weight: bold; background: #22272e; border-bottom: 1px solid #444c56; display: flex; justify-content: space-between; }
+        .header span { color: var(--accent); }
+        .img-container { width: 100%; height: 500px; background: #000; overflow: hidden; }
+        .sat-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        @media (max-width: 1000px) { .sat-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align:center; letter-spacing:2px;">TEXAS SATELLITE COMMAND (GOES-19)</h1>
+
+    <div class="sat-grid">
+        <div class="panel">
+            <div class="header">True Color / Night IR <span>GEOCOLOR</span></div>
+            <div class="img-container">
+                <img class="sat-img" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" id="vis">
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="header">Clean Infrared (Cloud Tops) <span>BAND 13</span></div>
+            <div class="img-container">
+                <img class="sat-img" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/latest.jpg" id="ir">
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="header">Water Vapor (Atmospheric Moisture) <span>BAND 08</span></div>
+            <div class="img-container">
+                <img class="sat-img" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/latest.jpg" id="wv">
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="header">Lightning Flash Density <span>GLM EXTENT3</span></div>
+            <div class="img-container">
+                <img class="sat-img" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/latest.jpg" id="lightning">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshImages() {
+            const timestamp = new Date().getTime();
+            ['vis', 'ir', 'wv', 'lightning'].forEach(id => {
+                const img = document.getElementById(id);
+                const baseUrl = img.src.split('?')[0];
+                img.src = baseUrl + '?t=' + timestamp;
+            });
+        }
+        setInterval(refreshImages, 300000); // Refresh every 5 mins
+    </script>
+</body>
+</html>
