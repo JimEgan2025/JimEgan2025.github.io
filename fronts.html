@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GTU Command Center v7</title>
+    <title>GTU Command Center v12</title>
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -38,19 +38,25 @@
             display: flex; justify-content: center; gap: 30px;
             background: #2d3436; padding: 20px; border-radius: 8px;
             max-width: 900px; margin: 20px auto; border: 1px solid #444;
-            flex-wrap: wrap;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            flex-wrap: wrap; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         .stat-item { text-align: center; min-width: 100px; }
         .stat-val { font-size: 1.8rem; font-weight: bold; color: #fff; display: block; margin-bottom: 5px; }
         .stat-label { font-size: 0.8rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Source badge */
-        .source-badge {
-            background: #0984e3; color: white; padding: 2px 6px; 
-            border-radius: 4px; font-size: 0.7rem; vertical-align: middle;
-            margin-left: 5px; font-weight: bold;
+        .source-badge { background: #0984e3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; vertical-align: middle; margin-left: 5px; font-weight: bold; }
+
+        /* NAV */
+        nav {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
         }
+        .tab-btn {
+            background: #2d3436; border: 1px solid #444; color: #aaa;
+            padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+        }
+        .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* GRID LAYOUT */
         .container { 
@@ -80,6 +86,12 @@
 
         canvas { width: 100% !important; height: 350px !important; }
 
+        /* IMAGE MAPS (CPC) */
+        img.cpc-map {
+            width: 100%; height: auto; display: block;
+            border-radius: 4px; border: 1px solid #333;
+        }
+
         /* RADAR */
         #map { height: 500px; width: 100%; background: #111; border-radius: 8px; }
         .radar-controls { margin-top: 10px; text-align: center; }
@@ -87,7 +99,7 @@
             background: var(--accent); color: #000; border: none;
             padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;
         }
-
+        
         /* THRESHOLD GUIDE */
         .reference-box { background: #1a1a1a; border: 1px solid #444; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 15px; }
@@ -97,14 +109,13 @@
         .danger { color: var(--danger); font-weight: bold; }
         .moderate { color: var(--warning); }
         .ref-title { text-align: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; font-weight: bold; color: #ccc;}
-
     </style>
 </head>
 <body>
 
 <header>
     <h1>GTU Command Center</h1>
-    <div style="color:#888;">Live Observations • HRRR Model • Radar</div>
+    <div style="color:#888;">Live Ops • Short Term (HRRR) • Long Range (NOAA)</div>
 </header>
 
 <!-- LIVE STATUS BAR -->
@@ -127,194 +138,191 @@
     </div>
 </div>
 
-<div class="container">
+<nav>
+    <button class="tab-btn active" onclick="switchTab('tab-short')">Short Range (48h)</button>
+    <button class="tab-btn" onclick="switchTab('tab-seasonal')">Long Range (NOAA CPC)</button>
+</nav>
 
-    <!-- 1. WIND SHIFT -->
-    <div class="card">
-        <div class="card-header">
-            <span>1. Wind & Fronts</span>
-            <span class="meta">Yellow Arrows = Direction</span>
+<!-- TAB 1: SHORT RANGE -->
+<div id="tab-short" class="tab-content active">
+    <div class="container">
+        <!-- 1. WIND -->
+        <div class="card">
+            <div class="card-header"><span>1. Wind & Fronts</span><span class="meta">Yellow Arrows = Direction</span></div>
+            <canvas id="windChart"></canvas>
         </div>
-        <canvas id="windChart"></canvas>
-    </div>
-
-    <!-- 2. THERMODYNAMICS -->
-    <div class="card">
-        <div class="card-header">
-            <span>2. Comfort & Moisture</span>
-            <span class="meta">Orange Dotted = Heat Index</span>
+        <!-- 2. THERMODYNAMICS -->
+        <div class="card">
+            <div class="card-header"><span>2. Comfort & Moisture</span><span class="meta">Orange = Heat Index / Chill</span></div>
+            <canvas id="tempChart"></canvas>
         </div>
-        <canvas id="tempChart"></canvas>
-    </div>
-
-    <!-- 3. PRECIPITATION -->
-    <div class="card">
-        <div class="card-header">
-            <span>3. Precip Timing</span>
-            <span class="meta">Chance (%) vs Amount (in)</span>
+        <!-- 3. PRECIP -->
+        <div class="card">
+            <div class="card-header"><span>3. Precip Timing</span><span class="meta">Chance % vs Amount</span></div>
+            <canvas id="precipChart"></canvas>
         </div>
-        <canvas id="precipChart"></canvas>
-    </div>
-
-    <!-- 4. SEVERE PARAMETERS -->
-    <div class="card">
-        <div class="card-header">
-            <span>4. Severe Potential</span>
-            <span class="meta">CAPE / CIN / Lifted Index</span>
+        <!-- 4. SEVERE -->
+        <div class="card">
+            <div class="card-header"><span>4. Severe Potential</span><span class="meta">CAPE / CIN / LI</span></div>
+            <canvas id="capeChart"></canvas>
         </div>
-        <canvas id="capeChart"></canvas>
-    </div>
-
-    <!-- 5. PRESSURE -->
-    <div class="card full-width">
-        <div class="card-header">
-            <span>5. Surface Pressure Trend (Forecast)</span>
-            <span class="meta">Falling = Storm Approaching | Rising = Front Passed</span>
+        <!-- 5. PRESSURE -->
+        <div class="card full-width">
+            <div class="card-header"><span>5. Pressure Trend</span><span class="meta">Storm Approach Tracker</span></div>
+            <canvas id="pressChart" style="height: 250px !important;"></canvas>
         </div>
-        <canvas id="pressChart" style="height: 250px !important;"></canvas>
-    </div>
-
-    <!-- 6. RADAR -->
-    <div class="card full-width">
-        <div class="card-header">
-            <span>6. Live Radar</span>
-            <span class="meta" id="radar-time">--:--</span>
+        <!-- 6. RADAR -->
+        <div class="card full-width">
+            <div class="card-header"><span>6. Live Radar</span><span class="meta" id="radar-time">--:--</span></div>
+            <div id="map"></div>
+            <div class="radar-controls"><button class="btn" onclick="togglePlay()">Play / Pause Loop</button></div>
         </div>
-        <div id="map"></div>
-        <div class="radar-controls">
-            <button class="btn" onclick="togglePlay()">Play / Pause Loop</button>
-        </div>
-    </div>
-    
-    <!-- 7. THRESHOLD GUIDE -->
-    <div class="card full-width reference-box">
-        <div class="ref-title">SEVERE WEATHER THRESHOLD GUIDE</div>
-        <div class="ref-grid">
-            <div class="ref-item" style="border-left-color: var(--danger);">
-                <h4>CAPE (Instability)</h4>
-                <div class="ref-row"><span>1000 - 2500</span> <span class="moderate">Moderate</span></div>
-                <div class="ref-row"><span>> 2500</span> <span class="danger">High / Extreme</span></div>
-                <small style="color:#888;">"Storm Fuel" available.</small>
-            </div>
-            <div class="ref-item" style="border-left-color: var(--warning);">
-                <h4>Lifted Index (LI)</h4>
-                <div class="ref-row"><span>-4 to -7</span> <span class="moderate">Very Unstable</span></div>
-                <div class="ref-row"><span>< -7</span> <span class="danger">Extreme</span></div>
-                <small style="color:#888;">Lower number = Air rises faster.</small>
-            </div>
-            <div class="ref-item" style="border-left-color: var(--accent);">
-                <h4>Dewpoint (Moisture)</h4>
-                <div class="ref-row"><span>> 65°F</span> <span class="moderate">Humid</span></div>
-                <div class="ref-row"><span>> 70°F</span> <span class="danger">Oppressive</span></div>
-                <small style="color:#888;">Required fuel for storms.</small>
+        
+        <!-- THRESHOLDS -->
+        <div class="card full-width reference-box">
+            <div class="ref-title">SEVERE WEATHER THRESHOLDS</div>
+            <div class="ref-grid">
+                <div class="ref-item" style="border-left-color: var(--danger);">
+                    <h4>CAPE (Energy)</h4>
+                    <div class="ref-row"><span>> 1000</span> <span class="moderate">Moderate</span></div>
+                    <div class="ref-row"><span>> 2500</span> <span class="danger">Severe</span></div>
+                </div>
+                <div class="ref-item" style="border-left-color: var(--warning);">
+                    <h4>Lifted Index (LI)</h4>
+                    <div class="ref-row"><span>-3 to -5</span> <span class="moderate">Unstable</span></div>
+                    <div class="ref-row"><span>< -6</span> <span class="danger">Very Unstable</span></div>
+                </div>
+                <div class="ref-item" style="border-left-color: var(--accent);">
+                    <h4>Dewpoint</h4>
+                    <div class="ref-row"><span>> 65°F</span> <span class="moderate">Humid</span></div>
+                    <div class="ref-row"><span>> 70°F</span> <span class="danger">Tornado Fuel</span></div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
+<!-- TAB 2: LONG RANGE (NOAA CPC) -->
+<div id="tab-seasonal" class="tab-content">
+    <div class="container">
+        <!-- 1. TEMP OUTLOOK -->
+        <div class="card full-width">
+            <div class="card-header">
+                <span>3-Month Temperature Outlook</span>
+                <span class="meta">Official NOAA Climate Prediction Center</span>
+            </div>
+            <!-- Standard NOAA Filename - Updates Automatically -->
+            <img id="cpc-temp" class="cpc-map" src="" alt="Loading CPC Map..." referrerpolicy="no-referrer">
+            <div style="text-align:center; padding:10px; color:#aaa;">Red = Warmer than normal | Blue = Cooler than normal</div>
+        </div>
+
+        <!-- 2. PRECIP OUTLOOK -->
+        <div class="card full-width">
+            <div class="card-header">
+                <span>3-Month Precipitation Outlook</span>
+                <span class="meta">Official NOAA Climate Prediction Center</span>
+            </div>
+            <img id="cpc-precip" class="cpc-map" src="" alt="Loading CPC Map..." referrerpolicy="no-referrer">
+            <div style="text-align:center; padding:10px; color:#aaa;">Green = Wetter than normal | Brown = Drier than normal</div>
+        </div>
+        
+        <div style="grid-column: 1/-1; text-align:center; margin-top:20px;">
+            <a href="https://www.cpc.ncep.noaa.gov/" target="_blank" style="color:var(--accent);">Visit NOAA CPC Website for more details</a>
+        </div>
+    </div>
 </div>
 
 <script>
     const LAT = 30.678; const LON = -97.679;
     
-    // Model Data API (Charts)
-    const MODEL_API = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,dewpoint_2m,precipitation,precipitation_probability,surface_pressure,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cape,lifted_index,convective_inhibition&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=2`;
+    // API 1: Short Range (HRRR)
+    const HRRR_API = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,dewpoint_2m,precipitation,precipitation_probability,surface_pressure,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cape,lifted_index,convective_inhibition&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=2`;
+    
+    // API 2: NOAA CPC Images (Static, Reliable)
+    const CPC_TEMP = "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/lead01/off01_temp.gif";
+    const CPC_PRCP = "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/lead01/off01_prcp.gif";
 
+    // --- INIT ---
     async function init() {
-        fetchLiveConditions(); 
-        const res = await fetch(MODEL_API);
-        const data = await res.json();
-        renderCharts(data.hourly);
-        initRadar();
+        fetchLiveConditions();
+        
+        // Load CPC Images (Cache busting)
+        const cb = new Date().getTime();
+        document.getElementById('cpc-temp').src = `${CPC_TEMP}?v=${cb}`;
+        document.getElementById('cpc-precip').src = `${CPC_PRCP}?v=${cb}`;
+
+        try {
+            const resHRRR = await fetch(HRRR_API);
+            const dataHRRR = await resHRRR.json();
+            renderShortRange(dataHRRR.hourly);
+            initRadar();
+        } catch(e) { console.error("HRRR Error", e); }
     }
 
-    // --- ROBUST LIVE DATA FETCH ---
+    // --- TAB LOGIC ---
+    function switchTab(id) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        
+        if(id === 'tab-short') document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        if(id === 'tab-seasonal') document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    }
+
+    // --- LIVE DATA ---
     async function fetchLiveConditions() {
         let stationId = 'KGTU';
         let data = await getStationData(stationId);
-
-        // Check if data is valid (Pressure and Wind must not be null)
-        if (!data || data.properties.barometricPressure.value === null || data.properties.windSpeed.value === null) {
-            console.warn("KGTU Missing Data. Switching to KAUS.");
-            stationId = 'KAUS'; // Switch to Austin Bergstrom
-            data = await getStationData(stationId);
+        if (!data || data.properties.barometricPressure.value === null) {
+            stationId = 'KAUS'; data = await getStationData(stationId);
         }
-
         updateHeader(data, stationId);
     }
-
-    async function getStationData(station) {
-        try {
-            const res = await fetch(`https://api.weather.gov/stations/${station}/observations/latest`);
-            if (!res.ok) return null;
-            return await res.json();
-        } catch(e) { return null; }
-    }
-
-    function updateHeader(data, stationName) {
-        if(!data) {
-            document.getElementById('live-temp').innerText = "Offline";
-            return;
-        }
-        
+    async function getStationData(s) { try{ return await (await fetch(`https://api.weather.gov/stations/${s}/observations/latest`)).json(); }catch(e){return null;}}
+    function updateHeader(data, station) {
+        if(!data) return;
         const p = data.properties;
+        const temp = p.temperature.value ? (p.temperature.value * 9/5) + 32 : null;
+        const dew = p.dewpoint.value ? (p.dewpoint.value * 9/5) + 32 : null;
+        const press = p.barometricPressure.value ? (p.barometricPressure.value / 100).toFixed(0) : "--";
+        const speed = p.windSpeed.value ? (p.windSpeed.value * 0.62).toFixed(0) : 0;
+        const dir = p.windDirection.value !== null ? valToDir(p.windDirection.value) : "";
         
-        // Conversions
-        const tempF = p.temperature.value ? (p.temperature.value * 9/5) + 32 : null;
-        const dewF = p.dewpoint.value ? (p.dewpoint.value * 9/5) + 32 : null;
-        
-        // Handle Null Pressure (If KAUS also fails, show --)
-        const pressMb = p.barometricPressure.value ? (p.barometricPressure.value / 100).toFixed(0) : "--";
-        
-        // Handle Null Wind
-        let windStr = "--";
-        if (p.windSpeed.value !== null) {
-            const speed = (p.windSpeed.value * 0.621371).toFixed(0);
-            const dir = p.windDirection.value !== null ? valToDir(p.windDirection.value) : "";
-            windStr = `${speed}mph ${dir}`;
-        }
-
-        // Update UI
-        document.getElementById('live-temp').innerText = tempF ? Math.round(tempF) + "°F" : "--";
-        document.getElementById('live-dew').innerText = dewF ? Math.round(dewF) + "°F" : "--";
-        document.getElementById('live-pressure').innerText = pressMb + " mb";
-        document.getElementById('live-wind').innerText = windStr;
-        
-        // Update Badge
-        document.getElementById('source-badge').innerText = stationName;
-        document.getElementById('source-badge').style.background = (stationName === 'KGTU') ? '#0984e3' : '#e67e22'; // Blue for GTU, Orange for Backup
+        document.getElementById('live-temp').innerText = temp ? Math.round(temp)+"°F" : "--";
+        document.getElementById('live-dew').innerText = dew ? Math.round(dew)+"°F" : "--";
+        document.getElementById('live-pressure').innerText = press+" mb";
+        document.getElementById('live-wind').innerText = `${speed}mph ${dir}`;
+        document.getElementById('source-badge').innerText = station;
     }
 
-    function renderCharts(hourly) {
+    // --- SHORT RANGE RENDERING ---
+    function renderShortRange(hourly) {
         const labels = hourly.time.map(t => new Date(t).toLocaleTimeString([], {weekday:'short', hour:'numeric'}));
-        
-        const common = {
-            responsive: true, maintainAspectRatio: false,
+        const commonOpts = { 
+            responsive: true, maintainAspectRatio: false, 
             interaction: { mode: 'index', intersect: false },
-            scales: { 
-                x: { ticks:{color:'#aaa', font:{size:14}}, grid:{color:'#333'} }, 
-                y: { ticks:{color:'#aaa', font:{size:14}}, grid:{color:'#333'} } 
-            },
-            plugins: { legend: { labels:{color:'#fff', font:{size:14}} } }
+            scales: { x: { ticks:{color:'#aaa'}, grid:{color:'#333'} }, y: { ticks:{color:'#aaa'}, grid:{color:'#333'} } },
+            plugins: { legend: { labels: { color: '#fff' } } }
         };
 
-        // 1. WIND
+        // WIND CHART (Visual Arrows + Tooltip Text)
         new Chart(document.getElementById('windChart'), {
-            data: { 
-                labels, 
-                datasets: [
-                    { 
-                        type:'line', label:'Gusts (mph)', data:hourly.wind_gusts_10m, 
-                        borderColor:'#f1c40f', borderWidth:3, 
-                        pointStyle: 'triangle', pointRadius: 8, pointBackgroundColor: '#f1c40f',
-                        rotation: (ctx) => hourly.wind_direction_10m[ctx.dataIndex] + 180
-                    }
-                ]
-            },
-            options: {
-                ...common,
+            data: { labels, datasets: [
+                { 
+                    type:'line', label:'Gusts (mph)', data:hourly.wind_gusts_10m, 
+                    borderColor:'#f1c40f', borderWidth:2, 
+                    pointStyle:'triangle', pointRadius:6, pointBackgroundColor:'#f1c40f',
+                    // VISUAL ROTATION
+                    rotation: (ctx) => hourly.wind_direction_10m[ctx.dataIndex] + 180 
+                }
+            ]}, 
+            options: { 
+                ...commonOpts,
                 plugins: {
+                    ...commonOpts.plugins,
                     tooltip: {
                         callbacks: {
+                            // TOOLTIP TEXT
                             afterLabel: function(context) {
                                 const dir = hourly.wind_direction_10m[context.dataIndex];
                                 return `Direction: ${dir}° (${valToDir(dir)})`;
@@ -325,81 +333,39 @@
             }
         });
 
-        // 2. TEMP
         new Chart(document.getElementById('tempChart'), {
-            type: 'line',
-            data: { labels, datasets: [
-                { label:'Temp', data:hourly.temperature_2m, borderColor:'#ff6b6b', borderWidth:4, pointRadius:0, tension:0.4 },
-                { label:'Feels Like', data:hourly.apparent_temperature, borderColor:'#ffa502', borderWidth:2, borderDash:[5,5], pointRadius:0, tension:0.4 },
-                { label:'Dewpoint', data:hourly.dewpoint_2m, borderColor:'#4ecdc4', borderWidth:3, pointRadius:0 }
-            ]}, options: common
+            type: 'line', data: { labels, datasets: [
+                { label:'Temp', data:hourly.temperature_2m, borderColor:'#ff6b6b', borderWidth:3, pointRadius:0 },
+                { label:'Feels Like', data:hourly.apparent_temperature, borderColor:'#ffa502', borderWidth:2, borderDash:[5,5], pointRadius:0 },
+                { label:'Dewpoint', data:hourly.dewpoint_2m, borderColor:'#4ecdc4', borderWidth:2, pointRadius:0 }
+            ]}, options: commonOpts
         });
 
-        // 3. PRECIPITATION
         new Chart(document.getElementById('precipChart'), {
-            data: {
-                labels,
-                datasets: [
-                    { type: 'line', label: 'Rain Chance (%)', data: hourly.precipitation_probability, borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)', fill: true, pointRadius: 0, tension: 0.4, yAxisID: 'y' },
-                    { type: 'bar', label: 'Amount (in)', data: hourly.precipitation, backgroundColor: '#a29bfe', yAxisID: 'y1' }
-                ]
-            },
-            options: {
-                ...common,
-                scales: {
-                    x: common.scales.x,
-                    y: { position:'left', min:0, max:100, title:{display:true, text:'Probability %', color:'#aaa'}},
-                    y1: { position:'right', min:0, suggestedMax:0.2, grid:{drawOnChartArea:false}, title:{display:true, text:'Inches', color:'#aaa'}}
-                }
-            }
-        });
-
-        // 4. SEVERE PARAMS
-        const cinData = hourly.convective_inhibition.map(v => -Math.abs(v)); 
-        const capeData = hourly.cape || new Array(labels.length).fill(0);
-
-        new Chart(document.getElementById('capeChart'), {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'CAPE (Storm Energy)', data: capeData,
-                        backgroundColor: c=> {
-                            const v = c.raw;
-                            if(v > 2500) return '#ff5252'; 
-                            if(v > 1000) return '#ff9f43';
-                            return '#1dd1a1';
-                        }, yAxisID: 'y'
-                    },
-                    { label: 'CIN (The Cap)', data: cinData, backgroundColor: '#0984e3', yAxisID: 'y' },
-                    {
-                        type: 'line', label: 'Lifted Index', data: hourly.lifted_index,
-                        borderColor: '#ffffff', borderWidth: 2, pointRadius: 0, tension: 0.4, yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                ...common,
-                scales: {
-                    ...common.scales,
-                    y: { position:'left', title:{display:true, text:'Energy (J/kg)', color:'#aaa'}, stacked: true },
-                    y1: { position:'right', reverse:true, title:{display:true, text:'LI (<0 Unstable)', color:'#aaa'}, grid:{drawOnChartArea:false} }
-                }
-            }
-        });
-
-        // 5. PRESSURE
-        new Chart(document.getElementById('pressChart'), {
-            type: 'line',
             data: { labels, datasets: [
-                { label:'Pressure (hPa)', data:hourly.surface_pressure, borderColor:'#a29bfe', borderWidth:4, pointRadius:0, tension:0.4 }
-            ]}, options: common
+                { type:'line', label:'Chance %', data:hourly.precipitation_probability, borderColor:'#3498db', fill:true, backgroundColor:'rgba(52,152,219,0.2)', pointRadius:0, yAxisID:'y' },
+                { type:'bar', label:'Inches', data:hourly.precipitation, backgroundColor:'#a29bfe', yAxisID:'y1' }
+            ]}, options: {...commonOpts, scales:{...commonOpts.scales, y1:{position:'right', grid:{drawOnChartArea:false}}}}
+        });
+
+        const cinData = hourly.convective_inhibition.map(v => -Math.abs(v));
+        new Chart(document.getElementById('capeChart'), {
+            type: 'bar', data: { labels, datasets: [
+                { label:'CAPE', data:hourly.cape, backgroundColor: c=>c.raw>1000?'#ff5252':'#2ecc71', yAxisID:'y' },
+                { label:'CIN', data:cinData, backgroundColor:'#0984e3', yAxisID:'y' },
+                { type:'line', label:'LI', data:hourly.lifted_index, borderColor:'#fff', yAxisID:'y1' }
+            ]}, options: {...commonOpts, scales:{...commonOpts.scales, y:{stacked:true}, y1:{position:'right', reverse:true, grid:{drawOnChartArea:false}}}}
+        });
+
+        new Chart(document.getElementById('pressChart'), {
+            type: 'line', data: { labels, datasets: [
+                { label:'Pressure', data:hourly.surface_pressure, borderColor:'#a29bfe', borderWidth:3, pointRadius:0 }
+            ]}, options: commonOpts
         });
     }
 
     function valToDir(d) {
-        if(d===undefined || d===null) return "";
+        if(d==null) return "";
         const dirs = ['N','NE','E','SE','S','SW','W','NW'];
         return dirs[Math.round(d / 45) % 8];
     }
@@ -410,10 +376,9 @@
         map = L.map('map').setView([LAT, LON], 7);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '©OpenStreetMap' }).addTo(map);
         L.marker([LAT, LON]).addTo(map).bindPopup("GTU").openPopup();
-        fetch("https://api.rainviewer.com/public/weather-maps.json")
-            .then(res => res.json()).then(data => {
-                if(data.radar && data.radar.past) { timestamps = data.radar.past; loadRadarLayers(); }
-            });
+        fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json()).then(d=>{
+            if(d.radar && d.radar.past) { timestamps = data.radar.past; loadRadarLayers(); }
+        });
     }
     function loadRadarLayers() {
         timestamps.forEach(ts => {
