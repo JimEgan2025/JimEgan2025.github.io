@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round Rock Resident Safety Monitor</title>
+    <style>
+        :root {
+            --freeze-blue: #00d2ff; --heat-red: #ff5252; --rain-green: #00ff88; --chill-teal: #00f2fe;
+            --warning-amber: #fbbf24; --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc; --alert-glow: rgba(255, 82, 82, 0.5);
+        }
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top, #1e293b 0%, var(--bg-dark) 100%); padding: 30px; color: var(--text-main); min-height: 100vh; }
+        .container { max-width: 1100px; margin: auto; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.03); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); }
+        .header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+        .card { padding: 24px; border-radius: 16px; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); position: relative; min-height: 220px; }
+        .card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; }
+        .freeze::before { background: var(--freeze-blue); } .heat::before { background: var(--heat-red); } .rain::before { background: var(--rain-green); } .chill::before { background: var(--chill-teal); }
+        .event-box { background: rgba(0, 0, 0, 0.2); border-left: 3px solid #475569; padding: 12px; margin-top: 12px; border-radius: 8px; font-size: 0.85em; color: #cbd5e1; }
+        .tag { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 20px; margin-left: 8px; background: rgba(255, 82, 82, 0.2); color: #ff8a8a; }
+        .summary-box { margin-top: 40px; padding: 30px; background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        .summary-title { font-weight: 800; color: var(--warning-amber); display: block; margin-bottom: 20px; font-size: 1.2em; text-transform: uppercase; letter-spacing: 1px; }
+        .narrative-item { margin-bottom: 25px; padding-left: 20px; border-left: 4px solid #475569; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 style="margin:0; font-weight: 200; letter-spacing: 4px; color: #fff;">SAFETY <span style="font-weight: 800; color: var(--chill-teal);">SEQUENCE</span></h1>
+        <p style="margin:5px 0; color:#94a3b8; font-size: 0.9em; letter-spacing: 1px;">ROUND ROCK, TX | INTEGRATED RISK MONITOR</p>
+    </div>
+    <div class="grid">
+        <div id="chill-card" class="card chill"><span class="label">Human Health (Chill ≤32°)</span><div id="chill-list"></div></div>
+        <div class="card freeze"><span class="label">Property Risk (Freeze ≤32°)</span><div id="freeze-list"></div></div>
+        <div id="rain-card" class="card rain"><span class="label">Meaningful Rain (≥20%)</span><div id="rain-list"></div></div>
+        <div class="card heat"><span class="label">Heat Index (Feels ≥95°)</span><div id="heat-list"></div></div>
+    </div>
+    <div class="summary-box">
+        <span class="summary-title">⚠️ STRATEGIC NARRATIVE BUILDER</span>
+        <div id="safety-comparison">Analyzing conditions...</div>
+    </div>
+</div>
+
+<script>
+async function updateDashboard() {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=30.5871&longitude=-97.641&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16";
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const hourly = data.hourly;
+        const now = new Date();
+        const nowIdx = hourly.time.findIndex(t => new Date(t) >= now);
+        const fullDateOpts = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+        const shortTimeOpts = { hour: 'numeric', minute: '2-digit' };
+
+        function findWindows(dataArr, threshold, direction) {
+            let windows = [], active = false, current = null;
+            for (let i = nowIdx; i < dataArr.length; i++) {
+                const isBreached = direction === 'below' ? dataArr[i] <= threshold : dataArr[i] >= threshold;
+                if (isBreached && !active) {
+                    active = true;
+                    current = { start: i, startTime: new Date(hourly.time[i]), maxProb: 0, totalAmount: 0 };
+                } 
+                if (active) {
+                    current.maxProb = Math.max(current.maxProb, hourly.precipitation_probability[i]);
+                    current.totalAmount += hourly.precipitation[i];
+                }
+                if (!isBreached && active) {
+                    active = false;
+                    current.end = i; current.endTime = new Date(hourly.time[i]); current.duration = i - current.start;
+                    windows.push(current);
+                }
+            }
+            return windows;
+        }
+
+        const chillWins = findWindows(hourly.apparent_temperature, 32, 'below');
+        const freezeWins = findWindows(hourly.temperature_2m, 32, 'below');
+        const rainWins = findWindows(hourly.precipitation_probability, 20, 'above');
+        const heatWins = findWindows(hourly.apparent_temperature, 95, 'above');
+
+        let narrativeHTML = "";
+
+        // 1. HEADLINE: CHILL & FREEZE NARRATIVE
+        if (chillWins.length > 0) {
+            chillWins.slice(0, 1).forEach(cW => {
+                const nestedFreezes = freezeWins.filter(fW => fW.startTime >= cW.startTime && (cW.endTime ? fW.endTime <= cW.endTime : true));
+                let phrase = `Wind chills reach 32°F or below starting at <b>${cW.startTime.toLocaleString('en-US', shortTimeOpts)}</b> on <b>${cW.startTime.toLocaleString('en-US', {month:'short', day:'numeric'})}</b>`;
+                
+                if (nestedFreezes.length > 0) {
+                    const fW = nestedFreezes[0];
+                    phrase += `. Within that period, we expect the <b>actual freezing period</b> to begin at <b>${fW.startTime.toLocaleString('en-US', shortTimeOpts)}</b> lasting for approximately <b>${fW.duration} hours</b>.`;
+                } else {
+                    phrase += `. However, we <b>do not</b> anticipate actual air temperatures reaching 32°F or below during this window.`;
+                }
+                narrativeHTML += `<div class="narrative-item" style="border-left-color: var(--chill-teal)"><p style="margin: 0; font-size: 1.15em; color: #cbd5e1;">"${phrase}"</p></div>`;
+            });
+        }
+
+        // 2. RAIN NARRATIVE (RESTORED DURATION: X HOURS)
+        if (rainWins.length > 0) {
+            rainWins.slice(0, 1).forEach(rW => {
+                const isFreezingOverlap = (chillWins.some(cW => (rW.startTime <= (cW.endTime || new Date(8640000000000000)) && rW.endTime >= cW.startTime)));
+                
+                narrativeHTML += `
+                    <div class="narrative-item" style="border-left-color: ${isFreezingOverlap ? 'var(--warning-amber)' : 'var(--rain-green)'}">
+                        <p style="margin: 0; font-size: 1.1em; color: #cbd5e1;">
+                            "We expect rain between <b>${rW.startTime.toLocaleString('en-US', fullDateOpts)}</b> and <b>${rW.endTime ? rW.endTime.toLocaleString('en-US', shortTimeOpts) : 'End'}</b> (approx. <b>${rW.duration} hours</b>), 
+                            and we <b>${isFreezingOverlap ? 'DO anticipate' : 'DO NOT anticipate'}</b> freezing weather during that period."
+                        </p>
+                    </div>`;
+            });
+        }
+
+        // 3. HEAT NARRATIVE
+        if (heatWins.length > 0) {
+            heatWins.slice(0, 1).forEach(hW => {
+                narrativeHTML += `<div class="narrative-item" style="border-left-color: var(--heat-red)"><p style="margin: 0; font-size: 1.1em; color: #cbd5e1;">"Heat indices reach 95°F+ starting at <b>${hW.startTime.toLocaleString('en-US', fullDateOpts)}</b> for a duration of <b>${hW.duration} hours</b>."</p></div>`;
+            });
+        }
+
+        document.getElementById('safety-comparison').innerHTML = narrativeHTML || "No significant risks detected.";
+
+        function render(id, windows, isRain = false) {
+            const container = document.getElementById(id);
+            if (windows.length === 0) { container.innerHTML = "<p>CLEAR</p>"; return; }
+            container.innerHTML = windows.slice(0, 3).map(w => `
+                <div class="event-box">
+                    <span style="color:#fff">${w.startTime.toLocaleString('en-US', {month:'short', day:'numeric', hour:'numeric'})}</span>
+                    <span class="tag" style="${isRain ? 'background:rgba(0,255,136,0.1); color:var(--rain-green);' : ''}">${isRain ? w.totalAmount.toFixed(2) + '"' : w.duration + 'h'}</span>
+                    ${isRain ? `<div style="font-size:0.7em; opacity:0.6; margin-top:4px;">Period: ${w.duration}h</div>` : ''}
+                </div>
+            `).join('');
+        }
+        render('chill-list', chillWins); render('freeze-list', freezeWins); render('rain-list', rainWins, true); render('heat-list', heatWins);
+    } catch (err) { console.error(err); }
+}
+updateDashboard();
+</script>
+</body>
+</html>
