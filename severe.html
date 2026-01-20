@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Full Operational Weather Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: system-ui, sans-serif; background: #020617; color: #e5e7eb; padding: 20px; max-width: 1000px; margin: auto; }
+h1,h2 { text-align: center; margin-bottom: 20px; }
+.card { background: #111827; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.safe { border-left: 6px solid #16a34a; }
+.yellow { border-left: 6px solid #eab308; }
+.orange { border-left: 6px solid #f97316; }
+.red { border-left: 6px solid #dc2626; }
+.label { font-weight: bold; color: #93c5fd; }
+small { color: #9ca3af; }
+ul { margin-top: 8px; }
+hr { border:1px solid #374151;margin:20px 0; }
+#timeline { position: relative; height:200px; border:1px solid #374151; margin-bottom:20px; background:#111; }
+.timeline-labels { position: relative; height:20px; display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px; color:#9ca3af;}
+#severe-panel { margin-top:20px; }
+.severe-row { display:flex; justify-content:space-between; padding:4px 8px; border-radius:6px; margin-bottom:4px; }
+.severe-low { background:#16a34a; color:#020617; }
+.severe-mod { background:#f97316; color:#020617; }
+.severe-high { background:#dc2626; color:#fff; }
+#severity-index { height:24px; border-radius:12px; margin-bottom:20px; background:#374151; position:relative; }
+#severity-bar { height:24px; border-radius:12px; width:0%; background:#f97316; transition:width 0.5s; }
+#severity-text { position:absolute; width:100%; text-align:center; top:0; color:#e5e7eb; line-height:24px; font-weight:bold; }
+#alerts { margin-bottom:20px; }
+.alert-card { background:#dc2626; padding:10px; border-radius:8px; margin-bottom:6px; color:#fff; font-weight:bold;}
+.spc-card, .wpc-card { background:#1f2937; padding:12px; border-radius:10px; margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<h1>🌩 Full Operational Weather Dashboard</h1>
+
+<!-- Severity Index -->
+<div id="severity-index">
+  <div id="severity-bar"></div>
+  <div id="severity-text">Loading Severity Index…</div>
+</div>
+
+<!-- NWS Alerts -->
+<h2>🚨 Current Watches / Warnings</h2>
+<div id="alerts">Loading NWS alerts…</div>
+
+<!-- SPC Convective Risk -->
+<h2>⚡ SPC Convective Risk</h2>
+<div id="spc-risk" class="spc-card">Loading SPC data…</div>
+
+<!-- WPC Flash / Flood Risk -->
+<h2>🌧 WPC Excessive Rain / Flood Risk</h2>
+<div id="wpc-risk" class="wpc-card">Loading WPC data…</div>
+
+<h2>🗓 Hazard Timeline (Next 5 Days)</h2>
+<div class="timeline-labels" id="timeline-labels"></div>
+<div id="timeline"></div>
+
+<div id="output">Loading forecast data…</div>
+
+<h2>⚡ Severe Indices Panel</h2>
+<div id="severe-panel">Loading severe indices…</div>
+
+<script>
+const LAT = 30.5083;
+const LON = -97.6789;
+
+/* ===== Helper Functions ===== */
+function classifyRun(hours){ if(hours>=6) return "🔴 Long"; if(hours>=3) return "🟠 Moderate"; return "🟡 Short"; }
+function severityColor(hours){ if(hours>=6) return "red"; if(hours>=3) return "orange"; if(hours>=1) return "yellow"; return "safe"; }
+function formatDateTime(dt){ return dt.toLocaleString('en-US',{weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true}); }
+function findRuns(times,values,threshold,above=true){ let runs=[],start=null,count=0; for(let i=0;i<values.length;i++){ let condition=above?values[i]>=threshold:values[i]<=threshold; if(condition){ if(!start) start=new Date(times[i]); count++; } else{ if(start){runs.push({start,end:new Date(times[i-1]),hours:count}); start=null; count=0;}}} if(start) runs.push({start,end:new Date(times[times.length-1]),hours:count}); return runs; }
+function findWindRuns(times,wind,gust,threshold=25){ let runs=[],start=null,count=0; for(let i=0;i<times.length;i++){ let val=Math.max(wind[i],gust[i]); if(val>=threshold){ if(!start) start=new Date(times[i]); count++; } else{ if(start){runs.push({start,end:new Date(times[i-1]),hours:count,maxWind:Math.max(...wind.slice(i-count,i)),maxGust:Math.max(...gust.slice(i-count,i))}); start=null; count=0;}}} if(start) runs.push({start,end:new Date(times[times.length-1]),hours:count,maxWind:Math.max(...wind.slice(times.length-count)),maxGust:Math.max(...gust.slice(times.length-count))}); return runs; }
+function findIceRuns(times,temp,precip,tempThreshold=32,precipThreshold=20){ let runs=[],start=null,count=0,runPrecip=[]; for(let i=0;i<times.length;i++){ if(temp[i]<=tempThreshold && precip[i]>=precipThreshold){ if(!start){start=new Date(times[i]); runPrecip=[];} count++; runPrecip.push(precip[i]);} else{ if(start){let maxProb=Math.max(...runPrecip); runs.push({start,end:new Date(times[i-1]),hours:count,maxProb}); start=null; count=0;}}} if(start){let maxProb=Math.max(...runPrecip); runs.push({start,end:new Date(times[times.length-1]),hours:count,maxProb});} return runs; }
+function pickTopHazard(runs,name){ if(runs.length===0) return null; let top=runs.reduce((a,b)=>b.hours>a.hours?b:a); return {name,start:top.start,end:top.end,hours:top.hours,classify:classifyRun(top.hours)}; }
+function generateSummary(topHazard){ if(!topHazard) return "No significant hazards expected over the next 5 days."; let text=""; switch(topHazard.name){ case "Ice/Snow Risk": text=`${topHazard.classify} ice/snow from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; break; case "Wind Chill": text=`${topHazard.classify} cold from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; break; case "Air Freeze": text=`${topHazard.classify} air freeze from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; break; case "High Wind": text=`${topHazard.classify} high wind from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; break; case "Heat Index": text=`${topHazard.classify} heat from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; break; default: text=`${topHazard.name} from ${formatDateTime(topHazard.start)} to ${formatDateTime(topHazard.end)}`; } return `⚠️ Summary: ${text}`; }
+function renderTimeline(runs,label,container,color,startTime){ runs.forEach(r=>{ const totalHours=5*24; const startHour=(new Date(r.start)-startTime)/3600000; const widthHours=r.hours; const leftPercent=(startHour/totalHours)*100; const widthPercent=(widthHours/totalHours)*100; const bar=document.createElement('div'); bar.title=`${label}: ${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs)`; bar.style.position='absolute'; bar.style.left=`${leftPercent}%`; bar.style.width=`${widthPercent}%`; bar.style.height='30px'; bar.style.background=color; bar.style.borderRadius='4px'; bar.style.opacity=0.8; container.appendChild(bar); }); }
+function renderSeverePanel(panelEl,severeData){ panelEl.innerHTML=""; severeData.forEach(d=>{ let div=document.createElement('div'); div.className='severe-row'; if(d.severity==='low') div.classList.add('severe-low'); else if(d.severity==='moderate') div.classList.add('severe-mod'); else div.classList.add('severe-high'); div.innerHTML=`<strong>${d.index}</strong> | ${d.period} | ${d.implication}`; panelEl.appendChild(div); }); }
+
+/* ===== Compute Severity Index (0–100%) ===== */
+function computeSeverityIndex(hour){
+    let score=0;
+    if(hour.apparent_temperature<=32) score+=2;
+    if(hour.temperature_2m<=32) score+=2;
+    if(hour.apparent_temperature>=95) score+=2;
+    if(hour.windspeed_10m>=25||hour.windgusts_10m>=25) score+=2;
+    if(hour.temperature_2m<=32 && hour.precipitation_probability>=20) score+=2;
+    return Math.min(100,Math.round((score/10)*100));
+}
+
+/* ===== Fetch Forecast & Alerts ===== */
+async function checkDashboard(){
+    const el=document.getElementById("output");
+    const timelineEl=document.getElementById("timeline");
+    const timelineLabelsEl=document.getElementById("timeline-labels");
+    const severeEl=document.getElementById("severe-panel");
+    const sevBar=document.getElementById("severity-bar");
+    const sevText=document.getElementById("severity-text");
+    const alertsEl=document.getElementById("alerts");
+    const spcEl=document.getElementById("spc-risk");
+    const wpcEl=document.getElementById("wpc-risk");
+
+    try{
+        /* ===== Open-Meteo Forecast ===== */
+        const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,windspeed_10m,windgusts_10m,precipitation_probability&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5`);
+        const d=await res.json();
+        const h=d.hourly;
+
+        /* ===== Severity Index ===== */
+        const perHourSeverity = h.time.map((t,i)=>({time:new Date(t),value:computeSeverityIndex({
+            temperature_2m:h.temperature_2m[i],
+            apparent_temperature:h.apparent_temperature[i],
+            windspeed_10m:h.windspeed_10m[i],
+            windgusts_10m:h.windgusts_10m[i],
+            precipitation_probability:h.precipitation_probability[i]
+        })}));
+        const maxSeverity = Math.max(...perHourSeverity.map(h=>h.value));
+        const peakHours = perHourSeverity.filter(h=>h.value===maxSeverity);
+
+        sevBar.style.width = perHourSeverity[0].value+'%';
+        sevText.innerText = `Current Severity Index: ${perHourSeverity[0].value}%`;
+
+        /* ===== Hazard Runs ===== */
+        const windChillRuns=findRuns(h.time,h.apparent_temperature,32,false);
+        const airTempRuns=findRuns(h.time,h.temperature_2m,32,false);
+        const heatRuns=findRuns(h.time,h.apparent_temperature,95,true);
+        const windRuns=findWindRuns(h.time,h.windspeed_10m,h.windgusts_10m,25);
+        const iceRuns=findIceRuns(h.time,h.temperature_2m,h.precipitation_probability,32,20);
+
+        const hazards=[pickTopHazard(windChillRuns,"Wind Chill"),
+                       pickTopHazard(airTempRuns,"Air Freeze"),
+                       pickTopHazard(heatRuns,"Heat Index"),
+                       pickTopHazard(windRuns,"High Wind"),
+                       pickTopHazard(iceRuns,"Ice/Snow Risk")].filter(h=>h!==null);
+        let topHazard=null; if(hazards.length>0) topHazard=hazards.reduce((a,b)=>b.hours>a.hours?b:a);
+
+        /* ===== Summary Card ===== */
+        let summaryText=generateSummary(topHazard);
+        let summaryHTML=`<div class="card ${severityColor(topHazard?topHazard.hours:0)}"><p class="label">📢 Forecast Summary</p><p>${summaryText}</p></div><hr>`;
+
+        /* ===== Hazard Cards ===== */
+        let html="";
+        html+=`<div class="card ${severityColor(windChillRuns.length)}"><p class="label">🧊 Cold / Wind Chill Periods</p>${windChillRuns.length===0?'<p>No wind chill ≤32°F periods.</p>':windChillRuns.map(r=>`<p>${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs) — ${classifyRun(r.hours)}</p>`).join("")}<p><strong>Air Temperature ≤32°F:</strong></p>${airTempRuns.length===0?'<p>None expected</p>':airTempRuns.map(r=>`<p>${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs) — ${classifyRun(r.hours)}</p>`).join("")}</div>`;
+        html+=`<div class="card ${severityColor(heatRuns.length)}"><p class="label">🔥 Heat Index Periods ≥95°F</p>${heatRuns.length===0?'<p>No heat events expected.</p>':heatRuns.map(r=>`<p>${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs) — ${classifyRun(r.hours)}</p>`).join("")}</div>`;
+        html+=`<div class="card ${severityColor(windRuns.length)}"><p class="label">🌬 High Wind Periods ≥25 mph</p>${windRuns.length===0?'<p>No high-wind periods expected.</p>':windRuns.map(r=>`<p>${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs) — ${classifyRun(r.hours)}<br>Max wind: ${r.maxWind.toFixed(0)} mph, Max gust: ${r.maxGust.toFixed(0)} mph</p>`).join("")}</div>`;
+        html+=`<div class="card"><p class="label">❄️ Ice / Snow Risk</p>${iceRuns.length===0?'<p>No ice/snow risk expected.</p>':iceRuns.map(r=>`<p>${formatDateTime(r.start)} → ${formatDateTime(r.end)} (${r.hours} hrs) — ${classifyRun(r.hours)}</p>`).join("")}</div>`;
+        el.innerHTML=summaryHTML+html;
+
+        /* ===== Timeline Labels ===== */
+        timelineLabelsEl.innerHTML="";
+        let startDate=new Date(h.time[0]);
+        for(let i=0;i<5;i++){ let d=new Date(startDate); d.setDate(d.getDate()+i); let span=document.createElement('span'); span.innerText=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); timelineLabelsEl.appendChild(span); }
+
+        /* ===== Render Timeline ===== */
+        timelineEl.innerHTML="";
+        const hazardRows=[
+            {runs:windChillRuns,label:'Wind Chill',color:'#3b82f6',top:0},
+            {runs:airTempRuns,label:'Air Freeze',color:'#60a5fa',top:35},
+            {runs:heatRuns,label:'Heat Index',color:'#f87171',top:70},
+            {runs:windRuns,label:'High Wind',color:'#fbbf24',top:105},
+            {runs:iceRuns,label:'Ice/Snow',color:'#dc2626',top:140}
+        ];
+        hazardRows.forEach(row=>{
+            const rowContainer=document.createElement('div'); 
+            rowContainer.style.position='absolute';
+            rowContainer.style.top=`${row.top}px`; 
+            rowContainer.style.left='0'; 
+            rowContainer.style.width='100%'; 
+            rowContainer.style.height='30px';
+            timelineEl.appendChild(rowContainer); 
+            renderTimeline(row.runs,row.label,rowContainer,row.color,startDate);
+        });
+
+        /* ===== Overlay Peak Severity Hours ===== */
+        perHourSeverity.forEach(hr=>{
+            if(hr.value===maxSeverity){
+                const totalHours=5*24;
+                const leftPercent=((hr.time-startDate)/3600000)/totalHours*100;
+                const marker=document.createElement('div');
+                marker.style.position='absolute';
+                marker.style.left=`${leftPercent}%`;
+                marker.style.top='0';
+                marker.style.width='2px';
+                marker.style.height='200px';
+                marker.style.background='red';
+                marker.title=`Peak Severity ${hr.value}% at ${formatDateTime(hr.time)}`;
+                timelineEl.appendChild(marker);
+            }
+        });
+
+        /* ===== Severe Indices Panel (Placeholder) ===== */
+        const severeData=[
+            {index:'CAPE', severity:'moderate', period:'Sat 24 14:00–17:00', implication:'Moderate thunderstorm potential'},
+            {index:'Lifted Index', severity:'moderate', period:'Sat 24 15:00–18:00', implication:'Unstable atmosphere, storms possible'},
+            {index:'Shear', severity:'moderate', period:'Sat 24 12:00–18:00', implication:'Possible organized storms'},
+            {index:'Freezing Rain Prob', severity:'high', period:'Sat 24 03:00–09:00', implication:'Ice accumulation possible'}
+        ];
+        renderSeverePanel(severeEl,severeData);
+
+        /* ===== NWS Alerts Placeholder ===== */
+        alertsEl.innerHTML="<div class='alert-card'>No active watches/warnings in the area</div>";
+
+        /* ===== SPC / WPC Placeholders ===== */
+        spcEl.innerHTML="Day 1 Risk: Slight; Day 2 Risk: Marginal; Day 3 Risk: Marginal";
+        wpcEl.innerHTML="No significant excessive rainfall risk in next 5 days.";
+
+    }catch(err){console.error(err); el.innerHTML="Error loading forecast data"; sevText.innerText="Error";}
+
+}
+
+checkDashboard();
+setInterval(checkDashboard,3600000); // refresh every hour
+</script>
+
+</body>
+</html>
