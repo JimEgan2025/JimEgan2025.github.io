@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIZCAYA HAZARD & BOUNDARY TRACKER v1.8-H</title>
+    <style>
+        :root { 
+            --bg: #020617; --card: #0f172a; --text: #f8fafc; 
+            --hazard-red: #ef4444; --hazard-blue: #3b82f6; 
+            --accent: #93c5fd; --border: #1e293b; 
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .header { text-align: center; border-bottom: 2px solid var(--hazard-red); padding-bottom: 15px; margin-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 1.8rem; letter-spacing: 2px; color: #fff; text-transform: uppercase; }
+        #last-refresh { font-size: 0.9rem; color: var(--accent); margin-top: 5px; font-weight: bold; text-transform: uppercase; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); }
+        .full-width { grid-column: span 2; }
+        
+        h2 { margin-top: 0; color: var(--accent); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 15px;}
+        
+        .stat-large { font-size: 4.5rem; font-weight: bold; margin: 10px 0; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .alert-active { background: #450a0a; border-left: 8px solid var(--hazard-red); padding: 15px; border-radius: 6px; margin-bottom: 10px; }
+        
+        #tracker-box { background: #000; padding: 12px; border-radius: 8px; font-family: 'Courier New', monospace; border: 1px solid #1e293b; }
+        .city-row { display: flex; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid #111; font-size: 0.95rem; }
+        .city-row:last-child { border-bottom: none; }
+        
+        .front-line { border: 2px dashed var(--hazard-red); color: var(--hazard-red); text-align: center; font-weight: bold; padding: 8px; margin: 5px 0; background: rgba(239, 68, 68, 0.15); animation: blink 2s infinite; font-size: 0.8rem; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+
+        .status-container { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .hub-status { display: flex; justify-content: space-between; padding: 10px; border-radius: 8px; background: #1e293b; border-left: 5px solid #334155; font-size: 0.85rem; }
+        .status-crit { border-left-color: var(--hazard-red); background: #450a0a; color: #fff; font-weight: bold; }
+        .status-ok { border-left-color: #22c55e; color: #22c55e; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Vizcaya Hazard & Boundary Tracker</h1>
+    <div id="last-refresh">Syncing National Weather Service Data...</div>
+</div>
+
+<div class="grid">
+    <!-- TIER 1: RISK INDEX -->
+    <div class="card">
+        <h2>Property Risk Index (Peak Window)</h2>
+        <div id="local-dsi" class="stat-large">--%</div>
+        <p id="local-narrative" style="font-weight: bold; font-size: 1.1rem; color: var(--hazard-red);">Awaiting Sync...</p>
+        <p id="risk-breakdown" style="font-size: 0.85rem; color: #94a3b8; margin-top: 10px; line-height: 1.4;"></p>
+    </div>
+
+    <!-- TIER 2: BOUNDARY TRACKER -->
+    <div class="card">
+        <h2>Texas Arctic Boundary Tracker (32°F)</h2>
+        <div id="tracker-box"></div>
+        <p id="front-velocity" style="font-size: 0.8rem; margin-top: 15px; color: var(--accent); font-weight: bold; text-align: center; text-transform: uppercase;"></p>
+    </div>
+
+    <!-- TIER 3: TEXAS ALERTS -->
+    <div class="card full-width">
+        <h2>Active Critical Texas Alerts (NWS)</h2>
+        <div id="alerts-area">Scanning 13 Texas NWS Offices...</div>
+    </div>
+
+    <!-- TIER 4: AVIATION HUBS -->
+    <div class="card">
+        <h2>Aviation Hub Status</h2>
+        <div id="hub-area" class="status-container"></div>
+    </div>
+    
+    <!-- TIER 4: INTERSTATE CORRIDORS -->
+    <div class="card">
+        <h2>Texas Interstate Corridor Safety</h2>
+        <div id="corridor-area" class="status-container"></div>
+    </div>
+</div>
+
+<script>
+    const LAT = 30.508; const LON = -97.679;
+    const CITIES = [
+        { name: "Amarillo (I-40)", lat: 35.22, lon: -101.83 },
+        { name: "Lubbock (I-27)", lat: 33.57, lon: -101.85 },
+        { name: "El Paso (I-10W Entry)", lat: 31.76, lon: -106.48 },
+        { name: "Abilene (I-20)", lat: 32.44, lon: -99.73 },
+        { name: "DFW Airport", lat: 32.89, lon: -97.04 },
+        { name: "Waco (I-35 Central)", lat: 31.54, lon: -97.14 },
+        { name: "Vizcaya/Round Rock", lat: 30.50, lon: -97.67 },
+        { name: "Houston (I-45/I-10E)", lat: 29.76, lon: -95.36 },
+        { name: "Beaumont (I-10 East)", lat: 30.08, lon: -94.12 },
+        { name: "San Antonio (I-35/I-10)", lat: 29.42, lon: -98.49 },
+        { name: "Laredo (I-35 South)", lat: 27.53, lon: -99.48 }
+    ];
+
+    async function updateTracker() {
+        try {
+            const forecastRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,precipitation_probability&temperature_unit=fahrenheit&forecast_days=3`);
+            const fData = await forecastRes.json();
+            
+            const cityQuery = CITIES.map(c => `latitude=${c.lat}&longitude=${c.lon}`).join('&');
+            const currentRes = await fetch(`https://api.open-meteo.com/v1/forecast?${cityQuery}&current=temperature_2m&temperature_unit=fahrenheit`);
+            const cData = await currentRes.json();
+
+            const alertRes = await fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`, { headers: { 'User-Agent': 'VizcayaTracker/1.8' }});
+            const aData = await alertRes.json();
+
+            processData(fData, cData, aData);
+        } catch (e) { 
+            document.getElementById('last-refresh').innerText = "Sync Error - Retrying...";
+        }
+    }
+
+    function processData(forecast, currentCities, alerts) {
+        // --- DSI ---
+        let dsi = 0; let reasons = [];
+        const h = forecast.hourly;
+        const minTemp = Math.min(...h.temperature_2m);
+        const freezeHours = h.temperature_2m.filter(t => t <= 32).length;
+        const hasIce = h.time.some((t, i) => h.temperature_2m[i] <= 32 && h.precipitation_probability[i] >= 20);
+        const activeAlerts = alerts.features || [];
+
+        if (minTemp <= 32) { dsi += 25; reasons.push("FREEZE"); }
+        if (freezeHours > 24) { dsi += 25; reasons.push("PROLONGED"); }
+        if (hasIce) { dsi += 30; reasons.push("ICING"); }
+        if (activeAlerts.length > 0) { dsi += 20; reasons.push("ALERTS"); }
+
+        const finalDSI = Math.min(100, dsi);
+        document.getElementById('local-dsi').innerText = `${finalDSI}%`;
+        document.getElementById('local-dsi').style.color = finalDSI > 75 ? 'var(--hazard-red)' : 'var(--accent)';
+        document.getElementById('local-narrative').innerText = finalDSI > 75 ? "CRITICAL INFRASTRUCTURE ALERT" : "TRANSITION MONITORING";
+        document.getElementById('risk-breakdown').innerHTML = `<strong>REASONS:</strong> ${reasons.join(" + ")}<br><strong>LOW:</strong> ${minTemp.toFixed(1)}°F | <strong>DURATION:</strong> ${freezeHours} HRS`;
+
+        // --- TRACKER ---
+        const trackerBox = document.getElementById('tracker-box');
+        trackerBox.innerHTML = "";
+        let frontFound = false;
+        currentCities.forEach((city, i) => {
+            const t = city.current.temperature_2m;
+            if (!frontFound && i > 0 && t > 32 && currentCities[i-1].current.temperature_2m <= 32) {
+                trackerBox.innerHTML += `<div class="front-line">--- ARCTIC FRONTLINE ---</div>`;
+                frontFound = true;
+            }
+            trackerBox.innerHTML += `<div class="city-row"><span>${CITIES[i].name}</span><span style="color:${t<=32?'#60a5fa':'#fff'}">${t.toFixed(1)}°F</span></div>`;
+        });
+        document.getElementById('front-velocity').innerText = frontFound ? "BOUNDARY POSITION: INTER-CITY" : "BOUNDARY STATUS: NORTH OF TEXAS / COASTAL";
+
+        // --- ALERTS ---
+        document.getElementById('alerts-area').innerHTML = activeAlerts.length > 0 ? 
+            activeAlerts.map(a => `<div class="alert-card"><strong>${a.properties.event}</strong><br><small>${a.properties.headline}</small></div>`).join("") : 
+            "<div class='hub-status status-ok'>No active life-safety warnings for Vizcaya.</div>";
+
+        // --- HUBS & CORRIDORS ---
+        const getT = (idx) => currentCities[idx].current.temperature_2m;
+        const isF = (idx) => getT(idx) <= 32;
+
+        document.getElementById('hub-area').innerHTML = `
+            <div class="hub-status ${isF(4) ? 'status-crit' : 'status-ok'}"><span>DFW HUB</span><span>${isF(4) ? 'ICE RISK' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(6) ? 'status-crit' : 'status-ok'}"><span>AUS HUB</span><span>${isF(6) ? 'ICE RISK' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(7) ? 'status-crit' : 'status-ok'}"><span>IAH HUB</span><span>${isF(7) ? 'ICE RISK' : 'OPEN'}</span></div>
+        `;
+        
+        document.getElementById('corridor-area').innerHTML = `
+            <div class="hub-status ${isF(4) ? 'status-crit' : 'status-ok'}"><span>I-35 NORTH (DFW)</span><span>${isF(4) ? 'ICE' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(10) ? 'status-crit' : 'status-ok'}"><span>I-35 SOUTH (LRD)</span><span>${isF(10) ? 'FREEZE' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(2) ? 'status-crit' : 'status-ok'}"><span>I-10 WEST (ELP)</span><span>${isF(2) ? 'FREEZE' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(8) ? 'status-crit' : 'status-ok'}"><span>I-10 EAST (BMT)</span><span>${isF(8) ? 'FREEZE' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(3) ? 'status-crit' : 'status-ok'}"><span>I-20 WEST (ABI)</span><span>${isF(3) ? 'ICE' : 'OPEN'}</span></div>
+            <div class="hub-status ${isF(7) ? 'status-crit' : 'status-ok'}"><span>I-45 SOUTH (HOU)</span><span>${isF(7) ? 'FREEZE' : 'OPEN'}</span></div>
+        `;
+        
+        document.getElementById('last-refresh').innerText = `LIVE DATA SYNC: ${new Date().toLocaleTimeString()} CST`;
+    }
+
+    updateTracker();
+    setInterval(updateTracker, 300000);
+</script>
+</body>
+</html>
