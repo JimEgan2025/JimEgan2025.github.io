@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vizcaya Risk Engine - Full Operational Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: system-ui, sans-serif; background: #020617; color: #e5e7eb; padding: 20px; max-width: 1000px; margin: auto; }
+h1,h2 { text-align: center; margin-bottom: 20px; }
+.card { background: #111827; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(0,0,0,.5); border-left: 6px solid #1e293b; }
+.safe { border-left-color: #16a34a; }
+.yellow { border-left-color: #eab308; }
+.orange { border-left-color: #f97316; }
+.red { border-left-color: #dc2626; }
+.label { font-weight: bold; color: #93c5fd; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; margin-bottom: 8px; display: block;}
+hr { border:1px solid #374151;margin:20px 0; }
+
+/* Timeline UI */
+.timeline-labels { display:flex; justify-content:space-between; margin-bottom:10px; font-size:12px; color:#9ca3af; padding-left: 80px;}
+#timeline-container { position: relative; border:1px solid #374151; background:#0a0f1d; border-radius: 8px; padding: 10px 0; }
+.timeline-row { position: relative; height: 40px; border-bottom: 1px solid #1e293b; display: flex; align-items: center; }
+.timeline-row:last-child { border-bottom: none; }
+.row-label { width: 80px; font-size: 11px; font-weight: bold; color: #93c5fd; text-align: right; padding-right: 10px; flex-shrink: 0; }
+.row-visual { position: relative; flex-grow: 1; height: 100%; }
+
+.severe-row { display:flex; justify-content:space-between; padding:12px; border-radius:8px; margin-bottom:6px; font-size: 0.9rem; }
+.severe-low { background: rgba(22, 163, 74, 0.2); border: 1px solid #16a34a; }
+.severe-mod { background: rgba(249, 115, 22, 0.2); border: 1px solid #f97316; }
+.severe-high { background: rgba(220, 38, 38, 0.2); border: 1px solid #dc2626; }
+
+#severity-index { height:35px; border-radius:8px; margin-bottom:25px; background:#1e293b; position:relative; overflow:hidden; border: 1px solid #334155;}
+#severity-bar { height:100%; width:0%; background:#16a34a; transition:width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+#severity-text { position:absolute; width:100%; text-align:center; top:0; color:#fff; line-height:35px; font-weight:bold; text-shadow: 1px 1px 3px #000; font-size: 1.1rem; }
+#alerts { margin-bottom:20px; }
+.alert-card { background:#7f1d1d; padding:15px; border-radius:8px; margin-bottom:10px; color:#fff; border-left: 8px solid #ef4444; box-shadow: 0 4px 12px rgba(0,0,0,0.3);}
+#ai-telemetry { display: none; }
+</style>
+</head>
+<body>
+
+<h1>🌩 VIZCAYA RISK ENGINE</h1>
+
+<div id="severity-index">
+  <div id="severity-bar"></div>
+  <div id="severity-text">Synchronizing Global Models...</div>
+</div>
+
+<div id="alerts">Scanning National Weather Service...</div>
+
+<h2>🗓 Operational Hazard Timeline</h2>
+<div class="timeline-labels" id="timeline-labels"></div>
+<div id="timeline-container">
+    <div class="timeline-row"><div class="row-label">FREEZE</div><div class="row-visual" id="row-freeze"></div></div>
+    <div class="timeline-row"><div class="row-label">ICE/SLEET</div><div class="row-visual" id="row-ice"></div></div>
+    <div class="timeline-row"><div class="row-label">HIGH WIND</div><div class="row-visual" id="row-wind"></div></div>
+</div>
+
+<div id="output">Generating Impact Analysis...</div>
+
+<h2>⚡ Severe Indices Analysis</h2>
+<div id="severe-panel">Processing...</div>
+
+<div id="ai-telemetry"></div>
+
+<script>
+const LAT = 30.5083;
+const LON = -97.6789;
+
+function findRuns(times,values,threshold,above=true){ 
+    let runs=[],start=null,count=0; 
+    for(let i=0;i<values.length;i++){ 
+        let condition=above?values[i]>=threshold:values[i]<=threshold; 
+        if(condition){ if(!start) start=new Date(times[i]); count++; } 
+        else { if(start){runs.push({start,end:new Date(times[i-1]),hours:count}); start=null; count=0;}}
+    } 
+    if(start) runs.push({start,end:new Date(times[times.length-1]),hours:count}); 
+    return runs; 
+}
+
+function findIceRuns(times,temp,precip,tempThreshold=32,precipThreshold=20){ 
+    let runs=[],start=null,count=0; 
+    for(let i=0;i<times.length;i++){ 
+        if(temp[i]<=tempThreshold && (precip[i]||0)>=precipThreshold){ 
+            if(!start) start=new Date(times[i]); count++; 
+        } else { if(start){runs.push({start,end:new Date(times[i-1]),hours:count}); start=null; count=0;}}
+    } 
+    if(start) runs.push({start,end:new Date(times[times.length-1]),hours:count}); 
+    return runs; 
+}
+
+function renderRow(runs, containerId, color, startTime) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    runs.forEach(r => {
+        const totalHours = 120;
+        const startHour = (new Date(r.start) - startTime) / 3600000;
+        const leftPercent = (startHour / totalHours) * 100;
+        const widthPercent = (r.hours / totalHours) * 100;
+        const bar = document.createElement('div');
+        bar.style.cssText = `position:absolute; left:${leftPercent}%; width:${widthPercent}%; height:24px; background:${color}; border-radius:4px; opacity:0.8; top:8px; border:1px solid rgba(255,255,255,0.2);`;
+        bar.title = `${r.hours} hours starting ${r.start.getHours()}:00`;
+        container.appendChild(bar);
+    });
+}
+
+async function checkDashboard(){
+    const outEl=document.getElementById("output");
+    const timelineLabelsEl=document.getElementById("timeline-labels");
+    const severeEl=document.getElementById("severe-panel");
+    const sevBar=document.getElementById("severity-bar");
+    const sevText=document.getElementById("severity-text");
+    const alertsEl=document.getElementById("alerts");
+
+    try {
+        let activeAlerts = [];
+        try {
+            const alertRes = await fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`, { headers: { 'User-Agent': 'VizcayaDashboard/1.0' }});
+            const alertData = await alertRes.json();
+            activeAlerts = alertData.features || [];
+        } catch (e) { console.warn("NWS API Fail"); }
+
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation_probability,snowfall&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&timezone=auto`);
+        const d = await res.json();
+        const h = d.hourly;
+
+        /* DSI Calculation */
+        let score = 0; let reasons = [];
+        const minTemp = Math.min(...h.temperature_2m);
+        const freezeHours = h.temperature_2m.filter(t => t <= 32).length;
+        const maxWind = Math.max(...h.wind_gusts_10m);
+        const hasIce = findIceRuns(h.time, h.temperature_2m, h.precipitation_probability, 32, 20).length > 0;
+
+        if (minTemp <= 32) { score += 20; reasons.push("Freeze"); if (freezeHours > 24) { score += 20; reasons.push("Prolonged Duration"); } }
+        if (hasIce) { score += 30; reasons.push("Icing/Sleet"); }
+        if (maxWind >= 35) { score += 10; reasons.push("High Wind"); }
+        if (activeAlerts.length > 0) score += 20;
+
+        const finalScore = Math.min(100, score);
+        sevBar.style.width = finalScore + '%';
+        sevText.innerText = `DAILY SEVERITY INDEX: ${finalScore}%`;
+        sevBar.style.background = finalScore > 75 ? "#dc2626" : (finalScore > 40 ? "#f97316" : "#16a34a");
+
+        if (activeAlerts.length > 0) {
+            alertsEl.innerHTML = activeAlerts.map(a => `<div class="alert-card">⚠️ ${a.properties.event}<br><small>${a.properties.headline}</small></div>`).join("");
+        } else {
+            alertsEl.innerHTML = "<div class='card safe'>✅ No active NWS watches or warnings.</div>";
+        }
+
+        /* Timeline Rendering */
+        const startDate = new Date(h.time[0]);
+        timelineLabelsEl.innerHTML = "";
+        for(let i=0; i<5; i++){
+            let dt = new Date(startDate); dt.setDate(dt.getDate()+i);
+            timelineLabelsEl.innerHTML += `<span>${dt.toLocaleDateString('en-US',{weekday:'short',day:'numeric'})}</span>`;
+        }
+        
+        renderRow(findRuns(h.time, h.temperature_2m, 32, false), "row-freeze", "#3b82f6", startDate);
+        renderRow(findIceRuns(h.time, h.temperature_2m, h.precipitation_probability, 32, 20), "row-ice", "#dc2626", startDate);
+        renderRow(findRuns(h.time, h.wind_gusts_10m, 25, true), "row-wind", "#fbbf24", startDate);
+
+        /* Description Cards */
+        outEl.innerHTML = `
+            <div class="card ${finalScore > 70 ? 'red' : 'orange'}">
+                <span class="label">Primary Infrastructure Threat</span>
+                <p><strong>Impact Narrative:</strong> This is a high-magnitude event. The primary threat is a <strong>${freezeHours}-hour window</strong> below freezing with a projected low of <strong>${minTemp}°F</strong>. The overlap of moisture and sub-freezing air creates a <strong>${hasIce ? 'Significant' : 'Low'}</strong> risk for icing on elevated surfaces.</p>
+            </div>
+            <div class="card">
+                <span class="label">Thermal Dynamics</span>
+                <p>The column is currently loading moisture ahead of an Arctic surge. The most dangerous window for property damage occurs when temperatures drop below 20°F (progged min: ${minTemp}°F) for a duration exceeding 12 hours.</p>
+            </div>
+        `;
+
+        /* Indices Panel */
+        severeEl.innerHTML = `
+            <div class="severe-row ${hasIce ? 'severe-high' : 'severe-low'}"><strong>Icing Potential</strong> <span>${hasIce ? 'HIGH' : 'LOW'}</span></div>
+            <div class="severe-row ${minTemp < 20 ? 'severe-high' : 'severe-mod'}"><strong>Plumbing Stress</strong> <span>${minTemp < 20 ? 'CRITICAL' : 'MODERATE'}</span></div>
+            <div class="severe-row ${maxWind > 35 ? 'severe-mod' : 'severe-low'}"><strong>Wind Load</strong> <span>${maxWind.toFixed(0)} MPH GUSTS</span></div>
+        `;
+
+        document.getElementById('ai-telemetry').innerText = `DSI:${finalScore}|FREEZE_HRS:${freezeHours}|MIN_TEMP:${minTemp}|ICE:${hasIce}`;
+
+    } catch (err) {
+        console.error(err);
+        sevText.innerText = "Sync Failure";
+    }
+}
+
+checkDashboard();
+setInterval(checkDashboard, 600000);
+</script>
+</body>
+</html>
