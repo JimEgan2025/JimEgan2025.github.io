@@ -12,6 +12,7 @@
         color: #fff;
         margin: 0;
         padding: 0;
+        scroll-behavior: smooth;
     }
     .header {
         background-color: #1F1F1F;
@@ -21,7 +22,7 @@
     }
     .header h1 {
         margin: 0;
-        font-size: 1.6em;
+        font-size: clamp(1.4em, 4vw, 1.8em);
         color: #00BFFF;
     }
     .live-data-header {
@@ -37,23 +38,41 @@
     }
     .quick-nav a {
         color: #00BFFF;
-        margin: 0 5px;
+        margin: 0 8px;
         text-decoration: none;
-        font-size: 0.9em;
+        font-size: 0.95em;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .quick-nav a:hover { 
+        background: rgba(0,191,255,0.1); 
+        text-decoration: none;
     }
     .card {
         background-color: #2A2A2A;
         border: 1px solid #444;
         border-radius: 8px;
         margin: 12px;
-        padding: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        font-size: 0.95em;
     }
     .card h2 {
         color: #00BFFF;
-        font-size: 1.1em;
-        margin-top: 0;
+        font-size: clamp(1.1em, 3vw, 1.3em);
+        margin: 0 0 12px 0;
         text-align: center;
+    }
+    .weather-image {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        max-width: 100%;
+        border-radius: 8px;
+        border: 1px solid #555;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        object-fit: contain;
     }
     .card img, .card iframe {
         width: 100%;
@@ -63,31 +82,74 @@
         border: 1px solid #555;
     }
     iframe { min-height: 300px; }
-
     #vizcaya-station iframe {
-        height: 500px;
+        height: clamp(350px, 50vh, 600px);
         max-height: 60vh;
     }
+    @media screen and (max-width: 768px) {
+        #vizcaya-station iframe { height: 350px; }
+        .weather-image { max-height: 35vh; }
+    }
     @media screen and (max-width: 480px) {
-        #vizcaya-station iframe {
-            height: 300px;
-        }
+        #vizcaya-station iframe { height: 300px; }
+        .weather-image { max-height: 30vh; }
+        .card { margin: 8px; padding: 12px; }
     }
-
-    /* Text Forecast Styling */
-    #forecast-container div {
+    /* Alerts list */
+    #alerts-list .alert-item {
         margin-bottom: 12px;
-        padding: 8px;
-        border-bottom: 1px solid #444;
-        color: #fff;
+        padding: 10px;
+        border-left: 4px solid #FF6B35;
+        background: #3A2A1F;
+        border-radius: 6px;
     }
-
-    .footer {
+    #alerts-list .alert-item:last-child { margin-bottom: 0; }
+    #alerts-list .alert-title {
+        font-weight: bold;
+        color: #FF9500;
+        margin-bottom: 4px;
+    }
+    #alerts-list .alert-meta {
+        font-size: 0.85em;
+        color: #ddd;
+        margin-bottom: 4px;
+    }
+    #alerts-list .alert-body {
+        font-size: 0.9em;
+        color: #ccc;
+        line-height: 1.4;
+    }
+    .loading {
+        color: #b0b0b0;
+        font-style: italic;
         text-align: center;
         padding: 12px;
-        font-size: 0.8em;
+    }
+    .error {
+        color: #FF6B6B;
+        text-align: center;
+        padding: 12px;
+    }
+    /* Text forecast styling */
+    #forecast-container div {
+        margin-bottom: 12px;
+        padding: 12px;
+        border-bottom: 1px solid #444;
+        color: #fff;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.02);
+    }
+    #forecast-container div:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .footer {
+        text-align: center;
+        padding: 16px;
+        font-size: 0.85em;
         color: #888;
         border-top: 1px solid #333;
+        margin: 20px 12px 12px 12px;
     }
 </style>
 </head>
@@ -109,59 +171,60 @@
     <a href="#radar">Radar</a>
 </nav>
 
-<!-- Local NWS Alerts -->
+<!-- Local NWS Alerts (list only) -->
 <div class="card" id="nws-alerts">
-    <h2>Local NWS Alerts</h2>
-    <script src="//rss.bloople.net/?url=https%3A%2F%2Falerts.weather.gov%2Fcap%2Fwwaatmget.php%3Fx%3DTXC491%26y%3D0&detail=100&limit=5&showtitle=false&type=js"></script>
+    <h2>Local NWS Alerts – Williamson County</h2>
+    <div id="alerts-list" class="loading">Loading alerts...</div>
 </div>
 
 <!-- Vizcaya Weather Station -->
 <div class="card" id="vizcaya-station">
     <h2>Live from Vizcaya Weather Station</h2>
-    <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen" loading="lazy"></iframe>
+    <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"
+            loading="lazy"></iframe>
 </div>
 
-<!-- 7-Day Text Forecast -->
+<!-- 7-Day Text Forecast (list only) -->
 <div class="card" id="forecast">
     <h2>7-Day Forecast</h2>
-    <div id="forecast-container"></div>
+    <div id="forecast-container" class="loading">Loading forecast...</div>
 </div>
 
 <!-- Central Texas Radar Loop -->
 <div class="card" id="radar">
     <h2>Central Texas Radar Loop</h2>
-    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif" 
+    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif"
          alt="Central Texas Radar Loop" loading="lazy">
 </div>
 
 <!-- GLM - Southern Plains -->
 <div class="card">
     <h2>GLM - Southern Plains</h2>
-    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/300x300.jpg" 
+    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/300x300.jpg"
          alt="GLM Southern Plains" loading="lazy">
 </div>
 
 <!-- Local Outlook Day 1 & 2 -->
 <div class="card">
     <h2>Local Outlook - Day 1</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" 
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png"
          alt="Outlook Day 1" loading="lazy">
 </div>
 <div class="card">
     <h2>Local Outlook - Day 2</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png" 
+    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png"
          alt="Outlook Day 2" loading="lazy">
 </div>
 
 <!-- Surface Analysis Day 1 & 2 -->
 <div class="card">
     <h2>Surface Analysis - Day 1</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif" 
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif"
          alt="Surface Analysis Day 1" loading="lazy">
 </div>
 <div class="card">
     <h2>Surface Analysis - Day 2</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif" 
+    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif"
          alt="Surface Analysis Day 2" loading="lazy">
 </div>
 
@@ -173,64 +236,173 @@
 function updateTimeAndSun() {
     const lat = 30.6476, lon = -97.6863;
     const now = new Date();
-    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Chicago' };
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', timeOptions);
-    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', dateOptions);
+    const timeOptions = {
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: true, timeZone: 'America/Chicago'
+    };
+    const dateOptions = {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    };
+    document.getElementById('currentTime').textContent =
+        now.toLocaleTimeString('en-US', timeOptions);
+    document.getElementById('currentDate').textContent =
+        now.toLocaleDateString('en-US', dateOptions);
 
     const times = SunCalc.getTimes(now, lat, lon);
-    const sunrise = times.sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const sunset = times.sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const sunrise = times.sunrise.toLocaleTimeString('en-US',
+        { hour: '2-digit', minute: '2-digit', hour12: true });
+    const sunset = times.sunset.toLocaleTimeString('en-US',
+        { hour: '2-digit', minute: '2-digit', hour12: true });
     const dayLengthMs = times.sunset - times.sunrise;
     const dayLengthHours = Math.floor(dayLengthMs / 3600000);
     const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
-    document.getElementById('sunInfo').textContent = `Sunrise: ${sunrise} | Sunset: ${sunset} | Day: ${dayLengthHours}h ${dayLengthMinutes}m`;
+    document.getElementById('sunInfo').textContent =
+        `Sunrise: ${sunrise} | Sunset: ${sunset} | Day: ${dayLengthHours}h ${dayLengthMinutes}m`;
 }
 
 function refreshImages() {
     const images = document.querySelectorAll('.weather-image');
     const timestamp = new Date().getTime();
     images.forEach(image => {
-        let baseSrc = image.src.split('?')[0];
+        const baseSrc = image.src.split('?')[0];
         image.src = baseSrc + '?t=' + timestamp;
     });
 }
 
+// Alerts: use NWS “showsigwx” HTML but strip it to a simple list
+async function fetchAlerts() {
+    const container = document.getElementById('alerts-list');
+    container.innerHTML = '<div class="loading">Loading alerts...</div>';
+
+    // This URL is the “Watches, Warnings & Advisories” page for your warn zone/county.[web:53][web:57][web:60][web:62]
+    const url = 'https://forecast.weather.gov/showsigwx.php?warnzone=TXZ173&warncounty=TXC491&firewxzone=TXZ173';
+
+    try {
+        const res = await fetch(url, { mode: 'cors' });
+        if (!res.ok) throw new Error('Alert page failed: ' + res.status);
+
+        const html = await res.text();
+
+        // Very simple parsing: look for headings and paragraphs
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        const products = doc.querySelectorAll('h3, h4'); // product titles
+        const result = [];
+        products.forEach(title => {
+            const name = title.textContent.trim();
+            if (!name) return;
+
+            // Next siblings until next heading
+            let node = title.nextElementSibling;
+            let textParts = [];
+            while (node && !/^H[34]$/.test(node.tagName)) {
+                if (node.tagName === 'PRE' || node.tagName === 'P') {
+                    textParts.push(node.textContent.trim());
+                }
+                node = node.nextElementSibling;
+            }
+            const fullText = textParts.join('\n\n');
+            if (fullText) {
+                result.push({ name, text: fullText });
+            }
+        });
+
+        container.innerHTML = '';
+
+        if (!result.length) {
+            container.innerHTML =
+                '<div class="loading">No active watches, warnings, or advisories for Williamson County.</div>';
+            return;
+        }
+
+        result.forEach(prod => {
+            const div = document.createElement('div');
+            div.className = 'alert-item';
+            const snippet = prod.text.length > 280
+                ? prod.text.substring(0, 280) + '…'
+                : prod.text;
+            div.innerHTML = `
+                <div class="alert-title">${prod.name}</div>
+                <div class="alert-body">${snippet.replace(/\n/g, '<br>')}</div>
+            `;
+            container.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = `
+            <div class="error">
+                Alerts unavailable. See
+                <a href="${url}" target="_blank" style="color:#00BFFF;">full list on weather.gov</a>.
+            </div>`;
+    }
+}
+
+// 7‑day forecast via api.weather.gov points → forecast (your original pattern).[web:1][web:2]
 async function fetchTextForecast() {
     const lat = 30.5871;
     const lon = -97.641;
+    const container = document.getElementById('forecast-container');
+
     try {
         const gridRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+        if (!gridRes.ok) throw new Error('Points request failed: ' + gridRes.status);
+
         const gridData = await gridRes.json();
-        const forecastUrl = gridData.properties.forecast;
+        const forecastUrl = gridData.properties && gridData.properties.forecast;
+        if (!forecastUrl) throw new Error('No forecast URL in NWS response');
 
         const forecastRes = await fetch(forecastUrl);
-        const forecastData = await forecastRes.json();
-        const periods = forecastData.properties.periods;
+        if (!forecastRes.ok) throw new Error('Forecast request failed: ' + forecastRes.status);
 
-        const container = document.getElementById('forecast-container');
+        const forecastData = await forecastRes.json();
+        const periods = (forecastData.properties && forecastData.properties.periods) || [];
+
         container.innerHTML = '';
 
-        periods.forEach(period => {
+        if (!periods.length) {
+            container.innerHTML =
+                '<div class="error">Forecast temporarily unavailable.</div>';
+            return;
+        }
+
+        // Show first 7 periods (you can change to 14 if you want full day/night)
+        periods.slice(0, 7).forEach(period => {
             const block = document.createElement('div');
-            block.innerHTML = `<strong>${period.name}:</strong> ${period.detailedForecast}`;
+            block.innerHTML =
+                `<strong>${period.name}:</strong> ${period.detailedForecast}`;
             container.appendChild(block);
         });
 
     } catch (error) {
-        document.getElementById('forecast-container').textContent = "Forecast data unavailable. Try weather.gov for your location.";
         console.error(error);
+        container.innerHTML = `
+            <div class="error">
+                Forecast unavailable. Try
+                <a href="https://forecast.weather.gov/MapClick.php?lat=${lat}&lon=${lon}" target="_blank" style="color:#00BFFF;">
+                    weather.gov
+                </a>.
+            </div>`;
     }
 }
 
-window.onload = function() {
+window.onload = function () {
     updateTimeAndSun();
     setInterval(updateTimeAndSun, 60000);
     refreshImages();
     setInterval(refreshImages, 300000);
+
+    fetchAlerts();
     fetchTextForecast();
+    setInterval(fetchAlerts, 15 * 60 * 1000);
+    setInterval(fetchTextForecast, 15 * 60 * 1000);
 };
 </script>
+
+</body>
+</html>
+
 
 </body>
 </html>
