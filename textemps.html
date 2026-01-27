@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texas Weather Dashboard</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; background: #f0f4f8; color: #333; }
+h1 { text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: center; }
+th { background: #1976d2; color: white; cursor: pointer; }
+tr:nth-child(even) { background: #e3f2fd; }
+tr:hover { background: #bbdefb; }
+#summary { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Texas Weather Dashboard</h1>
+<div id="summary">Loading summary...</div>
+<table id="weatherTable">
+  <thead>
+    <tr>
+      <th onclick="sortTable(0)">ICAO</th>
+      <th onclick="sortTable(1)">City</th>
+      <th onclick="sortTable(2)">Region</th>
+      <th onclick="sortTable(3)">Current °F</th>
+      <th onclick="sortTable(4)">High °F</th>
+      <th onclick="sortTable(5)">Low °F</th>
+      <th onclick="sortTable(6)">Precip in</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<script>
+// Full 190 stations array (City, ICAO, Lat, Lon, Region)
+const stations = [
+{icao:"", city:"Fort Davis",    lat:30.5882, lon:-103.8946, region:"West Texas"},
+{icao:"", city:"Matagorda",     lat:28.8880, lon:-96.0035, region:"Gulf Coast"},
+{icao:"", city:"Spearman",      lat:36.1939, lon:-101.1922, region:"Panhandle"},
+{icao:"", city:"Texline",       lat:36.5180, lon:-103.0410, region:"Panhandle"}, // approximate
+{icao:"", city:"Texoma Area",   lat:33.9550, lon:-96.9571, region:"NE Texas"},
+{id:"K07F", city:"Gladewater", lat:32.528, lon:-94.973, region:"NE Texas"},
+{id:"K11R", city:"Brenham Municipal", lat:30.218, lon:-96.373, region:"Brazos Valley"},
+{id:"K1F7", city:"Airpark East", lat:32.716, lon:-96.241, region:"North TX Plains"},
+{id:"K2R9", city:"Kenedy", lat:28.633, lon:-97.745, region:"South Texas Brush Country"},
+{id:"K3F2", city:"Cisco Municipal", lat:32.371, lon:-98.981, region:"West Texas"},
+{id:"K3R9", city:"Lakeway Airpark", lat:30.354, lon:-97.986, region:"Central / I-35"},
+{id:"K5C1", city:"Boerne Stage", lat:29.738, lon:-98.701, region:"Hill Country"},
+{id:"K60R", city:"Navasota Municipal", lat:30.367, lon:-96.112, region:"Brazos Valley"},
+{id:"K6P9", city:"Ranger Municipal", lat:32.464, lon:-98.682, region:"West Texas"},
+{id:"K6R3", city:"Cleveland Municipal", lat:30.354, lon:-95.008, region:"SE Texas"},
+{id:"K6R5", city:"Alvin Airpark", lat:29.421, lon:-95.222, region:"SE Texas"},
+{id:"K71T", city:"Cuero", lat:29.083, lon:-97.287, region:"South Texas Brush Country"},
+{id:"K7F3", city:"Caddo Mills", lat:33.037, lon:-96.189, region:"North TX Plains"},
+{id:"K7T3", city:"Berclair", lat:28.656, lon:-97.644, region:"South Texas Brush Country"},
+{id:"K81R", city:"San Saba County", lat:31.238, lon:-98.717, region:"Hill Country"},
+{id:"K8F5", city:"Daingerfield", lat:33.002, lon:-94.72, region:"NE Texas"},
+{id:"KABI", city:"Abilene Regional", lat:32.41, lon:-99.683, region:"West Texas"},
+{id:"KAFW", city:"Fort Worth Alliance", lat:32.987, lon:-97.319, region:"North TX Metro"},
+{id:"KALI", city:"Alice Intl", lat:27.74, lon:-98.027, region:"South Texas Brush Country"},
+  {id:"KAMA", city:"Amarillo", lat:35.219, lon:-101.705, region:"Panhandle"},
+{id:"KARM", city:"Wharton Regional", lat:29.254, lon:-96.154, region:"SE Texas"},
+{id:"KASL", city:"Marshall", lat:32.52, lon:-94.307, region:"NE Texas"},
+{id:"KATA", city:"Atlanta", lat:33.104, lon:-94.187, region:"NE Texas"},
+{id:"KATT", city:"Camp Mabry", lat:30.318, lon:-97.767, region:"Central / I-35"},
+{id:"KAUS", city:"Austin-Bergstrom Intl", lat:30.197, lon:-97.666, region:"Central / I-35"},
+{id:"KAXH", city:"Houston Southwest", lat:29.506, lon:-95.476, region:"SE Texas"},
+{id:"KBBD", city:"Brady", lat:31.179, lon:-99.323, region:"Hill Country"},
+{id:"KBEA", city:"Beeville Municipal", lat:28.363, lon:-97.79, region:"South Texas Brush Country"},
+{id:"KBFE", city:"Brownfield", lat:33.175, lon:-102.192, region:"Panhandle"},
+{id:"KBIF", city:"Biggs Army Airfield", lat:31.849, lon:-106.38, region:"Far West Texas"},
+{id:"KBKD", city:"Stephens County", lat:32.718, lon:-98.891, region:"North TX Plains"},
+{id:"KBKS", city:"Falfurrias", lat:27.206, lon:-98.121, region:"South Texas Brush Country"},
+{id:"KBMQ", city:"Burnet Municipal", lat:30.738, lon:-98.238, region:"Hill Country"},
+{id:"KBMT", city:"Beaumont Municipal", lat:30.07, lon:-94.216, region:"SE Texas"},
+{id:"KBPC", city:"Mesa Vista Ranch", lat:36.132, lon:-100.302, region:"Panhandle"},
+{id:"KBPG", city:"Big Spring McMahon", lat:32.213, lon:-101.523, region:"West Texas"},
+{id:"KBPT", city:"Beaumont/Pt Arthur", lat:29.95, lon:-94.021, region:"Upper Gulf Coast"},
+{id:"KBPT", city:"Port Arthur", lat:29.95, lon:-94.021, region:"Upper Gulf Coast"},
+{id:"KBRO", city:"Brownsville", lat:25.907, lon:-97.426, region:"Lower Gulf Coast"},
+{id:"KBWD", city:"Brownwood Regional", lat:31.8, lon:-98.956, region:"Hill Country"},
+{id:"KBYY", city:"Bay City", lat:28.973, lon:-95.863, region:"Middle Gulf Coast"},
+{id:"KCFD", city:"Bryan", lat:30.717, lon:-96.333, region:"Brazos Valley"},
+{id:"KCLL", city:"College Station", lat:30.588, lon:-96.363, region:"Brazos Valley"},
+{id:"KCLW", city:"Clarksville/Red River County", lat:33.594, lon:-95.063, region:"NE Texas"},
+{id:"KCOM", city:"Coleman Municipal", lat:31.841, lon:-99.403, region:"Hill Country"},
+{id:"KCOT", city:"Cotulla-La Salle", lat:28.456, lon:-99.22, region:"South Texas Brush Country"},
+{id:"KCPT", city:"Cleburne Regional", lat:32.354, lon:-97.433, region:"North TX Plains"},
+{id:"KCRP", city:"Corpus Christi Intl", lat:27.773, lon:-97.502, region:"Middle Gulf Coast"},
+{id:"KCXO", city:"Conroe-North Houston", lat:30.356, lon:-95.414, region:"SE Texas"},
+{id:"KCZT", city:"Carrizo Springs", lat:28.522, lon:-99.824, region:"South Texas Brush Country"},
+{id:"KDAL", city:"Dallas Love Field", lat:32.846, lon:-96.852, region:"North TX Metro"},
+{id:"KDFW", city:"DFW Airport", lat:32.897, lon:-97.038, region:"North TX Metro"},
+{id:"KDKR", city:"Crockett", lat:31.307, lon:-95.404, region:"East Texas"},
+{id:"KDRT", city:"Del Rio Intl", lat:29.372, lon:-100.922, region:"South Texas Brush Country"},
+{id:"KDTO", city:"Denton Enterprise", lat:33.201, lon:-97.198, region:"North TX Metro"},
+{id:"KDWH", city:"David Wayne Hooks", lat:30.061, lon:-95.553, region:"SE Texas"},
+{id:"KDYS", city:"Dyess AFB", lat:32.421, lon:-99.854, region:"West Texas"},
+{id:"KDZB", city:"Horseshoe Bay Airpark", lat:30.53, lon:-98.358, region:"Hill Country"},
+{id:"KE11", city:"Andrews County", lat:32.338, lon:-102.529, region:"West Texas"},
+{id:"KE13", city:"Crane County", lat:31.397, lon:-102.371, region:"West Texas"},
+{id:"KE38", city:"Alpine-Casparis", lat:30.384, lon:-103.684, region:"Big Bend"},
+{id:"KE42", city:"Spearman", lat:36.22, lon:-101.195, region:"Panhandle"},
+{id:"KE57", city:"Denver City Airport", lat:32.692, lon:-102.65, region:"West Texas"},
+{id:"KECU", city:"Edwards County", lat:29.946, lon:-100.174, region:"West Texas"},
+{id:"KEDC", city:"Austin Executive", lat:30.399, lon:-97.565, region:"Central / I-35"},
+{id:"KEFD", city:"Ellington Airport", lat:29.607, lon:-95.158, region:"SE Texas"},
+{id:"KELP", city:"El Paso Intl", lat:31.807, lon:-106.378, region:"Far West Texas"},
+{id:"KERV", city:"Kerrville Municipal", lat:30.044, lon:-99.145, region:"Hill Country"},
+{id:"KETN", city:"Eastland Municipal", lat:32.415, lon:-98.809, region:"West Texas"},
+{id:"KF00", city:"Jones Field", lat:33.612, lon:-96.178, region:"North TX Plains"},
+{id:"KF17", city:"Center", lat:31.841, lon:-94.155, region:"NE Texas"},
+{id:"KF41", city:"Ennis Municipal", lat:32.325, lon:-96.664, region:"North TX Plains"},
+{id:"KF44", city:"Athens", lat:32.163, lon:-95.828, region:"NE Texas"},
+{id:"KF51", city:"Winnsboro", lat:32.941, lon:-95.29, region:"NE Texas"},
+{id:"KF53", city:"Mt Vernon", lat:33.107, lon:-95.6, region:"NE Texas"},
+{id:"KF69", city:"Air Park-Dallas", lat:33.013, lon:-96.598, region:"North TX Metro"},
+{id:"KF75", city:"Canton Hackney", lat:32.56, lon:-95.862, region:"NE Texas"},
+{id:"KF90", city:"Dublin Municipal", lat:32.08, lon:-98.343, region:"Hill Country"},
+{id:"KFST", city:"Fort Stockton", lat:30.915, lon:-102.916, region:"Big Bend"},
+{id:"KFTN", city:"Faith Ranch", lat:28.942, lon:-100.016, region:"South Texas Brush Country"},
+{id:"KFTW", city:"Fort Worth Meacham", lat:32.82, lon:-97.362, region:"North TX Metro"},
+{id:"KGDJ", city:"Granbury Municipal", lat:32.445, lon:-97.816, region:"North TX Plains"},
+{id:"KGGG", city:"Longview", lat:32.383, lon:-94.711, region:"NE Texas"},
+{id:"KGLS", city:"Galveston", lat:29.265, lon:-94.86, region:"Upper Gulf Coast"},
+{id:"KGNC", city:"Seminole", lat:32.674, lon:-102.649, region:"West Texas"},
+{id:"KGPM", city:"Grand Prairie Municipal", lat:32.698, lon:-97.046, region:"North TX Metro"},
+{id:"KGRK", city:"Killeen-Fort Hood Regional", lat:31.065, lon:-97.827, region:"Central / I-35"},
+{id:"KGTU", city:"Georgetown Executive", lat:30.678, lon:-97.679, region:"Central / I-35"},
+{id:"KGVT", city:"Greenville", lat:33.067, lon:-96.065, region:"NE Texas"},
+{id:"KGYB", city:"Giddings-Lee County", lat:30.169, lon:-96.979, region:"Brazos Valley"},
+{id:"KGYI", city:"North Texas Regional", lat:33.714, lon:-96.673, region:"North TX Metro"},
+{id:"KGZN", city:"Gregory M Simmons", lat:32.383, lon:-98.817, region:"West Texas"},
+{id:"KHDO", city:"Hondo Municipal", lat:29.359, lon:-99.177, region:"South Texas Brush Country"},
+{id:"KHHF", city:"Canadian", lat:35.897, lon:-100.403, region:"Panhandle"},
+{id:"KHHI", city:"High Island",         lat:29.5669, lon:-94.3935, region:"Upper Gulf Coast"},
+{id:"KHLR", city:"Hood Army Airfield", lat:31.138, lon:-97.714, region:"Central / I-35"},
+{id:"KHOU", city:"William P Hobby", lat:29.645, lon:-95.279, region:"SE Texas"},
+{id:"KHPY", city:"Baytown Airport", lat:29.786, lon:-94.952, region:"SE Texas"},
+{id:"KHQZ", city:"Mesquite Metro", lat:32.748, lon:-96.53, region:"North TX Metro"},
+{id:"KHRL", city:"Harlingen", lat:26.228, lon:-97.654, region:"Lower Gulf Coast"},
+{id:"KHYI", city:"San Marcos Regional", lat:29.892, lon:-97.864, region:"Central / I-35"},
+{id:"KIAH", city:"Houston Intercontinental", lat:29.98, lon:-95.34, region:"SE Texas"},
+{id:"KINJ", city:"Hillsboro Municipal", lat:32.083, lon:-97.097, region:"Central / I-35"},
+{id:"KJAS", city:"Jasper County-Bell Field", lat:30.885, lon:-94.034, region:"SE Texas"},
+{id:"KJCT", city:"Junction", lat:30.511, lon:-99.763, region:"South Texas Brush Country"},
+{id:"KJSO", city:"Jacksonville", lat:31.869, lon:-95.217, region:"NE Texas"},
+{id:"KJXI", city:"Gilmer", lat:32.699, lon:-94.948, region:"NE Texas"},
+{id:"KLBB", city:"Lubbock Preston Smith", lat:33.665, lon:-101.823, region:"West Texas"},
+{id:"KLBX", city:"Angleton/Lake Jackson", lat:29.108, lon:-95.462, region:"Upper Gulf Coast"},
+{id:"KLFK", city:"Lufkin", lat:31.237, lon:-94.753, region:"East Texas"},
+{id:"KLHB", city:"Hearne Municipal", lat:30.871, lon:-96.622, region:"Brazos Valley"},
+{id:"KLLD", city:"Laredo", lat:27.44, lon:-99.465, region:"South Texas Brush Country"},
+{id:"KLLN", city:"Levelland Municipal", lat:33.545, lon:-102.371, region:"West Texas"},
+{id:"KLRD", city:"Laredo Intl", lat:27.544, lon:-99.461, region:"South Texas Brush Country"},
+{id:"KLUV", city:"Lamesa Municipal", lat:32.754, lon:-101.919, region:"West Texas"},
+{id:"KLVJ", city:"Pearland Regional", lat:29.521, lon:-95.242, region:"SE Texas"},
+{id:"KLZZ", city:"Llano", lat:30.753, lon:-98.668, region:"Hill Country"},
+{id:"KMAF", city:"Midland International", lat:31.942, lon:-102.202, region:"West Texas"},
+{id:"KMAS", city:"Mason", lat:30.748, lon:-99.234, region:"Hill Country"},
+{id:"KMCJ", city:"John Dunn Helistop", lat:29.751, lon:-95.367, region:"SE Texas"},
+{id:"KMFE", city:"McAllen", lat:26.176, lon:-98.239, region:"The Valley"},
+{id:"KMKN", city:"Comanche County-City", lat:31.916, lon:-98.6, region:"Hill Country"},
+{id:"KMNZ", city:"Hamilton Municipal", lat:31.665, lon:-98.148, region:"Hill Country"},
+{id:"KMRJ", city:"Marathon", lat:30.195, lon:-103.198, region:"Big Bend"},
+{id:"KMWL", city:"Mineral Wells Airport", lat:32.781, lon:-98.06, region:"North TX Plains"},
+{id:"KNFW", city:"Fort Worth NAS JRB", lat:32.77, lon:-97.441, region:"North TX Metro"},
+{id:"KNGP", city:"Corpus Christi NAS", lat:27.692, lon:-97.291, region:"Middle Gulf Coast"},
+{id:"KNQI", city:"Kingsville NAS", lat:27.507, lon:-97.809, region:"South Texas Brush Country"},
+{id:"KOCH", city:"Nacogdoches", lat:31.585, lon:-94.71, region:"East Texas"},
+{id:"KODO", city:"Schlemeyer Field", lat:31.921, lon:-102.388, region:"West Texas"},
+{id:"KORG", city:"Orange", lat:30.068, lon:-93.804, region:"Upper Gulf Coast"},
+{id:"KOSA", city:"Mt Pleasant", lat:33.095, lon:-94.962, region:"NE Texas"},
+{id:"KOZA", city:"Ozona Municipal", lat:30.735, lon:-101.203, region:"West Texas"},
+{id:"KPRS", city:"Presidio Lely Intl", lat:29.634, lon:-104.358, region:"Big Bend"},
+{id:"KPRX", city:"Paris", lat:33.636, lon:-95.45, region:"NE Texas"},
+{id:"KPSN", city:"Palestine Municipal", lat:31.781, lon:-95.706, region:"SE Texas"},
+{id:"KPWG", city:"McGregor Executive", lat:31.484, lon:-97.317, region:"Central / I-35"},
+{id:"KPYX", city:"Perryton", lat:36.414, lon:-100.751, region:"Panhandle"},
+{id:"KRAS", city:"Port Aransas", lat:27.81, lon:-97.088, region:"Middle Gulf Coast"},
+{id:"KRBO", city:"Robstown", lat:27.779, lon:-97.69, region:"Middle Gulf Coast"},
+{id:"KRFI", city:"Henderson", lat:32.142, lon:-94.852, region:"NE Texas"},
+{id:"KRND", city:"Randolph AFB", lat:29.53, lon:-98.273, region:"South Texas Urban"},
+{id:"KRPH", city:"Graham Municipal", lat:33.11, lon:-98.555, region:"North TX Plains"},
+{id:"KRYW", city:"Lago Vista", lat:30.498, lon:-97.967, region:"Central / I-35"},
+{id:"KSAT", city:"San Antonio Intl", lat:29.534, lon:-98.47, region:"South Texas Urban"},
+{id:"KSGR", city:"Sugar Land Regional", lat:29.622, lon:-95.656, region:"SE Texas"},
+{id:"KSKF", city:"Kelly Field", lat:29.384, lon:-98.581, region:"South Texas Urban"},
+{id:"KSLR", city:"Sulphur Springs", lat:33.159, lon:-95.621, region:"NE Texas"},
+{id:"KSNK", city:"Winston Field", lat:32.693, lon:-100.95, region:"West Texas"},
+{id:"KSOA", city:"Sonora Municipal", lat:30.588, lon:-100.649, region:"West Texas"},
+{id:"KSPS", city:"Wichita Falls Municipal", lat:33.988, lon:-98.491, region:"North TX Plains"},
+{id:"KSSF", city:"Stinson Municipal", lat:29.336, lon:-98.472, region:"South Texas Urban"},
+{id:"KSWW", city:"Avenger Field", lat:32.467, lon:-100.467, region:"West Texas"},
+{id:"KT41", city:"La Porte", lat:29.67, lon:-95.064, region:"Upper Gulf Coast"},
+{id:"KT69", city:"Sinton", lat:28.036, lon:-97.541, region:"Middle Gulf Coast"},
+{id:"KT70", city:"Laughlin AFB", lat:29.356, lon:-100.781, region:"West Texas"},
+{id:"KT78", city:"Liberty Municipal", lat:30.066, lon:-94.701, region:"SE Texas"},
+{id:"KT82", city:"Fredericksburg", lat:30.244, lon:-98.909, region:"Hill Country"},
+{id:"KT88", city:"Colorado City", lat:32.206, lon:-100.435, region:"West Texas"},
+{id:"KT89", city:"Lajitas Intl", lat:29.259, lon:-103.685, region:"Big Bend"},
+{id:"KT90", city:"Winnie", lat:29.82, lon:-94.388, region:"Upper Gulf Coast"},
+{id:"KTME", city:"Houston Executive", lat:29.806, lon:-95.897, region:"SE Texas"},
+{id:"KTPL", city:"Temple", lat:31.152, lon:-97.407, region:"Central / I-35"},
+{id:"KTRL", city:"Terrell Municipal", lat:32.708, lon:-96.267, region:"North TX Plains"},
+{id:"KTXK", city:"Texarkana", lat:33.453, lon:-94.037, region:"NE Texas"},
+{id:"KTXW", city:"Weslaco", lat:26.179, lon:-97.974, region:"The Valley"},
+{id:"KTYR", city:"Tyler Pounds Regional", lat:32.354, lon:-95.402, region:"NE Texas"},
+{id:"KUTS", city:"Huntsville Municipal", lat:30.746, lon:-95.587, region:"SE Texas"},
+{id:"KVCT", city:"Victoria Regional", lat:28.852, lon:-96.919, region:"SE Texas"},
+{id:"KVHN", city:"Van Horn", lat:31.057, lon:-104.784, region:"Far West Texas"},
+{id:"KWEA", city:"Hudson Oaks", lat:32.746, lon:-97.682, region:"North TX Plains"},
+{id:"KXBP", city:"Bridgeport Municipal", lat:33.175, lon:-97.828, region:"North TX Plains"},
+{id:"TKI", city:"McKinney National", lat:33.178, lon:-96.591, region:"North TX Metro"},
+
+
+];
+
+
+
+// Utility: °C → °F
+function cToF(c) { return (c * 9/5 + 32).toFixed(1); }
+
+// Populate table
+async function fetchWeather() {
+  const tbody = document.querySelector("#weatherTable tbody");
+  tbody.innerHTML = "";
+  let maxTemp = -999, minTemp = 999, rainiest = 0;
+  let hottestCity="", coldestCity="", wettestCity="";
+
+  for (let station of stations) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}&longitude=${station.lon}&current_weather=true&hourly=temperature_2m,precipitation&timezone=America/Chicago`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      let tempC = data.current_weather.temperature;
+      let tempF = cToF(tempC);
+
+      // Find hourly max/min and precipitation since midnight
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const times = data.hourly.time;
+      const temps = data.hourly.temperature_2m;
+      const prec = data.hourly.precipitation;
+
+      let highC = -999, lowC = 999, totalPrec=0;
+      for (let i=0;i<times.length;i++) {
+        if (times[i].startsWith(today)) {
+          if (temps[i]>highC) highC=temps[i];
+          if (temps[i]<lowC) lowC=temps[i];
+          totalPrec += prec[i];
+        }
+      }
+
+      let row = `<tr>
+        <td>${station.id}</td>
+        <td>${station.city}</td>
+        <td>${station.region}</td>
+        <td>${tempF}</td>
+        <td>${cToF(highC)}</td>
+        <td>${cToF(lowC)}</td>
+        <td>${totalPrec.toFixed(2)}</td>
+      </tr>`;
+      tbody.innerHTML += row;
+
+      // Update summary
+      if (highC>maxTemp) { maxTemp=highC; hottestCity=station.city; }
+      if (lowC<minTemp) { minTemp=lowC; coldestCity=station.city; }
+      if (totalPrec>rainiest) { rainiest=totalPrec; wettestCity=station.city; }
+
+    } catch(e){ console.log("Error fetching:", station.id, e); }
+  }
+
+  document.getElementById("summary").innerText =
+    `Hottest: ${hottestCity} ${cToF(maxTemp)}°F | Coldest: ${coldestCity} ${cToF(minTemp)}°F | Wettest: ${wettestCity} ${rainiest.toFixed(2)} in`;
+}
+
+// Sort table by column
+function sortTable(n) {
+  const table = document.getElementById("weatherTable");
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  let dir = table.getAttribute("data-sort-dir") === "asc" ? "desc" : "asc";
+  table.setAttribute("data-sort-dir", dir);
+
+  rows.sort((a, b) => {
+    let x = a.cells[n].innerText.trim();
+    let y = b.cells[n].innerText.trim();
+
+    // Detect if numeric
+    const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
+    if (isNumeric) {
+      x = parseFloat(x);
+      y = parseFloat(y);
+    } else {
+      x = x.toLowerCase();
+      y = y.toLowerCase();
+    }
+
+    if (dir === "asc") return x > y ? 1 : x < y ? -1 : 0;
+    else return x < y ? 1 : x > y ? -1 : 0;
+  });
+
+  // Reattach sorted rows
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+// Initial load
+fetchWeather();
+</script>
+
+</body>
+</html>
