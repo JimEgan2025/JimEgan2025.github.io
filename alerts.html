@@ -34,11 +34,19 @@
         .alert-card { 
             background: white; border: 1px solid #d1d5da; border-left: 12px solid var(--minor); 
             border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-decoration: none; color: inherit; display: block;
+        }
+        .alert-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
         }
         .severity-Extreme { border-left-color: var(--extreme); background-color: #fff5f5; }
         .severity-Severe { border-left-color: var(--severe); }
         .severity-Moderate { border-left-color: var(--moderate); }
-        
+        .severity-Minor { border-left-color: var(--minor); }
+        .severity-Unknown { border-left-color: #6a737d; }
+
         .alert-title { font-size: 1.5em; font-weight: 900; color: #1b1f23; display: block; margin-bottom: 5px; }
         .alert-headline { display: block; margin-bottom: 15px; font-weight: 600; color: #444; }
         .alert-areas { font-size: 0.95em; background: #f1f1f1; padding: 12px; border-radius: 6px; border: 1px solid #e1e4e8; }
@@ -111,21 +119,34 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 50px; background:white; border-radius:8px;"><h2>☀️ No alerts in this category</h2></div>`;
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 50px; background:white; border-radius:8px;">
+                        <h2>☀️ No alerts in this category</h2>
+                    </div>`;
                 return;
             }
 
             filtered.forEach(item => {
                 const p = item.properties;
-                const card = document.createElement('div');
-                card.className = `alert-card severity-${p.severity}`;
+                const url = p['@id'] || item.id || '#'; // NWS alert detail URL[web:7][web:15][web:134][web:139]
+
+                const card = document.createElement('a');
+                card.href = url;
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+                card.className = `alert-card severity-${p.severity || 'Unknown'}`;
+
+                const expiresText = p.expires
+                    ? new Date(p.expires).toLocaleString()
+                    : 'Unknown';
+
                 card.innerHTML = `
                     <span class="alert-title">${p.event}</span>
                     <span class="alert-headline">${p.headline || 'Active Statement'}</span>
                     <div class="alert-areas"><strong>Areas:</strong> ${p.areaDesc}</div>
                     <div class="alert-meta">
-                        <strong>Expires:</strong> ${new Date(p.expires).toLocaleString()} | 
-                        <strong>Severity:</strong> ${p.severity}
+                        <strong>Expires:</strong> ${expiresText} | 
+                        <strong>Severity:</strong> ${p.severity || 'Unknown'}
                     </div>
                 `;
                 container.appendChild(card);
