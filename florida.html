@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Travel Weather Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Base: mobile-first, single column */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0 0.5rem 2rem;
+      background:#f4f4f4;
+    }
+    header {
+      padding: 0.75rem 0.25rem 0.5rem;
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.3rem;
+    }
+    h2 {
+      margin-top: 0.9rem;
+      font-size: 1.05rem;
+    }
+    .controls {
+      background:#fff;
+      padding:0.6rem;
+      border-radius:6px;
+      margin-bottom:0.7rem;
+    }
+    label {
+      font-size:0.85rem;
+      display:inline-block;
+      margin-right:0.4rem;
+    }
+    input[type="text"] {
+      padding:0.3rem 0.4rem;
+      width:9rem;
+      font-size:0.9rem;
+    }
+    select {
+      padding:0.3rem 0.4rem;
+      font-size:0.9rem;
+      max-width:100%;
+    }
+    button {
+      padding:0.35rem 0.6rem;
+      margin-left:0.4rem;
+      cursor:pointer;
+      font-size:0.9rem;
+    }
+    .grid {
+      display:block; /* stacked on mobile */
+    }
+    .column {
+      width:100%;
+    }
+    .panel {
+      background:#fff;
+      padding:0.6rem;
+      border-radius:6px;
+      box-shadow:0 1px 2px rgba(0,0,0,0.05);
+      margin-bottom:0.7rem;
+    }
+    .small {
+      font-size:0.8rem;
+      color:#555;
+    }
+    pre {
+      white-space:pre-wrap;
+      word-wrap:break-word;
+      font-size:0.8rem;
+      max-height:260px;
+      overflow-y:auto;
+    }
+    .forecast-table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.8rem;
+    }
+    .forecast-table th,
+    .forecast-table td {
+      border:1px solid #ddd;
+      padding:0.2rem 0.3rem;
+      text-align:left;
+    }
+    .forecast-table th {
+      background:#eee;
+    }
+    .status {
+      font-size:0.8rem;
+      margin-top:0.25rem;
+    }
+    .error { color:#a00; }
+    .ok { color:#006400; }
+    .flex-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.4rem;
+      align-items:center;
+    }
+    .flex-col {
+      display:flex;
+      flex-direction:column;
+      gap:0.3rem;
+    }
+    .tag {
+      font-size:0.75rem;
+      padding:0.1rem 0.3rem;
+      border-radius:3px;
+      background:#eee;
+      display:inline-block;
+    }
+    .section-break {
+      margin-top:0.4rem;
+      padding-top:0.4rem;
+      border-top:1px solid #ddd;
+    }
+    /* Make Windy iframe responsive-ish on phones */
+    #windyRadar {
+      width:100%;
+      height:340px;
+      border:0;
+      border-radius:4px;
+    }
+    #satImg {
+      width:100%;
+      max-height:320px;
+      object-fit:cover;
+      border-radius:4px;
+    }
+
+    /* Larger screens: use two columns */
+    @media (min-width: 900px) {
+      body {
+        padding: 0 1rem 2rem;
+      }
+      h1 { font-size:1.5rem; }
+      h2 { font-size:1.2rem; }
+      .grid {
+        display:grid;
+        grid-template-columns: 2fr 1.5fr;
+        gap:1rem;
+      }
+      .panel {
+        margin-bottom:1rem;
+      }
+      #windyRadar {
+        height:420px;
+      }
+      #satImg {
+        max-height:360px;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Travel Weather Console</h1>
+  <div class="small">
+    NWS forecast, AFD, alerts for any U.S. location, plus a corridor radar and Gulf/Florida satellite viewport.
+  </div>
+</header>
+
+<section class="controls">
+  <div class="flex-col">
+    <!-- PRESET CITIES DROPDOWN -->
+    <div class="flex-row">
+      <label>
+        Quick stops (cruise route):
+        <select id="citySelect" onchange="setCityFromPreset()">
+          <option value="">-- choose a city --</option>
+          <optgroup label="Your February 2026 Route">
+            <option value="30.5871,-97.641">Vizcaya / Round Rock, TX</option>
+            <option value="30.2345,-92.4411">Lafayette, LA</option>
+            <option value="30.0797,-83.2956">Wakulla Springs, FL</option>
+            <option value="29.6522,-82.3194">Kanapaha Gardens (Gainesville), FL</option>
+            <option value="28.7517,-81.0955">Lake Apopka, FL</option>
+            <option value="28.3922,-80.6077">Kennedy Space Center, FL</option>
+            <option value="28.7411,-81.3723">Mount Dora, FL</option>
+            <option value="27.9881,-81.5610">Lake Wales, FL</option>
+            <option value="27.3364,-82.5306">Sarasota, FL</option>
+            <option value="26.1582,-81.7942">Naples, FL</option>
+            <option value="27.6393,-80.3874">Vero Beach, FL</option>
+            <option value="27.9947,-81.9854">Lakeland, FL</option>
+            <option value="30.4383,-84.2807">Tallahassee, FL</option>
+            <option value="30.6954,-88.0398">Mobile, AL</option>
+            <option value="29.8551,-93.8901">Winnie, TX</option>
+          </optgroup>
+        </select>
+      </label>
+    </div>
+
+    <!-- MANUAL LAT/LON ENTRY -->
+    <div class="flex-row section-break">
+      <label>Or enter manually:</label>
+    </div>
+    <div class="flex-row">
+      <div>
+        <label>Latitude: <input id="latInput" type="text" value="30.5871"></label>
+      </div>
+      <div>
+        <label>Longitude: <input id="lonInput" type="text" value="-97.641"></label>
+      </div>
+      <button onclick="loadAll()">Load</button>
+    </div>
+
+    <!-- GEOCODE BY CITY NAME -->
+    <div class="flex-row section-break">
+      <label>Or type a city name:</label>
+    </div>
+    <div class="flex-row">
+      <div>
+        <input id="cityNameInput" type="text" placeholder="e.g., Denver, CO"
+               onkeypress="if(event.key==='Enter') geocodeCity()">
+      </div>
+      <button onclick="geocodeCity()">Search</button>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+</section>
+
+<div class="grid">
+  <!-- LEFT / FIRST COLUMN (stacked on mobile) -->
+  <div class="column">
+    <section class="panel">
+      <h2>Quick Summary (for Jim)</h2>
+      <div id="quickSummary" class="small">
+        Load a location to generate a simple, human‑readable overview from the NWS data.
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Local Forecast (NWS)</h2>
+      <div id="forecastStatus" class="status"></div>
+      <table class="forecast-table" id="forecastTable"></table>
+    </section>
+
+    <section class="panel">
+      <h2>Local Alerts</h2>
+      <div id="alertsStatus" class="status"></div>
+      <div id="alertsList" class="small"></div>
+    </section>
+  </div>
+
+  <!-- RIGHT / SECOND COLUMN (follows the first on mobile) -->
+  <div class="column">
+    <section class="panel">
+      <h2>Area Forecast Discussion (AFD)</h2>
+      <div id="afdHeader" class="small"></div>
+      <pre id="afdText"></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Corridor Radar (Windy)</h2>
+      <div class="small">
+        Live radar centered on the current location, zoomed wide enough to see the broader route.
+      </div>
+      <div style="margin-top:0.5rem;">
+        <iframe
+          id="windyRadar"
+          src="https://embed.windy.com/embed2.html?lat=28.0&lon=-91.0&zoom=5&level=surface&overlay=radar&product=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&detailLat=28.0&detailLon=-91.0&metricWind=default&metricTemp=default&radarRange=-1"
+          frameborder="0">
+        </iframe>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Gulf / Florida Satellite (GOES)</h2>
+      <div class="small">
+        Static Gulf of America GeoColor viewport (independent of selected location).
+      </div>
+      <div style="margin-top:0.5rem;">
+        <img id="satImg" alt="Satellite">
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const statusEl = document.getElementById('status');
+const forecastStatusEl = document.getElementById('forecastStatus');
+const alertsStatusEl = document.getElementById('alertsStatus');
+const forecastTableEl = document.getElementById('forecastTable');
+const alertsListEl = document.getElementById('alertsList');
+const afdTextEl = document.getElementById('afdText');
+const afdHeaderEl = document.getElementById('afdHeader');
+const quickSummaryEl = document.getElementById('quickSummary');
+const satImgEl = document.getElementById('satImg');
+
+// Load from preset dropdown
+function setCityFromPreset() {
+  const sel = document.getElementById('citySelect');
+  const val = sel.value;
+  if (!val) return;
+  const [lat, lon] = val.split(',');
+  document.getElementById('latInput').value = lat;
+  document.getElementById('lonInput').value = lon;
+  document.getElementById('cityNameInput').value = '';
+  loadAll();
+}
+
+// Geocode a city name to lat/lon using Open-Meteo
+async function geocodeCity() {
+  const cityName = document.getElementById('cityNameInput').value.trim();
+  if (!cityName) {
+    statusEl.textContent = 'Please enter a city name.';
+    statusEl.className = 'status error';
+    return;
+  }
+
+  statusEl.textContent = `Searching for "${cityName}"...`;
+  statusEl.className = 'status';
+
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1&language=en&format=json`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Geocode fetch failed');
+    const data = await resp.json();
+
+    if (!data.results || !data.results.length) {
+      statusEl.textContent = `No results found for "${cityName}". Try another search.`;
+      statusEl.className = 'status error';
+      return;
+    }
+
+    const result = data.results[0];
+    const lat = result.latitude;
+    const lon = result.longitude;
+    const name = result.name;
+    const admin = result.admin1 || '';
+
+    document.getElementById('latInput').value = lat;
+    document.getElementById('lonInput').value = lon;
+    document.getElementById('citySelect').value = '';
+
+    statusEl.textContent = `Found: ${name}, ${admin}. Loading weather...`;
+    statusEl.className = 'status ok';
+
+    loadAll();
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Error geocoding city. Please try another name or enter lat/lon manually.';
+    statusEl.className = 'status error';
+  }
+}
+
+// Update Windy radar center/zoom based on current location
+function updateWindyRadar(lat, lon) {
+  const iframe = document.getElementById('windyRadar');
+  const zoom = 6; // 5 = wider corridor, 6–7 = tighter
+
+  const src =
+    'https://embed.windy.com/embed2.html' +
+    `?lat=${lat}` +
+    `&lon=${lon}` +
+    `&zoom=${zoom}` +
+    '&level=surface' +
+    '&overlay=radar' +
+    '&product=radar' +
+    '&menu=' +
+    '&message=' +
+    '&marker=' +
+    '&calendar=now' +
+    '&pressure=' +
+    '&type=map' +
+    '&location=coordinates' +
+    '&detail=' +
+    `&detailLat=${lat}` +
+    `&detailLon=${lon}` +
+    '&metricWind=default' +
+    '&metricTemp=default' +
+    '&radarRange=-1';
+
+  iframe.src = src;
+}
+
+// Main load function
+async function loadAll() {
+  const lat = document.getElementById('latInput').value.trim();
+  const lon = document.getElementById('lonInput').value.trim();
+  if (!lat || !lon) {
+    statusEl.textContent = 'Please enter latitude and longitude or choose a city.';
+    statusEl.className = 'status error';
+    return;
+  }
+
+  statusEl.textContent = 'Loading NWS point metadata...';
+  statusEl.className = 'status';
+
+  try {
+    const pointUrl = `https://api.weather.gov/points/${lat},${lon}`;
+    const pointResp = await fetch(pointUrl, {headers:{"Accept":"application/geo+json"}});
+    if (!pointResp.ok) throw new Error('Point lookup failed');
+    const pointData = await pointResp.json();
+
+    const props = pointData.properties;
+    const office = props.gridId;
+    const gridX = props.gridX;
+    const gridY = props.gridY;
+    const forecastUrl = props.forecast;
+    const city = props.relativeLocation.properties.city;
+    const state = props.relativeLocation.properties.state;
+
+    statusEl.textContent = `Location: ${city}, ${state} – Office: ${office}, Grid ${gridX},${gridY}`;
+    statusEl.className = 'status ok';
+
+    loadForecast(forecastUrl);
+    loadAlerts(lat, lon);
+    loadAFD(office);
+    updateWindyRadar(lat, lon);
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'Error loading point metadata – check lat/lon or try again.';
+    statusEl.className = 'status error';
+  }
+}
+
+async function loadForecast(url) {
+  forecastStatusEl.textContent = 'Loading forecast...';
+  forecastTableEl.innerHTML = '';
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('forecast fetch failed');
+    const data = await resp.json();
+    const periods = data.properties.periods || [];
+
+    const slice = periods.slice(0, 8);
+    let html = '<tr><th>Period</th><th>Temp</th><th>Wind</th><th>Short</th></tr>';
+    slice.forEach(p => {
+      html += `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.temperature}°${p.temperatureUnit}</td>
+        <td>${p.windDirection} ${p.windSpeed}</td>
+        <td>${p.shortForecast}</td>
+      </tr>`;
+    });
+    forecastTableEl.innerHTML = html;
+    forecastStatusEl.textContent = `Received ${slice.length} forecast periods from NWS.`;
+    forecastStatusEl.className = 'status ok';
+
+    updateQuickSummaryFromForecast(slice);
+
+  } catch (err) {
+    console.error(err);
+    forecastStatusEl.textContent = 'Error loading forecast.';
+    forecastStatusEl.className = 'status error';
+  }
+}
+
+async function loadAlerts(lat, lon) {
+  alertsStatusEl.textContent = 'Loading alerts...';
+  alertsListEl.innerHTML = '';
+  try {
+    const url = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('alerts fetch failed');
+    const data = await resp.json();
+    const feats = data.features || [];
+
+    if (!feats.length) {
+      alertsListEl.textContent = 'No active alerts for this point.';
+      alertsStatusEl.textContent = 'Alerts loaded.';
+      alertsStatusEl.className = 'status ok';
+      return;
+    }
+
+    let html = '';
+    feats.forEach(f => {
+      const p = f.properties;
+      html += `<div style="margin-bottom:0.35rem;">
+        <span class="tag">${p.event}</span><br>
+        <span class="small"><strong>${p.headline || ''}</strong></span>
+      </div>`;
+    });
+    alertsListEl.innerHTML = html;
+    alertsStatusEl.textContent = `${feats.length} active alert(s) found.`;
+    alertsStatusEl.className = 'status ok';
+
+  } catch (err) {
+    console.error(err);
+    alertsStatusEl.textContent = 'Error loading alerts.';
+    alertsStatusEl.className = 'status error';
+  }
+}
+
+async function loadAFD(office) {
+  afdHeaderEl.textContent = 'Loading AFD...';
+  afdTextEl.textContent = '';
+  try {
+    const url = `https://api.weather.gov/products/types/AFD/locations/${office}/latest`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('AFD metadata fetch failed');
+    const data = await resp.json();
+
+    if (!data || !data.productCode) {
+      afdHeaderEl.textContent = 'No recent AFD available.';
+      afdTextEl.textContent = '';
+      return;
+    }
+
+    const textUrl = data["@id"] || data.id;
+    if (!textUrl) {
+      afdHeaderEl.textContent = 'No AFD text URL found.';
+      afdTextEl.textContent = '';
+      return;
+    }
+
+    const textResp = await fetch(textUrl);
+    if (!textResp.ok) throw new Error('AFD text fetch failed');
+    const textData = await textResp.json();
+
+    afdHeaderEl.textContent = `Latest AFD from office ${office}.`;
+    afdTextEl.textContent = (textData.productText || '').trim();
+
+  } catch (err) {
+    console.error(err);
+    afdHeaderEl.textContent = 'Error loading clean AFD.';
+    afdTextEl.textContent = '';
+  }
+}
+
+// Static GOES Gulf/Florida viewport
+function loadStaticImages() {
+  satImgEl.src =
+    'https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ga/GEOCOLOR/2000x2000.jpg';
+  satImgEl.onerror = () => {
+    satImgEl.alt = 'Gulf of America satellite image not available.';
+  };
+}
+
+// Build a simple human-readable summary from forecast periods
+function updateQuickSummaryFromForecast(periods) {
+  if (!periods || !periods.length) {
+    quickSummaryEl.textContent = 'No forecast data available yet.';
+    return;
+  }
+
+  const names = periods.slice(0, 4).map(p => p.name).join(', ');
+
+  let minT = Infinity;
+  let maxT = -Infinity;
+  let hasStorm = false;
+  let hasRain = false;
+  let hasSnow = false;
+
+  periods.slice(0, 8).forEach(p => {
+    if (typeof p.temperature === 'number') {
+      if (p.temperature < minT) minT = p.temperature;
+      if (p.temperature > maxT) maxT = p.temperature;
+    }
+    const sf = (p.shortForecast || '').toLowerCase();
+    if (sf.includes('thunder')) hasStorm = true;
+    if (sf.includes('rain') || sf.includes('shower')) hasRain = true;
+    if (sf.includes('snow') || sf.includes('sleet') || sf.includes('freezing')) hasSnow = true;
+  });
+
+  if (minT === Infinity || maxT === -Infinity) {
+    quickSummaryEl.textContent = 'Forecast temperatures not available yet.';
+    return;
+  }
+
+  let hazard = 'No major hazards are obvious from the simple NWS text forecast.';
+  if (hasStorm) {
+    hazard = 'Some storms are possible; watch for lightning and brief heavy downpours.';
+  } else if (hasRain) {
+    hazard = 'Occasional showers are possible, but no big severe signal is obvious.';
+  } else if (hasSnow) {
+    hazard = 'Wintry weather is possible; watch for slick spots, especially at night.';
+  }
+
+  quickSummaryEl.textContent =
+    `For ${names}, expect lows around ${minT}° and highs up to about ${maxT}°. ` +
+    `${hazard} Winds follow the NWS forecast table below.`;
+}
+
+// Load static GOES viewport once
+loadStaticImages();
+</script>
+</body>
+</html>
