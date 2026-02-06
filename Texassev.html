@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Texas All-Hazards Live OPS Dashboard v9</title>
+<title>Texas All-Hazards Live OPS Dashboard v11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -31,18 +31,16 @@ h1{margin:0;font-size:1.4rem;}
 .md-entry:hover{background:#1f2937;}
 .loading{color:var(--muted);font-style:italic;}
 button{background:#020617;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;}
+img{border-radius:8px;max-width:100%;}
 </style>
 </head>
 
 <body>
 <header>
-<h1>🌎 Texas All-Hazards Live OPS Dashboard v9</h1>
+<h1>🌎 Texas All-Hazards Live OPS Dashboard v11</h1>
 <div>
   <button onclick="toggleRadar()">Radar</button>
   <button onclick="toggleVelocity()">Velocity</button>
-  <button onclick="toggleSPC()">SPC/MD</button>
-  <button onclick="toggleMarine()">Marine</button>
-  <button onclick="toggleTropical()">Tropical</button>
 </div>
 </header>
 
@@ -58,8 +56,8 @@ button{background:#020617;color:var(--text);border:1px solid var(--border);borde
 
     <div class="card">
       <h2>SPC Convective Outlook</h2>
-      <div class="big loading" id="spcRisk">LOADING…</div>
-      <div class="small" id="spcDetail"></div>
+      <img id="spcImg" src="https://www.spc.noaa.gov/products/outlook/day1otlk_1.png">
+      <div class="small">SPC Day 1 Outlook</div>
     </div>
 
     <div class="card">
@@ -112,141 +110,89 @@ let velocity = L.tileLayer.wms(
   {layers:"nexrad-n0q", transparent:true, opacity:.65}
 );
 
-// SPC & MD Layers
-let spcLayer = L.layerGroup().addTo(map);
-
-// ---------------- CORS + Retry Helpers ----------------
-async function fetchWithRetry(url, retries=3, delay=3000){
-  for(let i=0;i<retries;i++){
-    try{
-      const resp = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      return await resp.json();
-    } catch(e){
-      console.warn("Fetch error, retrying:", e);
-      if(i===retries-1) throw e;
-      await new Promise(r=>setTimeout(r, delay));
-    }
-  }
-}
-
-// ---------------- FETCH LIVE SPC + MD ----------------
-async function fetchSPC_MD(){
-  try {
-    const spcUrl = "https://services.spc.noaa.gov/products/outlook/day1otlk.geojson";
-    const spcJson = await fetchWithRetry(spcUrl);
-
-    spcLayer.clearLayers();
-    document.getElementById("spcRisk").className = "big ok";
-    document.getElementById("spcRisk").innerText = spcJson.properties.DAY || "N/A";
-    document.getElementById("spcDetail").innerText = spcJson.properties.text.replace(/\n/g," ");
-
-    L.geoJSON(spcJson, {style: f => ({color:"#fb923c", fillOpacity:0.2, weight:2})}).addTo(spcLayer);
-
-    // Mesoscale Discussions
-    const mdUrl = "https://services.spc.noaa.gov/products/md/mdlatest.geojson";
-    const mdJson = await fetchWithRetry(mdUrl);
-
-    const mdDiv = document.getElementById("mds");
-    mdDiv.innerHTML = "";
-    L.geoJSON(mdJson, {
-      style: f => ({color:"#fbbf24", fillOpacity:0.25, weight:2}),
-      onEachFeature: (feature, layer) => {
-        const id = feature.properties.id;
-        const type = feature.properties.md_product;
-        const valid = feature.properties.start_time + " → " + feature.properties.end_time;
-        const link = `https://www.spc.noaa.gov/products/md/md${id}.html`;
-        layer.bindPopup(`<a href="${link}" target="_blank">MD ${id} — ${type}</a><br>${valid}`);
-        layer.addTo(spcLayer);
-
-        const entry = document.createElement("div");
-        entry.className = "md-entry watch";
-        entry.innerHTML = `MD ${id} — ${type}`;
-        entry.onclick = ()=> window.open(link, "_blank");
-        mdDiv.appendChild(entry);
-      }
-    });
-
-  } catch(e){
-    console.error("SPC/MD fetch error:", e);
-    document.getElementById("spcRisk").className = "big warn";
-    document.getElementById("spcRisk").innerText = "ERROR — retrying…";
-    setTimeout(fetchSPC_MD, 5000);
-  }
-}
-
-// ---------------- FETCH LIVE NWS ALERTS ----------------
+// ---------------- FETCH LIVE ALERTS ----------------
 async function fetchAlerts(){
   try {
-    const url = "https://api.weather.gov/alerts/active?area=TX";
-    const alerts = await fetchWithRetry(url);
+    const resp = await fetch("https://api.weather.gov/alerts/active?area=TX");
+    const alerts = await resp.json();
 
     const warnEl = document.getElementById("warnings");
     const watchEl = document.getElementById("watches");
     const marineEl = document.getElementById("marine");
     const tropEl = document.getElementById("tropical");
+    const mdEl = document.getElementById("mds");
 
-    warnEl.innerHTML = ""; watchEl.innerHTML = ""; marineEl.innerHTML = ""; tropEl.innerHTML = "";
+    warnEl.innerHTML=""; watchEl.innerHTML=""; marineEl.innerHTML=""; tropEl.innerHTML=""; mdEl.innerHTML="";
 
     let noGo = false;
+
     alerts.features.forEach(a => {
       const text = a.properties.event;
-      const li = document.createElement("div");
       const key = text.toLowerCase();
+      const li = document.createElement("div");
 
+      // Warnings
       if(key.includes("warning") && !key.includes("marine") && !key.includes("tropical")){
-        li.className = "warn"; warnEl.appendChild(li); noGo = true;
-      } else if(key.includes("watch") && !key.includes("marine") && !key.includes("tropical")){
-        li.className = "watch"; watchEl.appendChild(li);
+        li.className="warn"; li.innerText=text; warnEl.appendChild(li); noGo=true;
       }
 
+      // Watches
+      else if(key.includes("watch") && !key.includes("marine") && !key.includes("tropical")){
+        li.className="watch"; li.innerText=text; watchEl.appendChild(li);
+      }
+
+      // Marine / Coastal
       if(key.includes("marine") || key.includes("gale") || key.includes("storm")){
-        li.className = "watch"; marineEl.appendChild(li); noGo = true;
+        li.className="watch"; li.innerText=text; marineEl.appendChild(li); noGo=true;
       }
 
+      // Tropical / NHC
       if(key.includes("tropical") || key.includes("hurricane")){
-        li.className = "warn"; tropEl.appendChild(li); noGo = true;
+        li.className="warn"; li.innerText=text; tropEl.appendChild(li); noGo=true;
       }
 
-      li.innerText = text;
+      // Mesoscale Discussions links
+      if(key.includes("mesoscale")){
+        const mdLink = a.properties.link || "#";
+        const mdEntry = document.createElement("div");
+        mdEntry.className="md-entry watch";
+        mdEntry.innerText=text;
+        mdEntry.onclick = ()=> window.open(mdLink,"_blank");
+        mdEl.appendChild(mdEntry);
+      }
     });
 
     const gogoEl = document.getElementById("gogo");
-    gogoEl.innerText = noGo ? "NO-GO" : "GO";
-    gogoEl.className = noGo ? "big warn" : "big ok";
+    gogoEl.innerText=noGo?"NO-GO":"GO";
+    gogoEl.className=noGo?"big warn":"big ok";
 
   } catch(e){
     console.error("Alerts fetch error:", e);
-    document.getElementById("gogo").className="big warn";
-    document.getElementById("gogo").innerText="ERROR — retrying…";
-    setTimeout(fetchAlerts, 5000);
+    setTimeout(fetchAlerts,5000);
   }
 }
 
 // ---------------- OVERNIGHT / NEXT SHIFT ----------------
 function evaluateOvernight(){
   const h = new Date().getHours();
-  const night = (h >= 18 || h <= 6);
-  document.getElementById("overnightRisk").innerText = night ? "ELEVATED" : "MONITOR";
+  const night = (h >=18 || h<=6);
+  document.getElementById("overnightRisk").innerText = night?"ELEVATED":"MONITOR";
   document.getElementById("overnightDetail").innerText = night
-    ? "Overnight hazards possible (storms / freeze / coastal)"
-    : "Await daytime hazard evolution";
+    ?"Overnight hazards possible (storms / freeze / coastal)"
+    :"Await daytime hazard evolution";
 }
 
 // ---------------- TOGGLE LAYERS ----------------
 function toggleRadar(){ map.hasLayer(radar)?map.removeLayer(radar):map.addLayer(radar); }
 function toggleVelocity(){ map.hasLayer(velocity)?map.removeLayer(velocity):map.addLayer(velocity); }
-function toggleSPC(){ map.hasLayer(spcLayer)?map.removeLayer(spcLayer):map.addLayer(spcLayer); }
-function toggleMarine(){ alert("Marine overlay toggle: coming online"); }
-function toggleTropical(){ alert("Tropical overlay toggle: coming online"); }
 
 // ---------------- INITIAL LOAD ----------------
-fetchSPC_MD(); fetchAlerts(); evaluateOvernight();
-setInterval(fetchSPC_MD, 600000); // 10 min
-setInterval(fetchAlerts, 300000);  // 5 min
-setInterval(evaluateOvernight, 3600000); // 1 hr
+fetchAlerts(); evaluateOvernight();
+setInterval(fetchAlerts,300000); // 5 min
+setInterval(evaluateOvernight,3600000); // 1 hr
 </script>
 
 </body>
 </html>
+
 
