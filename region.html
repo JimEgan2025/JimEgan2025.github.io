@@ -2,25 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gulf OPS v11.1 - Texas Regional Mission</title>
+<title>Gulf OPS v11.2 - Impact Projection Ready</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#020617; --panel:#0f172a; --border:#1e293b; --text:#e5e7eb;
-  --muted:#94a3b8; --ok:#22c55e; --warn:#ef4444; --watch:#fde047; --risk:#f97316; --marine:#06b6d4;
+  --muted:#94a3b8; --ok:#22c55e; --warn:#ef4444; --watch:#fde047; --risk:#f97316; --marine:#06b6d4; --tropical:#d946ef;
 }
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui;overflow:hidden;}
 header{padding:0 16px;background:#020617;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;height:50px;}
 .grid{display:grid;grid-template-columns:1fr 320px;height:calc(100vh - 50px);}
-#map{height:100%;background:#020617;}
+#map{height:100%;background:#020617;cursor:crosshair;}
 .side{display:flex;flex-direction:column;gap:8px;padding:8px;overflow-y:auto;border-left:1px solid var(--border);}
 .card{background:var(--panel);border-radius:6px;padding:12px;border:1px solid var(--border);flex-shrink:0;}
 .card h2{margin:0 0 4px;font-size:0.65rem;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
 .big{font-size:1.4rem;font-weight:900;line-height:1.1;letter-spacing:-0.5px;}
 .small{font-size:0.75rem;color:var(--muted);margin-top:4px;}
-.warn{color:var(--warn);} .marine{color:var(--marine); font-weight:bold;}
+.warn{color:var(--warn);} .marine{color:var(--marine); font-weight:bold;} .tropical{color:var(--tropical);}
 button{background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px 10px;cursor:pointer;font-size:0.7rem;font-weight:600;}
 button.active{background:var(--risk);color:white;border-color:white;}
 #timestamp{font-family:monospace; font-size: 0.75rem; color: var(--muted); background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;}
@@ -29,21 +29,21 @@ button.active{background:var(--risk);color:white;border-color:white;}
 <body>
 <header>
   <div style="display:flex; align-items:center; gap:15px;">
-    <h1 style="font-size:1.1rem; margin:0;">REGIONAL OPS <span style="color:var(--risk)">v11.1</span></h1>
+    <h1 style="font-size:1.1rem; margin:0;">REGIONAL OPS <span style="color:var(--risk)">v11.2</span></h1>
     <div id="timestamp">SYNCING LIVE...</div>
   </div>
   <div style="display:flex; gap:5px;">
+    <button id="btnProj" onclick="toggleProjection()">PATH PROJECTION</button>
     <button id="btnSST" onclick="toggleLayer('sst', this)">OCEAN TEMP</button>
-    <button id="btnSPC" class="active" onclick="toggleLayer('spc', this)">SPC / MD</button>
     <button id="btnRadar" class="active" onclick="toggleLayer('radar', this)">RADAR</button>
-    <button id="btnHaz" class="active" onclick="toggleLayer('hazards', this)">HAZARDS/MARINE</button>
+    <button id="btnHaz" class="active" onclick="toggleLayer('hazards', this)">HAZARDS</button>
   </div>
 </header>
 <div class="grid">
   <div id="map"></div>
   <div class="side">
-    <div class="card"><h2>Mission Status (TX Sector)</h2><div class="big" id="gogo">STABLE</div><div class="small" id="gogoDetail">TX Land Ops Clear</div></div>
-    <div class="card"><h2>Severe Warnings</h2><div id="warnings" class="small">Clear</div></div>
+    <div class="card"><h2>Mission Status</h2><div class="big" id="gogo">STABLE</div><div class="small" id="gogoDetail">TX/5-State Region Monitoring</div></div>
+    <div class="card"><h2>Tropical Impact Tool</h2><div id="projText" class="small">Click 'Path Projection' and select two points on map to simulate a track.</div></div>
     <div class="card"><h2>Marine (Early Warning)</h2><div id="marine" class="small">Clear</div></div>
     <div class="card" style="flex-grow:1"><h2>Advisories & Watches</h2><div id="watches" class="small">--</div></div>
   </div>
@@ -62,12 +62,39 @@ const radar = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nex
 }).addTo(map);
 
 const hazardLayer = L.layerGroup().addTo(map);
+const projLayer = L.layerGroup().addTo(map);
 
-// REFINED GIS COASTAL BOUNDARIES for TX/LA
+let projectionMode = false;
+let points = [];
+
+function toggleProjection() {
+    projectionMode = !projectionMode;
+    document.getElementById("btnProj").classList.toggle("active");
+    if(!projectionMode) { projLayer.clearLayers(); points = []; }
+}
+
+map.on('click', (e) => {
+    if(!projectionMode) return;
+    points.push(e.latlng);
+    L.circleMarker(e.latlng, {color: '#d946ef', radius: 6}).addTo(projLayer);
+    
+    if(points.length === 2) {
+        const line = L.polyline(points, {color: '#d946ef', weight: 4, dashArray: '10, 10'}).addTo(projLayer);
+        // Draw simulated cone
+        L.polygon([
+            points[0],
+            [points[1].lat + 1.5, points[1].lng - 1.5],
+            [points[1].lat + 1.5, points[1].lng + 1.5]
+        ], {color: '#d946ef', fillOpacity: 0.2, weight: 1}).addTo(projLayer);
+        document.getElementById("projText").innerHTML = `<b class="tropical">Simulated Impact Path</b><br>Origin: ${points[0].lat.toFixed(1)}, ${points[0].lng.toFixed(1)}<br>Inland: ${points[1].lat.toFixed(1)}, ${points[1].lng.toFixed(1)}`;
+        points = [];
+    }
+});
+
 const coastPoly = {
-  "LA": [[29.7, -93.8], [28.8, -93.8], [28.5, -89.4], [29.3, -89.1], [30.1, -89.6]],
+  "LA": [[29.7, -93.8], [28.8, -93.8], [28.2, -89.4], [29.3, -89.1], [30.1, -89.6]],
   "TX": [[29.7, -94.2], [28.0, -94.0], [26.0, -97.2], [29.5, -94.5]],
-  "FL": [[30.4, -87.4], [29.5, -87.4], [29.5, -83.5], [30.1, -83.5]]
+  "FL": [[30.4, -87.4], [29.2, -87.4], [29.2, -83.5], [30.1, -83.5]]
 };
 
 async function fetchAlerts() {
@@ -75,37 +102,22 @@ async function fetchAlerts() {
     const res = await fetch("https://api.weather.gov/alerts/active?area=TX,NM,OK,AR,LA,MS,AL,FL");
     const data = await res.json();
     hazardLayer.clearLayers();
-    const ui = { warn: document.getElementById("warnings"), marine: document.getElementById("marine"), watch: document.getElementById("watches") };
+    const ui = { marine: document.getElementById("marine"), watch: document.getElementById("watches") };
     Object.values(ui).forEach(div => div.innerHTML = "Clear");
-    let txRisk = false;
 
     data.features.forEach(a => {
-      const p = a.properties;
-      const k = p.event.toLowerCase(), state = p.areaDesc.split(';')[0].substring(0,2);
-      
+      const p = a.properties, k = p.event.toLowerCase(), state = p.areaDesc.split(';')[0].substring(0,2);
       if(a.geometry) {
-        let color = k.includes("tornado") ? "#ff0000" : (k.includes("severe") ? "#ffff00" : "#06b6d4");
-        L.geoJSON(a, { style: { color: color, weight: 3, fillOpacity: 0.3 } }).addTo(hazardLayer);
+        L.geoJSON(a, { style: { color: k.includes("tornado") ? "#ff0000" : "#06b6d4", weight: 3, fillOpacity: 0.3 } }).addTo(hazardLayer);
       } else if (k.includes("craft") || k.includes("marine")) {
         const poly = coastPoly[state];
         if(poly) L.polygon(poly, {color: '#06b6d4', fillOpacity: 0.4, weight: 1}).addTo(hazardLayer);
       }
-
       if (k.includes("marine") || k.includes("craft")) {
         if(ui.marine.innerText === "Clear") ui.marine.innerHTML = "";
         ui.marine.innerHTML += `<div class="alert-item marine">${p.event} [${state}]</div>`;
-      } else if(k.includes("warning")) {
-        if(ui.warn.innerText === "Clear") ui.warn.innerHTML = "";
-        ui.warn.innerHTML += `<div class="alert-item warn">${p.event} [${state}]</div>`;
-        if(state === "TX") txRisk = true;
-      } else {
-        if(ui.watch.innerText === "Clear") ui.watch.innerHTML = "";
-        ui.watch.innerHTML += `<div class="alert-item watch">${p.event} [${state}]</div>`;
       }
     });
-
-    document.getElementById("gogo").innerText = txRisk ? "ALERT" : "STABLE";
-    document.getElementById("gogo").className = txRisk ? "big warn" : "big ok";
     document.getElementById("timestamp").innerText = "SYNC: " + new Date().toLocaleTimeString();
   } catch(e) { console.error("Sync Error"); }
 }
