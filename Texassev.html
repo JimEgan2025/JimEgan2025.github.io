@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Texas All-Hazards Live OPS Dashboard v9</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root{
+  --bg:#020617; --panel:#0f172a; --border:#1e293b; --text:#e5e7eb;
+  --muted:#94a3b8; --ok:#22c55e; --warn:#dc2626; --watch:#fde047;
+  --risk:#fb923c;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui;}
+header{padding:10px 16px;background:#020617;border-bottom:3px solid var(--risk);display:flex;justify-content:space-between;align-items:center;}
+h1{margin:0;font-size:1.4rem;}
+.grid{display:grid;grid-template-columns:2.5fr 1fr;height:calc(100vh - 56px);}
+#map{height:100%;}
+.side{display:grid;grid-template-rows:repeat(8,1fr);gap:8px;padding:8px;}
+.card{background:var(--panel);border-radius:12px;padding:10px;box-shadow:0 10px 25px rgba(0,0,0,.5);}
+.card h2{margin:0 0 6px;font-size:.9rem;color:var(--risk);}
+.big{font-size:1.6rem;font-weight:800;}
+.small{font-size:.8rem;color:var(--muted);}
+.ok{color:var(--ok);font-weight:700;}
+.warn{color:var(--warn);font-weight:800;}
+.watch{color:var(--watch);font-weight:700;}
+.md-entry{cursor:pointer;margin:2px 0;padding:3px;border-radius:4px;}
+.md-entry:hover{background:#1f2937;}
+button{background:#020617;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;}
+</style>
+</head>
+
+<body>
+<header>
+<h1>🌎 Texas All‑Hazards Live OPS Dashboard v9</h1>
+<div>
+  <button onclick="toggleRadar()">Radar</button>
+  <button onclick="toggleVelocity()">Velocity</button>
+  <button onclick="toggleSPC()">SPC/MD</button>
+  <button onclick="toggleMarine()">Marine</button>
+  <button onclick="toggleTropical()">Tropical</button>
+</div>
+</header>
+
+<div class="grid">
+  <div id="map"></div>
+  <div class="side">
+
+    <div class="card">
+      <h2>GO / NO‑GO STATUS</h2>
+      <div class="big warn" id="gogo">UPDATING…</div>
+      <div class="small" id="gogoDetail">Waiting for live data…</div>
+    </div>
+
+    <div class="card">
+      <h2>SPC Convective Outlook</h2>
+      <div class="big" id="spcRisk">UPDATING…</div>
+      <div class="small" id="spcDetail"></div>
+    </div>
+
+    <div class="card">
+      <h2>Active Warnings</h2>
+      <div id="warnings">UPDATING…</div>
+    </div>
+
+    <div class="card">
+      <h2>Active Watches</h2>
+      <div id="watches">UPDATING…</div>
+    </div>
+
+    <div class="card">
+      <h2>Mesoscale Discussions</h2>
+      <div id="mds">UPDATING…</div>
+    </div>
+
+    <div class="card">
+      <h2>Marine / Coastal Alerts</h2>
+      <div id="marine">UPDATING…</div>
+    </div>
+
+    <div class="card">
+      <h2>Tropical / NHC</h2>
+      <div id="tropical">UPDATING…</div>
+    </div>
+
+    <div class="card">
+      <h2>Overnight / Next‑Shift Risk</h2>
+      <div class="big" id="overnightRisk">EVALUATING…</div>
+      <div class="small" id="overnightDetail"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---------------- MAP ----------------
+const map = L.map('map').setView([30.5, -99],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+
+// Radar & Velocity
+let radar = L.tileLayer.wms(
+  "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
+  {layers:"nexrad-n0r", transparent:true, opacity:.65}
+).addTo(map);
+
+let velocity = L.tileLayer.wms(
+  "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi",
+  {layers:"nexrad-n0q", transparent:true, opacity:.65}
+);
+
+// SPC & MD Layers
+let spcLayer = L.layerGroup().addTo(map);
+
+// Live SPC + Mesoscale Discussions
+async function fetchSPC_MD(){
+  try {
+    const spcResp = await fetch("https://services.spc.noaa.gov/products/outlook/day1otlk.geojson");
+    const spcJson = await spcResp.json();
+
+    spcLayer.clearLayers();
+    document.getElementById("spcRisk").innerText = spcJson.properties.DAY.split(" ")[0];
+    document.getElementById("spcDetail").innerText = spcJson.properties.text.replace(/\n/g," ");
+
+    L.geoJSON(spcJson, {
+      style: f => ({
+        color: "#fb923c", fillOpacity: 0.2, weight: 2
+      })
+    }).addTo(spcLayer);
+
+    // Fetch Mesoscale Discussions
+    const mdResp = await fetch("https://services.spc.noaa.gov/products/md/mdlatest.geojson");
+    const mdJson = await mdResp.json();
+
+    const mdDiv = document.getElementById("mds");
+    mdDiv.innerHTML = "";
+    L.geoJSON(mdJson, {
+      style: f => ({color:"#fbbf24", fillOpacity:0.25, weight:2}),
+      onEachFeature: (feature, layer) => {
+        const id = feature.properties.id;
+        const type = feature.properties["md_product"];
+        const valid = feature.properties["start_time"] + " → " + feature.properties["end_time"];
+        const link = `https://www.spc.noaa.gov/products/md/md${id}.html`;
+
+        layer.bindPopup(`<a href="${link}" target="_blank">MD ${id} — ${type}</a><br>${valid}`);
+        layer.addTo(spcLayer);
+
+        const entry = document.createElement("div");
+        entry.className = "md-entry watch";
+        entry.innerHTML = `MD ${id} — ${type}`;
+        entry.onclick = ()=> window.open(link, "_blank");
+        mdDiv.appendChild(entry);
+      }
+    });
+  } catch (e) {
+    console.error("SPC/MD load error", e);
+  }
+}
+fetchSPC_MD();
+
+// ---------------- ALERTS ----------------
+async function fetchAlerts(){
+  try {
+    const response = await fetch("https://api.weather.gov/alerts/active?area=TX");
+    const alerts = await response.json();
+
+    const warnEl = document.getElementById("warnings");
+    const watchEl = document.getElementById("watches");
+    const marineEl = document.getElementById("marine");
+    const tropEl = document.getElementById("tropical");
+
+    warnEl.innerHTML = ""; watchEl.innerHTML = ""; marineEl.innerHTML = ""; tropEl.innerHTML = "";
+
+    let noGo = false;
+    alerts.features.forEach(a => {
+      const text = a.properties.event;
+      const li = document.createElement("div");
+
+      const key = text.toLowerCase();
+      if(key.includes("warning") && !key.includes("marine") && !key.includes("tropical")){
+        li.className = "warn"; warnEl.appendChild(li); noGo = true;
+      } else if(key.includes("watch")){
+        li.className = "watch"; watchEl.appendChild(li);
+      }
+
+      if(key.includes("marine") || key.includes("gale") || key.includes("storm")){
+        li.className = "watch"; marineEl.appendChild(li); noGo = true;
+      }
+      if(key.includes("tropical") || key.includes("hurricane")){
+        li.className = "warn"; tropEl.appendChild(li); noGo = true;
+      }
+      li.innerText = text;
+    });
+
+    const gogoEl = document.getElementById("gogo");
+    gogoEl.innerText = noGo ? "NO‑GO" : "GO";
+    gogoEl.className = noGo ? "big warn" : "big ok";
+
+  } catch(e) {
+    console.error("Alert poll error", e);
+  }
+}
+fetchAlerts();
+setInterval(fetchAlerts, 300000);
+
+// ---------------- Overnight Risk ----------------
+function evaluateOvernight(){
+  const h = new Date().getHours();
+  const night = (h >= 18 || h <= 6);
+  document.getElementById("overnightRisk").innerText = night ? "ELEVATED" : "MONITOR";
+  document.getElementById("overnightDetail").innerText = night
+    ? "Overnight hazards possible (storms / freeze / coastal)"
+    : "Await daytime hazard evolution";
+}
+evaluateOvernight();
+
+// ---------------- Toggle Functions ----------------
+function toggleRadar(){ map.hasLayer(radar) ? map.removeLayer(radar) : map.addLayer(radar); }
+function toggleVelocity(){ map.hasLayer(velocity) ? map.removeLayer(velocity) : map.addLayer(velocity); }
+function toggleSPC(){ map.hasLayer(spcLayer) ? map.removeLayer(spcLayer) : map.addLayer(spcLayer); }
+function toggleMarine(){ alert("Marine overlay toggle: coming online"); }
+function toggleTropical(){ alert("Tropical overlay toggle: coming online"); }
+</script>
+
+</body>
+</html>
