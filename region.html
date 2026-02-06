@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gulf OPS v11.0 - Texas Regional Focus</title>
+<title>Gulf OPS v11.1 - Texas Regional Mission</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -29,7 +29,7 @@ button.active{background:var(--risk);color:white;border-color:white;}
 <body>
 <header>
   <div style="display:flex; align-items:center; gap:15px;">
-    <h1 style="font-size:1.1rem; margin:0;">REGIONAL OPS <span style="color:var(--risk)">v11.0</span></h1>
+    <h1 style="font-size:1.1rem; margin:0;">REGIONAL OPS <span style="color:var(--risk)">v11.1</span></h1>
     <div id="timestamp">SYNCING LIVE...</div>
   </div>
   <div style="display:flex; gap:5px;">
@@ -42,19 +42,19 @@ button.active{background:var(--risk);color:white;border-color:white;}
 <div class="grid">
   <div id="map"></div>
   <div class="side">
-    <div class="card"><h2>Mission Status (TX Sector)</h2><div class="big" id="gogo">STABLE</div><div class="small" id="gogoDetail">All Land Operations Clear</div></div>
-    <div class="card"><h2>Severe Warnings</h2><div id="warnings" class="small">Scanning...</div></div>
-    <div class="card"><h2>Marine (Gulf Early Warning)</h2><div id="marine" class="small">Scanning...</div></div>
+    <div class="card"><h2>Mission Status (TX Sector)</h2><div class="big" id="gogo">STABLE</div><div class="small" id="gogoDetail">TX Land Ops Clear</div></div>
+    <div class="card"><h2>Severe Warnings</h2><div id="warnings" class="small">Clear</div></div>
+    <div class="card"><h2>Marine (Early Warning)</h2><div id="marine" class="small">Clear</div></div>
     <div class="card" style="flex-grow:1"><h2>Advisories & Watches</h2><div id="watches" class="small">--</div></div>
   </div>
 </div>
 
 <script>
-const map = L.map('map', {zoomControl: false, minZoom: 4}).setView([31.0, -97.0], 6); // Centered on Texas
+const map = L.map('map', {zoomControl: false, minZoom: 4}).setView([31.0, -97.0], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
 const sstLayer = L.tileLayer.wms("https://nowcoast.noaa.gov/arcgis/services/nowcoast/analysis_ocean_sfc_sst_time/MapServer/WmsServer", {
-  layers: "1", format: 'image/png', transparent: true, opacity: 0.5
+  layers: "1", format: 'image/png', transparent: true, opacity: 0.4
 });
 
 const radar = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
@@ -63,11 +63,10 @@ const radar = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nex
 
 const hazardLayer = L.layerGroup().addTo(map);
 
-// REFINED MARINE ZONES: Coordinates for Actual Coastal Areas
+// REFINED GIS COASTAL BOUNDARIES for TX/LA
 const coastPoly = {
   "LA": [[29.7, -93.8], [28.8, -93.8], [28.5, -89.4], [29.3, -89.1], [30.1, -89.6]],
-  "TX-Upper": [[29.7, -94.2], [29.2, -94.7], [28.0, -94.0], [28.5, -93.0]],
-  "TX-Lower": [[28.5, -96.5], [26.0, -97.2], [26.0, -96.5], [28.0, -95.5]],
+  "TX": [[29.7, -94.2], [28.0, -94.0], [26.0, -97.2], [29.5, -94.5]],
   "FL": [[30.4, -87.4], [29.5, -87.4], [29.5, -83.5], [30.1, -83.5]]
 };
 
@@ -87,10 +86,8 @@ async function fetchAlerts() {
       if(a.geometry) {
         let color = k.includes("tornado") ? "#ff0000" : (k.includes("severe") ? "#ffff00" : "#06b6d4");
         L.geoJSON(a, { style: { color: color, weight: 3, fillOpacity: 0.3 } }).addTo(hazardLayer);
-      } else if (k.includes("craft") || k.includes("gale") || k.includes("marine")) {
-        // Map the alert to the refined coastline polygons
-        let poly = coastPoly[state];
-        if (state === "TX") poly = coastPoly["TX-Upper"]; // Default to upper for simplicity
+      } else if (k.includes("craft") || k.includes("marine")) {
+        const poly = coastPoly[state];
         if(poly) L.polygon(poly, {color: '#06b6d4', fillOpacity: 0.4, weight: 1}).addTo(hazardLayer);
       }
 
@@ -107,10 +104,10 @@ async function fetchAlerts() {
       }
     });
 
-    document.getElementById("gogo").innerText = txRisk ? "STORM ALERT" : "STABLE";
+    document.getElementById("gogo").innerText = txRisk ? "ALERT" : "STABLE";
     document.getElementById("gogo").className = txRisk ? "big warn" : "big ok";
     document.getElementById("timestamp").innerText = "SYNC: " + new Date().toLocaleTimeString();
-  } catch(e) { console.error("Alert Sync Error"); }
+  } catch(e) { console.error("Sync Error"); }
 }
 
 function toggleLayer(type, btn) {
