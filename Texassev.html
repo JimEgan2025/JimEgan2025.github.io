@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Texas All-Hazards Live OPS Dashboard v11</title>
+<title>Texas All-Hazards Live OPS Dashboard v14</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -37,10 +37,9 @@ img{border-radius:8px;max-width:100%;}
 
 <body>
 <header>
-<h1>🌎 Texas All-Hazards Live OPS Dashboard v11</h1>
+<h1>🌎 Texas All-Hazards Live OPS Dashboard v14</h1>
 <div>
   <button onclick="toggleRadar()">Radar</button>
-  <button onclick="toggleVelocity()">Velocity</button>
 </div>
 </header>
 
@@ -99,16 +98,29 @@ img{border-radius:8px;max-width:100%;}
 const map = L.map('map').setView([30.5, -99],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
 
-// Radar & Velocity
-let radar = L.tileLayer.wms(
-  "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
-  {layers:"nexrad-n0r", transparent:true, opacity:.65}
-).addTo(map);
+// ---------------- Live Radar (RainViewer) ----------------
+let radar;
+async function loadRadar(){
+  try {
+    // Fetch RainViewer JSON to get latest timestamp
+    const resp = await fetch('https://tilecache.rainviewer.com/api/maps.json');
+    const data = await resp.json();
+    const frames = data.radar.past;
+    if(!frames || frames.length===0) return console.warn("No radar frames found");
+    const latestFrame = frames[frames.length-1].time; // latest radar timestamp
 
-let velocity = L.tileLayer.wms(
-  "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0q.cgi",
-  {layers:"nexrad-n0q", transparent:true, opacity:.65}
-);
+    // Remove old layer if exists
+    if(radar) map.removeLayer(radar);
+
+    radar = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latestFrame}/{z}/{x}/{y}/2/1_1.png`,{
+      attribution:'Radar © RainViewer',
+      opacity:0.6
+    }).addTo(map);
+  } catch(e){
+    console.error("Radar load error:", e);
+    setTimeout(loadRadar,5000);
+  }
+}
 
 // ---------------- FETCH LIVE ALERTS ----------------
 async function fetchAlerts(){
@@ -183,10 +195,11 @@ function evaluateOvernight(){
 }
 
 // ---------------- TOGGLE LAYERS ----------------
-function toggleRadar(){ map.hasLayer(radar)?map.removeLayer(radar):map.addLayer(radar); }
-function toggleVelocity(){ map.hasLayer(velocity)?map.removeLayer(velocity):map.addLayer(velocity); }
+function toggleRadar(){ if(radar) map.hasLayer(radar)?map.removeLayer(radar):map.addLayer(radar); }
 
 // ---------------- INITIAL LOAD ----------------
+loadRadar();
+setInterval(loadRadar,120000); // refresh radar every 2 min
 fetchAlerts(); evaluateOvernight();
 setInterval(fetchAlerts,300000); // 5 min
 setInterval(evaluateOvernight,3600000); // 1 hr
@@ -194,5 +207,6 @@ setInterval(evaluateOvernight,3600000); // 1 hr
 
 </body>
 </html>
+
 
 
