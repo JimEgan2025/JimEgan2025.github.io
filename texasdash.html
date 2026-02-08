@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Texas Weather Dashboard</title>
+<style>
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; margin:0; padding:20px; background:#f0f2f5; color:#1f2937;}
+.container { max-width:1200px; margin:0 auto;}
+header { background:#1e3a8a; color:#fff; padding:1rem 1.5rem; border-radius:12px; margin-bottom:2rem; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);}
+header h1 { margin:0; font-size:1.8rem;}
+.tabs { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;}
+.tab { padding:0.5rem 1rem; border-radius:6px; background:#e5e7eb; cursor:pointer;}
+.tab.active { background:#1e3a8a; color:#fff;}
+.content { display:none; }
+.content.active { display:block; }
+.card { background:#fff; padding:1rem; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:1rem;}
+.sub-obs { font-size:1rem; color:#6b7280; line-height:1.5; }
+.forecast-item { border-bottom:1px solid #f3f4f6; padding:0.5rem 0; }
+.forecast-header { display:flex; justify-content:space-between; }
+.afd-summary-box { background:#fffbeb; border-left:4px solid #f59e0b; padding:0.5rem; margin-bottom:0.5rem; border-radius:0 4px 4px 0;}
+.afd-toggle-btn { margin-top:0.25rem; padding:0.25rem 0.5rem; font-size:0.85rem; border-radius:4px; border:1px solid #d1d5db; background:#f9fafb; cursor:pointer;}
+.radar-container img, .satellite-container img, .surface-container img { width:100%; border-radius:8px; }
+.error-msg { color:#dc2626; background:#fee2e2; padding:0.5rem; border-radius:4px; font-size:0.9rem;}
+.alert-badge { display:inline-block; padding:0.2rem 0.4rem; margin:0.1rem; border-radius:4px; background:#f87171; color:#fff; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Texas Weather Dashboard</h1>
+  </header>
+  <div class="tabs" id="tabsContainer"></div>
+  <div id="contentContainer"></div>
+</div>
+
+<script>
+const CITIES = [
+  { name:'Texas Summary', code:'TX', type:'summary' },
+  { name:'Austin/San Antonio', code:'EWX', lat:30.2672, lon:-97.7431, radar:'KEWX', type:'city' },
+  { name:'Houston', code:'HGX', lat:29.7604, lon:-95.3698, radar:'KHGX', type:'city' },
+  { name:'Dallas/Fort Worth', code:'FWD', lat:32.7767, lon:-96.7970, radar:'KFWS', type:'city' },
+  { name:'El Paso', code:'EPZ', lat:31.7619, lon:-106.4850, radar:'KEPZ', type:'city' },
+  { name:'Amarillo', code:'AMA', lat:35.2210, lon:-101.8313, radar:'KAMA', type:'city' },
+  { name:'Brownsville', code:'BRO', lat:25.9017, lon:-97.4975, radar:'KBRO', type:'city' },
+  { name:'Corpus Christi', code:'CRP', lat:27.8006, lon:-97.3964, radar:'KCRP', type:'city' },
+  { name:'San Angelo', code:'SJT', lat:31.4638, lon:-100.4370, radar:'KSJT', type:'city' },
+  { name:'Beaumont', code:'LCH', lat:30.0802, lon:-94.1266, radar:'KLCH', type:'city' },
+  { name:'Lubbock', code:'LUB', lat:33.5779, lon:-101.8552, radar:'KLBB', type:'city' },
+  { name:'Midland', code:'MAF', lat:31.9974, lon:-102.0779, radar:'KMAF', type:'city' },
+  { name:'Texarkana', code:'SHV', lat:33.4251, lon:-94.0477, radar:'KSHV', type:'city' }
+];
+
+const HEADERS = {'User-Agent':'TexasWeatherDash/1.0 (Jim.egan@gmail.com)','Accept':'application/geo+json'};
+let currentTab = 0;
+
+function init() {
+  const tabs = document.getElementById('tabsContainer');
+  const content = document.getElementById('contentContainer');
+
+  // Create tabs and content immediately
+  CITIES.forEach((city,i)=>{
+    const tab = document.createElement('div'); 
+    tab.className='tab'+(i===0?' active':''); 
+    tab.textContent=city.name;
+    tab.addEventListener('click',()=>switchTab(i)); 
+    tabs.appendChild(tab);
+
+    const cont = document.createElement('div'); 
+    cont.className='content'+(i===0?' active':''); 
+    cont.id='content-'+i; 
+    content.appendChild(cont);
+  });
+
+  // Load data asynchronously for all cities
+  CITIES.forEach((city,i)=>loadCityDataAsync(city,i));
+
+  // Refresh every 10 minutes
+  setInterval(()=>CITIES.forEach((city,i)=>loadCityDataAsync(city,i)), 600000);
+}
+
+function switchTab(idx){
+  currentTab=idx;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i==idx));
+  document.querySelectorAll('.content').forEach((c,i)=>c.classList.toggle('active',i==idx));
+}
+
+async function loadCityDataAsync(city,idx){
+  const container=document.getElementById('content-'+idx);
+  container.innerHTML='';
+
+  if(city.type==='summary'){
+    container.innerHTML='<p>Loading Texas summary...</p>';
+    await loadTexasSummary(container);
+    return;
+  }
+
+  // Create placeholders immediately
+  const obsCard=document.createElement('div'); obsCard.className='card';
+  obsCard.innerHTML=`<h2>Current Conditions</h2><div id="currentObs-${idx}" class="sub-obs">Loading...</div>`;
+  const forecastCard=document.createElement('div'); forecastCard.className='card';
+  forecastCard.innerHTML=`<h2>7-Day Forecast</h2><div id="forecast-${idx}">Loading...</div>`;
+  const radarCard=document.createElement('div'); radarCard.className='card radar-container';
+  radarCard.innerHTML=`<h2>Radar</h2><img id="radar-${idx}" alt="Radar">`;
+  const afdCard=document.createElement('div'); afdCard.className='card';
+  afdCard.innerHTML=`<h2>AFD Highlights</h2><div id="afdSummary-${idx}">Loading...</div><button class="afd-toggle-btn" id="afdBtn-${idx}">Show Full AFD</button><pre id="afdFull-${idx}" style="display:none;">Loading...</pre>`;
+
+  container.append(obsCard,forecastCard,radarCard,afdCard);
+
+  // Load everything in parallel
+  loadCurrentConditions(city,idx);
+  loadForecast(city,idx);
+  loadAFD(city,idx);
+
+  // Load radar asynchronously
+  const radarImg = document.getElementById(`radar-${idx}`);
+  radarImg.src = `https://radar.weather.gov/ridge/standard/${city.radar}_loop.gif?t=${Date.now()}`;
+  radarImg.onload = ()=>{}; // optional: remove loading spinner
+
+  // Fetch active alerts asynchronously
+  (async()=>{
+    try{
+      const alertsResp = await fetch(`https://api.weather.gov/alerts/active?office=${city.code}`);
+      const alertsData = await alertsResp.json();
+      const officeAlerts = alertsData.features.map(a=>a.properties.event);
+      if(officeAlerts.length){
+        obsCard.innerHTML += '<p><b>Active Watches/Warnings/Advisories:</b></p><ul>'
+          + officeAlerts.map(a=>`<li class="alert-badge">${a}</li>`).join('') + '</ul>';
+      }
+    }catch{}
+  })();
+}
+
+async function loadCurrentConditions(city,idx){
+  try{
+    const points=await fetchNWS(`https://api.weather.gov/points/${city.lat},${city.lon}`);
+    const stationsUrl=points.properties.observationStations;
+    const stations=await fetchNWS(stationsUrl);
+    const stationId=stations.features[0].id;
+    const obs=await fetchNWS(`${stationId}/observations/latest`);
+    const p=obs.properties;
+    const temp=p.temperature.value!=null?(p.temperature.value*9/5+32).toFixed(0):'--';
+    const dew=p.dewpoint.value!=null?(p.dewpoint.value*9/5+32).toFixed(0):'--';
+    const wind=p.windSpeed.value!=null?Math.round(p.windSpeed.value*0.621371):0;
+    const dir=getWindDir(p.windDirection.value);
+    document.getElementById(`currentObs-${idx}`).innerHTML=`<b>${p.textDescription||'N/A'}</b><br>Temp: ${temp}°F<br>Dewpoint: ${dew}°F<br>Wind: ${dir} ${wind} mph<br>Humidity: ${p.relativeHumidity?.value!=null?Math.round(p.relativeHumidity.value):'--'}%`;
+  }catch{ document.getElementById(`currentObs-${idx}`).innerHTML='Obs unavailable'; }
+}
+
+async function loadForecast(city,idx){
+  try{
+    const points=await fetchNWS(`https://api.weather.gov/points/${city.lat},${city.lon}`);
+    const forecastUrl=points.properties.forecast;
+    const data=await fetchNWS(forecastUrl);
+    const periods=data.properties.periods.slice(0,8);
+    document.getElementById(`forecast-${idx}`).innerHTML=periods.map(p=>`<div class="forecast-item"><div class="forecast-header"><span>${p.name}</span><span>${p.temperature}°${p.temperatureUnit}</span></div><div>${p.detailedForecast}</div></div>`).join('');
+  }catch{ document.getElementById(`forecast-${idx}`).innerHTML='<div class="error-msg">Forecast unavailable</div>'; }
+}
+
+async function loadAFD(city,idx){
+  try{
+    const url=`https://forecast.weather.gov/product.php?site=${city.code}&issuedby=${city.code}&product=AFD&format=txt&version=1`;
+    const resp=await fetch(url); const txt=await resp.text();
+    let parser=new DOMParser(); let doc=parser.parseFromString(txt,'text/html');
+    let rawText=doc.querySelector('pre')?doc.querySelector('pre').textContent:doc.body.textContent;
+    const highlights=parseAFDBullets(rawText);
+    document.getElementById(`afdSummary-${idx}`).innerHTML=highlights.map(h=>`<div class="afd-summary-box">${h}</div>`).join('')||'No highlights';
+    const full=document.getElementById(`afdFull-${idx}`); full.textContent=rawText;
+    document.getElementById(`afdBtn-${idx}`).addEventListener('click',()=>{ full.style.display=full.style.display==='none'?'block':'none'; });
+  }catch{ document.getElementById(`afdSummary-${idx}`).innerHTML='AFD unavailable'; }
+}
+
+function parseAFDBullets(text){
+  let bullets=[]; const keyMsg=text.match(/\.KEY MESSAGES\.\.\.([\s\S]*?)(?=\.\w+|\n\n&&)/i);
+  if(keyMsg){ bullets=keyMsg[1].split(/[\n•*-]+/).map(s=>s.trim()).filter(s=>s.length>10); }
+  if(!bullets.length){ const syn=text.match(/\.SYNOPSIS\.\.\.([\s\S]*?)(?=\.\w+)/i); 
+    if(syn){ bullets = syn[1].replace(/\n/g,' ').split('. ').map(s=>s.trim()).filter(s=>s.length>10); } 
+  }
+  return bullets;
+}
+
+async function loadTexasSummary(container){
+  container.innerHTML='';
+
+  const radarCard = document.createElement('div'); 
+  radarCard.className='card radar-container';
+  radarCard.innerHTML = `
+    <h2>Texas Radar</h2>
+    <img src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/state_tx_anim.gif?t=${Date.now()}" alt="Texas Radar">
+  `;
+  const satelliteCard = document.createElement('div'); 
+  satelliteCard.className='card satellite-container';
+  satelliteCard.innerHTML = `
+    <h2>Southern Plains Satellite</h2>
+    <img src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/latest.jpg?t=${Date.now()}" alt="Satellite">
+  `;
+  container.append(radarCard, satelliteCard);
+
+  // Load AFD highlights for all offices asynchronously
+  CITIES.slice(1).forEach(async city=>{
+    const cityCard = document.createElement('div'); cityCard.className='card';
+    cityCard.innerHTML = `<h3>${city.name} (${city.code})</h3><div>Loading AFD...</div>`;
+    container.appendChild(cityCard);
+
+    try {
+      const url=`https://forecast.weather.gov/product.php?site=${city.code}&issuedby=${city.code}&product=AFD&format=txt&version=1`;
+      const resp = await fetch(url); const txt = await resp.text();
+      const match = txt.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+      const rawText = match ? match[1] : txt;
+
+      let bullets = [];
+      const keyMsg = rawText.match(/\.KEY MESSAGES\.\.\.([\s\S]*?)(?=\.\w+|\n\n&&)/i);
+      if(keyMsg){ bullets = keyMsg[1].split(/[\n•*-]+/).map(s=>s.trim()).filter(s=>s.length>10); }
+      if(!bullets.length){ const syn = rawText.match(/\.SYNOPSIS\.\.\.([\s\S]*?)(?=\.\w+)/i); 
+        if(syn){ bullets = syn[1].replace(/\n/g,' ').split('. ').map(s=>s.trim()).filter(s=>s.length>10); } 
+      }
+      if(bullets.length){ cityCard.innerHTML = `<h3>${city.name} (${city.code})</h3><ul>`+bullets.map(b=>`<li>${b}</li>`).join('')+'</ul>'; } else { cityCard.innerHTML = `<h3>${city.name} (${city.code})</h3><p>No AFD highlights</p>`; }
+    } catch{ cityCard.innerHTML = `<h3>${city.name} (${city.code})</h3><p class="error-msg">AFD unavailable</p>`; }
+  });
+}
+
+function getWindDir(degrees){ if(degrees==null)return''; const val=Math.floor((degrees/22.5)+0.5); const arr=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return arr[val%16]; }
+async function fetchNWS(url){ const resp=await fetch(url,{headers:HEADERS}); if(!resp.ok)throw new Error(`HTTP ${resp.status}`); return await resp.json(); }
+
+init();
+</script>
+</body>
+</html>
