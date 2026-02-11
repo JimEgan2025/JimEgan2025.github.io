@@ -3,442 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GTU Command Center v20</title>
+    <title>GTU Command Center v20.7</title>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    
-    <!-- Leaflet (Local Radar) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         :root { 
-            --bg: #121212; 
-            --card: #1e1e24; 
-            --text: #e0e0e0; 
-            --accent: #00d2d3;
-            --danger: #ff5252;
-            --warning: #ff9f43;
-            --safe: #2ecc71;
-            --hot: #ff6b6b;
-            --cold: #4ecdc4;
+            --bg: #121212; --card: #1e1e24; --text: #e0e0e0; --accent: #00d2d3;
+            --danger: #ff5252; --warning: #ff9f43; --safe: #2ecc71;
         }
-        body { 
-            background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; 
-            margin: 0; padding: 20px; 
-        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        header { text-align: center; margin-bottom: 10px; }
         
-        header { text-align: center; margin-bottom: 20px; }
-        h1 { margin: 0; font-weight: 300; letter-spacing: 2px; }
+        #alert-banner { background:#1e1e24; color:#aaa; text-align:center; padding:12px; font-weight:bold; margin: 5px auto; max-width:1200px; border-radius:5px; border: 1px solid #333; display:none; }
 
-        /* LIVE STATUS BAR */
-        .status-bar {
-            display: flex; justify-content: center; gap: 30px;
-            background: #2d3436; padding: 20px; border-radius: 8px;
-            max-width: 900px; margin: 20px auto; border: 1px solid #444;
-            flex-wrap: wrap; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .stat-item { text-align: center; min-width: 100px; }
-        .stat-val { font-size: 1.8rem; font-weight: bold; color: #fff; display: block; }
-        .stat-label { font-size: 0.8rem; color: var(--accent); text-transform: uppercase; }
-        .source-badge { background: #0984e3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; font-weight: bold; vertical-align:middle;}
+        .status-bar { display: flex; justify-content: center; gap: 20px; background: #2d3436; padding: 15px; border-radius: 8px; max-width: 900px; margin: 10px auto; border: 1px solid #444; flex-wrap: wrap; }
+        .stat-item { text-align: center; min-width: 80px; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #fff; display: block; }
+        .stat-label { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; }
 
-        /* NAV */
-        nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn {
-            background: #2d3436; border: 1px solid #444; color: #aaa;
-            padding: 10px 15px; cursor: pointer; font-weight: bold; border-radius: 4px;
-            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; font-size: 0.9rem;
-        }
+        nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { background: #2d3436; border: 1px solid #444; color: #aaa; padding: 8px 14px; cursor: pointer; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem; }
         .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* GRID SYSTEM */
-        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 98%; margin: 0 auto; }
-        .card { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.5); border: 1px solid #333; display: flex; flex-direction: column; }
-        .full-width { grid-column: 1 / -1; }
-        .card-header { border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-        .meta { font-size: 0.9rem; color: #aaa; font-weight: normal; }
-        canvas { width: 100% !important; height: 350px !important; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .card { background: var(--card); border-radius: 10px; padding: 15px; border: 1px solid #333; height: 380px; display: flex; flex-direction: column; }
+        .full-width { grid-column: 1 / -1; height: auto; min-height: 400px; margin-bottom: 15px; }
+        .card-header { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; font-size: 1rem; font-weight: bold; color: #fff; }
+        
+        /* Fixed Chart Bug: Pointer-events must be auto for tooltips to work */
+        .chart-wrapper { flex-grow: 1; position: relative; min-height: 0; width: 100%; pointer-events: auto; }
+        canvas { width: 100% !important; height: 100% !important; }
 
-        /* ALMANAC TABLES */
-        .almanac-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .alm-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: center; }
-        .alm-title { color: var(--accent); font-weight: bold; margin-bottom: 15px; display: block; text-transform: uppercase; font-size: 0.9rem; border-bottom: 1px solid #444; padding-bottom: 10px;}
-        .alm-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .alm-val { font-weight: bold; }
-        .val-high { color: var(--hot); }
-        .val-low { color: var(--cold); }
-        .val-rain { color: #3498db; }
-
-        /* --- NEW RADAR WALL & SAT STYLES --- */
-        .wall-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
-        }
-        .wall-panel { 
-            background: #000; border: 1px solid #444; border-radius: 8px; overflow: hidden; 
-            height: 600px; display: flex; flex-direction: column;
-        }
-        .wall-header { 
-            padding: 8px 12px; font-size: 0.85rem; font-weight: bold; background: #2d3436; 
-            border-bottom: 1px solid #444; display: flex; justify-content: space-between; 
-        }
-        .wall-header span { color: var(--accent); font-family: monospace; }
-        .wall-content { flex-grow: 1; position: relative; }
+        .wall-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .wall-panel { background: #000; border: 1px solid #444; border-radius: 8px; overflow: hidden; height: 500px; display: flex; flex-direction: column; }
+        .wall-header { padding: 10px; font-size: 0.8rem; font-weight: bold; background: #2d3436; display: flex; justify-content: space-between; cursor: pointer; }
+        
         iframe { width: 100%; height: 100%; border: none; }
-        img.sat-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-        /* Local Radar Map */
-        #map { height: 600px; width: 100%; background: #111; border-radius: 8px; }
-        .radar-controls { margin-top: 15px; text-align: center; }
-        .btn { background: var(--accent); color: #000; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #map { height: 75vh; width: 100%; background: #111; border-radius: 8px; border: 1px solid #333; }
+        .sat-img { width: 100%; height: 100%; object-fit: contain; background: #000; cursor: zoom-in; }
+        
+        /* Fullscreen Support */
+        .wall-panel:fullscreen, .sat-img:fullscreen { background: #000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>GTU Command Center</h1>
-    <div style="color:#888;">Complete Meteorological Suite</div>
-</header>
+<header><h1>GTU COMMAND CENTER</h1></header>
+<div id="alert-banner"></div>
 
 <div class="status-bar">
-    <div class="stat-item"><span class="stat-val" id="live-temp">--°</span><span class="stat-label">Temp <span id="source-badge" class="source-badge">Locating...</span></span></div>
-    <div class="stat-item"><span class="stat-val" id="live-dew">--°</span><span class="stat-label">Dewpoint</span></div>
-    <div class="stat-item"><span class="stat-val" id="live-pressure">-- mb</span><span class="stat-label">Pressure</span></div>
+    <div class="stat-item"><span class="stat-val" id="live-temp">--°</span><span class="stat-label">Temp</span></div>
+    <div class="stat-item"><span class="stat-val" id="live-dew">--°</span><span class="stat-label">Dew</span></div>
+    <div class="stat-item"><span class="stat-val" id="live-pressure">-- mb</span><span class="stat-label">Baro</span></div>
     <div class="stat-item"><span class="stat-val" id="live-wind">--</span><span class="stat-label">Wind</span></div>
 </div>
 
 <nav>
-    <button class="tab-btn active" onclick="switchTab('tab-short')">Short Range</button>
-    <button class="tab-btn" onclick="switchTab('tab-long')">Long Range</button>
-    <button class="tab-btn" onclick="switchTab('tab-almanac')">Almanac</button>
-    <button class="tab-btn" onclick="switchTab('tab-localradar')">Local Radar</button>
-    <button class="tab-btn" onclick="switchTab('tab-radarwall')">TX Radar Wall</button>
-    <button class="tab-btn" onclick="switchTab('tab-sat')">Sat Analysis</button>
+    <button class="tab-btn active" onclick="switchTab('tab-short', this)">Short Range</button>
+    <button class="tab-btn" onclick="switchTab('tab-long', this)">Long Range</button>
+    <button class="tab-btn" onclick="switchTab('tab-localradar', this)">Local Radar</button>
+    <button class="tab-btn" onclick="switchTab('tab-radarwall', this)">TX Radar Wall</button>
+    <button class="tab-btn" onclick="switchTab('tab-sat', this)">Sat Analysis</button>
 </nav>
 
-<!-- TAB 1: SHORT RANGE -->
 <div id="tab-short" class="tab-content active">
     <div class="container">
-        <!-- 1. Wind -->
-        <div class="card"><div class="card-header"><span>1. Wind & Fronts</span><span class="meta">Yellow Arrows = Direction</span></div><canvas id="windChart"></canvas></div>
-        <!-- 2. Temp -->
-        <div class="card"><div class="card-header"><span>2. Comfort & Moisture</span><span class="meta">Orange = Heat Index</span></div><canvas id="tempChart"></canvas></div>
-        <!-- 3. Precip -->
-        <div class="card"><div class="card-header"><span>3. Precip Timing</span><span class="meta">Chance % vs Amount</span></div><canvas id="precipChart"></canvas></div>
-        <!-- 4. Severe -->
-        <div class="card"><div class="card-header"><span>4. Severe Potential</span><span class="meta">CAPE / CIN / LI</span></div><canvas id="capeChart"></canvas></div>
-        <!-- 5. Sky -->
-        <div class="card full-width"><div class="card-header"><span>5. Sky & Aviation</span><span class="meta">Cloud Cover (Gray) • Ceiling (Purple) • Vis (Green)</span></div><canvas id="skyChart" style="height: 300px !important;"></canvas></div>
-        <!-- 6. Pressure -->
-        <div class="card full-width"><div class="card-header"><span>6. Pressure Trend</span><span class="meta">Frontal Passage Tracker</span></div><canvas id="pressChart" style="height: 250px !important;"></canvas></div>
+        <div class="card"><div class="card-header">Wind & Gusts</div><div class="chart-wrapper"><canvas id="windChart"></canvas></div></div>
+        <div class="card"><div class="card-header">Temp & Dewpoint</div><div class="chart-wrapper"><canvas id="tempChart"></canvas></div></div>
+        <div class="card"><div class="card-header">Rain Probability</div><div class="chart-wrapper"><canvas id="precipChart"></canvas></div></div>
+        <div class="card"><div class="card-header">CAPE (Instability)</div><div class="chart-wrapper"><canvas id="capeChart"></canvas></div></div>
     </div>
 </div>
 
-<!-- TAB 2: LONG RANGE -->
 <div id="tab-long" class="tab-content">
     <div class="container">
-        <div class="card full-width"><div class="card-header"><span>16-Day Temp Trend (GFS)</span><span class="meta">Look for Cold Fronts</span></div><canvas id="gfsTempChart" style="height: 400px !important;"></canvas></div>
-        <div class="card full-width"><div class="card-header"><span>16-Day Precip Outlook (GFS)</span><span class="meta">Accumulated Rainfall</span></div><canvas id="gfsRainChart" style="height: 300px !important;"></canvas></div>
+        <div class="card full-width"><div class="card-header">16-Day Temp Trend</div><div class="chart-wrapper"><canvas id="gfsTempChart"></canvas></div></div>
+        <div class="card full-width"><div class="card-header">16-Day Rain (Accumulated)</div><div class="chart-wrapper"><canvas id="gfsRainChart"></canvas></div></div>
     </div>
 </div>
 
-<!-- TAB 3: ALMANAC -->
-<div id="tab-almanac" class="tab-content">
-    <div class="container">
-        <div class="card full-width">
-            <div class="card-header"><span>Daily Weather Report Data</span><span class="meta">Observed vs Forecast</span></div>
-            <div class="almanac-grid">
-                <div class="alm-box" style="border-left: 4px solid #aaa;"><span class="alm-title">YESTERDAY (OBSERVED)</span>
-                    <div class="alm-row"><span>High:</span> <span class="val-high" id="hist-high">--°</span></div>
-                    <div class="alm-row"><span>Low:</span> <span class="val-low" id="hist-low">--°</span></div>
-                    <div class="alm-row"><span>Rain:</span> <span class="val-rain" id="hist-rain">-- in</span></div>
-                    <div class="alm-row"><span>Wind:</span> <span class="alm-val" id="hist-wind">-- mph</span></div>
-                </div>
-                <div class="alm-box" style="border-left: 4px solid var(--accent);"><span class="alm-title">TODAY (FORECAST)</span>
-                    <div class="alm-row"><span>High:</span> <span class="val-high" id="fcst-high">--°</span></div>
-                    <div class="alm-row"><span>Low:</span> <span class="val-low" id="fcst-low">--°</span></div>
-                    <div class="alm-row"><span>Rain:</span> <span class="val-rain" id="fcst-rain">-- in</span></div>
-                    <div class="alm-row"><span>Wind:</span> <span class="alm-val" id="fcst-wind">-- mph</span></div>
-                </div>
-                <div class="alm-box" style="border-left: 4px solid #3498db;"><span class="alm-title">7-DAY RAIN TOTAL</span>
-                    <div class="alm-row" style="justify-content:center; font-size:3.5rem; color:#3498db; border:none;"><span id="rain-7day">--</span><span style="font-size:1.5rem; margin-top:25px;">in</span></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- TAB 4: LOCAL RADAR (Interactive) -->
 <div id="tab-localradar" class="tab-content">
-    <div class="card full-width">
-        <div class="card-header"><span>Live Local Radar Loop</span><span class="meta" id="radar-time">Loading...</span></div>
-        <div class="card-body" style="padding:0;"><div id="map"></div></div>
-        <div class="radar-controls"><button class="btn" onclick="toggleRadar()">⏯ Play / Pause</button></div>
-    </div>
+    <div class="full-width"><div id="map"></div></div>
 </div>
 
-<!-- TAB 5: TX RADAR WALL (NWS Grid) -->
-<div id="tab-radarwall" class="tab-content">
-    <div class="container" style="max-width:100%;">
-        <div class="card full-width">
-            <div class="card-header">
-                <span>Texas Radar Wall</span>
-                <span class="meta">Official NWS Station Feeds</span>
-                <button class="btn" style="font-size:0.7rem; padding:4px 8px;" onclick="initRadarWall()">Reload Feeds</button>
-            </div>
-            <div class="wall-grid" id="radar-wall-container">
-                <div style="text-align:center; grid-column:1/-1; padding:50px; color:#aaa;">
-                    Click "TX Radar Wall" tab to load feeds...
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<div id="tab-radarwall" class="tab-content"><div class="wall-grid" id="radar-wall-container"></div></div>
 
-<!-- TAB 6: SATELLITE ANALYSIS (GOES-19) -->
 <div id="tab-sat" class="tab-content">
-    <div class="container" style="max-width:100%;">
-        <div class="wall-grid">
-            <div class="wall-panel">
-                <div class="wall-header">True Color / Night IR <span>GEOCOLOR</span></div>
-                <div class="wall-content"><img class="sat-img" id="sat-vis" src=""></div>
-            </div>
-            <div class="wall-panel">
-                <div class="wall-header">Clean Infrared (Cloud Tops) <span>BAND 13</span></div>
-                <div class="wall-content"><img class="sat-img" id="sat-ir" src=""></div>
-            </div>
-            <div class="wall-panel">
-                <div class="wall-header">Water Vapor (Moisture) <span>BAND 08</span></div>
-                <div class="wall-content"><img class="sat-img" id="sat-wv" src=""></div>
-            </div>
-            <div class="wall-panel">
-                <div class="wall-header">Lightning Density <span>GLM EXTENT3</span></div>
-                <div class="wall-content"><img class="sat-img" id="sat-lgt" src=""></div>
-            </div>
-        </div>
+    <div class="wall-grid">
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Visible</div><img id="sat-vis" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">IR</div><img id="sat-ir" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Vapor</div><img id="sat-wv" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Lightning</div><img id="sat-lgt" class="sat-img" onclick="toggleExpand(this)"></div>
     </div>
 </div>
 
 <script>
-    const LAT = 30.678; const LON = -97.679;
-    
-    // API 1: Short Range
-    const HRRR_API = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,dewpoint_2m,precipitation,precipitation_probability,surface_pressure,cloud_cover,visibility,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cape,lifted_index,convective_inhibition&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&length_unit=imperial&timezone=auto&forecast_days=2`;
-    // API 2: Long Range
-    const GFS_API = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=16&models=gfs_seamless`;
-    // API 3: History
-    const HISTORY_API = `https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_gusts_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&past_days=7`;
+    const LAT = 30.678, LON = -97.679;
+    const TX_OFFICES = [
+        {id:'kgrk', n:'Central TX'}, {id:'kewx', n:'Austin/SA'}, {id:'kfws', n:'Dallas/FW'},
+        {id:'khgx', n:'Houston'}, {id:'kcrp', n:'Corpus Christi'}, {id:'kbro', n:'Brownsville'},
+        {id:'ksjt', n:'San Angelo'}, {id:'kdyx', n:'Abilene'}, {id:'kmaf', n:'Midland'},
+        {id:'klub', n:'Lubbock'}, {id:'kama', n:'Amarillo'}, {id:'kepz', n:'El Paso'}, {id:'kshv', n:'Shreveport'}
+    ];
 
-    // Global Vars
-    let charts = {};
-    let radarMap;
-    let radarLayers={}, radarStamps=[], radarIdx=0, radarTimer=false;
-    let mapsInitialized = { radar: false, wall: false };
+    let charts = {}, radarMap;
+
+    // GLOBAL CHART SETTINGS FOR TOOLTIPS
+    Chart.defaults.interaction.mode = 'index';
+    Chart.defaults.interaction.intersect = false;
+    Chart.defaults.plugins.tooltip.enabled = true;
 
     async function init() {
-        fetchLiveConditions();
-        fetchHRRR();
-        fetchGFS();
-        fetchHistory();
-        // Sat images load immediately as they are static images
-        refreshSatImages();
+        await fetchLiveConditions(); 
+        fetchHRRR(); 
+        fetchGFS(); 
+        refreshSat(); 
+        initRadarWall();
+        fetchAlerts();
+        setInterval(fetchAlerts, 300000);
+        setInterval(refreshSat, 600000);
     }
 
-    function switchTab(id) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        
-        // Highlight active button
-        const btns = document.querySelectorAll('.tab-btn');
-        if(id==='tab-short') btns[0].classList.add('active');
-        if(id==='tab-long') btns[1].classList.add('active');
-        if(id==='tab-almanac') btns[2].classList.add('active');
-        
-        if(id==='tab-localradar') {
-            btns[3].classList.add('active');
-            setTimeout(() => { if(!mapsInitialized.radar) initLocalRadar(); else radarMap.invalidateSize(); }, 100);
-        }
-        if(id==='tab-radarwall') {
-            btns[4].classList.add('active');
-            if(!mapsInitialized.wall) initRadarWall();
-        }
-        if(id==='tab-sat') {
-            btns[5].classList.add('active');
-            refreshSatImages();
-        }
+    function mkChart(id, type, labels, datasets) {
+        if(charts[id]) charts[id].destroy();
+        const ctx = document.getElementById(id).getContext('2d');
+        charts[id] = new Chart(ctx, {
+            type,
+            data: { labels, datasets },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#aaa', font: { size: 10 } } } },
+                scales: { 
+                    x: { ticks: { color: '#888', font: { size: 9 } }, grid: { color: '#333' } },
+                    y: { ticks: { color: '#888', font: { size: 9 } }, grid: { color: '#333' } }
+                }
+            }
+        });
     }
 
-    // --- CHART FACTORY ---
-    function getCommonOpts() {
-        return {
-            responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            scales: { x: { ticks:{color:'#aaa'}, grid:{color:'#333'} }, y: { ticks:{color:'#aaa'}, grid:{color:'#333'} } },
-            plugins: { 
-                legend: { labels: { color: '#fff' } },
-                tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.9)', titleColor: '#fff', bodyFont: { size: 14 } }
-            },
-            elements: { point: { hitRadius: 20, hoverRadius: 10 } }
-        };
-    }
-
-    // --- FETCHES & RENDERERS ---
     async function fetchHRRR() {
-        try {
-            const res = await fetch(HRRR_API);
-            const data = await res.json();
-            renderShortRange(data.hourly);
-            document.getElementById('fcst-high').innerText = Math.round(data.daily.temperature_2m_max[0]) + "°";
-            document.getElementById('fcst-low').innerText = Math.round(data.daily.temperature_2m_min[0]) + "°";
-            document.getElementById('fcst-rain').innerText = data.daily.precipitation_sum[0].toFixed(2) + " in";
-            document.getElementById('fcst-wind').innerText = Math.round(data.daily.wind_gusts_10m_max[0]) + " mph";
-        } catch(e) { console.error(e); }
-    }
-
-    function renderShortRange(hourly) {
-        const labels = hourly.time.map(t => new Date(t).toLocaleTimeString([], {weekday:'short', hour:'numeric'}));
-
-        // 1. WIND
-        let windOpts = getCommonOpts();
-        windOpts.plugins.tooltip.callbacks = { afterLabel: function(ctx) { const dir = hourly.wind_direction_10m[ctx.dataIndex]; return `Direction: ${dir}° (${valToDir(dir)})`; } };
-        mkChart('windChart', 'line', labels, [{ label:'Gusts', data:hourly.wind_gusts_10m, borderColor:'#f1c40f', borderWidth:2, pointStyle:'triangle', pointRadius:6, rotation:(c)=>hourly.wind_direction_10m[c.dataIndex]+180 }], windOpts);
-
-        // 2. TEMP
-        mkChart('tempChart', 'line', labels, [{ label:'Temp', data:hourly.temperature_2m, borderColor:'#ff6b6b', borderWidth:3, pointRadius:0 }, { label:'Apparent', data:hourly.apparent_temperature, borderColor:'#ffa502', borderWidth:2, borderDash:[5,5], pointRadius:0 }, { label:'Dewpoint', data:hourly.dewpoint_2m, borderColor:'#4ecdc4', borderWidth:2, pointRadius:0 }], getCommonOpts());
-
-        // 3. PRECIP
-        let pOpts = getCommonOpts(); pOpts.scales.y1 = {position:'right', grid:{drawOnChartArea:false}};
-        mkChart('precipChart', 'bar', labels, [{ type:'line', label:'Chance %', data:hourly.precipitation_probability, borderColor:'#3498db', fill:true, backgroundColor:'rgba(52,152,219,0.2)', yAxisID:'y' }, { label:'Inches', data:hourly.precipitation, backgroundColor:'#a29bfe', yAxisID:'y1' }], pOpts);
-
-        // 4. SEVERE
-        const cinData = hourly.convective_inhibition.map(v => -Math.abs(v));
-        let sevOpts = getCommonOpts(); sevOpts.scales.y = {stacked:true}; sevOpts.scales.y1 = {position:'right', reverse:true};
-        mkChart('capeChart', 'bar', labels, [{ label:'CAPE', data:hourly.cape, backgroundColor: c=>c.raw>1000?'#ff5252':'#2ecc71', yAxisID:'y' }, { label:'CIN', data:cinData, backgroundColor:'#0984e3', yAxisID:'y' }, { type:'line', label:'LI', data:hourly.lifted_index, borderColor:'#fff', yAxisID:'y1' }], sevOpts);
-
-        // 5. SKY
-        const ceiling = hourly.temperature_2m.map((t, i) => Math.max(0, (t - hourly.dewpoint_2m[i]) * 225));
-        const visMiles = hourly.visibility.map(v => v/5280); 
-        let skyOpts = getCommonOpts(); skyOpts.scales.y = {position:'left', max:100}; skyOpts.scales.y1 = {position:'right', min:0, max:10000, grid:{drawOnChartArea:false}};
-        mkChart('skyChart', 'line', labels, [{ label:'Cloud %', data:hourly.cloud_cover, backgroundColor:'rgba(200,200,200,0.2)', fill:true, borderWidth:0, yAxisID:'y' }, { label:'Ceiling (ft)', data:ceiling, borderColor:'#a29bfe', borderWidth:2, yAxisID:'y1' }, { label:'Vis (mi)', data:visMiles, borderColor:'#2ecc71', borderWidth:2, yAxisID:'y2' }], skyOpts);
-
-        // 6. PRESSURE
-        mkChart('pressChart', 'line', labels, [{ label:'Pressure', data:hourly.surface_pressure, borderColor:'#a29bfe', borderWidth:3, pointRadius:0 }], getCommonOpts());
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,dewpoint_2m,precipitation_probability,wind_speed_10m,wind_gusts_10m,cape&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=2`);
+        const data = await res.json();
+        const h = data.hourly;
+        const labels = h.time.map(t => new Date(t).toLocaleTimeString([], {hour:'numeric'}));
+        mkChart('windChart', 'line', labels, [{label:'Gusts', data:h.wind_gusts_10m, borderColor:'#f1c40f', pointRadius:0, tension:0.3}]);
+        mkChart('tempChart', 'line', labels, [{label:'Temp', data:h.temperature_2m, borderColor:'#ff6b6b', pointRadius:0}, {label:'Dew', data:h.dewpoint_2m, borderColor:'#4ecdc4', pointRadius:0}]);
+        mkChart('precipChart', 'bar', labels, [{label:'Rain %', data:h.precipitation_probability, backgroundColor:'rgba(52,152,219,0.5)'}]);
+        mkChart('capeChart', 'bar', labels, [{label:'CAPE', data:h.cape, backgroundColor:'#2ecc71'}]);
     }
 
     async function fetchGFS() {
-        const res = await fetch(GFS_API);
-        const data = await res.json();
-        const labels = data.daily.time.map(t => t.substring(5));
-        const common = { responsive:true, maintainAspectRatio:false, scales:{x:{ticks:{color:'#aaa'}}, y:{ticks:{color:'#aaa'}}} };
-        mkChart('gfsTempChart', 'line', labels, [{ label: 'High', data: data.daily.temperature_2m_max, borderColor: '#ff6b6b', fill:false, tension:0.4 }, { label: 'Low', data: data.daily.temperature_2m_min, borderColor: '#4ecdc4', fill:true, backgroundColor:'rgba(78,205,196,0.1)', tension:0.4 }], common);
-        mkChart('gfsRainChart', 'bar', labels, [{ label: 'Precip (in)', data: data.daily.precipitation_sum, backgroundColor: '#3498db' }], common);
-    }
-
-    async function fetchHistory() {
-        const res = await fetch(HISTORY_API);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16&models=gfs_seamless`);
         const data = await res.json();
         const d = data.daily;
-        const last = d.time.length - 1;
-        document.getElementById('hist-high').innerText = Math.round(d.temperature_2m_max[last]) + "°";
-        document.getElementById('hist-low').innerText = Math.round(d.temperature_2m_min[last]) + "°";
-        document.getElementById('hist-rain').innerText = d.precipitation_sum[last].toFixed(2) + " in";
-        document.getElementById('hist-wind').innerText = Math.round(d.wind_gusts_10m_max[last]) + " mph";
-        document.getElementById('rain-7day').innerText = d.precipitation_sum.reduce((a, b) => a + b, 0).toFixed(2);
+        mkChart('gfsTempChart', 'line', d.time, [{label:'Max', data:d.temperature_2m_max, borderColor:'#ff6b6b'}, {label:'Min', data:d.temperature_2m_min, borderColor:'#4ecdc4'}]);
+        mkChart('gfsRainChart', 'bar', d.time, [{label:'Rain Total (in)', data:d.precipitation_sum, backgroundColor:'#3498db'}]);
     }
 
-    async function fetchLiveConditions() {
-        let sid='KGTU', d=await getStation(sid);
-        if(!d||d.properties.barometricPressure.value===null){sid='KAUS';d=await getStation(sid);}
-        if(d){
-            const p=d.properties;
-            const t=p.temperature.value?p.temperature.value*1.8+32:null;
-            const dw=p.dewpoint.value?p.dewpoint.value*1.8+32:null;
-            const pr=p.barometricPressure.value?(p.barometricPressure.value/100).toFixed(0):"--";
-            const ws=p.windSpeed.value?(p.windSpeed.value*0.62).toFixed(0):0;
-            const wd=p.windDirection.value?valToDir(p.windDirection.value):"";
-            document.getElementById('live-temp').innerText=t?Math.round(t)+"°":"--";
-            document.getElementById('live-dew').innerText=dw?Math.round(dw)+"°":"--";
-            document.getElementById('live-pressure').innerText=pr+" mb";
-            document.getElementById('live-wind').innerText=`${ws}mph ${wd}`;
-            document.getElementById('source-badge').innerText=sid;
+    function initRadarWall() {
+        const container = document.getElementById('radar-wall-container');
+        TX_OFFICES.forEach(o => {
+            const div = document.createElement('div');
+            div.className = 'wall-panel';
+            div.innerHTML = `<div class="wall-header" onclick="toggleExpand(this.parentElement)">${o.n} <span>${o.id.toUpperCase()}</span></div>
+                <iframe src="https://radar.weather.gov/station/${o.id}/standard" allowfullscreen loading="lazy"></iframe>`;
+            container.appendChild(div);
+        });
+    }
+
+    function initLocalRadar() {
+        if(radarMap) return;
+        radarMap = L.map('map').setView([LAT, LON], 9);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(radarMap);
+        
+        // RainViewer API for Live Tile Overlay
+        fetch("https://api.rainviewer.com/public/weather-maps.json")
+            .then(res => res.json())
+            .then(data => {
+                const ts = data.radar.past[data.radar.past.length - 1].time;
+                L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`, {
+                    opacity: 0.6,
+                    zIndex: 100
+                }).addTo(radarMap);
+            });
+        
+        L.circle([LAT, LON], {color: 'var(--accent)', radius: 2000}).addTo(radarMap).bindPopup("GTU");
+    }
+
+    function toggleExpand(el) {
+        if (!document.fullscreenElement) el.requestFullscreen();
+        else document.exitFullscreen();
+    }
+    
+    function switchTab(id, btn) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+        if(id === 'tab-localradar') {
+            setTimeout(initLocalRadar, 100); // Small delay ensures DOM is ready
         }
     }
 
-    // --- RADAR WALL ---
-    function initRadarWall() {
-        const sites = [
-            { id: "kgrk", name: "Central TX (KGRK)" }, { id: "kewx", name: "Austin/SA (KEWX)" },
-            { id: "kfws", name: "Dallas (KFWS)" }, { id: "khgx", name: "Houston (KHGX)" },
-            { id: "kdyx", name: "Abilene (KDYX)" }, { id: "ksjt", name: "San Angelo (KSJT)" }
-        ];
-        const container = document.getElementById('radar-wall-container');
-        container.innerHTML = "";
-        sites.forEach(site => {
-            const div = document.createElement('div');
-            div.className = 'wall-panel';
-            div.innerHTML = `<div class="wall-header">${site.name} <span>${site.id.toUpperCase()}</span></div>
-                <div class="wall-content"><iframe src="https://radar.weather.gov/station/${site.id}/standard" loading="lazy"></iframe></div>`;
-            container.appendChild(div);
-        });
-        mapsInitialized.wall = true;
+    async function fetchAlerts() {
+        try {
+            const res = await fetch(`https://api.weather.gov/alerts/active?zone=TXZ173`);
+            const data = await res.json();
+            const banner = document.getElementById('alert-banner');
+            if (data.features?.length > 0) {
+                const a = data.features[0].properties;
+                banner.style.display = "block";
+                banner.innerText = `⚠️ ${a.event}: ${a.headline}`;
+                banner.style.background = a.event.includes('Warning') ? "var(--danger)" : "var(--warning)";
+                banner.style.color = "white";
+            } else { banner.style.display = "none"; }
+        } catch(e) {}
     }
 
-    // --- SATELLITE ---
-    function refreshSatImages() {
-        const t = new Date().getTime();
-        document.getElementById('sat-vis').src = "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg?t="+t;
-        document.getElementById('sat-ir').src = "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/latest.jpg?t="+t;
-        document.getElementById('sat-wv').src = "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/latest.jpg?t="+t;
-        document.getElementById('sat-lgt').src = "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/latest.jpg?t="+t;
+    function refreshSat() {
+        const t = Date.now();
+        document.getElementById('sat-vis').src = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/latest.jpg?t=${t}`;
+        document.getElementById('sat-ir').src = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/latest.jpg?t=${t}`;
+        document.getElementById('sat-wv').src = `https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/latest.jpg?t=${t}`;
+        document.getElementById('sat-lgt').src = `https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/latest.jpg?t=${t}`;
     }
 
-    // --- LOCAL RADAR ---
-    function initLocalRadar() {
-        radarMap = L.map('map').setView([LAT, LON], 7);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '©OpenStreetMap' }).addTo(radarMap);
-        L.marker([LAT, LON]).addTo(radarMap).bindPopup("GTU").openPopup();
-        fetch("https://api.rainviewer.com/public/weather-maps.json").then(r=>r.json()).then(d=>{
-            if(d.radar && d.radar.past) { timestamps = data.radar.past; loadRadarLayers(); }
-        });
-        mapsInitialized.radar = true;
+    async function fetchLiveConditions() {
+        try {
+            const res = await fetch(`https://api.weather.gov/stations/KGTU/observations/latest`);
+            const data = await res.json();
+            const p = data.properties;
+            document.getElementById('live-temp').innerText = Math.round(p.temperature.value * 1.8 + 32) + "°";
+            document.getElementById('live-dew').innerText = Math.round(p.dewpoint.value * 1.8 + 32) + "°";
+            document.getElementById('live-wind').innerText = `${Math.round(p.windSpeed.value * 0.62)} mph`;
+            document.getElementById('live-pressure').innerText = Math.round(p.barometricPressure.value / 100) + " mb";
+        } catch(e) {}
     }
-    function loadRadarLayers() {
-        timestamps.forEach(ts => {
-            const layer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${ts.time}/256/{z}/{x}/{y}/2/1_1.png`, {opacity: 0, zIndex: 100}).addTo(radarMap);
-            radarLayers[ts.time] = layer;
-        });
-        showFrame(timestamps.length - 1);
-    }
-    function showFrame(index) {
-        Object.values(radarLayers).forEach(l => l.setOpacity(0));
-        if(radarLayers[timestamps[index].time]) radarLayers[timestamps[index].time].setOpacity(0.8);
-        document.getElementById('radar-time').innerText = new Date(timestamps[index].time*1000).toLocaleTimeString();
-    }
-    function toggleRadar() {
-        if(radarTimer) { clearInterval(radarTimer); radarTimer = false; }
-        else { radarTimer = setInterval(() => { radarIdx = (radarIdx + 1) % timestamps.length; showFrame(radarIdx); }, 500); }
-    }
-
-    // --- UTILS ---
-    function mkChart(id, type, labels, datasets, opts) {
-        if(charts[id]) charts[id].destroy();
-        charts[id] = new Chart(document.getElementById(id), { type, data: { labels, datasets }, options: opts });
-    }
-    async function getStation(s) { try{return await(await fetch(`https://api.weather.gov/stations/${s}/observations/latest`)).json()}catch{return null}}
-    function valToDir(d) { if(d==null)return ""; const x=['N','NE','E','SE','S','SW','W','NW']; return x[Math.round(d/45)%8]; }
-
-    // Expose functions
-    window.switchTab = switchTab;
-    window.toggleRadar = toggleRadar;
-    window.initRadarWall = initRadarWall;
-    window.toggleSat = refreshSatImages; // Sat images are static latest, button refreshes them
 
     init();
 </script>
-
 </body>
 </html>
