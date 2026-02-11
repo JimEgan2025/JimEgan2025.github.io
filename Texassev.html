@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Texas All-Hazards Live OPS Dashboard v14</title>
+<title>Texas All-Hazards Live OPS Dashboard v21 (Static Radar)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
 <style>
 :root{
@@ -15,12 +16,15 @@
   --risk:#fb923c;
 }
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui;}
-header{padding:10px 16px;background:#020617;border-bottom:3px solid var(--risk);display:flex;justify-content:space-between;align-items:center;}
-h1{margin:0;font-size:1.4rem;}
+header{padding:10px 16px;background:#020617;border-bottom:3px solid var(--risk);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+h1{margin:0;font-size:1.1rem;}
+.controls{display:flex;flex-wrap:wrap;gap:6px;}
 .grid{display:grid;grid-template-columns:2.5fr 1fr;height:calc(100vh - 56px);}
 #map{height:100%;}
 .side{display:grid;grid-template-rows:repeat(8,1fr);gap:8px;padding:8px;}
-.card{background:var(--panel);border-radius:12px;padding:10px;box-shadow:0 10px 25px rgba(0,0,0,.5);}
+.card{background:var(--panel);border-radius:12px;padding:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.5);}
 .card h2{margin:0 0 6px;font-size:.9rem;color:var(--risk);}
 .big{font-size:1.6rem;font-weight:800;}
 .small{font-size:.8rem;color:var(--muted);}
@@ -30,17 +34,25 @@ h1{margin:0;font-size:1.4rem;}
 .md-entry{cursor:pointer;margin:2px 0;padding:3px;border-radius:4px;}
 .md-entry:hover{background:#1f2937;}
 .loading{color:var(--muted);font-style:italic;}
-button{background:#020617;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;}
-img{border-radius:8px;max-width:100%;}
+button{background:#020617;color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:4px 8px;cursor:pointer;font-size:.75rem;}
+button:hover{border-color:var(--risk);}
+.wwa-boost { filter:saturate(3) contrast(1.4) brightness(0.8); opacity:0.8 !important; }
 </style>
 </head>
 
 <body>
 <header>
-<h1>🌎 Texas All-Hazards Live OPS Dashboard v14</h1>
-<div>
-  <button onclick="toggleRadar()">Radar</button>
-</div>
+  <h1>Texas All-Hazards Live OPS Dashboard v21</h1>
+  <div class="controls">
+    <button onclick="toggleRadar()">Radar</button>
+    <button onclick="toggleWWA()">Hazards</button>
+    <button onclick="toggleDay1()">SPC D1</button>
+    <button onclick="toggleDay2()">SPC D2</button>
+    <button onclick="toggleDay3()">SPC D3</button>
+    <button onclick="toggleQPF()">WPC QPF</button>
+    <button onclick="toggleMD()">SPC MD</button>
+  </div>
 </header>
 
 <div class="grid">
@@ -54,9 +66,10 @@ img{border-radius:8px;max-width:100%;}
     </div>
 
     <div class="card">
-      <h2>SPC Convective Outlook</h2>
-      <img id="spcImg" src="https://www.spc.noaa.gov/products/outlook/day1otlk_1.png">
-      <div class="small">SPC Day 1 Outlook</div>
+      <h2>Outlook Context (0–3 Day)</h2>
+      <div class="small">
+        Static NEXRAD mosaic with 5‑minute refresh, SPC Day 1–3 outlooks, WPC QPF, and SPC MD overlays for Texas situational awareness. [web:21][web:23][web:115][web:120][web:116]
+      </div>
     </div>
 
     <div class="card">
@@ -70,7 +83,7 @@ img{border-radius:8px;max-width:100%;}
     </div>
 
     <div class="card">
-      <h2>Mesoscale Discussions</h2>
+      <h2>Mesoscale Discussions (TX)</h2>
       <div id="mds" class="loading">LOADING…</div>
     </div>
 
@@ -94,35 +107,166 @@ img{border-radius:8px;max-width:100%;}
 </div>
 
 <script>
-// ---------------- MAP ----------------
-const map = L.map('map').setView([30.5, -99],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+// ---------------- BASE MAP ----------------
+const map = L.map('map', {
+  zoomControl: true,
+  fadeAnimation: false,
+  updateWhenIdle: true
+}).setView([30.5, -99], 6);
 
-// ---------------- Live Radar (RainViewer) ----------------
-let radar;
-async function loadRadar(){
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'© OpenStreetMap'
+}).addTo(map);
+
+// ---------------- STATIC NEXRAD (IEM WMS) ----------------
+// Latest NEXRAD mosaic; IEM regenerates roughly every 5 minutes. [web:21][web:23]
+const radarLayer = L.tileLayer.wms(
+  'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi',
+  {
+    layers: 'nexrad-n0r-900913',
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.7
+  }
+).addTo(map);
+
+// Force tile refresh every 5 minutes with a cache-buster.
+function refreshRadar() {
+  radarLayer.setParams({ _ts: Date.now() });
+}
+setInterval(refreshRadar, 300000); // 5 min
+
+// WWA hazards overlay (IEM). [web:23]
+const wwaLayer = L.tileLayer.wms(
+  'https://mesonet.agron.iastate.edu/cgi-bin/wms/us/wwa.cgi',
+  {
+    layers:'wwa',
+    format:'image/png',
+    transparent:true,
+    className:'wwa-boost'
+  }
+).addTo(map);
+
+function toggleRadar(){
+  if(map.hasLayer(radarLayer)) map.removeLayer(radarLayer);
+  else map.addLayer(radarLayer);
+}
+function toggleWWA(){
+  if(map.hasLayer(wwaLayer)) map.removeLayer(wwaLayer);
+  else map.addLayer(wwaLayer);
+}
+
+// ---------------- SPC OUTLOOKS (Day 1–3) ----------------
+const spcUrl = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer'; // [web:115][web:134]
+
+const day1Layer = L.esri.dynamicMapLayer({
+  url: spcUrl,
+  layers: [0],
+  opacity: 0.5
+});
+const day2Layer = L.esri.dynamicMapLayer({
+  url: spcUrl,
+  layers: [1],
+  opacity: 0.5
+});
+const day3Layer = L.esri.dynamicMapLayer({
+  url: spcUrl,
+  layers: [2],
+  opacity: 0.5
+});
+
+function toggleDay1(){
+  if(map.hasLayer(day1Layer)) map.removeLayer(day1Layer);
+  else map.addLayer(day1Layer);
+}
+function toggleDay2(){
+  if(map.hasLayer(day2Layer)) map.removeLayer(day2Layer);
+  else map.addLayer(day2Layer);
+}
+function toggleDay3(){
+  if(map.hasLayer(day3Layer)) map.removeLayer(day3Layer);
+  else map.addLayer(day3Layer);
+}
+
+// ---------------- WPC QPF ----------------
+const wpcUrl = 'https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer'; // [web:120][web:135]
+const qpfLayer = L.esri.dynamicMapLayer({
+  url: wpcUrl,
+  layers: [0],
+  opacity: 0.4
+});
+
+function toggleQPF(){
+  if(map.hasLayer(qpfLayer)) map.removeLayer(qpfLayer);
+  else map.addLayer(qpfLayer);
+}
+
+// ---------------- SPC MESOSCALE DISCUSSIONS ----------------
+const mdUrl = 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/spc_mesoscale_discussion/MapServer'; // [web:116]
+const mdPolyLayer = L.esri.dynamicMapLayer({
+  url: mdUrl,
+  layers: [0],
+  opacity: 0.6
+});
+
+function toggleMD(){
+  if(map.hasLayer(mdPolyLayer)) map.removeLayer(mdPolyLayer);
+  else map.addLayer(mdPolyLayer);
+}
+
+async function loadMDList(){
+  const mdEl = document.getElementById("mds");
+  mdEl.innerHTML = "LOADING…";
+
   try {
-    // Fetch RainViewer JSON to get latest timestamp
-    const resp = await fetch('https://tilecache.rainviewer.com/api/maps.json');
-    const data = await resp.json();
-    const frames = data.radar.past;
-    if(!frames || frames.length===0) return console.warn("No radar frames found");
-    const latestFrame = frames[frames.length-1].time; // latest radar timestamp
+    const mdLayer = L.esri.featureLayer({
+      url: mdUrl + '/0',
+      fields: ['OBJECTID','MD_NUM','MD_TEXT','VALID_TIME','ISSUE_TIME'],
+    });
 
-    // Remove old layer if exists
-    if(radar) map.removeLayer(radar);
+    const txBounds = {
+      xmin: -106.7, ymin: 25.8,
+      xmax:  -93.5, ymax: 36.6
+    };
 
-    radar = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${latestFrame}/{z}/{x}/{y}/2/1_1.png`,{
-      attribution:'Radar © RainViewer',
-      opacity:0.6
-    }).addTo(map);
+    mdLayer.query()
+      .within(L.latLngBounds(
+        [txBounds.ymin, txBounds.xmin],
+        [txBounds.ymax, txBounds.xmax]
+      ))
+      .run((error, featureCollection) => {
+        if(error){
+          console.error(error);
+          mdEl.textContent = "Error loading SPC MDs.";
+          return;
+        }
+        const feats = featureCollection.features || [];
+        if(!feats.length){
+          mdEl.textContent = "No active SPC mesoscale discussions intersecting Texas.";
+          return;
+        }
+        mdEl.innerHTML = "";
+        feats.forEach(f => {
+          const props = f.properties || {};
+          const num = props.MD_NUM || "MD";
+          const txt = (props.MD_TEXT || "").slice(0, 120).replace(/\s+/g,' ') + "…";
+          const issue = props.ISSUE_TIME || "";
+          const div = document.createElement("div");
+          div.className = "md-entry watch";
+          div.innerText = `MD ${num} – ${txt}`;
+          div.title = issue;
+          div.onclick = () => window.open("https://www.spc.noaa.gov/products/md/", "_blank");
+          mdEl.appendChild(div);
+        });
+      });
+
   } catch(e){
-    console.error("Radar load error:", e);
-    setTimeout(loadRadar,5000);
+    console.error(e);
+    mdEl.textContent = "Error loading SPC MDs.";
   }
 }
 
-// ---------------- FETCH LIVE ALERTS ----------------
+// ---------------- TX ALERTS / GO-NO-GO ----------------
 async function fetchAlerts(){
   try {
     const resp = await fetch("https://api.weather.gov/alerts/active?area=TX");
@@ -132,51 +276,59 @@ async function fetchAlerts(){
     const watchEl = document.getElementById("watches");
     const marineEl = document.getElementById("marine");
     const tropEl = document.getElementById("tropical");
-    const mdEl = document.getElementById("mds");
 
-    warnEl.innerHTML=""; watchEl.innerHTML=""; marineEl.innerHTML=""; tropEl.innerHTML=""; mdEl.innerHTML="";
+    warnEl.innerHTML=""; watchEl.innerHTML=""; marineEl.innerHTML=""; tropEl.innerHTML="";
 
     let noGo = false;
+    let seriousReasons = [];
 
-    alerts.features.forEach(a => {
-      const text = a.properties.event;
+    (alerts.features || []).forEach(a => {
+      const text = a.properties.event || "";
       const key = text.toLowerCase();
-      const li = document.createElement("div");
 
-      // Warnings
       if(key.includes("warning") && !key.includes("marine") && !key.includes("tropical")){
-        li.className="warn"; li.innerText=text; warnEl.appendChild(li); noGo=true;
+        const li = document.createElement("div");
+        li.className="warn"; li.innerText=text;
+        warnEl.appendChild(li);
+        noGo = true;
+        seriousReasons.push(text);
+      } else if(key.includes("watch") && !key.includes("marine") && !key.includes("tropical")){
+        const li = document.createElement("div");
+        li.className="watch"; li.innerText=text;
+        watchEl.appendChild(li);
       }
 
-      // Watches
-      else if(key.includes("watch") && !key.includes("marine") && !key.includes("tropical")){
-        li.className="watch"; li.innerText=text; watchEl.appendChild(li);
-      }
-
-      // Marine / Coastal
       if(key.includes("marine") || key.includes("gale") || key.includes("storm")){
-        li.className="watch"; li.innerText=text; marineEl.appendChild(li); noGo=true;
+        const mLi = document.createElement("div");
+        mLi.className="watch"; mLi.innerText=text;
+        marineEl.appendChild(mLi);
+        noGo = true;
+        seriousReasons.push(text);
       }
 
-      // Tropical / NHC
       if(key.includes("tropical") || key.includes("hurricane")){
-        li.className="warn"; li.innerText=text; tropEl.appendChild(li); noGo=true;
-      }
-
-      // Mesoscale Discussions links
-      if(key.includes("mesoscale")){
-        const mdLink = a.properties.link || "#";
-        const mdEntry = document.createElement("div");
-        mdEntry.className="md-entry watch";
-        mdEntry.innerText=text;
-        mdEntry.onclick = ()=> window.open(mdLink,"_blank");
-        mdEl.appendChild(mdEntry);
+        const tLi = document.createElement("div");
+        tLi.className="warn"; tLi.innerText=text;
+        tropEl.appendChild(tLi);
+        noGo = true;
+        seriousReasons.push(text);
       }
     });
 
     const gogoEl = document.getElementById("gogo");
-    gogoEl.innerText=noGo?"NO-GO":"GO";
-    gogoEl.className=noGo?"big warn":"big ok";
+    const gogoDetail = document.getElementById("gogoDetail");
+    if(noGo){
+      gogoEl.innerText = "NO-GO";
+      gogoEl.className = "big warn";
+      gogoDetail.innerText =
+        seriousReasons.length
+          ? "Constraints in effect: " + seriousReasons.slice(0,4).join(" • ")
+          : "One or more hazards meet NO-GO criteria.";
+    } else {
+      gogoEl.innerText = "GO";
+      gogoEl.className = "big ok";
+      gogoDetail.innerText = "No major TX warnings or coastal/tropical constraints detected at this time.";
+    }
 
   } catch(e){
     console.error("Alerts fetch error:", e);
@@ -187,26 +339,29 @@ async function fetchAlerts(){
 // ---------------- OVERNIGHT / NEXT SHIFT ----------------
 function evaluateOvernight(){
   const h = new Date().getHours();
-  const night = (h >=18 || h<=6);
-  document.getElementById("overnightRisk").innerText = night?"ELEVATED":"MONITOR";
-  document.getElementById("overnightDetail").innerText = night
-    ?"Overnight hazards possible (storms / freeze / coastal)"
-    :"Await daytime hazard evolution";
+  const night = (h >= 18 || h <= 6);
+  const riskEl = document.getElementById("overnightRisk");
+  const detailEl = document.getElementById("overnightDetail");
+
+  if(night){
+    riskEl.innerText = "ELEVATED";
+    riskEl.className = "big warn";
+    detailEl.innerText = "Overnight hazards possible (storms / freeze / coastal) – maintain active monitoring.";
+  } else {
+    riskEl.innerText = "MONITOR";
+    riskEl.className = "big ok";
+    detailEl.innerText = "Await daytime hazard evolution; keep situational awareness but no automatic constraints.";
+  }
 }
 
-// ---------------- TOGGLE LAYERS ----------------
-function toggleRadar(){ if(radar) map.hasLayer(radar)?map.removeLayer(radar):map.addLayer(radar); }
-
 // ---------------- INITIAL LOAD ----------------
-loadRadar();
-setInterval(loadRadar,120000); // refresh radar every 2 min
-fetchAlerts(); evaluateOvernight();
-setInterval(fetchAlerts,300000); // 5 min
-setInterval(evaluateOvernight,3600000); // 1 hr
+fetchAlerts();
+evaluateOvernight();
+loadMDList();
+setInterval(fetchAlerts, 300000);       // 5 min
+setInterval(evaluateOvernight, 3600000); // 1 hr
+setInterval(loadMDList, 900000);         // 15 min
 </script>
 
 </body>
 </html>
-
-
-
