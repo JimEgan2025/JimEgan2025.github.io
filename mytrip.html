@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Gulf Coast Road Trip Weather Console</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#0d2233;
+    color:white;
+    margin:0;
+    padding:0;
+}
+
+header{
+    background:#132f44;
+    padding:15px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#alertBanner{
+    padding:10px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.controls{
+    text-align:center;
+    margin:10px;
+}
+
+button{
+    padding:6px 12px;
+    font-size:14px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+
+th, td{
+    border:1px solid #555;
+    padding:6px;
+    text-align:center;
+}
+
+th{
+    background:#1f3f5a;
+}
+
+.low{ background:#1f4d2e; }
+.mod{ background:#665c00; }
+.high{ background:#6b1d1d; }
+.severe{ background:#4b0082; }
+.pending{ background:#1f4d2e; }
+
+footer{
+    text-align:center;
+    padding:8px;
+    font-size:11px;
+    opacity:0.7;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+🌪 Gulf Coast Road Trip Tactical Weather Console
+</header>
+
+<div id="alertBanner">Loading alerts...</div>
+
+<div class="controls">
+<button onclick="refreshAll()">Manual Refresh</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Location</th>
+<th>Current</th>
+<th>High</th>
+<th>Low</th>
+<th>Rain %</th>
+<th>Wind mph</th>
+<th>Hazard</th>
+</tr>
+</thead>
+<tbody id="weatherTable"></tbody>
+</table>
+
+<footer>
+Auto-refresh every 10 minutes
+</footer>
+
+<script>
+
+const stops = [
+{date:"2026-03-05", name:"Lafayette, LA", lat:30.2241, lon:-92.0198},
+{date:"2026-03-06", name:"Wakulla Springs, FL", lat:30.2358, lon:-84.3050},
+{date:"2026-03-07", name:"Wakulla Springs, FL", lat:30.2358, lon:-84.3050},
+{date:"2026-03-08", name:"Gainesville, FL", lat:29.6516, lon:-82.3248},
+{date:"2026-03-08", name:"Mount Dora, FL", lat:28.8025, lon:-81.6448},
+{date:"2026-03-09", name:"Titusville, FL", lat:28.6122, lon:-80.8076},
+{date:"2026-03-10", name:"Vero Beach, FL", lat:27.6386, lon:-80.3973},
+{date:"2026-03-10", name:"Lake Wales, FL", lat:27.9014, lon:-81.5859},
+{date:"2026-03-12", name:"Naples Botanical Garden, FL", lat:26.1104, lon:-81.7716},
+{date:"2026-03-12", name:"Fort Myers, FL", lat:26.6406, lon:-81.8723},
+{date:"2026-03-13", name:"Fort Myers, FL", lat:26.6406, lon:-81.8723},
+{date:"2026-03-14", name:"Lake Apopka, FL", lat:28.6760, lon:-81.6387},
+{date:"2026-03-15", name:"Sarasota, FL", lat:27.3364, lon:-82.5307},
+{date:"2026-03-16", name:"Sarasota, FL", lat:27.3364, lon:-82.5307},
+{date:"2026-03-17", name:"Sarasota, FL", lat:27.3364, lon:-82.5307},
+{date:"2026-03-18", name:"Tallahassee, FL", lat:30.4383, lon:-84.2807},
+{date:"2026-03-19", name:"Mobile, AL", lat:30.6954, lon:-88.0399},
+{date:"2026-03-20", name:"Mobile, AL", lat:30.6954, lon:-88.0399},
+{date:"2026-03-21", name:"Winnie, TX", lat:29.8208, lon:-94.3844},
+{date:"2026-03-22", name:"Winnie, TX", lat:29.8208, lon:-94.3844},
+{date:"2026-03-23", name:"Port Aransas, TX", lat:27.8339, lon:-97.0611},
+{date:"2026-03-24", name:"Port Aransas, TX", lat:27.8339, lon:-97.0611},
+{date:"2026-03-25", name:"Georgetown, TX", lat:30.6333, lon:-97.6770}
+];
+
+function cToF(c){ return (c*9/5)+32; }
+
+function hazardLevel(rain, wind){
+    if(wind > 45) return {label:"SEVERE", class:"severe"};
+    if(wind > 30 || rain > 80) return {label:"HIGH", class:"high"};
+    if(wind > 20 || rain > 50) return {label:"MOD", class:"mod"};
+    return {label:"LOW", class:"low"};
+}
+
+async function getWeather(lat, lon){
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max&temperature_unit=celsius&windspeed_unit=mph&timezone=auto`;
+    const res = await fetch(url);
+    return await res.json();
+}
+
+async function buildTable(){
+    const tbody = document.getElementById("weatherTable");
+    tbody.innerHTML="";
+
+    for(const stop of stops){
+
+        const data = await getWeather(stop.lat, stop.lon);
+
+        let current="Pending";
+        if(data.current_weather){
+            const tempF = Math.round(cToF(data.current_weather.temperature));
+            const wind = Math.round(data.current_weather.windspeed);
+            current = `${tempF}°F / ${wind}mph`;
+        }
+
+        let high="--", low="--", rain="--", wind="--";
+        let hazard={label:"Pending",class:"pending"};
+
+        const index = data.daily?.time.indexOf(stop.date);
+
+        if(index >= 0){
+            high = Math.round(cToF(data.daily.temperature_2m_max[index]));
+            low = Math.round(cToF(data.daily.temperature_2m_min[index]));
+            rain = data.daily.precipitation_probability_max[index];
+            wind = Math.round(data.daily.windspeed_10m_max[index]);
+            hazard = hazardLevel(rain, wind);
+        }
+
+        tbody.innerHTML += `
+        <tr class="${hazard.class}">
+        <td>${stop.date}</td>
+        <td>${stop.name}</td>
+        <td>${current}</td>
+        <td>${high}</td>
+        <td>${low}</td>
+        <td>${rain}</td>
+        <td>${wind}</td>
+        <td>${hazard.label}</td>
+        </tr>`;
+    }
+}
+
+async function checkAlerts(){
+    try{
+        const res = await fetch("https://api.weather.gov/alerts/active?area=TX,LA,MS,AL,FL");
+        const data = await res.json();
+        const banner = document.getElementById("alertBanner");
+
+        if(data.features.length > 0){
+            banner.innerHTML = `⚠ Active Gulf Region Alerts: ${data.features.length}`;
+            banner.style.background="darkred";
+        }else{
+            banner.innerHTML="No active alerts in Gulf region.";
+            banner.style.background="darkgreen";
+        }
+    }catch{
+        document.getElementById("alertBanner").innerHTML="Alert feed unavailable.";
+    }
+}
+
+async function refreshAll(){
+    await buildTable();
+    await checkAlerts();
+}
+
+refreshAll();
+setInterval(refreshAll,600000);
+
+</script>
+
+</body>
+</html>
