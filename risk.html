@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vizcaya Risk Engine - Full Operational Dashboard</title>
+<title>Vizcaya Risk Engine - Operational Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root {
@@ -26,19 +26,21 @@ body {
   max-width: 1000px;
   margin: auto;
 }
-h1 { margin: 0 0 20px 0; text-align: center; font-weight:800; letter-spacing:-1px;}
-h2 { text-align: center; margin: 30px 0 15px 0; font-size:1.1rem; text-transform:uppercase; color:#94a3b8; letter-spacing:1px; border-bottom:1px solid var(--border); padding-bottom:10px; }
+h1 { margin: 10px 0 20px 0; text-align: center; font-weight:800; letter-spacing:-1px;}
 
-/* UTILS */
-.btn-geo {
-    position: absolute; top: 20px; right: 20px;
+/* LOCATION BAR */
+.location-bar {
+    display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;
+}
+.btn-loc {
     background: #1e293b; color: #94a3b8;
     border: 1px solid var(--border);
-    padding: 6px 12px; border-radius: 6px;
-    cursor: pointer; font-size: 0.8rem;
-    transition: all 0.2s;
+    padding: 8px 16px; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
 }
-.btn-geo:hover { background: #334155; color: #fff; }
+.btn-loc:hover { background: #334155; color: #fff; }
+.btn-loc.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 
 /* CARDS */
 .card {
@@ -140,7 +142,12 @@ h2 { text-align: center; margin: 30px 0 15px 0; font-size:1.1rem; text-transform
 </head>
 <body>
 
-<button class="btn-geo" onclick="getLocation()">📍 Locate Me</button>
+<div class="location-bar">
+    <button class="btn-loc active" id="btn-home" onclick="setPreset('HOME')">🏠 Vizcaya HQ</button>
+    <button class="btn-loc" id="btn-sara" onclick="setPreset('SARASOTA')">🌴 Sarasota</button>
+    <button class="btn-loc" id="btn-gps" onclick="setGPS()">📍 GPS</button>
+</div>
+
 <h1>⚡ VIZCAYA RISK ENGINE</h1>
 
 <div id="severity-wrapper">
@@ -149,7 +156,7 @@ h2 { text-align: center; margin: 30px 0 15px 0; font-size:1.1rem; text-transform
       <div id="severity-text">INITIALIZING...</div>
     </div>
     <div id="severity-meta">
-        <span id="loc-label">LOC: 30.51, -97.68 (Default)</span>
+        <span id="loc-label">LOC: 30.51, -97.68</span>
         <span id="last-updated">Updated: --:--</span>
     </div>
 </div>
@@ -181,42 +188,58 @@ h2 { text-align: center; margin: 30px 0 15px 0; font-size:1.1rem; text-transform
   <span class="label">Trigger Mechanisms</span>
   <ul style="font-size:0.85rem; line-height:1.6; padding-left: 1.2rem; margin: 0; color: #94a3b8;">
     <li><strong>Freeze</strong>: Temp ≤ 32°F for ≥1 hour.</li>
-    <li><strong>Plumbing Stress</strong>: CRITICAL if Temp < 20°F; MODERATE if 20-32°F; LOW if > 32°F.</li>
+    <li><strong>Plumbing Stress</strong>: CRITICAL if Temp < 20°F; MODERATE if 20-32°F.</li>
     <li><strong>Ice/Sleet</strong>: Temp ≤ 32°F AND Precip Probability ≥ 20%.</li>
     <li><strong>Heavy Rain</strong>: Rate ≥ 0.15"/hr OR Active Flood Alerts.</li>
-    <li><strong>High Wind</strong>: Gusts ≥ 30 mph.</li>
-    <li><strong>Fog</strong>: Weather Codes 45 or 48.</li>
-    <li><strong>Instability</strong>: CAPE ≥ 500 J/kg AND Lifted Index ≤ -2.</li>
+    <li><strong>High Wind</strong>: Gusts ≥ 30 mph (Tropical Storm force is 39+).</li>
+    <li><strong>SPC/Tropical</strong>: NWS Forecast mentions "Severe", "Hurricane", "Tropical", or "Surge".</li>
     <li><strong>Heat</strong>: Heat Index ≥ 95°F.</li>
     <li><strong>Fire Weather</strong>: Wind > 15mph AND Humidity < 25%.</li>
   </ul>
 </div>
 
 <script>
-// Default: Round Rock/Vizcaya
-let LAT = 30.5083;
-let LON = -97.6789;
+// COORDINATES
+const LOCS = {
+    'HOME': { lat: 30.5083, lon: -97.6789, name: "Vizcaya HQ" },
+    'SARASOTA': { lat: 27.3364, lon: -82.5307, name: "Sarasota, FL" }
+};
+
+let LAT = LOCS.HOME.lat;
+let LON = LOCS.HOME.lon;
 let updateTimer = null;
 
-function getLocation() {
-    const btn = document.querySelector('.btn-geo');
+// --- LOCATION LOGIC ---
+function setPreset(key) {
+    LAT = LOCS[key].lat;
+    LON = LOCS[key].lon;
+    
+    document.querySelectorAll('.btn-loc').forEach(b => b.classList.remove('active'));
+    if(key === 'HOME') document.getElementById('btn-home').classList.add('active');
+    if(key === 'SARASOTA') document.getElementById('btn-sara').classList.add('active');
+    
+    document.getElementById('loc-label').innerText = `LOC: ${LOCS[key].name}`;
+    document.getElementById('output').innerHTML = "🔄 Switching Location...";
+    checkDashboard();
+}
+
+function setGPS() {
+    const btn = document.getElementById('btn-gps');
     if (navigator.geolocation) {
-        btn.innerText = "⏳ Triangulating...";
+        btn.innerText = "⏳ ...";
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 LAT = pos.coords.latitude;
                 LON = pos.coords.longitude;
-                btn.innerText = "📍 Locate Me";
+                document.querySelectorAll('.btn-loc').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                btn.innerText = "📍 GPS";
                 document.getElementById('loc-label').innerText = `LOC: ${LAT.toFixed(2)}, ${LON.toFixed(2)} (GPS)`;
                 checkDashboard();
             },
-            (err) => {
-                btn.innerText = "❌ Error";
-                alert("Geolocation failed: " + err.message);
-                setTimeout(() => btn.innerText = "📍 Locate Me", 2000);
-            }
+            (err) => { alert("GPS Failed"); btn.innerText = "📍 GPS"; }
         );
-    } else { alert("Geolocation not supported"); }
+    } else { alert("GPS not supported"); }
 }
 
 // === ROBUST RUN ENGINE ===
@@ -227,10 +250,7 @@ function findSequences(times, predicate){
             if(!start) start = new Date(times[i]);
             count++;
         } else {
-            if(start){
-                runs.push({ start, end: new Date(times[i-1]), hours: count });
-                start = null; count = 0;
-            }
+            if(start){ runs.push({ start, end: new Date(times[i-1]), hours: count }); start = null; count = 0; }
         }
     }
     if(start) runs.push({ start, end: new Date(times[times.length-1]), hours: count });
@@ -240,7 +260,7 @@ function findSequences(times, predicate){
 function renderRow(runs, containerId, color, startTime){
     const container = document.getElementById(containerId);
     container.innerHTML = "";
-    const totalHours = 168; // 7 days
+    const totalHours = 168; 
     runs.forEach(r => {
         const startHour = (new Date(r.start) - startTime) / 3600000;
         const left = (startHour / totalHours) * 100;
@@ -252,15 +272,44 @@ function renderRow(runs, containerId, color, startTime){
     });
 }
 
+// === AI TEXT SCANNER ===
+async function checkNWSForecastText() {
+    try {
+        const metaRes = await fetch(`https://api.weather.gov/points/${LAT},${LON}`);
+        if(!metaRes.ok) return null;
+        const meta = await metaRes.json();
+        const forecastUrl = meta.properties.forecast;
+        
+        const fRes = await fetch(forecastUrl);
+        if(!fRes.ok) return null;
+        const fData = await fRes.json();
+        const periods = fData.properties.periods.slice(0, 3); // Check Day 1-2
+        
+        let match = false;
+        let details = "";
+        
+        periods.forEach(p => {
+            const text = (p.detailedForecast || "").toLowerCase();
+            if(text.includes("severe") || text.includes("damaging wind") || text.includes("tornado") || text.includes("large hail") ||
+               text.includes("tropical") || text.includes("hurricane") || text.includes("storm surge")) {
+                match = true;
+                details = p.detailedForecast;
+            }
+        });
+        
+        return match ? details : null;
+    } catch(e) { console.warn("Forecast Text Scan Failed"); return null; }
+}
+
 async function checkDashboard(){
     const outEl = document.getElementById("output");
     const alertsEl = document.getElementById("alerts");
     const nextThreatEl = document.getElementById("next-threat");
-
+    
     document.getElementById("last-updated").innerText = "Updated: " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
     try {
-        // 1. Get Alerts
+        // 1. Get NWS Alerts
         let activeAlerts = [];
         try {
             const alertRes = await fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`);
@@ -268,14 +317,17 @@ async function checkDashboard(){
             activeAlerts = alertData.features || [];
         } catch (e) { console.warn("NWS API Fail"); }
 
-        // Flood Check
+        // 2. Get NWS Text Forecast
+        const spcTextWarning = await checkNWSForecastText();
+
+        // Flood/Tropical Alert Check
         const floodAlerts = activeAlerts.filter(a => {
             const ev = (a.properties.event || "").toLowerCase();
-            return ev.includes("flood") || ev.includes("hydrologic") || ev.includes("rain");
+            return ev.includes("flood") || ev.includes("hydrologic") || ev.includes("rain") || ev.includes("tropical") || ev.includes("hurricane");
         });
         const hasFloodAlert = floodAlerts.length > 0;
 
-        // 2. Get Data
+        // 3. Get Open-Meteo Data
         const res = await fetch(
             `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
             `&hourly=temperature_2m,apparent_temperature,wind_gusts_10m,` +
@@ -285,12 +337,10 @@ async function checkDashboard(){
         const d = await res.json();
         const h = d.hourly;
         
-        // --- Analysis Setup ---
+        // --- Analysis ---
         const startTime = new Date(h.time[0]);
         const minTemp = Math.min(...h.temperature_2m);
         const maxWind = Math.max(...h.wind_gusts_10m);
-        
-        // --- DATA MAPPING ---
         
         const freezeRuns = findSequences(h.time, i => h.temperature_2m[i] <= 32);
         const freezeHours = freezeRuns.reduce((s,r) => s+r.hours, 0);
@@ -305,14 +355,11 @@ async function checkDashboard(){
         const maxRainRate = Math.max(...h.precipitation);
         const totalRain = h.precipitation.reduce((a,b) => a+b, 0);
         
-        // Wind: Gusts >= 30 mph
         const windRuns = findSequences(h.time, i => h.wind_gusts_10m[i] >= 30);
         
-        // Fog: Code 45 or 48
         const fogRuns = findSequences(h.time, i => h.weathercode[i] === 45 || h.weathercode[i] === 48);
         const fogHours = fogRuns.reduce((s,r) => s+r.hours, 0);
 
-        // Instability: CAPE >= 500, LI <= -2
         const instabRuns = findSequences(h.time, i => (h.cape[i]||0) >= 500 && (h.lifted_index[i]||0) <= -2);
         const instabHours = instabRuns.reduce((s,r) => s+r.hours, 0);
         
@@ -322,12 +369,8 @@ async function checkDashboard(){
         const fireRuns = findSequences(h.time, i => h.wind_gusts_10m[i] >= 15 && h.relative_humidity_2m[i] <= 25);
         const fireHours = fireRuns.reduce((s,r) => s+r.hours, 0);
 
-        // --- Energy Load ---
         let hdd = 0, cdd = 0;
-        h.temperature_2m.forEach(t => {
-            if(t < 65) hdd += (65 - t) / 24;
-            if(t > 65) cdd += (t - 65) / 24;
-        });
+        h.temperature_2m.forEach(t => { if(t < 65) hdd += (65 - t) / 24; if(t > 65) cdd += (t - 65) / 24; });
 
         // --- Scoring ---
         let score = 0;
@@ -335,48 +378,58 @@ async function checkDashboard(){
         if(freezeHours > 24) score += 20;
         if(hasIce) score += 40;
         if(maxWind >= 35) score += 10;
+        if(maxWind >= 50) score += 20; 
         if(snowHours > 0) score += 10;
         if(heatHours > 0) score += 15;
         if(instabHours > 0) score += 10;
         if(fireHours > 0) score += 15;
         if(hasFloodAlert) score += 25;
         if(maxRainRate > 0.5) score += 20; 
-        
         if(activeAlerts.length > 0) score += 10;
+        if(spcTextWarning) score += 20;
+
         const finalScore = Math.min(100, score);
 
         // --- RENDER SEVERITY ---
         const bar = document.getElementById('severity-bar');
         bar.style.width = finalScore + '%';
         bar.style.background = finalScore > 70 ? 'var(--accent-red)' : (finalScore > 40 ? 'var(--accent-orange)' : 'var(--accent-green)');
-        document.getElementById('severity-text').innerText = `RISK INDEX: ${finalScore}/100`;
+        document.getElementById('severity-text').innerText = `RISK INDEX: ${finalScore}%`;
 
         // --- RENDER NEXT THREAT ---
         let nextThreatText = "✅ NO IMMEDIATE CRITICAL THREATS (48 HR)";
         let nextThreatClass = "";
         
-        for(let i=0; i<48; i++){
-            const t = h.temperature_2m[i];
-            const p = h.precipitation_probability[i] || 0;
-            const rate = h.precipitation[i] || 0;
-            const w = h.wind_gusts_10m[i];
-            const timeStr = new Date(h.time[i]).toLocaleTimeString([], {weekday:'short', hour:'numeric'});
-            
-            if(t <= 32 && p >= 20) { nextThreatText = `⚠️ ICING STARTING: ${timeStr}`; nextThreatClass="active"; break; }
-            if(rate >= 0.25) { nextThreatText = `⚠️ HEAVY RAIN (${rate}"/hr): ${timeStr}`; nextThreatClass="active"; break; }
-            if(w >= 40) { nextThreatText = `⚠️ HIGH WIND (${w.toFixed(0)}mph): ${timeStr}`; nextThreatClass="active"; break; }
-            if(t <= 28) { nextThreatText = `⚠️ HARD FREEZE: ${timeStr}`; nextThreatClass="active"; break; }
-            if(h.apparent_temperature[i] >= 105) { nextThreatText = `⚠️ DANGEROUS HEAT: ${timeStr}`; nextThreatClass="active"; break; }
+        if(spcTextWarning) {
+            nextThreatText = "⚠️ NWS OUTLOOK: Severe/Tropical Conditions Possible";
+            nextThreatClass = "active";
+        } else {
+            for(let i=0; i<48; i++){
+                const t = h.temperature_2m[i];
+                const p = h.precipitation_probability[i] || 0;
+                const rate = h.precipitation[i] || 0;
+                const w = h.wind_gusts_10m[i];
+                const timeStr = new Date(h.time[i]).toLocaleTimeString([], {weekday:'short', hour:'numeric'});
+                
+                if(t <= 32 && p >= 20) { nextThreatText = `⚠️ ICING STARTING: ${timeStr}`; nextThreatClass="active"; break; }
+                if(rate >= 0.25) { nextThreatText = `⚠️ HEAVY RAIN (${rate}"/hr): ${timeStr}`; nextThreatClass="active"; break; }
+                if(w >= 40) { nextThreatText = `⚠️ HIGH WIND (${w.toFixed(0)}mph): ${timeStr}`; nextThreatClass="active"; break; }
+                if(t <= 28) { nextThreatText = `⚠️ HARD FREEZE: ${timeStr}`; nextThreatClass="active"; break; }
+                if(h.apparent_temperature[i] >= 105) { nextThreatText = `⚠️ DANGEROUS HEAT: ${timeStr}`; nextThreatClass="active"; break; }
+            }
         }
         nextThreatEl.innerText = nextThreatText;
         nextThreatEl.className = nextThreatClass;
 
         // --- RENDER ALERTS ---
-        if(activeAlerts.length > 0){
-            alertsEl.innerHTML = activeAlerts.map(a => `<div class="alert-card">⚠️ <strong>${a.properties.event}</strong>: ${a.properties.headline?.split('.')[0]}</div>`).join('');
-        } else {
-            alertsEl.innerHTML = `<div class="card safe" style="padding:10px; font-size:0.9rem;">✅ No active NWS advisories.</div>`;
+        let alertHTML = "";
+        if(spcTextWarning) {
+            alertHTML += `<div class="alert-card" style="border-left-color:#facc15; background:rgba(250, 204, 21, 0.1);">⚡ <strong>Forecast Discussion</strong>: ${spcTextWarning.substring(0, 140)}...</div>`;
         }
+        if(activeAlerts.length > 0){
+            alertHTML += activeAlerts.map(a => `<div class="alert-card">⚠️ <strong>${a.properties.event}</strong>: ${a.properties.headline?.split('.')[0]}</div>`).join('');
+        }
+        alertsEl.innerHTML = alertHTML || `<div class="card safe" style="padding:10px; font-size:0.9rem;">✅ No active NWS advisories.</div>`;
 
         // --- RENDER TIMELINE ---
         const tlLabels = document.getElementById('timeline-labels');
@@ -406,6 +459,9 @@ async function checkDashboard(){
         else if(maxRainRate > 0.15 || totalRain > 2.0) { rainClass = 'severe-mod'; rainText = `MOD (Total ${totalRain.toFixed(1)}")`; }
         else if(totalRain > 0) { rainText = `LOW (Total ${totalRain.toFixed(2)}")`; }
 
+        let spcClass = (instabHours > 0 || spcTextWarning) ? 'severe-mod' : 'severe-low';
+        if(spcTextWarning) spcClass = 'severe-high';
+
         document.getElementById('severe-panel').innerHTML = `
             <div class="severe-row ${hasIce ? 'severe-high' : 'severe-low'}">
                 <strong>Icing Potential</strong> <span>${hasIce ? 'HIGH' : 'LOW'}</span>
@@ -428,8 +484,8 @@ async function checkDashboard(){
             <div class="severe-row severe-low">
                 <strong>HVAC Load (Degree Days)</strong> <span>${Math.round(cdd)} Cool / ${Math.round(hdd)} Heat</span>
             </div>
-            <div class="severe-row ${instabHours > 0 ? 'severe-mod' : 'severe-low'}">
-                <strong>Instability / Fog</strong> <span>${instabHours}hr CAPE | ${fogHours}hr FOG</span>
+            <div class="severe-row ${spcClass}">
+                <strong>SPC / Tropical</strong> <span>${spcTextWarning ? 'RISK DETECTED' : (instabHours > 0 ? 'Possible' : 'Stable')}</span>
             </div>
         `;
 
@@ -442,13 +498,14 @@ async function checkDashboard(){
             narrative = `<strong>CRITICAL HAZARD:</strong> Significant infrastructure stress projected. 
             ${hasIce ? "Major icing likely." : ""} 
             ${minTemp < 20 ? "Hard freeze poses burst pipe risk." : ""} 
-            ${maxRainRate > 0.5 ? "Flash flooding likely due to high rain intensity." : ""}`;
+            ${maxRainRate > 0.5 ? "Flash flooding likely due to high rain intensity." : ""}
+            ${spcTextWarning ? "Forecast indicates severe or tropical weather potential." : ""}`;
         } else if (finalScore > 35) {
             cardClass = "orange";
             narrative = `<strong>ELEVATED RISK:</strong> Monitor conditions. 
             ${fireHours > 0 ? "Fire weather parameters met." : ""} 
             ${totalRain > 2.0 ? "Soil saturation and drainage issues possible." : ""}
-            ${freezeHours > 0 ? `Freeze window: ${freezeHours} hours.` : ""}`;
+            ${spcTextWarning ? "NWS discussion indicates severe/tropical potential." : ""}`;
         } else if (freezeHours > 0) {
             cardClass = "yellow";
             narrative = `<strong>NUISANCE FREEZE:</strong> ${freezeHours} hours of sub-freezing temps expected (Low: ${minTemp}°F). Protect sensitive plants/hoses.`;
