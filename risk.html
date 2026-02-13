@@ -165,10 +165,10 @@ hr { border:1px solid #374151;margin:20px 0; }
     <li><strong>Freeze</strong>: Temperature at or below 32°F for one or more consecutive hours.</li>
     <li><strong>Ice/Sleet</strong>: Temperature at or below 32°F with precipitation probability ≥ 20% in the same hour.</li>
     <li><strong>Snow</strong>: Hourly snowfall rate meeting or exceeding a small accumulation threshold (e.g., 0.1 units/hr).</li>
-    <li><strong>Fog</strong>: Weather code indicating fog or depositing rime fog (codes 45 or 48).[web:6][web:108]</li>
-    <li><strong>Instability</strong>: CAPE ≥ 1000 J/kg together with Lifted Index ≤ -2, signaling a more unstable convective environment.[web:6][web:89][web:90][web:93][web:97][web:101]</li>
-    <li><strong>Heat</strong>: Apparent temperature (heat index) at or above 95°F, approximating elevated heat stress conditions.[web:6][web:111][web:116][web:119]</li>
-    <li><strong>Excess Rain</strong>: Many hours with precipitation probability ≥ 70%; for true flood risk, also consider NWS Flood Watches/Warnings and local hydrologic context.[web:6][web:59][web:63][web:66]</li>
+    <li><strong>Fog</strong>: Weather code indicating fog or depositing rime fog (codes 45 or 48).</li>
+    <li><strong>Instability</strong>: CAPE ≥ 1000 J/kg together with Lifted Index ≤ -2, signaling a more unstable convective environment.</li>
+    <li><strong>Heat</strong>: Apparent temperature (heat index) at or above 95°F, approximating elevated heat stress conditions.</li>
+    <li><strong>Excess Rain</strong>: Many hours with precipitation probability ≥ 70%; for true flood risk, also consider NWS Flood Watches/Warnings and local hydrologic context.</li>
   </ul>
 </div>
 
@@ -569,12 +569,24 @@ async function checkDashboard(){
         outEl.innerHTML = primaryCard;
 
         // Indices Panel
+        let plumbingClass, plumbingText;
+        if (minTemp < 20) {
+            plumbingClass = 'severe-high';
+            plumbingText = 'CRITICAL';
+        } else if (minTemp <= 32) {
+            plumbingClass = 'severe-mod';
+            plumbingText = 'MODERATE';
+        } else {
+            plumbingClass = 'severe-low';
+            plumbingText = 'LOW';
+        }
+
         severeEl.innerHTML = `
             <div class="severe-row ${hasIce ? 'severe-high' : 'severe-low'}">
                 <strong>Icing Potential</strong> <span>${hasIce ? 'HIGH' : 'LOW'}</span>
             </div>
-            <div class="severe-row ${minTemp < 20 ? 'severe-high' : 'severe-mod'}">
-                <strong>Plumbing Stress</strong> <span>${minTemp < 20 ? 'CRITICAL' : 'MODERATE'}</span>
+            <div class="severe-row ${plumbingClass}">
+                <strong>Plumbing Stress</strong> <span>${plumbingText}</span>
             </div>
             <div class="severe-row ${maxWind > 35 ? 'severe-mod' : 'severe-low'}">
                 <strong>Wind Load</strong> <span>${maxWind.toFixed(0)} MPH GUSTS</span>
