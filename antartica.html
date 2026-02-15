@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viking Octantis 2026 • Photographer Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f9fafb; }
+        .forecast-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            scrollbar-width: thin;
+        }
+        .day-card {
+            min-width: 90px;
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 1rem 0.75rem;
+            background: #f1f5f9;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .forecast-content { display: none; padding: 1.5rem; background: #f8fafc; border-top: 1px solid #e5e7eb; }
+        .card-expanded .forecast-content { display: block; }
+        .toggle-btn { transition: all 0.2s; }
+    </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+
+<div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-red-700">VIKING OCTANTIS</h1>
+        <p class="text-2xl mt-3">The Americas & Antarctic Explorer • Nov 6 – Dec 16, 2026</p>
+        <p class="text-lg text-gray-600 mt-4">Toggle rows for live forecast + 2026 sunrise/sunset • Antarctica sites expand inline</p>
+    </div>
+
+    <!-- Daily Itinerary -->
+    <div class="bg-white rounded-xl shadow overflow-hidden mb-16">
+        <table class="w-full">
+            <thead class="bg-red-700 text-white">
+                <tr>
+                    <th class="px-6 py-4 text-left">Date 2026</th>
+                    <th class="px-6 py-4 text-left">Port / Activity</th>
+                    <th class="px-6 py-4 text-left">Avg High/Low (°F)</th>
+                    <th class="px-6 py-4 text-center">Forecast + Light</th>
+                </tr>
+            </thead>
+            <tbody id="itinerary"></tbody>
+        </table>
+    </div>
+
+    <!-- Antarctic Sites -->
+    <div class="mt-16">
+        <h2 class="text-3xl font-bold text-center mb-8 text-red-700">Antarctic Peninsula Sites (Dec 7–12) – Photo Hotspots</h2>
+        <div id="antarctic-sites" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</div>
+
+<script>
+// ====================== ITINERARY DATA ======================
+const days = [
+    {date:"Nov 06 Fri", desc:"Depart Austin (AUS) → Ft. Lauderdale (FLL) → Embark", lat:26.12, lon:-80.14, avg:"82/70", fullDate:"2026-11-06"},
+    {date:"Nov 07 Sat", desc:"Scenic Sailing – Gulf of Mexico", lat:24.5, lon:-83.0, avg:"80/68", fullDate:"2026-11-07"},
+    {date:"Nov 08 Sun", desc:"Cozumel, Mexico", lat:20.42, lon:-86.92, avg:"84/73", fullDate:"2026-11-08"},
+    {date:"Nov 09–10 Mon-Tue", desc:"Sail Caribbean Sea", lat:18.0, lon:-78.0, avg:"85/75", fullDate:"2026-11-09"},
+    {date:"Nov 11 Wed", desc:"Scenic Sailing – Panama Canal", lat:9.0, lon:-79.6, avg:"88/75", fullDate:"2026-11-11"},
+    {date:"Nov 12 Thu", desc:"Fuerte Amador (Panama City), Panama", lat:8.91, lon:-79.55, avg:"88/75", fullDate:"2026-11-12"},
+    {date:"Nov 13 Fri", desc:"Sail Pacific Ocean", lat:5.0, lon:-82.0, avg:"86/76", fullDate:"2026-11-13"},
+    {date:"Nov 14 Sat", desc:"Manta, Ecuador", lat:-0.95, lon:-80.73, avg:"82/70", fullDate:"2026-11-14"},
+    {date:"Nov 15–16 Sun-Mon", desc:"Sail Pacific Ocean", lat:-5.0, lon:-82.0, avg:"80/68", fullDate:"2026-11-15"},
+    {date:"Nov 17 Tue", desc:"Callao (Lima), Peru", lat:-12.07, lon:-77.15, avg:"72/64", fullDate:"2026-11-17"},
+    {date:"Nov 18–19 Wed-Thu", desc:"Sail Pacific Ocean", lat:-15.0, lon:-77.0, avg:"70/62", fullDate:"2026-11-18"},
+    {date:"Nov 20 Fri", desc:"Iquique, Chile", lat:-20.23, lon:-70.14, avg:"75/62", fullDate:"2026-11-20"},
+    {date:"Nov 21–22 Sat-Sun", desc:"Sail Pacific Ocean", lat:-25.0, lon:-72.0, avg:"72/58", fullDate:"2026-11-21"},
+    {date:"Nov 23 Mon", desc:"Valparaíso (Santiago), Chile", lat:-33.04, lon:-71.63, avg:"72/54", fullDate:"2026-11-23"},
+    {date:"Nov 24 Tue", desc:"Sail Pacific Ocean", lat:-38.0, lon:-74.0, avg:"65/50", fullDate:"2026-11-24"},
+    {date:"Nov 25 Wed", desc:"Scenic Sailing – Chilean Fjords", lat:-45.5, lon:-73.0, avg:"60/45", fullDate:"2026-11-25"},
+    {date:"Nov 26 Thu", desc:"Puerto Chacabuco, Chile", lat:-45.47, lon:-72.83, avg:"60/45", fullDate:"2026-11-26"},
+    {date:"Nov 27 Fri", desc:"Scenic Sailing – Chilean Fjords", lat:-48.0, lon:-73.5, avg:"58/42", fullDate:"2026-11-27"},
+    {date:"Nov 28–30 Sat-Mon", desc:"Explore Chilean Glaciers", lat:-50.0, lon:-73.8, avg:"55/40", fullDate:"2026-11-28"},
+    {date:"Dec 01 Tue", desc:"Punta Arenas, Chile", lat:-53.16, lon:-70.91, avg:"56/43", fullDate:"2026-12-01"},
+    {date:"Dec 02–05 Wed-Sat", desc:"Sail Drake Passage / Toward Antarctica", lat:-57.0, lon:-65.0, avg:"45/35", fullDate:"2026-12-02"},
+    {date:"Dec 06 Sun", desc:"Enter Antarctic waters / Explore", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-06"},
+    {date:"Dec 07 Mon", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-07"},
+    {date:"Dec 08 Tue", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-08"},
+    {date:"Dec 09 Wed", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-09"},
+    {date:"Dec 10 Thu", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-10"},
+    {date:"Dec 11 Fri", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-11"},
+    {date:"Dec 12 Sat", desc:"Explore Antarctica / Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", fullDate:"2026-12-12"},
+    {date:"Dec 13 Sun", desc:"Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", fullDate:"2026-12-13"},
+    {date:"Dec 14 Mon", desc:"Scenic Sailing – Cape Horn", lat:-55.98, lon:-67.27, avg:"55/41", fullDate:"2026-12-14"},
+    {date:"Dec 15 Tue", desc:"Disembark Ushuaia → Airport", lat:-54.8, lon:-68.3, avg:"57/41", fullDate:"2026-12-15"},
+    {date:"Dec 16 Wed", desc:"Depart Ushuaia (USH) → Austin (AUS)", lat:-54.8, lon:-68.3, avg:"57/41", fullDate:"2026-12-16"}
+];
+
+const itineraryBody = document.getElementById('itinerary');
+
+days.forEach(day => {
+    const row = document.createElement('tr');
+    row.className = 'bg-white border-b hover:bg-gray-50';
+    row.innerHTML = `
+        <td class="px-6 py-4 font-medium">${day.date}</td>
+        <td class="px-6 py-4">${day.desc}</td>
+        <td class="px-6 py-4">${day.avg}</td>
+        <td class="px-6 py-4 text-center">
+            <button class="bg-red-700 hover:bg-red-800 text-white px-5 py-2 rounded text-sm font-medium toggle-btn">
+                Show Forecast + Sunrise/Sunset
+            </button>
+        </td>
+    `;
+
+    const expandRow = document.createElement('tr');
+    expandRow.innerHTML = `<td colspan="4"><div class="forecast-content"><div class="text-center text-gray-500 py-8">Loading forecast...</div></div></td>`;
+    const content = expandRow.querySelector('.forecast-content');
+
+    itineraryBody.appendChild(row);
+    itineraryBody.appendChild(expandRow);
+
+    const btn = row.querySelector('.toggle-btn');
+
+    btn.addEventListener('click', async () => {
+        const isOpen = content.style.display === 'block';
+        if (isOpen) {
+            content.style.display = 'none';
+            btn.textContent = 'Show Forecast + Sunrise/Sunset';
+            return;
+        }
+
+        content.style.display = 'block';
+        btn.textContent = 'Hide Forecast + Sunrise/Sunset';
+
+        if (!content.dataset.loaded) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${day.lat}&longitude=${day.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const wmo = {0:"Clear ☀️",1:"Mainly clear",2:"Partly cloudy",3:"Overcast ☁️",45:"Fog 🌫️",71:"Light snow ❄️",73:"Snow",75:"Heavy snow",85:"Snow showers"};
+
+                const dateObj = new Date(day.fullDate);
+                const times = SunCalc.getTimes(dateObj, day.lat, day.lon);
+                const sunrise = times.sunrise ? times.sunrise.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}) : 'N/A';
+                const sunset  = times.sunset  ? times.sunset.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}) : 'N/A';
+
+                let html = `
+                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gray-50 p-6 rounded-xl text-center">
+                            <div class="text-sm text-gray-600 mb-2">CURRENT</div>
+                            <div class="text-5xl font-light">${data.current.temperature_2m}°F</div>
+                            <div class="text-gray-600 mt-1">Feels ${data.current.apparent_temperature}°F</div>
+                            <div class="text-2xl mt-4">${wmo[data.current.weather_code] || 'Unknown'}</div>
+                            <div class="text-sm mt-3">Wind: ${data.current.wind_speed_10m} mph</div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="text-sm text-gray-600 mb-4 uppercase tracking-wide">7-Day Forecast</div>
+                            <div class="forecast-grid">
+                `;
+
+                for (let i = 0; i < 7; i++) {
+                    const d = data.daily.time[i].slice(5);
+                    const hi = data.daily.temperature_2m_max[i];
+                    const lo = data.daily.temperature_2m_min[i];
+                    const code = data.daily.weather_code[i];
+                    html += `
+                        <div class="day-card">
+                            <div class="font-medium">${d}</div>
+                            <div class="text-3xl my-2">${wmo[code] || '??'}</div>
+                            <div class="font-medium">${hi}° / ${lo}°</div>
+                        </div>
+                    `;
+                }
+
+                html += `</div></div></div>`;
+
+                html += `
+                    <div class="mt-8 bg-amber-50 border border-amber-200 p-6 rounded-2xl">
+                        <div class="text-center">
+                            <div class="text-amber-700 font-medium text-sm tracking-widest uppercase">Sunrise / Sunset – ${day.date} 2026</div>
+                            <div class="text-3xl font-light mt-4">${sunrise} → ${sunset}</div>
+                            <div class="text-sm text-amber-600 mt-3">Golden hour ≈ 1 hr after sunrise & before sunset. In early Dec Antarctica Peninsula ≈ 19–21 hrs daylight – extended low light for photos!</div>
+                        </div>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+                content.dataset.loaded = 'true';
+            } catch (e) {
+                content.innerHTML = `<div class="text-red-600 text-center py-8">Error loading forecast – check connection</div>`;
+            }
+        }
+    });
+});
+
+// ====================== ANTARCTIC SITES (INLINE) ======================
+const sites = [
+    {name:"Paradise Bay", desc:"Glaciers + gentoo penguins – stunning reflections & golden light", lat:-64.82, lon:-62.87},
+    {name:"Neko Harbour", desc:"Gentoo colony & calving glacier – dramatic action shots", lat:-64.84, lon:-62.58},
+    {name:"Port Lockroy", desc:"Historic base & gentoos – human history + wildlife contrast", lat:-64.83, lon:-63.50},
+    {name:"Cuverville Island", desc:"Large gentoo rookery – penguin behavior & ice", lat:-64.68, lon:-62.68},
+    {name:"Deception Island", desc:"Volcanic caldera, black sand, chinstraps – unique textures", lat:-62.97, lon:-60.65},
+    {name:"Petermann Island", desc:"Adélies, icebergs, Lemaire Channel – epic landscapes", lat:-65.17, lon:-64.17},
+    {name:"Half Moon Island", desc:"Chinstraps on cliffs – good wildlife portraits", lat:-62.46, lon:-59.91}
+];
+
+const sitesDiv = document.getElementById('antarctic-sites');
+
+sites.forEach(site => {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl shadow p-6 hover:shadow-xl transition';
+    card.innerHTML = `
+        <h3 class="text-xl font-bold mb-2">${site.name}</h3>
+        <p class="text-gray-600 mb-4">${site.desc}</p>
+        <button class="w-full bg-red-700 hover:bg-red-800 text-white font-medium py-3 rounded-lg toggle-site">
+            Show Live Weather
+        </button>
+        <div class="forecast-content mt-4 text-sm"></div>
+    `;
+
+    sitesDiv.appendChild(card);
+
+    const btn = card.querySelector('.toggle-site');
+    const content = card.querySelector('.forecast-content');
+
+    btn.addEventListener('click', async () => {
+        const isOpen = content.style.display === 'block';
+        if (isOpen) {
+            content.style.display = 'none';
+            btn.textContent = 'Show Live Weather';
+            return;
+        }
+
+        content.style.display = 'block';
+        btn.textContent = 'Hide Live Weather';
+
+        if (!content.dataset.loaded) {
+            content.innerHTML = '<div class="text-center py-6 text-gray-500">Loading...</div>';
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${site.lat}&longitude=${site.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const wmo = {0:"Clear ☀️",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Fog 🌫️",71:"Light snow ❄️",73:"Snow",75:"Heavy snow",85:"Snow showers"};
+
+                let html = `
+                    <div class="bg-gray-50 p-5 rounded-lg text-center mb-4">
+                        <div class="text-4xl font-bold">${data.current.temperature_2m}°F</div>
+                        <div class="text-gray-600">Feels ${data.current.apparent_temperature}°F</div>
+                        <div class="text-2xl my-3">${wmo[data.current.weather_code] || 'Unknown'}</div>
+                        <div>Wind: ${data.current.wind_speed_10m} mph</div>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-3 uppercase tracking-wide">7-Day Forecast</div>
+                    <div class="forecast-grid">
+                `;
+
+                for (let i = 0; i < 7; i++) {
+                    const d = data.daily.time[i].slice(5);
+                    const hi = data.daily.temperature_2m_max[i];
+                    const lo = data.daily.temperature_2m_min[i];
+                    const code = data.daily.weather_code[i];
+                    html += `
+                        <div class="day-card">
+                            <div class="font-medium">${d}</div>
+                            <div class="text-3xl my-2">${wmo[code] || '??'}</div>
+                            <div class="font-medium">${hi}° / ${lo}°</div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+                content.innerHTML = html;
+                content.dataset.loaded = 'true';
+            } catch (e) {
+                content.innerHTML = '<div class="text-red-600 text-center py-6">Error loading weather</div>';
+            }
+        }
+    });
+});
+</script>
+
+<p class="text-center text-sm text-gray-500 mt-12">
+    Early December on the Antarctic Peninsula: ~19–21 hours daylight (sunrise ~3–4 AM, sunset ~10–11 PM local). Sun never fully sets — extended golden hour & twilight for photography!
+</p>
+</body>
+</html>
