@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>7-Day Ensemble + Climatology Forecast</title>
+<style>
+body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+    background:#f3f4f6;
+    padding:20px;
+}
+h1 { margin-bottom:10px; }
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+th, td {
+    border:1px solid #ddd;
+    text-align:center;
+    padding:6px;
+    font-size:14px;
+}
+th { background:#e5e7eb; }
+.confHigh { background:#bbf7d0; }  /* green */
+.confMed { background:#fde68a; }   /* yellow */
+.confLow { background:#fecaca; }   /* red */
+.popHigh { background:#f87171; color:white; } /* red */
+.popMed { background:#fb923c; } /* orange */
+.popLow { background:#fde047; }  /* yellow */
+.iceAlert { background:#bae6fd; } /* light blue alert for ice/snow */
+.sparkline { font-size:10px; color:#2563eb; } /* tiny local variation */
+</style>
+</head>
+<body>
+
+<h1>7-Day Ensemble + Climatology Forecast</h1>
+
+<table id="forecastTable">
+<thead>
+<tr>
+<th>Parameter / Day</th>
+<th>Feb 17</th>
+<th>Feb 18</th>
+<th>Feb 19</th>
+<th>Feb 20</th>
+<th>Feb 21</th>
+<th>Feb 22</th>
+<th>Feb 23</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+// =========================
+// SIMULATED DATA
+// =========================
+
+const days = ["2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-21","2026-02-22","2026-02-23"];
+
+function randomEnsemble(size, base, spread) {
+    return Array.from({length:size}, () =>
+        Math.max(0, base + (Math.random()-0.5)*spread)
+    );
+}
+
+// Simulated historical averages and maxes for each day
+function randomHistorical() {
+    const avg = (Math.random()*0.8 + 0.2).toFixed(2);
+    const max = (parseFloat(avg) + Math.random()*0.8).toFixed(2);
+    return {avg,max};
+}
+
+// Local 1km grid variation as tiny sparkline
+function localGridVariation() {
+    return Array.from({length:5}, ()=> (Math.random()*0.5).toFixed(2));
+}
+
+const forecastData = {};
+days.forEach(day => {
+    const hist = randomHistorical();
+    forecastData[day] = {
+        highTemp: Math.round(65 + Math.random()*12),
+        lowTemp: Math.round(50 + Math.random()*10),
+        shortRain: randomEnsemble(10, 0.5, 1.0),
+        midRain: randomEnsemble(31, 0.6, 1.5),
+        hours: randomEnsemble(24, 0.3, 0.6),
+        temps: randomEnsemble(24, 45, 10),
+        wind: Math.round(5 + Math.random()*12),
+        humidity: Math.round(40 + Math.random()*40),
+        historicalAvg: hist.avg,
+        historicalMax: hist.max,
+        localGrid: localGridVariation()
+    };
+});
+
+// =========================
+// CALCULATION FUNCTIONS
+// =========================
+function avg(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function range(arr){ return `${Math.min(...arr).toFixed(2)}–${Math.max(...arr).toFixed(2)}`; }
+function probability(arr, threshold){ return Math.round(arr.filter(x=>x>=threshold).length/arr.length*100); }
+function confidence(mean, spread, pop){
+    const ratio = spread/mean;
+    if(pop>70 && ratio<0.5) return "High";
+    if(pop>40) return "Moderate";
+    return "Low";
+}
+function peakHours(arr){
+    let copy = arr.map((v,i)=>({hour:i,value:v}));
+    copy.sort((a,b)=>b.value-a.value);
+    return copy.slice(0,3).map(o=>`${o.hour}:00-${o.hour+1}:00`).join(", ");
+}
+function sparkline(arr){ return arr.map(v=>"▮").join(""); }
+
+// =========================
+// BUILD TABLE
+// =========================
+const tbody = document.querySelector("#forecastTable tbody");
+
+const parameters = [
+    {name:"High Temp (°F)", key:"highTemp"},
+    {name:"Low Temp (°F)", key:"lowTemp"},
+    {name:"Expected Avg Temp (°F)", key:null}, // will compute
+    {name:"Short-range Rain (in)", key:"shortRain"},
+    {name:"Short-range Confidence", key:"shortRain"},
+    {name:"Mid-range Rain (in)", key:"midRain"},
+    {name:"Mid-range Range (Min–Max)", key:"midRain"},
+    {name:"Probability ≥0.10\"", key:"midRain"},
+    {name:"Probability ≥0.50\"", key:"midRain"},
+    {name:"Peak Probability Hours", key:"hours"},
+    {name:"Wind (mph)", key:"wind"},
+    {name:"Humidity (%)", key:"humidity"},
+    {name:"Historical Avg Rain (in)", key:"historicalAvg"},
+    {name:"Historical Max Rain (in)", key:"historicalMax"},
+    {name:"Local Grid Variation", key:"localGrid"},
+    {name:"Ice/Snow Alert", key:"temps"}
+];
+
+parameters.forEach(param=>{
+    const row = document.createElement("tr");
+    const cells = [`<td>${param.name}</td>`];
+
+    days.forEach(day=>{
+        const d = forecastData[day];
+        let val="", cls="";
+        switch(param.name){
+            case "Expected Avg Temp (°F)":
+                val = Math.round((d.highTemp+d.lowTemp)/2);
+                break;
+            case "Short-range Rain (in)":
+                val = avg(d.shortRain).toFixed(2);
+                break;
+            case "Short-range Confidence":
+                const shortAvg = avg(d.shortRain);
+                const shortSpread = Math.max(...d.shortRain)-Math.min(...d.shortRain);
+                const pop10 = probability(d.shortRain,0.10);
+                const conf = confidence(shortAvg, shortSpread, pop10);
+                cls = conf==="High"?"confHigh":conf==="Moderate"?"confMed":"confLow";
+                val = conf;
+                break;
+            case "Mid-range Rain (in)":
+                val = avg(d.midRain).toFixed(2);
+                break;
+            case "Mid-range Range (Min–Max)":
+                val = range(d.midRain);
+                break;
+            case "Probability ≥0.10\"":
+                const pop10mid = probability(d.midRain,0.10);
+                val = pop10mid + "%";
+                cls = pop10mid>=80?"popHigh":pop10mid>=60?"popMed":pop10mid>=40?"popLow":"";
+                break;
+            case "Probability ≥0.50\"":
+                const pop50mid = probability(d.midRain,0.50);
+                val = pop50mid + "%";
+                cls = pop50mid>=80?"popHigh":pop50mid>=60?"popMed":pop50mid>=40?"popLow":"";
+                break;
+            case "Peak Probability Hours":
+                val = peakHours(d.hours);
+                break;
+            case "Ice/Snow Alert":
+                const freezeHours = d.temps.filter(t=>t<=32).length;
+                if(freezeHours>0){ val="⚠ Ice/Snow Risk"; cls="iceAlert"; } else { val="–"; }
+                break;
+            case "Historical Avg Rain (in)":
+                val = d.historicalAvg;
+                break;
+            case "Historical Max Rain (in)":
+                val = d.historicalMax;
+                break;
+            case "Local Grid Variation":
+                val = `<span class="sparkline">${sparkline(d.localGrid)}</span>`;
+                break;
+            default:
+                val = d[param.key];
+        }
+        cells.push(`<td class="${cls}">${val}</td>`);
+    });
+
+    row.innerHTML = cells.join("");
+    tbody.appendChild(row);
+});
+</script>
+
+</body>
+</html>
