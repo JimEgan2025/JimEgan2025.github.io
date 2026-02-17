@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vizcaya Weather — Open-Meteo Forecast</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; margin: 0; }
+  h2 { text-align: center; color: #1f2937; }
+  .controls { text-align: center; margin: 20px 0; }
+  button, label { margin: 0 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; }
+  table { width: 100%; max-width: 2000px; margin: 20px auto; border-collapse: collapse; font-size: 13px; }
+  th, td { border: 1px solid #d1d5db; padding: 8px; text-align: center; }
+  th { background: #1f2937; color: white; position: sticky; top: 0; z-index: 10; }
+  tr:nth-child(even) { background: #f9fafb; }
+  tfoot tr { background: #e5e7eb; font-weight: bold; }
+  tfoot td { border-top: 2px solid #9ca3af; }
+  /* Colors */
+  .low-prob    { background-color: #d4edda; }
+  .med-prob    { background-color: #fff3cd; }
+  .high-prob   { background-color: #f8d7da; }
+  .cape-low    { background-color: #d4edda; }
+  .cape-mod    { background-color: #fff3cd; }
+  .cape-high   { background-color: #ffdab9; }
+  .cape-extreme{ background-color: #ffcccc; }
+  .cold-low    { background-color: #d1e7ff; }
+  .hot-high    { background-color: #ffcccc; }
+  .cold-feels  { background-color: #cce5ff; }
+  .feels-30s   { background-color: #cce5ff; }
+  .hot-feels   { background-color: #ff9999; }
+  .windy       { background-color: #fffacd; }
+  .cloud-clear { background-color: #e6ffe6; }
+  .cloud-part  { background-color: #fffacd; }
+  .cloud-over  { background-color: #e6e6ff; }
+  /* Humidity & Dew Point */
+  .humid-high  { background-color: #fff3cd; } /* >70% muggy */
+  .humid-low   { background-color: #e6ffe6; font-weight: bold; } /* <40% dry - bold green */
+  .dew-muggy   { background-color: #ffe6cc; } /* >65°F very muggy */
+  .dew-comfy   { background-color: #fffacd; } /* 55-65°F muggy */
+  .summary { font-size: 14px; text-align: center; margin: 10px; color: #374151; }
+  .note { font-size: 12px; color: #666; text-align: center; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h2>Vizcaya Weather — Open-Meteo Blended Forecast (Round Rock, TX)</h2>
+
+<div class="controls">
+  <button onclick="fetchOpenMeteo()">Fetch Current Forecast</button>
+  <input type="file" id="csvFile" accept=".csv">
+  <label for="csvFile">Upload SpotWX CSV</label>
+  <button onclick="clearTable()">Clear</button>
+</div>
+
+<table id="forecastTable">
+<thead>
+<tr>
+  <th>Date</th>
+  <th>Day</th>
+  <th>Rain (in)</th>
+  <th>Prob (%)</th>
+  <th>Max CAPE (J/kg)</th>
+  <th>Cloud Avg (%)</th>
+  <th>Humidity Mean (%)</th>
+  <th>Dew Pt Mean (°F)</th>
+  <th>Mean (°F)</th>
+  <th>High (°F)</th>
+  <th>Low (°F)</th>
+  <th>Feels High (°F)</th>
+  <th>Feels Low (°F)</th>
+  <th>Max Wind (mph)</th>
+  <th>Max Gust (mph)</th>
+  <th>Sunshine (hrs)</th>
+  <th>UV Max</th>
+</tr>
+</thead>
+<tbody id="forecastBody"></tbody>
+<tfoot id="summaryFooter"></tfoot>
+</table>
+
+<div class="summary" id="grandSummary"></div>
+<div class="note">
+  Humidity Mean: Bold green <40% (low/dry air). Yellow >70% (humid/muggy). Dew Pt Mean: Orange >65°F (very muggy), Yellow 55–65°F. Feels Low: Deep blue ≤32°F, Light blue 33–39°F. 16-day blended forecast.
+</div>
+
+<script>
+const LAT = 30.509747;
+const LON = -97.692116;
+const TZ  = "America/Chicago";
+
+async function fetchOpenMeteo() {
+  const tbody = document.getElementById("forecastBody");
+  tbody.innerHTML = `<tr><td colspan="17" style="padding:40px; text-align:center;">Loading forecast...</td></tr>`;
+
+  let dailyJson = null;
+  let hourlyJson = { hourly: { time: [], cape: [], cloud_cover: [] } };
+
+  try {
+    const dailyUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=rain_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,temperature_2m_mean,relative_humidity_2m_mean,dew_point_2m_mean,apparent_temperature_max,apparent_temperature_min,wind_speed_10m_max,wind_gusts_10m_max,sunshine_duration,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${TZ}&forecast_days=16`;
+    const dailyRes = await fetch(dailyUrl);
+    if (!dailyRes.ok) throw new Error(`Daily API ${dailyRes.status}`);
+    dailyJson = await dailyRes.json();
+
+    const hourlyUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=cape,cloud_cover&timezone=${TZ}&forecast_days=16`;
+    const hourlyRes = await fetch(hourlyUrl);
+    if (hourlyRes.ok) hourlyJson = await hourlyRes.json();
+  } catch (err) {
+    alert(`Fetch issue: ${err.message}\nSome data may be missing.`);
+    console.error(err);
+  }
+
+  const data = [];
+  const times = dailyJson?.daily?.time || [];
+  if (times.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="17">No data returned. Check connection.</td></tr>`;
+    return;
+  }
+
+  const rainMm  = dailyJson.daily.rain_sum || [];
+  const prob    = dailyJson.daily.precipitation_probability_max || [];
+  const humMean = dailyJson.daily.relative_humidity_2m_mean || [];
+  const dewMean = dailyJson.daily.dew_point_2m_mean || [];
+  const tMean   = dailyJson.daily.temperature_2m_mean || [];
+  const tMax    = dailyJson.daily.temperature_2m_max || [];
+  const tMin    = dailyJson.daily.temperature_2m_min || [];
+  const appMax  = dailyJson.daily.apparent_temperature_max || [];
+  const appMin  = dailyJson.daily.apparent_temperature_min || [];
+  const windMax = dailyJson.daily.wind_speed_10m_max || [];
+  const gustMax = dailyJson.daily.wind_gusts_10m_max || [];
+  const sunshine= dailyJson.daily.sunshine_duration || [];
+  const uvMax   = dailyJson.daily.uv_index_max || [];
+
+  const capeTimes  = hourlyJson.hourly.time || [];
+  const capeVals   = hourlyJson.hourly.cape || [];
+  const cloudTimes = hourlyJson.hourly.time || [];
+  const cloudVals  = hourlyJson.hourly.cloud_cover || [];
+
+  for (let i = 0; i < times.length; i++) {
+    const dateStr = times[i];
+    const dayStart = dateStr + "T00:00";
+    const dayEnd   = dateStr + "T23:59";
+
+    let maxCape = 0;
+    capeTimes.forEach((t, idx) => {
+      if (t >= dayStart && t <= dayEnd) maxCape = Math.max(maxCape, capeVals[idx] || 0);
+    });
+
+    let cloudSum = 0, cloudCount = 0;
+    cloudTimes.forEach((t, idx) => {
+      if (t >= dayStart && t <= dayEnd) {
+        const val = cloudVals[idx] || 0;
+        cloudSum += val;
+        cloudCount++;
+      }
+    });
+    const avgCloud = cloudCount > 0 ? (cloudSum / cloudCount).toFixed(0) : "N/A";
+
+    const rainIn = (rainMm[i] ?? 0) / 25.4;
+    const p = prob[i] ?? 0;
+    const sunshineHrs = sunshine[i] ? (sunshine[i] / 3600).toFixed(1) : "—";
+
+    data.push({
+      Date: dateStr.slice(5),
+      Day: new Date(dateStr).toLocaleDateString("en-US", {weekday: "short"}),
+      Rain: rainIn.toFixed(2),
+      Prob: p,
+      MaxCape: capeTimes.length > 0 ? maxCape.toFixed(0) : "N/A",
+      CloudAvg: avgCloud,
+      HumMean: humMean[i] != null ? humMean[i].toFixed(0) : "—",
+      DewMean: dewMean[i] != null ? dewMean[i].toFixed(1) : "—",
+      Mean: tMean[i] != null ? tMean[i].toFixed(1) : "—",
+      High: tMax[i] != null ? tMax[i].toFixed(1) : "—",
+      Low: tMin[i] != null ? tMin[i].toFixed(1) : "—",
+      AppHigh: appMax[i] != null ? appMax[i].toFixed(1) : "—",
+      AppLow: appMin[i] != null ? appMin[i].toFixed(1) : "—",
+      WindMax: windMax[i] != null ? windMax[i].toFixed(0) : "—",
+      GustMax: gustMax[i] != null ? gustMax[i].toFixed(0) : "—",
+      Sunshine: sunshineHrs,
+      UV: uvMax[i] != null ? uvMax[i].toFixed(1) : "—"
+    });
+  }
+
+  populateTable(data);
+}
+
+function populateTable(data) {
+  const tbody = document.getElementById("forecastBody");
+  const tfoot = document.getElementById("summaryFooter");
+  tbody.innerHTML = "";
+  tfoot.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+
+    const probClass   = row.Prob < 10 ? "low-prob" : row.Prob <= 30 ? "med-prob" : "high-prob";
+    const capeVal     = parseFloat(row.MaxCape);
+    const capeClass   = isNaN(capeVal) ? "" : capeVal < 1000 ? "cape-low" : capeVal <= 2500 ? "cape-mod" : capeVal <= 4000 ? "cape-high" : "cape-extreme";
+    const highClass   = parseFloat(row.High) > 90 ? "hot-high" : "";
+    const lowClass    = parseFloat(row.Low)  < 40 ? "cold-low" : "";
+    let feelsHighClass = parseFloat(row.AppHigh) >= 95 ? "hot-feels" : "";
+    let feelsLowClass  = "";
+    const feelsLowVal = parseFloat(row.AppLow);
+    if (!isNaN(feelsLowVal)) {
+      if (feelsLowVal <= 32) feelsLowClass = "cold-feels";
+      else if (feelsLowVal <= 39) feelsLowClass = "feels-30s";
+    }
+    const gustClass   = parseFloat(row.GustMax) > 25 ? "windy" : "";
+    const cloudVal = parseFloat(row.CloudAvg);
+    const cloudClass = isNaN(cloudVal) ? "" : cloudVal < 30 ? "cloud-clear" : cloudVal <= 70 ? "cloud-part" : "cloud-over";
+
+    // Humidity & Dew Point classes
+    const humVal = parseFloat(row.HumMean);
+    const humClass = isNaN(humVal) ? "" : humVal > 70 ? "humid-high" : humVal < 40 ? "humid-low" : "";
+    const dewVal = parseFloat(row.DewMean);
+    const dewClass = isNaN(dewVal) ? "" : dewVal > 65 ? "dew-muggy" : dewVal >= 55 ? "dew-comfy" : "";
+
+    tr.innerHTML = `
+      <td>${row.Date}</td>
+      <td>${row.Day}</td>
+      <td>${row.Rain}</td>
+      <td class="${probClass}">${row.Prob}</td>
+      <td class="${capeClass}">${row.MaxCape}</td>
+      <td class="${cloudClass}">${row.CloudAvg}</td>
+      <td class="${humClass}">${row.HumMean}</td>
+      <td class="${dewClass}">${row.DewMean}</td>
+      <td>${row.Mean}</td>
+      <td class="${highClass}">${row.High}</td>
+      <td class="${lowClass}">${row.Low}</td>
+      <td class="${feelsHighClass}">${row.AppHigh}</td>
+      <td class="${feelsLowClass}">${row.AppLow}</td>
+      <td>${row.WindMax}</td>
+      <td class="${gustClass}">${row.GustMax}</td>
+      <td>${row.Sunshine}</td>
+      <td>${row.UV}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const totalRain = data.reduce((s,r)=>s+parseFloat(r.Rain||0),0).toFixed(2);
+  const avgProb   = (data.reduce((s,r)=>s+(r.Prob||0),0)/data.length).toFixed(1);
+  const peakCape  = Math.max(...data.map(r=>parseFloat(r.MaxCape)||0)).toFixed(0);
+  const avgCloud  = (data.reduce((s,r)=>s+parseFloat(r.CloudAvg||0),0)/data.filter(r=>r.CloudAvg!=="N/A").length).toFixed(0);
+  const avgHum    = (data.reduce((s,r)=>s+parseFloat(r.HumMean||0),0)/data.length).toFixed(0);
+  const avgDew    = (data.reduce((s,r)=>s+parseFloat(r.DewMean||0),0)/data.length).toFixed(1);
+  const avgMean   = (data.reduce((s,r)=>s+parseFloat(r.Mean||0),0)/data.length).toFixed(1);
+  const avgHigh   = (data.reduce((s,r)=>s+parseFloat(r.High||0),0)/data.length).toFixed(1);
+  const avgLow    = (data.reduce((s,r)=>s+parseFloat(r.Low||0),0)/data.length).toFixed(1);
+  const maxGust   = Math.max(...data.map(r=>parseFloat(r.GustMax)||0)).toFixed(0);
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td></td>
+    <td><strong>16-Day Summary</strong></td>
+    <td>${totalRain} in</td>
+    <td>${avgProb}%</td>
+    <td>Peak ${peakCape}</td>
+    <td>Avg cloud ${avgCloud}%</td>
+    <td>Avg hum ${avgHum}%</td>
+    <td>Avg dew ${avgDew}°F</td>
+    <td>Avg mean ${avgMean}°F</td>
+    <td>Avg high ${avgHigh}°F</td>
+    <td>Avg low ${avgLow}°F</td>
+    <td>—</td>
+    <td>—</td>
+    <td>Peak gust ${maxGust} mph</td>
+    <td>—</td>
+    <td>—</td>
+  `;
+  tfoot.appendChild(tr);
+
+  document.getElementById("grandSummary").innerHTML =
+    `Total rain: <strong>${totalRain} in</strong> • Avg precip chance: <strong>${avgProb}%</strong> • Avg cloud: <strong>${avgCloud}%</strong><br>` +
+    `Avg humidity: <strong>${avgHum}%</strong> • Avg dew point: <strong>${avgDew}°F</strong> • Avg temp: <strong>${avgMean}°F</strong> (range ${avgHigh}°F / ${avgLow}°F) • Peak gust: <strong>${maxGust} mph</strong>`;
+}
+
+function clearTable() {
+  document.getElementById("forecastBody").innerHTML = "";
+  document.getElementById("summaryFooter").innerHTML = "";
+  document.getElementById("grandSummary").innerHTML = "";
+}
+
+document.getElementById("csvFile").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.trim().split(/\r?\n/);
+    const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const vals = lines[i].split(',').map(v=>v.trim());
+      const obj = {};
+      headers.forEach((h,idx) => {
+        const v = vals[idx];
+        if (h.includes("date")) obj.Date = v;
+        else if (h.includes("day")) obj.Day = v;
+        else if (h.includes("rain")) obj.Rain = parseFloat(v).toFixed(2) || "0.00";
+        else if (h.includes("prob")) obj.Prob = parseInt(v) || 0;
+        else if (h.includes("cape")) obj.MaxCape = parseFloat(v).toFixed(0) || "—";
+        else if (h.includes("cloud")) obj.CloudAvg = parseFloat(v).toFixed(0) || "—";
+        else if (h.includes("humidity") || h.includes("hum")) obj.HumMean = parseFloat(v).toFixed(0) || "—";
+        else if (h.includes("dew")) obj.DewMean = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("mean")) obj.Mean = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("high")) obj.High = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("low")) obj.Low = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("feels high") || h.includes("app high")) obj.AppHigh = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("feels low")  || h.includes("app low"))  obj.AppLow  = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("wind max")) obj.WindMax = parseFloat(v).toFixed(0) || "—";
+        else if (h.includes("gust")) obj.GustMax = parseFloat(v).toFixed(0) || "—";
+        else if (h.includes("sun")) obj.Sunshine = parseFloat(v).toFixed(1) || "—";
+        else if (h.includes("uv")) obj.UV = parseFloat(v).toFixed(1) || "—";
+      });
+      if (obj.Date) data.push(obj);
+    }
+    populateTable(data);
+  };
+  reader.readAsText(file);
+});
+</script>
+
+</body>
+</html>
