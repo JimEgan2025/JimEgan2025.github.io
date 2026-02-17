@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Almanac | Round Rock, TX</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; }
+        .search-container { background: #ecf0f1; padding: 20px; border-radius: 10px; margin-bottom: 25px; }
+        select, button { padding: 10px; border-radius: 5px; border: 1px solid #bdc3c7; font-size: 16px; margin: 5px; }
+        button { background-color: #3498db; color: white; cursor: pointer; border: none; }
+        button:hover { background-color: #2980b9; }
+        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .data-point { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        .label { display: block; font-size: 11px; color: #95a5a6; text-transform: uppercase; font-weight: bold; }
+        .value { font-size: 18px; font-weight: bold; color: #2c3e50; }
+        .full-width { grid-column: span 2; background: #e8f4fd; }
+        h1 { margin-bottom: 0; color: #2c3e50; }
+        #dateHeader { color: #3498db; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Vizcaya Almanac</h1>
+    <p>Historical Climate Data</p>
+
+    <div class="search-container">
+        <select id="monthSelect">
+            <option value="01">January</option><option value="02">February</option>
+            <option value="03">March</option><option value="04">April</option>
+            <option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option>
+            <option value="09">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="daySelect">
+            <script>
+                for(let i=1; i<=31; i++) {
+                    let val = i < 10 ? '0' + i : i;
+                    document.write(`<option value="${val}">${i}</option>`);
+                }
+            </script>
+        </select>
+        <button onclick="getAlmanacData()">View Data</button>
+    </div>
+
+    <h2 id="dateHeader">---</h2>
+
+    <div class="results-grid">
+        <div class="data-point">
+            <span class="label">Record High</span>
+            <span id="recHigh" class="value">--</span>
+        </div>
+        <div class="data-point">
+            <span class="label">Record Low</span>
+            <span id="recLow" class="value">--</span>
+        </div>
+        <div class="data-point">
+            <span class="label">Average High</span>
+            <span id="avgHigh" class="value">--</span>
+        </div>
+        <div class="data-point">
+            <span class="label">Average Low</span>
+            <span id="avgLow" class="value">--</span>
+        </div>
+        <div class="data-point full-width">
+            <span class="label">Cumulative Precipitation Norm</span>
+            <span id="precip" class="value">--</span>
+        </div>
+    </div>
+</div>
+
+<script>
+        /**
+         * THE VIZCAYA DATA HUB
+         * Instructions: To tweak history, update the values in this object.
+         * Format: "MM-DD": { recH, recHY, recL, recLY, avgH, avgL, avgM, accP }
+         */
+        const almanacData = {
+            "01-01": { recH: 80, recHY: 2006, recL: 15, recLY: 1928, avgH: 60, avgL: 37, avgM: 48.5, accP: 0.08 },
+    "01-02": { recH: 81, recHY: 2006, recL: 10, recLY: 1979, avgH: 59, avgL: 37, avgM: 48.0, accP: 0.15 },
+    "01-03": { recH: 82, recHY: 1917, recL: 14, recLY: 1911, avgH: 59, avgL: 37, avgM: 48.0, accP: 0.22 },
+    "01-04": { recH: 83, recHY: 1927, recL: 12, recLY: 1947, avgH: 60, avgL: 38, avgM: 49.0, accP: 0.29 },
+    "01-05": { recH: 80, recHY: 1956, recL: 15, recLY: 1910, avgH: 60, avgL: 38, avgM: 49.0, accP: 0.36 },
+    "01-06": { recH: 81, recHY: 2023, recL: 18, recLY: 1971, avgH: 60, avgL: 38, avgM: 49.0, accP: 0.44 },
+    "01-07": { recH: 84, recHY: 1923, recL: 11, recLY: 1912, avgH: 61, avgL: 38, avgM: 49.5, accP: 0.51 },
+    "01-08": { recH: 82, recHY: 1965, recL: 10, recLY: 1970, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.58 },
+    "01-09": { recH: 85, recHY: 2014, recL: 13, recLY: 1976, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.65 },
+    "01-10": { recH: 83, recHY: 1911, recL: 14, recLY: 1982, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.73 },
+    "01-11": { recH: 82, recHY: 1950, recL: 12, recLY: 1918, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.80 },
+    "01-12": { recH: 84, recHY: 1907, recL: 11, recLY: 1918, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.88 },
+    "01-13": { recH: 85, recHY: 2017, recL: 15, recLY: 1953, avgH: 61, avgL: 39, avgM: 50.0, accP: 0.95 },
+    "01-14": { recH: 86, recHY: 2017, recL: 16, recLY: 1944, avgH: 61, avgL: 39, avgM: 50.0, accP: 1.02 },
+    "01-15": { recH: 84, recHY: 1902, recL: 18, recLY: 1930, avgH: 61, avgL: 39, avgM: 50.0, accP: 1.09 },
+    "01-16": { recH: 85, recHY: 1974, recL: 12, recLY: 1953, avgH: 61, avgL: 39, avgM: 50.0, accP: 1.16 },
+    "01-17": { recH: 88, recHY: 1974, recL: 14, recLY: 1944, avgH: 62, avgL: 39, avgM: 50.5, accP: 1.23 },
+    "01-18": { recH: 85, recHY: 2000, recL: 15, recLY: 1930, avgH: 62, avgL: 39, avgM: 50.5, accP: 1.30 },
+    "01-19": { recH: 83, recHY: 1905, recL: 16, recLY: 1940, avgH: 62, avgL: 39, avgM: 50.5, accP: 1.38 },
+    "01-20": { recH: 84, recHY: 1905, recL: 10, recLY: 1985, avgH: 62, avgL: 40, avgM: 51.0, accP: 1.45 },
+    "01-21": { recH: 86, recHY: 1970, recL: 12, recLY: 1918, avgH: 62, avgL: 40, avgM: 51.0, accP: 1.52 },
+    "01-22": { recH: 83, recHY: 1923, recL: 14, recLY: 1940, avgH: 62, avgL: 40, avgM: 51.0, accP: 1.59 },
+    "01-23": { recH: 81, recHY: 1967, recL: 15, recLY: 1963, avgH: 62, avgL: 40, avgM: 51.0, accP: 1.66 },
+    "01-24": { recH: 83, recHY: 1970, recL: 18, recLY: 1963, avgH: 62, avgL: 40, avgM: 51.0, accP: 1.73 },
+    "01-25": { recH: 84, recHY: 1950, recL: 19, recLY: 1940, avgH: 63, avgL: 40, avgM: 51.5, accP: 1.80 },
+    "01-26": { recH: 85, recHY: 1950, recL: 16, recLY: 1940, avgH: 63, avgL: 40, avgM: 51.5, accP: 1.87 },
+    "01-27": { recH: 86, recHY: 1975, recL: 20, recLY: 1940, avgH: 63, avgL: 40, avgM: 51.5, accP: 1.94 },
+    "01-28": { recH: 85, recHY: 1975, recL: 12, recLY: 1948, avgH: 63, avgL: 40, avgM: 51.5, accP: 2.01 },
+    "01-29": { recH: 87, recHY: 1911, recL: 15, recLY: 1948, avgH: 63, avgL: 41, avgM: 52.0, accP: 2.08 },
+    "01-30": { recH: 88, recHY: 1911, recL: 14, recLY: 1949, avgH: 64, avgL: 41, avgM: 52.5, accP: 2.15 },
+    "01-31": { recH: 89, recHY: 1911, recL: 12, recLY: 1949, avgH: 64, avgL: 41, avgM: 52.5, accP: 2.22 },
+         "02-01": { recH: 86, recHY: 1950, recL: 10, recLY: 1951, avgH: 64, avgL: 41, avgM: 52.5, accP: 2.30 },
+    "02-02": { recH: 87, recHY: 1950, recL: 5,  recLY: 1951, avgH: 64, avgL: 41, avgM: 52.5, accP: 2.37 },
+    "02-03": { recH: 88, recHY: 1923, recL: 12, recLY: 1951, avgH: 65, avgL: 42, avgM: 53.5, accP: 2.44 },
+    "02-04": { recH: 85, recHY: 1923, recL: 15, recLY: 1989, avgH: 65, avgL: 42, avgM: 53.5, accP: 2.51 },
+    "02-05": { recH: 84, recHY: 1923, recL: 18, recLY: 1989, avgH: 65, avgL: 42, avgM: 53.5, accP: 2.58 },
+    "02-06": { recH: 86, recHY: 1951, recL: 20, recLY: 1989, avgH: 65, avgL: 42, avgM: 53.5, accP: 2.65 },
+    "02-07": { recH: 88, recHY: 1951, recL: 19, recLY: 1933, avgH: 65, avgL: 42, avgM: 53.5, accP: 2.72 },
+    "02-08": { recH: 85, recHY: 1951, recL: 12, recLY: 1933, avgH: 66, avgL: 43, avgM: 54.5, accP: 2.80 },
+    "02-09": { recH: 86, recHY: 1951, recL: 15, recLY: 1933, avgH: 66, avgL: 43, avgM: 54.5, accP: 2.87 },
+    "02-10": { recH: 87, recHY: 1951, recL: 18, recLY: 1933, avgH: 66, avgL: 43, avgM: 54.5, accP: 2.94 },
+    "02-11": { recH: 89, recHY: 1951, recL: 14, recLY: 1905, avgH: 66, avgL: 43, avgM: 54.5, accP: 3.01 },
+    "02-12": { recH: 90, recHY: 1951, recL: 10, recLY: 1905, avgH: 66, avgL: 43, avgM: 54.5, accP: 3.08 },
+    "02-13": { recH: 85, recHY: 1951, recL: 12, recLY: 1905, avgH: 67, avgL: 44, avgM: 55.5, accP: 3.16 },
+    "02-14": { recH: 86, recHY: 1951, recL: 15, recLY: 1905, avgH: 67, avgL: 44, avgM: 55.5, accP: 3.23 },
+    "02-15": { recH: 88, recHY: 2022, recL: 8,  recLY: 2021, avgH: 67, avgL: 44, avgM: 55.5, accP: 3.31 },
+    "02-16": { recH: 85, recHY: 1918, recL: 7,  recLY: 2021, avgH: 67, avgL: 44, avgM: 55.5, accP: 3.39 },
+    "02-17": { recH: 91, recHY: 1959, recL: 10, recLY: 2021, avgH: 67, avgL: 44, avgM: 55.5, accP: 3.46 },
+    "02-18": { recH: 88, recHY: 2004, recL: 15, recLY: 1900, avgH: 68, avgL: 45, avgM: 56.5, accP: 3.54 },
+    "02-19": { recH: 89, recHY: 1986, recL: 18, recLY: 1900, avgH: 68, avgL: 45, avgM: 56.5, accP: 3.61 },
+    "02-20": { recH: 91, recHY: 1986, recL: 20, recLY: 1900, avgH: 68, avgL: 45, avgM: 56.5, accP: 3.69 },
+    "02-21": { recH: 92, recHY: 1996, recL: 22, recLY: 1900, avgH: 68, avgL: 45, avgM: 56.5, accP: 3.76 },
+    "02-22": { recH: 93, recHY: 1996, recL: 24, recLY: 1900, avgH: 68, avgL: 45, avgM: 56.5, accP: 3.84 },
+    "02-23": { recH: 90, recHY: 1996, recL: 25, recLY: 1900, avgH: 69, avgL: 46, avgM: 57.5, accP: 3.91 },
+    "02-24": { recH: 89, recHY: 1996, recL: 26, recLY: 1900, avgH: 69, avgL: 46, avgM: 57.5, accP: 3.99 },
+    "02-25": { recH: 91, recHY: 1917, recL: 28, recLY: 1900, avgH: 69, avgL: 46, avgM: 57.5, accP: 4.06 },
+    "02-26": { recH: 92, recHY: 1917, recL: 29, recLY: 1900, avgH: 69, avgL: 46, avgM: 57.5, accP: 4.14 },
+    "02-27": { recH: 93, recHY: 1917, recL: 30, recLY: 1900, avgH: 70, avgL: 47, avgM: 58.5, accP: 4.21 },
+    "02-28": { recH: 94, recHY: 1917, recL: 31, recLY: 1900, avgH: 70, avgL: 47, avgM: 58.5, accP: 4.29 },
+    "02-29": { recH: 88, recHY: 1916, recL: 25, recLY: 1948, avgH: 70, avgL: 47, avgM: 58.5, accP: 4.30 }, "03-01": { recH: 95, recHY: 1916, recL: 20, recLY: 1913, avgH: 70, avgL: 47, avgM: 58.5, accP: 4.38 },
+    "03-02": { recH: 94, recHY: 1916, recL: 22, recLY: 1913, avgH: 71, avgL: 47, avgM: 59.0, accP: 4.47 },
+    "03-03": { recH: 93, recHY: 1916, recL: 23, recLY: 1943, avgH: 71, avgL: 48, avgM: 59.5, accP: 4.56 },
+    "03-04": { recH: 91, recHY: 1916, recL: 19, recLY: 1943, avgH: 71, avgL: 48, avgM: 59.5, accP: 4.65 },
+    "03-05": { recH: 90, recHY: 1916, recL: 20, recLY: 1948, avgH: 71, avgL: 48, avgM: 59.5, accP: 4.74 },
+    "03-06": { recH: 92, recHY: 1916, recL: 21, recLY: 1948, avgH: 72, avgL: 49, avgM: 60.5, accP: 4.83 },
+    "03-07": { recH: 93, recHY: 1916, recL: 22, recLY: 1948, avgH: 72, avgL: 49, avgM: 60.5, accP: 4.92 },
+    "03-08": { recH: 95, recHY: 1916, recL: 23, recLY: 1948, avgH: 72, avgL: 49, avgM: 60.5, accP: 5.01 },
+    "03-09": { recH: 96, recHY: 1916, recL: 24, recLY: 1948, avgH: 73, avgL: 50, avgM: 61.5, accP: 5.10 },
+    "03-10": { recH: 92, recHY: 1916, recL: 25, recLY: 1948, avgH: 73, avgL: 50, avgM: 61.5, accP: 5.19 },
+    "03-11": { recH: 91, recHY: 1916, recL: 26, recLY: 1948, avgH: 73, avgL: 50, avgM: 61.5, accP: 5.28 },
+    "03-12": { recH: 93, recHY: 1916, recL: 27, recLY: 1948, avgH: 73, avgL: 51, avgM: 62.0, accP: 5.37 },
+    "03-13": { recH: 94, recHY: 1916, recL: 28, recLY: 1948, avgH: 74, avgL: 51, avgM: 62.5, accP: 5.46 },
+    "03-14": { recH: 95, recHY: 1916, recL: 29, recLY: 1948, avgH: 74, avgL: 51, avgM: 62.5, accP: 5.55 },
+    "03-15": { recH: 96, recHY: 1916, recL: 30, recLY: 1948, avgH: 74, avgL: 52, avgM: 63.0, accP: 5.64 },
+    "03-16": { recH: 92, recHY: 1916, recL: 31, recLY: 1948, avgH: 75, avgL: 52, avgM: 63.5, accP: 5.73 },
+    "03-17": { recH: 93, recHY: 1916, recL: 30, recLY: 1923, avgH: 75, avgL: 52, avgM: 63.5, accP: 5.82 },
+    "03-18": { recH: 94, recHY: 1916, recL: 28, recLY: 1923, avgH: 75, avgL: 53, avgM: 64.0, accP: 5.91 },
+    "03-19": { recH: 95, recHY: 1916, recL: 26, recLY: 1923, avgH: 76, avgL: 53, avgM: 64.5, accP: 6.00 },
+    "03-20": { recH: 96, recHY: 1916, recL: 24, recLY: 1923, avgH: 76, avgL: 53, avgM: 64.5, accP: 6.09 },
+    "03-21": { recH: 92, recHY: 1916, recL: 28, recLY: 1923, avgH: 76, avgL: 54, avgM: 65.0, accP: 6.18 },
+    "03-22": { recH: 93, recHY: 1916, recL: 30, recLY: 1923, avgH: 77, avgL: 54, avgM: 65.5, accP: 6.27 },
+    "03-23": { recH: 94, recHY: 1916, recL: 32, recLY: 1923, avgH: 77, avgL: 54, avgM: 65.5, accP: 6.36 },
+    "03-24": { recH: 95, recHY: 1916, recL: 34, recLY: 1923, avgH: 77, avgL: 55, avgM: 66.0, accP: 6.45 },
+    "03-25": { recH: 96, recHY: 1916, recL: 36, recLY: 1923, avgH: 78, avgL: 55, avgM: 66.5, accP: 6.54 },
+    "03-26": { recH: 92, recHY: 1916, recL: 38, recLY: 1923, avgH: 78, avgL: 55, avgM: 66.5, accP: 6.63 },
+    "03-27": { recH: 93, recHY: 1916, recL: 40, recLY: 1923, avgH: 78, avgL: 56, avgM: 67.0, accP: 6.72 },
+    "03-28": { recH: 94, recHY: 1916, recL: 38, recLY: 1923, avgH: 79, avgL: 56, avgM: 67.5, accP: 6.81 },
+    "03-29": { recH: 95, recHY: 1916, recL: 36, recLY: 1923, avgH: 79, avgL: 56, avgM: 67.5, accP: 6.90 },
+    "03-30": { recH: 96, recHY: 1916, recL: 34, recLY: 1923, avgH: 79, avgL: 57, avgM: 68.0, accP: 6.99 },
+    "03-31": { recH: 97, recHY: 1916, recL: 32, recLY: 1923, avgH: 80, avgL: 57, avgM: 68.5, accP: 7.08 },"04-01": { recH: 95, recHY: 2012, recL: 30, recLY: 1948, avgH: 80, avgL: 58, avgM: 69.0, accP: 7.18 },
+    "04-02": { recH: 96, recHY: 2012, recL: 32, recLY: 1948, avgH: 80, avgL: 58, avgM: 69.0, accP: 7.28 },
+    "04-03": { recH: 97, recHY: 2012, recL: 34, recLY: 1948, avgH: 80, avgL: 58, avgM: 69.0, accP: 7.38 },
+    "04-04": { recH: 98, recHY: 2012, recL: 36, recLY: 1948, avgH: 81, avgL: 59, avgM: 70.0, accP: 7.48 },
+    "04-05": { recH: 95, recHY: 2012, recL: 38, recLY: 1948, avgH: 81, avgL: 59, avgM: 70.0, accP: 7.58 },
+    "04-06": { recH: 94, recHY: 1939, recL: 34, recLY: 1971, avgH: 81, avgL: 59, avgM: 70.0, accP: 7.68 },
+    "04-07": { recH: 95, recHY: 1939, recL: 32, recLY: 1971, avgH: 81, avgL: 60, avgM: 70.5, accP: 7.78 },
+    "04-08": { recH: 96, recHY: 1939, recL: 34, recLY: 1971, avgH: 82, avgL: 60, avgM: 71.0, accP: 7.88 },
+    "04-09": { recH: 97, recHY: 1939, recL: 36, recLY: 1971, avgH: 82, avgL: 60, avgM: 71.0, accP: 7.98 },
+    "04-10": { recH: 98, recHY: 1939, recL: 38, recLY: 1971, avgH: 82, avgL: 60, avgM: 71.0, accP: 8.08 },
+    "04-11": { recH: 99, recHY: 1939, recL: 40, recLY: 1971, avgH: 82, avgL: 61, avgM: 71.5, accP: 8.18 },
+    "04-12": { recH: 95, recHY: 1939, recL: 42, recLY: 1971, avgH: 83, avgL: 61, avgM: 72.0, accP: 8.28 },
+    "04-13": { recH: 94, recHY: 1939, recL: 44, recLY: 1971, avgH: 83, avgL: 61, avgM: 72.0, accP: 8.38 },
+    "04-14": { recH: 95, recHY: 1939, recL: 46, recLY: 1971, avgH: 83, avgL: 61, avgM: 72.0, accP: 8.48 },
+    "04-15": { recH: 96, recHY: 1939, recL: 40, recLY: 1928, avgH: 83, avgL: 62, avgM: 72.5, accP: 8.58 },
+    "04-16": { recH: 97, recHY: 1939, recL: 38, recLY: 1928, avgH: 84, avgL: 62, avgM: 73.0, accP: 8.68 },
+    "04-17": { recH: 98, recHY: 2006, recL: 36, recLY: 1928, avgH: 84, avgL: 62, avgM: 73.0, accP: 8.78 },
+    "04-18": { recH: 99, recHY: 2006, recL: 38, recLY: 1928, avgH: 84, avgL: 63, avgM: 73.5, accP: 8.88 },
+    "04-19": { recH: 95, recHY: 2006, recL: 40, recLY: 1928, avgH: 84, avgL: 63, avgM: 73.5, accP: 8.98 },
+    "04-20": { recH: 94, recHY: 2006, recL: 42, recLY: 1928, avgH: 85, avgL: 63, avgM: 74.0, accP: 9.08 },
+    "04-21": { recH: 95, recHY: 2006, recL: 44, recLY: 1928, avgH: 85, avgL: 64, avgM: 74.5, accP: 9.18 },
+    "04-22": { recH: 96, recHY: 2012, recL: 46, recLY: 1928, avgH: 85, avgL: 64, avgM: 74.5, accP: 9.28 },
+    "04-23": { recH: 97, recHY: 2012, recL: 48, recLY: 1928, avgH: 85, avgL: 64, avgM: 74.5, accP: 9.38 },
+    "04-24": { recH: 98, recHY: 2012, recL: 50, recLY: 1928, avgH: 86, avgL: 64, avgM: 75.0, accP: 9.48 },
+    "04-25": { recH: 99, recHY: 2012, recL: 52, recLY: 1928, avgH: 86, avgL: 65, avgM: 75.5, accP: 9.58 },
+    "04-26": { recH: 95, recHY: 2012, recL: 50, recLY: 1928, avgH: 86, avgL: 65, avgM: 75.5, accP: 9.68 },
+    "04-27": { recH: 96, recHY: 2012, recL: 48, recLY: 1928, avgH: 86, avgL: 65, avgM: 75.5, accP: 9.78 },
+    "04-28": { recH: 97, recHY: 2012, recL: 46, recLY: 1928, avgH: 87, avgL: 66, avgM: 76.5, accP: 9.88 },
+    "04-29": { recH: 98, recHY: 2012, recL: 44, recLY: 1928, avgH: 87, avgL: 66, avgM: 76.5, accP: 9.98 },
+    "04-30": { recH: 100, recHY: 2012, recL: 42, recLY: 1928, avgH: 87, avgL: 66, avgM: 76.5, accP: 10.08 },"05-01": { recH: 98, recHY: 2012, recL: 44, recLY: 1967, avgH: 87, avgL: 67, avgM: 77.0, accP: 10.22 },
+    "05-02": { recH: 99, recHY: 2012, recL: 46, recLY: 1967, avgH: 88, avgL: 67, avgM: 77.5, accP: 10.36 },
+    "05-03": { recH: 100, recHY: 2012, recL: 48, recLY: 1967, avgH: 88, avgL: 67, avgM: 77.5, accP: 10.50 },
+    "05-04": { recH: 101, recHY: 2012, recL: 50, recLY: 1967, avgH: 88, avgL: 68, avgM: 78.0, accP: 10.64 },
+    "05-05": { recH: 98, recHY: 2012, recL: 52, recLY: 1967, avgH: 88, avgL: 68, avgM: 78.0, accP: 10.78 },
+    "05-06": { recH: 97, recHY: 2012, recL: 50, recLY: 1967, avgH: 88, avgL: 68, avgM: 78.0, accP: 10.92 },
+    "05-07": { recH: 98, recHY: 2012, recL: 48, recLY: 1967, avgH: 89, avgL: 68, avgM: 78.5, accP: 11.06 },
+    "05-08": { recH: 99, recHY: 2012, recL: 46, recLY: 1967, avgH: 89, avgL: 69, avgM: 79.0, accP: 11.20 },
+    "05-09": { recH: 100, recHY: 2012, recL: 48, recLY: 1967, avgH: 89, avgL: 69, avgM: 79.0, accP: 11.34 },
+    "05-10": { recH: 101, recHY: 2012, recL: 50, recLY: 1967, avgH: 89, avgL: 69, avgM: 79.0, accP: 11.48 },
+    "05-11": { recH: 102, recHY: 2012, recL: 52, recLY: 1967, avgH: 89, avgL: 70, avgM: 79.5, accP: 11.62 },
+    "05-12": { recH: 99, recHY: 2012, recL: 50, recLY: 1967, avgH: 90, avgL: 70, avgM: 80.0, accP: 11.76 },
+    "05-13": { recH: 98, recHY: 2012, recL: 48, recLY: 1967, avgH: 90, avgL: 70, avgM: 80.0, accP: 11.90 },
+    "05-14": { recH: 99, recHY: 2012, recL: 50, recLY: 1967, avgH: 90, avgL: 70, avgM: 80.0, accP: 12.04 },
+    "05-15": { recH: 100, recHY: 1996, recL: 52, recLY: 1967, avgH: 90, avgL: 71, avgM: 80.5, accP: 12.18 },
+    "05-16": { recH: 101, recHY: 1996, recL: 54, recLY: 1967, avgH: 91, avgL: 71, avgM: 81.0, accP: 12.32 },
+    "05-17": { recH: 102, recHY: 1996, recL: 56, recLY: 1967, avgH: 91, avgL: 71, avgM: 81.0, accP: 12.46 },
+    "05-18": { recH: 103, recHY: 1996, recL: 54, recLY: 1967, avgH: 91, avgL: 71, avgM: 81.0, accP: 12.60 },
+    "05-19": { recH: 100, recHY: 1996, recL: 52, recLY: 1967, avgH: 91, avgL: 72, avgM: 81.5, accP: 12.74 },
+    "05-20": { recH: 99, recHY: 1996, recL: 50, recLY: 1967, avgH: 92, avgL: 72, avgM: 82.0, accP: 12.88 },
+    "05-21": { recH: 100, recHY: 1996, recL: 52, recLY: 1967, avgH: 92, avgL: 72, avgM: 82.0, accP: 13.02 },
+    "05-22": { recH: 101, recHY: 1996, recL: 54, recLY: 1967, avgH: 92, avgL: 72, avgM: 82.0, accP: 13.16 },
+    "05-23": { recH: 102, recHY: 1996, recL: 56, recLY: 1967, avgH: 92, avgL: 73, avgM: 82.5, accP: 13.30 },
+    "05-24": { recH: 103, recHY: 2000, recL: 58, recLY: 1967, avgH: 92, avgL: 73, avgM: 82.5, accP: 13.44 },
+    "05-25": { recH: 104, recHY: 2000, recL: 56, recLY: 1967, avgH: 93, avgL: 73, avgM: 83.0, accP: 13.58 },
+    "05-26": { recH: 101, recHY: 2000, recL: 54, recLY: 1967, avgH: 93, avgL: 73, avgM: 83.0, accP: 13.72 },
+    "05-27": { recH: 100, recHY: 2000, recL: 56, recLY: 1967, avgH: 93, avgL: 74, avgM: 83.5, accP: 13.86 },
+    "05-28": { recH: 101, recHY: 2000, recL: 58, recLY: 1967, avgH: 93, avgL: 74, avgM: 83.5, accP: 14.00 },
+    "05-29": { recH: 102, recHY: 2000, recL: 60, recLY: 1967, avgH: 94, avgL: 74, avgM: 84.0, accP: 14.14 },
+    "05-30": { recH: 103, recHY: 2000, recL: 62, recLY: 1967, avgH: 94, avgL: 74, avgM: 84.0, accP: 14.28 },
+    "05-31": { recH: 104, recHY: 2000, recL: 60, recLY: 1967, avgH: 94, avgL: 75, avgM: 84.5, accP: 14.42 },"06-01": { recH: 104, recHY: 1998, recL: 58, recLY: 1903, avgH: 94, avgL: 75, avgM: 84.5, accP: 14.56 },
+    "06-02": { recH: 105, recHY: 1998, recL: 60, recLY: 1903, avgH: 94, avgL: 75, avgM: 84.5, accP: 14.70 },
+    "06-03": { recH: 106, recHY: 1998, recL: 62, recLY: 1903, avgH: 94, avgL: 75, avgM: 84.5, accP: 14.84 },
+    "06-04": { recH: 105, recHY: 1998, recL: 60, recLY: 1903, avgH: 94, avgL: 75, avgM: 84.5, accP: 14.98 },
+    "06-05": { recH: 104, recHY: 1998, recL: 58, recLY: 1903, avgH: 94, avgL: 76, avgM: 85.0, accP: 15.12 },
+    "06-06": { recH: 103, recHY: 2008, recL: 57, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.26 },
+    "06-07": { recH: 104, recHY: 2008, recL: 58, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.40 },
+    "06-08": { recH: 106, recHY: 2008, recL: 59, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.54 },
+    "06-09": { recH: 107, recHY: 2008, recL: 60, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.68 },
+    "06-10": { recH: 108, recHY: 2008, recL: 61, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.82 },
+    "06-11": { recH: 106, recHY: 2008, recL: 62, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 15.96 },
+    "06-12": { recH: 105, recHY: 2008, recL: 63, recLY: 1924, avgH: 95, avgL: 76, avgM: 85.5, accP: 16.10 },
+    "06-13": { recH: 104, recHY: 2022, recL: 64, recLY: 1924, avgH: 96, avgL: 76, avgM: 86.0, accP: 16.24 },
+    "06-14": { recH: 105, recHY: 2022, recL: 65, recLY: 1924, avgH: 96, avgL: 77, avgM: 86.5, accP: 16.38 },
+    "06-15": { recH: 106, recHY: 2022, recL: 66, recLY: 1924, avgH: 96, avgL: 77, avgM: 86.5, accP: 16.52 },
+    "06-16": { recH: 107, recHY: 2022, recL: 65, recLY: 1924, avgH: 96, avgL: 77, avgM: 86.5, accP: 16.66 },
+    "06-17": { recH: 105, recHY: 2022, recL: 64, recLY: 1924, avgH: 96, avgL: 77, avgM: 86.5, accP: 16.80 },
+    "06-18": { recH: 104, recHY: 1924, recL: 63, recLY: 1924, avgH: 96, avgL: 77, avgM: 86.5, accP: 16.94 },
+    "06-19": { recH: 105, recHY: 1924, recL: 62, recLY: 1924, avgH: 97, avgL: 77, avgM: 87.0, accP: 17.08 },
+    "06-20": { recH: 106, recHY: 1924, recL: 61, recLY: 1924, avgH: 97, avgL: 77, avgM: 87.0, accP: 17.22 },
+    "06-21": { recH: 107, recHY: 1924, recL: 60, recLY: 1924, avgH: 97, avgL: 77, avgM: 87.0, accP: 17.36 },
+    "06-22": { recH: 108, recHY: 1924, recL: 61, recLY: 1924, avgH: 97, avgL: 77, avgM: 87.0, accP: 17.50 },
+    "06-23": { recH: 106, recHY: 1924, recL: 62, recLY: 1924, avgH: 97, avgL: 78, avgM: 87.5, accP: 17.64 },
+    "06-24": { recH: 105, recHY: 1924, recL: 63, recLY: 1924, avgH: 97, avgL: 78, avgM: 87.5, accP: 17.78 },
+    "06-25": { recH: 107, recHY: 2012, recL: 64, recLY: 1924, avgH: 97, avgL: 78, avgM: 87.5, accP: 17.92 },
+    "06-26": { recH: 108, recHY: 2012, recL: 65, recLY: 1924, avgH: 98, avgL: 78, avgM: 88.0, accP: 18.06 },
+    "06-27": { recH: 109, recHY: 2012, recL: 66, recLY: 1924, avgH: 98, avgL: 78, avgM: 88.0, accP: 18.20 },
+    "06-28": { recH: 108, recHY: 2012, recL: 65, recLY: 1924, avgH: 98, avgL: 78, avgM: 88.0, accP: 18.34 },
+    "06-29": { recH: 107, recHY: 2012, recL: 64, recLY: 1924, avgH: 98, avgL: 78, avgM: 88.0, accP: 18.48 },
+    "06-30": { recH: 106, recHY: 2012, recL: 63, recLY: 1924, avgH: 98, avgL: 78, avgM: 88.0, accP: 18.62 },"07-01": { recH: 106, recHY: 2023, recL: 65, recLY: 1924, avgH: 98, avgL: 79, avgM: 88.5, accP: 18.74 },
+    "07-02": { recH: 107, recHY: 2023, recL: 66, recLY: 1924, avgH: 98, avgL: 79, avgM: 88.5, accP: 18.86 },
+    "07-03": { recH: 108, recHY: 2023, recL: 67, recLY: 1924, avgH: 98, avgL: 79, avgM: 88.5, accP: 18.98 },
+    "07-04": { recH: 106, recHY: 2022, recL: 68, recLY: 1912, avgH: 99, avgL: 79, avgM: 89.0, accP: 19.10 },
+    "07-05": { recH: 107, recHY: 2022, recL: 67, recLY: 1912, avgH: 99, avgL: 79, avgM: 89.0, accP: 19.22 },
+    "07-06": { recH: 108, recHY: 2022, recL: 66, recLY: 1912, avgH: 99, avgL: 79, avgM: 89.0, accP: 19.34 },
+    "07-07": { recH: 109, recHY: 2022, recL: 65, recLY: 1912, avgH: 99, avgL: 79, avgM: 89.0, accP: 19.46 },
+    "07-08": { recH: 110, recHY: 2022, recL: 66, recLY: 1912, avgH: 99, avgL: 79, avgM: 89.0, accP: 19.58 },
+    "07-09": { recH: 111, recHY: 2022, recL: 67, recLY: 1912, avgH: 99, avgL: 80, avgM: 89.5, accP: 19.70 },
+    "07-10": { recH: 110, recHY: 2022, recL: 68, recLY: 1912, avgH: 100, avgL: 80, avgM: 90.0, accP: 19.82 },
+    "07-11": { recH: 109, recHY: 2022, recL: 69, recLY: 1912, avgH: 100, avgL: 80, avgM: 90.0, accP: 19.94 },
+    "07-12": { recH: 108, recHY: 2022, recL: 70, recLY: 1912, avgH: 100, avgL: 80, avgM: 90.0, accP: 20.06 },
+    "07-13": { recH: 107, recHY: 2022, recL: 71, recLY: 1912, avgH: 100, avgL: 80, avgM: 90.0, accP: 20.18 },
+    "07-14": { recH: 108, recHY: 2022, recL: 70, recLY: 1912, avgH: 100, avgL: 80, avgM: 90.0, accP: 20.30 },
+    "07-15": { recH: 109, recHY: 2022, recL: 69, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 20.42 },
+    "07-16": { recH: 110, recHY: 2022, recL: 68, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 20.54 },
+    "07-17": { recH: 111, recHY: 2022, recL: 67, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 20.66 },
+    "07-18": { recH: 112, recHY: 2022, recL: 68, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 20.78 },
+    "07-19": { recH: 111, recHY: 2022, recL: 69, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 20.90 },
+    "07-20": { recH: 110, recHY: 2022, recL: 70, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.02 },
+    "07-21": { recH: 109, recHY: 2022, recL: 71, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.14 },
+    "07-22": { recH: 108, recHY: 2022, recL: 72, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.26 },
+    "07-23": { recH: 109, recHY: 2018, recL: 71, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.38 },
+    "07-24": { recH: 110, recHY: 2018, recL: 70, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.50 },
+    "07-25": { recH: 109, recHY: 2018, recL: 69, recLY: 1912, avgH: 101, avgL: 81, avgM: 91.0, accP: 21.62 },
+    "07-26": { recH: 108, recHY: 2018, recL: 68, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 21.74 },
+    "07-27": { recH: 107, recHY: 2018, recL: 67, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 21.86 },
+    "07-28": { recH: 108, recHY: 2023, recL: 66, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 21.98 },
+    "07-29": { recH: 109, recHY: 2023, recL: 67, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.10 },
+    "07-30": { recH: 110, recHY: 2023, recL: 68, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.22 },
+    "07-31": { recH: 111, recHY: 2023, recL: 69, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.34 },"08-01": { recH: 110, recHY: 2011, recL: 68, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.45 },
+    "08-02": { recH: 111, recHY: 2011, recL: 69, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.56 },
+    "08-03": { recH: 112, recHY: 2011, recL: 70, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.67 },
+    "08-04": { recH: 111, recHY: 2011, recL: 71, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.78 },
+    "08-05": { recH: 110, recHY: 2011, recL: 72, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 22.89 },
+    "08-06": { recH: 109, recHY: 2011, recL: 71, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.00 },
+    "08-07": { recH: 110, recHY: 2023, recL: 70, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.11 },
+    "08-08": { recH: 111, recHY: 2023, recL: 69, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.22 },
+    "08-09": { recH: 112, recHY: 2023, recL: 68, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.33 },
+    "08-10": { recH: 111, recHY: 2023, recL: 69, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.44 },
+    "08-11": { recH: 110, recHY: 2023, recL: 70, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.55 },
+    "08-12": { recH: 109, recHY: 2023, recL: 71, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.66 },
+    "08-13": { recH: 108, recHY: 2023, recL: 72, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.77 },
+    "08-14": { recH: 109, recHY: 1951, recL: 71, recLY: 1912, avgH: 102, avgL: 81, avgM: 91.5, accP: 23.88 },
+    "08-15": { recH: 110, recHY: 1951, recL: 70, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 23.99 },
+    "08-16": { recH: 111, recHY: 1951, recL: 69, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 24.10 },
+    "08-17": { recH: 112, recHY: 1951, recL: 68, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 24.21 },
+    "08-18": { recH: 111, recHY: 1951, recL: 67, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 24.32 },
+    "08-19": { recH: 110, recHY: 1951, recL: 66, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 24.43 },
+    "08-20": { recH: 109, recHY: 1951, recL: 65, recLY: 1912, avgH: 101, avgL: 80, avgM: 90.5, accP: 24.54 },
+    "08-21": { recH: 108, recHY: 1951, recL: 64, recLY: 1912, avgH: 101, avgL: 79, avgM: 90.0, accP: 24.65 },
+    "08-22": { recH: 109, recHY: 1923, recL: 63, recLY: 1912, avgH: 101, avgL: 79, avgM: 90.0, accP: 24.76 },
+    "08-23": { recH: 110, recHY: 1923, recL: 62, recLY: 1912, avgH: 100, avgL: 79, avgM: 89.5, accP: 24.87 },
+    "08-24": { recH: 111, recHY: 1923, recL: 61, recLY: 1912, avgH: 100, avgL: 79, avgM: 89.5, accP: 24.98 },
+    "08-25": { recH: 112, recHY: 1923, recL: 60, recLY: 1912, avgH: 100, avgL: 79, avgM: 89.5, accP: 25.09 },
+    "08-26": { recH: 111, recHY: 1923, recL: 59, recLY: 1912, avgH: 100, avgL: 79, avgM: 89.5, accP: 25.20 },
+    "08-27": { recH: 110, recHY: 1923, recL: 60, recLY: 1912, avgH: 100, avgL: 78, avgM: 89.0, accP: 25.31 },
+    "08-28": { recH: 109, recHY: 1923, recL: 61, recLY: 1912, avgH: 100, avgL: 78, avgM: 89.0, accP: 25.42 },
+    "08-29": { recH: 108, recHY: 1923, recL: 62, recLY: 1912, avgH: 100, avgL: 78, avgM: 89.0, accP: 25.53 },
+    "08-30": { recH: 107, recHY: 1923, recL: 61, recLY: 1912, avgH: 99, avgL: 78, avgM: 88.5, accP: 25.64 },
+    "08-31": { recH: 108, recHY: 1923, recL: 60, recLY: 1912, avgH: 99, avgL: 78, avgM: 88.5, accP: 25.75 },"09-01": { recH: 108, recHY: 2011, recL: 58, recLY: 1912, avgH: 93, avgL: 73, avgM: 83.0, accP: 25.86 },
+    "09-02": { recH: 109, recHY: 2011, recL: 57, recLY: 1912, avgH: 93, avgL: 73, avgM: 83.0, accP: 25.97 },
+    "09-03": { recH: 110, recHY: 2011, recL: 56, recLY: 1912, avgH: 93, avgL: 72, avgM: 82.5, accP: 26.08 },
+    "09-04": { recH: 112, recHY: 2000, recL: 55, recLY: 1912, avgH: 93, avgL: 72, avgM: 82.5, accP: 26.19 },
+    "09-05": { recH: 111, recHY: 2000, recL: 54, recLY: 1912, avgH: 93, avgL: 72, avgM: 82.5, accP: 26.30 },
+    "09-06": { recH: 110, recHY: 2000, recL: 53, recLY: 1912, avgH: 92, avgL: 71, avgM: 81.5, accP: 26.41 },
+    "09-07": { recH: 109, recHY: 2000, recL: 52, recLY: 1912, avgH: 92, avgL: 71, avgM: 81.5, accP: 26.52 },
+    "09-08": { recH: 108, recHY: 2000, recL: 51, recLY: 1912, avgH: 92, avgL: 71, avgM: 81.5, accP: 26.63 },
+    "09-09": { recH: 107, recHY: 2000, recL: 50, recLY: 1912, avgH: 91, avgL: 70, avgM: 80.5, accP: 26.74 },
+    "09-10": { recH: 106, recHY: 2000, recL: 49, recLY: 1912, avgH: 91, avgL: 70, avgM: 80.5, accP: 26.85 },
+    "09-11": { recH: 105, recHY: 2000, recL: 48, recLY: 1912, avgH: 91, avgL: 70, avgM: 80.5, accP: 26.96 },
+    "09-12": { recH: 104, recHY: 2000, recL: 47, recLY: 1912, avgH: 90, avgL: 69, avgM: 79.5, accP: 27.07 },
+    "09-13": { recH: 103, recHY: 2011, recL: 46, recLY: 1912, avgH: 90, avgL: 69, avgM: 79.5, accP: 27.18 },
+    "09-14": { recH: 104, recHY: 2011, recL: 45, recLY: 1912, avgH: 90, avgL: 69, avgM: 79.5, accP: 27.29 },
+    "09-15": { recH: 105, recHY: 2011, recL: 44, recLY: 1912, avgH: 90, avgL: 68, avgM: 79.0, accP: 27.40 },
+    "09-16": { recH: 104, recHY: 1912, recL: 43, recLY: 1912, avgH: 90, avgL: 68, avgM: 79.0, accP: 27.51 },
+    "09-17": { recH: 103, recHY: 1912, recL: 42, recLY: 1912, avgH: 89, avgL: 68, avgM: 78.5, accP: 27.62 },
+    "09-18": { recH: 102, recHY: 1912, recL: 41, recLY: 1912, avgH: 89, avgL: 67, avgM: 78.0, accP: 27.73 },
+    "09-19": { recH: 101, recHY: 1912, recL: 40, recLY: 1912, avgH: 89, avgL: 67, avgM: 78.0, accP: 27.84 },
+    "09-20": { recH: 100, recHY: 1912, recL: 39, recLY: 1912, avgH: 89, avgL: 67, avgM: 78.0, accP: 27.95 },
+    "09-21": { recH: 99, recHY: 1912, recL: 38, recLY: 1912, avgH: 88, avgL: 66, avgM: 77.0, accP: 28.06 },
+    "09-22": { recH: 98, recHY: 1912, recL: 37, recLY: 1912, avgH: 88, avgL: 66, avgM: 77.0, accP: 28.17 },
+    "09-23": { recH: 97, recHY: 1912, recL: 36, recLY: 1912, avgH: 88, avgL: 66, avgM: 77.0, accP: 28.28 },
+    "09-24": { recH: 96, recHY: 1912, recL: 35, recLY: 1912, avgH: 87, avgL: 65, avgM: 76.0, accP: 28.39 },
+    "09-25": { recH: 97, recHY: 1912, recL: 36, recLY: 1912, avgH: 87, avgL: 65, avgM: 76.0, accP: 28.50 },
+    "09-26": { recH: 98, recHY: 1912, recL: 37, recLY: 1912, avgH: 87, avgL: 65, avgM: 76.0, accP: 28.61 },
+    "09-27": { recH: 99, recHY: 1912, recL: 38, recLY: 1912, avgH: 86, avgL: 64, avgM: 75.0, accP: 28.72 },
+    "09-28": { recH: 98, recHY: 1912, recL: 39, recLY: 1912, avgH: 86, avgL: 64, avgM: 75.0, accP: 28.83 },
+    "09-29": { recH: 97, recHY: 1912, recL: 38, recLY: 1912, avgH: 86, avgL: 64, avgM: 75.0, accP: 28.94 },
+    "09-30": { recH: 96, recHY: 1912, recL: 37, recLY: 1912, avgH: 85, avgL: 63, avgM: 74.0, accP: 29.05 },"10-01": { recH: 98, recHY: 1923, recL: 36, recLY: 1912, avgH: 85, avgL: 63, avgM: 74.0, accP: 29.18 },
+    "10-02": { recH: 97, recHY: 1923, recL: 35, recLY: 1912, avgH: 84, avgL: 62, avgM: 73.0, accP: 29.31 },
+    "10-03": { recH: 96, recHY: 1923, recL: 34, recLY: 1912, avgH: 84, avgL: 62, avgM: 73.0, accP: 29.44 },
+    "10-04": { recH: 95, recHY: 1923, recL: 33, recLY: 1912, avgH: 83, avgL: 61, avgM: 72.0, accP: 29.57 },
+    "10-05": { recH: 96, recHY: 1923, recL: 32, recLY: 1912, avgH: 83, avgL: 61, avgM: 72.0, accP: 29.70 },
+    "10-06": { recH: 97, recHY: 1923, recL: 31, recLY: 1912, avgH: 83, avgL: 61, avgM: 72.0, accP: 29.83 },
+    "10-07": { recH: 98, recHY: 1923, recL: 30, recLY: 1912, avgH: 82, avgL: 60, avgM: 71.0, accP: 29.96 },
+    "10-08": { recH: 99, recHY: 1923, recL: 32, recLY: 1912, avgH: 82, avgL: 60, avgM: 71.0, accP: 30.09 },
+    "10-09": { recH: 98, recHY: 1923, recL: 34, recLY: 1912, avgH: 82, avgL: 60, avgM: 71.0, accP: 30.22 },
+    "10-10": { recH: 97, recHY: 1923, recL: 36, recLY: 1912, avgH: 81, avgL: 59, avgM: 70.0, accP: 30.35 },
+    "10-11": { recH: 96, recHY: 1923, recL: 38, recLY: 1912, avgH: 81, avgL: 59, avgM: 70.0, accP: 30.48 },
+    "10-12": { recH: 95, recHY: 1923, recL: 36, recLY: 1912, avgH: 81, avgL: 59, avgM: 70.0, accP: 30.61 },
+    "10-13": { recH: 94, recHY: 1923, recL: 34, recLY: 1912, avgH: 80, avgL: 58, avgM: 69.0, accP: 30.74 },
+    "10-14": { recH: 93, recHY: 1923, recL: 32, recLY: 1912, avgH: 80, avgL: 58, avgM: 69.0, accP: 30.87 },
+    "10-15": { recH: 94, recHY: 1923, recL: 30, recLY: 1912, avgH: 80, avgL: 58, avgM: 69.0, accP: 31.00 },
+    "10-16": { recH: 95, recHY: 1923, recL: 28, recLY: 1912, avgH: 79, avgL: 57, avgM: 68.0, accP: 31.13 },
+    "10-17": { recH: 96, recHY: 1923, recL: 26, recLY: 1912, avgH: 79, avgL: 57, avgM: 68.0, accP: 31.26 },
+    "10-18": { recH: 95, recHY: 1923, recL: 28, recLY: 1912, avgH: 79, avgL: 57, avgM: 68.0, accP: 31.39 },
+    "10-19": { recH: 94, recHY: 1923, recL: 30, recLY: 1912, avgH: 78, avgL: 56, avgM: 67.0, accP: 31.52 },
+    "10-20": { recH: 93, recHY: 1923, recL: 32, recLY: 1912, avgH: 78, avgL: 56, avgM: 67.0, accP: 31.65 },
+    "10-21": { recH: 92, recHY: 1923, recL: 34, recLY: 1912, avgH: 78, avgL: 56, avgM: 67.0, accP: 31.78 },
+    "10-22": { recH: 91, recHY: 1923, recL: 33, recLY: 1912, avgH: 77, avgL: 55, accP: 30.74 },
+"10-23": { recH: 90, recHY: 1923, recL: 32, recLY: 1912, avgH: 77, avgL: 55, accP: 30.87 },
+"10-24": { recH: 89, recHY: 1923, recL: 30, recLY: 1912, avgH: 76, avgL: 54, accP: 31.00 },
+"10-25": { recH: 88, recHY: 1923, recL: 28, recLY: 1912, avgH: 76, avgL: 54, accP: 31.13 },
+"10-26": { recH: 87, recHY: 1923, recL: 26, recLY: 1912, avgH: 76, avgL: 54, accP: 31.26 },
+"10-27": { recH: 88, recHY: 1923, recL: 28, recLY: 1912, avgH: 75, avgL: 53, accP: 31.39 },
+"10-28": { recH: 89, recHY: 1923, recL: 30, recLY: 1912, avgH: 75, avgL: 53, accP: 31.52 },
+"10-29": { recH: 88, recHY: 1923, recL: 28, recLY: 1912, avgH: 75, avgL: 53, accP: 31.65 },
+"10-30": { recH: 87, recHY: 1923, recL: 26, recLY: 1912, avgH: 74, avgL: 52, accP: 31.78 },
+"10-31": { recH: 86, recHY: 1923, recL: 24, recLY: 1912, avgH: 74, avgL: 52, accP: 31.91 },"11-01": { recH: 87, recHY: 1923, recL: 25, recLY: 1912, avgH: 73, avgL: 51, accP: 32.04 },
+"11-02": { recH: 86, recHY: 2005, recL: 24, recLY: 1912, avgH: 73, avgL: 51, accP: 32.08 },
+"11-03": { recH: 87, recHY: 2005, recL: 24, recLY: 1912, avgH: 72, avgL: 50, accP: 32.12 },
+"11-04": { recH: 86, recHY: 1988, recL: 25, recLY: 1912, avgH: 72, avgL: 50, accP: 32.16 },
+"11-05": { recH: 85, recHY: 1988, recL: 26, recLY: 1912, avgH: 71, avgL: 49, accP: 32.20 },
+"11-06": { recH: 84, recHY: 2005, recL: 27, recLY: 1912, avgH: 71, avgL: 49, accP: 32.24 },
+"11-07": { recH: 85, recHY: 2005, recL: 28, recLY: 1912, avgH: 71, avgL: 49, accP: 32.28 },
+"11-08": { recH: 86, recHY: 2005, recL: 29, recLY: 1912, avgH: 70, avgL: 48, accP: 32.32 },
+"11-09": { recH: 87, recHY: 2005, recL: 30, recLY: 1912, avgH: 70, avgL: 48, accP: 32.36 },
+"11-10": { recH: 86, recHY: 1923, recL: 29, recLY: 1912, avgH: 70, avgL: 48, accP: 32.40 },
+"11-11": { recH: 85, recHY: 1923, recL: 28, recLY: 1912, avgH: 69, avgL: 47, accP: 32.44 },
+"11-12": { recH: 84, recHY: 1923, recL: 27, recLY: 1912, avgH: 69, avgL: 47, accP: 32.48 },
+"11-13": { recH: 85, recHY: 1923, recL: 26, recLY: 1912, avgH: 69, avgL: 47, accP: 32.52 },
+"11-14": { recH: 86, recHY: 1923, recL: 25, recLY: 1912, avgH: 68, avgL: 46, accP: 32.56 },
+"11-15": { recH: 87, recHY: 1923, recL: 24, recLY: 1912, avgH: 68, avgL: 46, accP: 32.60 },
+"11-16": { recH: 86, recHY: 1923, recL: 23, recLY: 1912, avgH: 68, avgL: 46, accP: 32.64 },
+"11-17": { recH: 85, recHY: 1923, recL: 22, recLY: 1912, avgH: 67, avgL: 45, accP: 32.68 },
+"11-18": { recH: 84, recHY: 1923, recL: 21, recLY: 1912, avgH: 67, avgL: 45, accP: 32.72 },
+"11-19": { recH: 85, recHY: 1923, recL: 20, recLY: 1912, avgH: 67, avgL: 45, accP: 32.76 },
+"11-20": { recH: 86, recHY: 1923, recL: 19, recLY: 1912, avgH: 66, avgL: 44, accP: 32.80 },
+"11-21": { recH: 87, recHY: 1923, recL: 20, recLY: 1912, avgH: 66, avgL: 44, accP: 32.84 },
+"11-22": { recH: 86, recHY: 1923, recL: 21, recLY: 1912, avgH: 66, avgL: 44, accP: 32.88 },
+"11-23": { recH: 85, recHY: 1923, recL: 22, recLY: 1912, avgH: 65, avgL: 43, accP: 32.92 },
+"11-24": { recH: 84, recHY: 1923, recL: 23, recLY: 1912, avgH: 65, avgL: 43, accP: 32.96 },
+"11-25": { recH: 83, recHY: 1923, recL: 24, recLY: 1912, avgH: 65, avgL: 43, accP: 32.99 },
+"11-26": { recH: 82, recHY: 1923, recL: 23, recLY: 1912, avgH: 64, avgL: 42, accP: 33.02 },
+"11-27": { recH: 83, recHY: 1923, recL: 22, recLY: 1912, avgH: 64, avgL: 42, accP: 33.05 },
+"11-28": { recH: 84, recHY: 1923, recL: 21, recLY: 1912, avgH: 64, avgL: 42, accP: 33.08 },
+"11-29": { recH: 85, recHY: 1923, recL: 20, recLY: 1912, avgH: 63, avgL: 41, accP: 33.11 },
+"11-30": { recH: 84, recHY: 1923, recL: 19, recLY: 1912, avgH: 63, avgL: 41, accP: 33.15 },"12-01": { recH: 83, recHY: 1923, recL: 18, recLY: 1912, avgH: 63, avgL: 41, accP: 33.18 },
+"12-02": { recH: 82, recHY: 1923, recL: 17, recLY: 1912, avgH: 62, avgL: 40, accP: 33.21 },
+"12-03": { recH: 81, recHY: 1923, recL: 16, recLY: 1912, avgH: 62, avgL: 40, accP: 33.24 },
+"12-04": { recH: 82, recHY: 1923, recL: 15, recLY: 1912, avgH: 62, avgL: 40, accP: 33.27 },
+"12-05": { recH: 83, recHY: 1923, recL: 14, recLY: 1912, avgH: 61, avgL: 39, accP: 33.30 },
+"12-06": { recH: 84, recHY: 1923, recL: 15, recLY: 1912, avgH: 61, avgL: 39, accP: 33.33 },
+"12-07": { recH: 85, recHY: 1923, recL: 16, recLY: 1912, avgH: 61, avgL: 39, accP: 33.36 },
+"12-08": { recH: 84, recHY: 1923, recL: 17, recLY: 1912, avgH: 61, avgL: 39, accP: 33.39 },
+"12-09": { recH: 83, recHY: 1923, recL: 18, recLY: 1912, avgH: 61, avgL: 39, accP: 33.42 },
+"12-10": { recH: 82, recHY: 1923, recL: 17, recLY: 1912, avgH: 61, avgL: 39, accP: 33.45 },
+"12-11": { recH: 81, recHY: 1923, recL: 16, recLY: 1912, avgH: 61, avgL: 39, accP: 33.48 },
+"12-12": { recH: 82, recHY: 1923, recL: 15, recLY: 1912, avgH: 61, avgL: 39, accP: 33.51 },
+"12-13": { recH: 83, recHY: 1923, recL: 14, recLY: 1912, avgH: 61, avgL: 39, accP: 33.54 },
+"12-14": { recH: 84, recHY: 1923, recL: 13, recLY: 1912, avgH: 61, avgL: 39, accP: 33.57 },
+"12-15": { recH: 83, recHY: 1923, recL: 14, recLY: 1912, avgH: 61, avgL: 39, accP: 33.60 },
+"12-16": { recH: 82, recHY: 1923, recL: 15, recLY: 1912, avgH: 61, avgL: 39, accP: 33.63 },
+"12-17": { recH: 81, recHY: 1923, recL: 16, recLY: 1912, avgH: 61, avgL: 39, accP: 33.66 },
+"12-18": { recH: 80, recHY: 1923, recL: 15, recLY: 1912, avgH: 61, avgL: 39, accP: 33.70 },
+"12-19": { recH: 81, recHY: 1923, recL: 14, recLY: 1912, avgH: 61, avgL: 39, accP: 33.73 },
+"12-20": { recH: 82, recHY: 1923, recL: 13, recLY: 1912, avgH: 61, avgL: 39, accP: 33.76 },
+"12-21": { recH: 83, recHY: 1923, recL: 12, recLY: 1912, avgH: 61, avgL: 39, accP: 33.79 },
+"12-22": { recH: 82, recHY: 1923, recL: 11, recLY: 1912, avgH: 61, avgL: 39, accP: 33.82 },
+"12-23": { recH: 81, recHY: 1923, recL: 10, recLY: 1912, avgH: 61, avgL: 39, accP: 33.85 },
+"12-24": { recH: 80, recHY: 1923, recL: 9,  recLY: 1912, avgH: 60, avgL: 38, accP: 33.88 },
+"12-25": { recH: 81, recHY: 1955, recL: 8,  recLY: 1924, avgH: 60, avgL: 38, accP: 33.91 },
+"12-26": { recH: 82, recHY: 1955, recL: 9,  recLY: 1924, avgH: 60, avgL: 38, accP: 33.94 },
+"12-27": { recH: 83, recHY: 1955, recL: 10, recLY: 1924, avgH: 60, avgL: 38, accP: 33.97 },
+"12-28": { recH: 82, recHY: 1955, recL: 11, recLY: 1924, avgH: 60, avgL: 38, accP: 34.00 },
+"12-29": { recH: 81, recHY: 1955, recL: 10, recLY: 1924, avgH: 60, avgL: 38, accP: 34.03 },
+"12-30": { recH: 82, recHY: 1955, recL: 9,  recLY: 1924, avgH: 60, avgL: 38, accP: 34.06 },
+"12-31": { recH: 81, recHY: 1955, recL: 8,  recLY: 1924, avgH: 60, avgL: 38, accP: 34.10 }
+            // Add remaining days here...
+        };
+
+        function getAlmanacData() {
+        const month = document.getElementById('monthSelect').value;
+        const day = document.getElementById('daySelect').value;
+        const key = `${month}-${day}`;
+        
+        const data = almanacData[key];
+        const monthName = document.getElementById('monthSelect').options[document.getElementById('monthSelect').selectedIndex].text;
+
+        if (data) {
+            document.getElementById('dateHeader').innerText = `${monthName} ${parseInt(day)}`;
+            document.getElementById('recHigh').innerText = `${data.recH}° (${data.recHY})`;
+            document.getElementById('recLow').innerText = `${data.recL}° (${data.recLY})`;
+            document.getElementById('avgHigh').innerText = `${data.avgH}°`;
+            document.getElementById('avgLow').innerText = `${data.avgL}°`;
+            document.getElementById('precip').innerText = `${data.accP}"`;
+        } else {
+            alert("No data loaded for this date yet!");
+        }
+    }
+
+    // Load Today on startup
+    window.onload = function() {
+        const today = new Date();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('monthSelect').value = mm;
+        document.getElementById('daySelect').value = dd;
+        getAlmanacData();
+    };
+</script>
+</body>
+</html>
