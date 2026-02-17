@@ -2,30 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Climate Command — Live Dash</title>
+    <title>Vizcaya Climate Command</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; padding: 20px; color: #1f2937; }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container { max-width: 1450px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 25px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         thead th { background: #1e3a8a; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
-        td { padding: 12px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+        td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; }
         
-        /* Temperature Departures */
+        /* Color Coding */
+        .temp-hot { color: #b91c1c; font-weight: bold; }
+        .temp-cold { color: #1d4ed8; font-weight: bold; }
+        .feels-low-freeze { color: #1e40af; background: #dbeafe; font-weight: bold; border-radius: 4px; } /* Deep Blue <=32 */
+        .feels-low-chilly { color: #2563eb; background: #eff6ff; font-weight: bold; border-radius: 4px; } /* Light Blue 33-39 */
+        
+        /* Departure Styling */
         .departure-pos { color: #dc2626; font-weight: bold; }
         .departure-neg { color: #2563eb; font-weight: bold; }
+
+        /* Summary Footer */
+        .summary-footer { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1e3a8a; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px; }
+        .summary-line { font-family: monospace; font-size: 13px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; color: #4b5563; }
         
-        /* Records Styling */
-        .rec-high { color: #b91c1c; font-weight: 600; }
-        .rec-low { color: #1d4ed8; font-weight: 600; }
-        .record-tag { font-size: 10px; padding: 2px 5px; border-radius: 4px; background: #fee2e2; color: #991b1b; font-weight: bold; margin-top: 3px; display: inline-block; }
-        .lo-watch { background: #dbeafe !important; color: #1e40af !important; }
-        
-        /* Subtext & Goals */
-        .sub-val { font-size: 10px; color: #6b7280; margin-left: 4px; }
-        .norm-text { color: #6b7280; font-style: italic; font-size: 11px; display: block; }
-        .rain-goal { font-size: 10px; color: #1e3a8a; font-weight: 600; margin-top: 2px; }
+        .bold-green { color: #059669; font-weight: bold; } /* Low Humidity <40% */
+        .bold-yellow { color: #d97706; font-weight: bold; } /* High Hum >70% or Dew 55-65 */
+        .bold-orange { color: #ea580c; font-weight: bold; } /* Dew >65 */
     </style>
 </head>
 <body>
@@ -33,8 +38,7 @@
 <div class="container">
     <header>
         <h1 style="margin:0; color:#1e3a8a;">Vizcaya Climate Command</h1>
-        <p style="margin:5px 0; color:#6b7280;">Professional 16-Day Forecast & 130-Year Historical Analysis</p>
-        <div id="currentDateTime" style="font-weight:600; color: #1f2937;"></div>
+        <div id="currentDateTime" style="font-weight:600; margin-top:5px;"></div>
     </header>
 
     <div class="table-wrapper">
@@ -42,107 +46,117 @@
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th style="text-align:left">Forecast</th>
-                    <th>SPC/Severity</th>
-                    <th>Temp (H/L)</th>
-                    <th>Historical Averages</th>
-                    <th>130yr Records (H/L)</th>
-                    <th>Rain / Prob</th>
-                    <th>Wind / Gust</th>
+                    <th>Forecast</th>
+                    <th>Severity</th>
+                    <th>Actual (H/L)</th>
+                    <th>Feels Like (H/L)</th>
+                    <th>Almanac Averages</th>
+                    <th>130yr Records</th>
+                    <th>Rain / Goal</th>
+                    <th>Wind/Gust</th>
                 </tr>
             </thead>
-            <tbody id="forecastBody">
-                <tr><td colspan="8">Synchronizing with Round Rock Almanac...</td></tr>
-            </tbody>
+            <tbody id="forecastBody"></tbody>
         </table>
+    </div>
+
+    <div class="summary-footer" id="summaryBox">
+        <div class="summary-grid" id="statsGrid"></div>
+        <div class="summary-line" id="longSummary"></div>
+        <div style="margin-top:10px; font-size:11px; color:#9ca3af; font-style:italic;">16-day blended forecast • Data sourced from Open-Meteo & Round Rock Almanac</div>
     </div>
 </div>
 
 <script>
-async function loadAlmanacAndWeather() {
-    // Linked to your standalone program URL
+async function loadDash() {
     const ALMANAC_URL = 'https://jimegan2025.github.io/almanac.html';
     const tbody = document.getElementById("forecastBody");
 
     try {
-        // 1. Fetch Almanac from GitHub
         const response = await fetch(ALMANAC_URL);
         const html = await response.text();
-        
-        // 2. Extract data object (handling your specific spacing/format)
         const match = html.match(/const\s+almanacData\s*=\s*(\{[\s\S]*?\});/);
-        if (!match) throw new Error("Data handshake failed: Could not find almanacData.");
-
-        // Evaluate extracted text into a usable JS object
         const almanacData = eval('(' + match[1] + ')');
 
-        // 3. Fetch Live Weather Data (Round Rock, TX)
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
+        // Added relative_humidity_2m_max and dew_point_2m_max for the summary
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,shortwave_radiation_sum,et0_fao_evapotranspiration&hourly=relative_humidity_2m,dew_point_2m,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
         const weather = await weatherRes.json();
+
+        let s = { rain:0, prob:0, cloud:0, hum:0, dew:0, high:0, low:0, mean:0, gust:0, count:16 };
 
         tbody.innerHTML = "";
         
         weather.daily.time.forEach((date, i) => {
-            const mmdd = date.slice(5); 
-            const h = almanacData[mmdd] || { avgH: "--", avgL: "--", recH: "--", recHY: "--", recL: "--", recLY: "--", accP: "--" };
+            const mmdd = date.slice(5);
+            const h = almanacData[mmdd] || { avgH:0, avgL:0, recH:0, recHY:0, recL:0, recLY:0, accP:0 };
             
             const tHigh = weather.daily.temperature_2m_max[i];
             const tLow = weather.daily.temperature_2m_min[i];
+            const fHigh = weather.daily.apparent_temperature_max[i];
+            const fLow = weather.daily.apparent_temperature_min[i];
             const rain = weather.daily.rain_sum[i];
-            const gusts = weather.daily.wind_gusts_10m_max[i];
-            const diff = h.avgH !== "--" ? Math.round(tHigh - h.avgH) : 0;
+            const gust = weather.daily.wind_gusts_10m_max[i];
+            const diff = Math.round(tHigh - h.avgH);
 
-            // --- SPC/SEVERITY LOGIC ---
-            // Official Risk for Days 1-3; Historical Anomaly for Days 4-16
-            let spcTag = "";
-            if (i <= 2) { 
-                if (rain > 1.0 || gusts > 40) spcTag = '<b style="color:#dc2626;">SLGT RISK</b>';
-                else if (rain > 0.10 || gusts > 25) spcTag = '<b style="color:#d97706;">MRGL RISK</b>';
-                else spcTag = '<span style="color:#10b981;">GENERAL</span>';
-            } else {
-                if (Math.abs(diff) > 15) spcTag = '<span style="color:#7c3aed; font-weight:bold;">ANOMALOUS</span>';
-                else if (Math.abs(diff) > 8) spcTag = '<span style="color:#6366f1;">VARIABLE</span>';
-                else spcTag = '<span style="color:#94a3b8;">STABLE</span>';
-            }
+            // Accumulate Stats for Summary
+            s.rain += rain;
+            s.prob += weather.daily.precipitation_probability_max[i];
+            s.high += tHigh;
+            s.low += tLow;
+            s.gust = Math.max(s.gust, gust);
+
+            // Determine Feels Like Color Logic
+            let feelsLowClass = "";
+            if (fLow <= 32) feelsLowClass = "feels-low-freeze";
+            else if (fLow <= 39) feelsLowClass = "feels-low-chilly";
+
+            // Severity
+            let sev = i <= 2 ? (rain > 0.5 || gust > 35 ? "⚠️ SLGT" : "✅ GEN") : (Math.abs(diff) > 12 ? "🚨 ANOM" : "⚖️ STBL");
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><strong>${mmdd}</strong></td>
-                <td style="text-align:left">${rain > 0.05 ? '🌧️' : tHigh > 75 ? '☀️' : '⛅'} Forecast</td>
-                <td>${spcTag}</td>
-                <td><span style="color:#b91c1c; font-weight:bold;">${tHigh.toFixed(0)}°</span> / ${tLow.toFixed(0)}°</td>
-                <td>
-                    <span class="norm-text">Avg: ${h.avgH}° / ${h.avgL}°</span>
-                    <span class="${diff >= 0 ? 'departure-pos' : 'departure-neg'}">${diff >= 0 ? '+' : ''}${diff}° vs Avg</span>
-                </td>
-                <td>
-                    <div class="rec-high">H: ${h.recH}° <span style="font-weight:normal; font-size:10px;">(${h.recHY})</span></div>
-                    <div class="rec-low">L: ${h.recL}° <span style="font-weight:normal; font-size:10px;">(${h.recLY})</span></div>
-                    ${tHigh >= h.recH - 2 ? `<span class="record-tag">HI WATCH</span>` : ''}
-                    ${tLow <= h.recL + 2 ? `<span class="record-tag lo-watch">LO WATCH</span>` : ''}
-                </td>
-                <td>
-                    ${rain.toFixed(2)}"<span class="sub-val">${weather.daily.precipitation_probability_max[i]}%</span>
-                    <div class="rain-goal">Goal Pace: ${h.accP}"</div>
-                </td>
-                <td>${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span class="sub-val">G: ${gusts.toFixed(0)}</span></td>
+                <td>${rain > 0.1 ? '🌧️' : '🌤️'}</td>
+                <td style="font-weight:bold">${sev}</td>
+                <td><span class="${tHigh > 80 ? 'temp-hot' : 'temp-cold'}">${tHigh.toFixed(0)}°</span> / ${tLow.toFixed(0)}°</td>
+                <td>${fHigh.toFixed(0)}° / <span class="${feelsLowClass}">${fLow.toFixed(0)}°</span></td>
+                <td><span class="norm-text">${h.avgH}/${h.avgL}</span> <span class="${diff >= 0 ? 'departure-pos' : 'departure-neg'}">${diff >= 0 ? '+' : ''}${diff}°</span></td>
+                <td><div style="color:#b91c1c">H: ${h.recH}°</div><div style="color:#1d4ed8">L: ${h.recL}°</div></td>
+                <td>${rain.toFixed(2)}"<div class="rain-goal">Goal: ${h.accP}"</div></td>
+                <td>${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span class="sub-val">G:${gust.toFixed(0)}</span></td>
             `;
             tbody.appendChild(tr);
         });
 
-    } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" style="color:red; padding:20px;">Error Linking Almanac: ${err.message}</td></tr>`;
-    }
+        // Hourly Averages (Cloud, Hum, Dew)
+        s.cloud = weather.hourly.cloud_cover.reduce((a,b)=>a+b,0) / weather.hourly.cloud_cover.length;
+        s.hum = weather.hourly.relative_humidity_2m.reduce((a,b)=>a+b,0) / weather.hourly.relative_humidity_2m.length;
+        s.dew = weather.hourly.dew_point_2m.reduce((a,b)=>a+b,0) / weather.hourly.dew_point_2m.length;
+
+        // Render Summary
+        const humClass = s.hum < 40 ? "bold-green" : (s.hum > 70 ? "bold-yellow" : "");
+        const dewClass = s.dew > 65 ? "bold-orange" : (s.dew > 55 ? "bold-yellow" : "");
+
+        document.getElementById("statsGrid").innerHTML = `
+            <div>16-Day Summary: <strong>${s.rain.toFixed(2)} in</strong></div>
+            <div>Avg Precip: ${(s.prob/16).toFixed(1)}%</div>
+            <div>Avg Cloud: ${s.cloud.toFixed(0)}%</div>
+            <div>Avg Hum: <span class="${humClass}">${s.hum.toFixed(0)}%</span></div>
+            <div>Avg Dew: <span class="${dewClass}">${s.dew.toFixed(1)}°F</span></div>
+            <div>Peak Gust: ${s.gust.toFixed(0)} mph</div>
+        `;
+
+        document.getElementById("longSummary").innerHTML = `
+            Total rain: ${s.rain.toFixed(2)} in &bull; Avg precip chance: ${(s.prob/16).toFixed(1)}% &bull; Avg cloud: ${s.cloud.toFixed(0)}%<br>
+            Avg humidity: <span class="${humClass}">${s.hum.toFixed(0)}%</span> &bull; Avg dew point: <span class="${dewClass}">${s.dew.toFixed(1)}°F</span> &bull; 
+            Avg temp: ${((s.high+s.low)/32).toFixed(1)}°F (Range: ${(s.high/16).toFixed(1)}°F / ${(s.low/16).toFixed(1)}°F) &bull; Peak gust: ${s.gust.toFixed(0)} mph
+        `;
+
+    } catch (err) { console.error(err); }
 }
 
-// Clock update logic
-setInterval(() => { 
-    document.getElementById("currentDateTime").innerText = new Date().toLocaleString('en-US', { 
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' 
-    }); 
-}, 1000);
-
-loadAlmanacAndWeather();
+setInterval(() => { document.getElementById("currentDateTime").innerText = new Date().toLocaleString(); }, 1000);
+loadDash();
 </script>
 </body>
 </html>
