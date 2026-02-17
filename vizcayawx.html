@@ -5,32 +5,26 @@
     <title>Vizcaya Climate Command</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; padding: 20px; color: #1f2937; }
-        .container { max-width: 1450px; margin: 0 auto; }
+        .container { max-width: 1550px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 25px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
         .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        thead th { background: #1e3a8a; color: white; padding: 12px; text-transform: uppercase; font-size: 11px; }
-        td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        thead th { background: #1e3a8a; color: white; padding: 10px; text-transform: uppercase; font-size: 10px; }
+        td { padding: 8px 5px; text-align: center; border-bottom: 1px solid #e5e7eb; }
         
         /* Color Coding */
         .temp-hot { color: #b91c1c; font-weight: bold; }
         .temp-cold { color: #1d4ed8; font-weight: bold; }
-        .feels-low-freeze { color: #1e40af; background: #dbeafe; font-weight: bold; border-radius: 4px; } /* Deep Blue <=32 */
-        .feels-low-chilly { color: #2563eb; background: #eff6ff; font-weight: bold; border-radius: 4px; } /* Light Blue 33-39 */
-        
-        /* Departure Styling */
-        .departure-pos { color: #dc2626; font-weight: bold; }
-        .departure-neg { color: #2563eb; font-weight: bold; }
+        .feels-low-freeze { color: #1e40af; background: #dbeafe; font-weight: bold; border-radius: 4px; padding: 2px; }
+        .feels-low-chilly { color: #2563eb; background: #eff6ff; font-weight: bold; border-radius: 4px; padding: 2px; }
+        .uv-high { color: #7c3aed; font-weight: bold; }
 
         /* Summary Footer */
-        .summary-footer { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #1e3a8a; }
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 14px; }
-        .summary-line { font-family: monospace; font-size: 13px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; color: #4b5563; }
-        
-        .bold-green { color: #059669; font-weight: bold; } /* Low Humidity <40% */
-        .bold-yellow { color: #d97706; font-weight: bold; } /* High Hum >70% or Dew 55-65 */
-        .bold-orange { color: #ea580c; font-weight: bold; } /* Dew >65 */
+        .summary-footer { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 8px solid #1e3a8a; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; font-size: 14px; }
+        .sum-val { font-size: 20px; font-weight: bold; display: block; margin-top: 5px; }
+        .sum-sub { font-size: 11px; color: #64748b; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -47,12 +41,13 @@
                 <tr>
                     <th>Date</th>
                     <th>Forecast</th>
-                    <th>Severity</th>
-                    <th>Actual (H/L)</th>
-                    <th>Feels Like (H/L)</th>
-                    <th>Almanac Averages</th>
+                    <th>Temp (H/L)</th>
+                    <th>Feels (H/L)</th>
+                    <th>Norms (H/L)</th>
                     <th>130yr Records</th>
-                    <th>Rain / Goal</th>
+                    <th>Rain (Prob)</th>
+                    <th>Goal Pace</th>
+                    <th>Sun / UV</th>
                     <th>Wind/Gust</th>
                 </tr>
             </thead>
@@ -60,10 +55,24 @@
         </table>
     </div>
 
-    <div class="summary-footer" id="summaryBox">
-        <div class="summary-grid" id="statsGrid"></div>
-        <div class="summary-line" id="longSummary"></div>
-        <div style="margin-top:10px; font-size:11px; color:#9ca3af; font-style:italic;">16-day blended forecast • Data sourced from Open-Meteo & Round Rock Almanac</div>
+    <div class="summary-footer">
+        <div class="summary-grid">
+            <div style="border-right: 1px solid #e2e8f0;">
+                <span class="sum-sub">16-DAY RAIN PERFORMANCE</span>
+                <span class="sum-val" id="sumRain">0.00"</span>
+                <span id="rainVerdict" style="font-size:12px; font-weight:bold;"></span>
+            </div>
+            <div style="border-right: 1px solid #e2e8f0;">
+                <span class="sum-sub">TEMP VS. 130-YR AVG</span>
+                <span class="sum-val" id="sumTemp">0.0°</span>
+                <span id="tempVerdict" style="font-size:12px; font-weight:bold;"></span>
+            </div>
+            <div>
+                <span class="sum-sub">PEAK CONDITIONS</span>
+                <span class="sum-val" id="sumPeaks">--</span>
+                <span class="sum-sub" id="sumSunHours">--</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -78,79 +87,68 @@ async function loadDash() {
         const match = html.match(/const\s+almanacData\s*=\s*(\{[\s\S]*?\});/);
         const almanacData = eval('(' + match[1] + ')');
 
-        // Added relative_humidity_2m_max and dew_point_2m_max for the summary
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,shortwave_radiation_sum,et0_fao_evapotranspiration&hourly=relative_humidity_2m,dew_point_2m,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,shortwave_radiation_sum,uv_index_max,sunshine_duration&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
         const weather = await weatherRes.json();
 
-        let s = { rain:0, prob:0, cloud:0, hum:0, dew:0, high:0, low:0, mean:0, gust:0, count:16 };
+        let s = { rain:0, goalStart:0, goalEnd:0, tSum:0, nSum:0, peakUV:0, sunHrs:0, peakGust:0 };
 
         tbody.innerHTML = "";
         
-        weather.daily.time.forEach((date, i) => {
-            const mmdd = date.slice(5);
+        weather.daily.time.forEach((i_date, i) => {
+            const mmdd = i_date.slice(5);
             const h = almanacData[mmdd] || { avgH:0, avgL:0, recH:0, recHY:0, recL:0, recLY:0, accP:0 };
             
-            const tHigh = weather.daily.temperature_2m_max[i];
-            const tLow = weather.daily.temperature_2m_min[i];
-            const fHigh = weather.daily.apparent_temperature_max[i];
-            const fLow = weather.daily.apparent_temperature_min[i];
+            const tH = weather.daily.temperature_2m_max[i];
+            const tL = weather.daily.temperature_2m_min[i];
+            const fL = weather.daily.apparent_temperature_min[i];
             const rain = weather.daily.rain_sum[i];
-            const gust = weather.daily.wind_gusts_10m_max[i];
-            const diff = Math.round(tHigh - h.avgH);
+            const prob = weather.daily.precipitation_probability_max[i];
+            const sunH = (weather.daily.sunshine_duration[i] / 3600).toFixed(1);
+            const uv = weather.daily.uv_index_max[i];
 
-            // Accumulate Stats for Summary
+            // Summary Math
             s.rain += rain;
-            s.prob += weather.daily.precipitation_probability_max[i];
-            s.high += tHigh;
-            s.low += tLow;
-            s.gust = Math.max(s.gust, gust);
+            if(i === 0) s.goalStart = h.accP;
+            if(i === 15) s.goalEnd = h.accP;
+            s.tSum += (tH + tL) / 2;
+            s.nSum += (h.avgH + h.avgL) / 2;
+            s.peakUV = Math.max(s.peakUV, uv);
+            s.sunHrs += parseFloat(sunH);
+            s.peakGust = Math.max(s.peakGust, weather.daily.wind_gusts_10m_max[i]);
 
-            // Determine Feels Like Color Logic
-            let feelsLowClass = "";
-            if (fLow <= 32) feelsLowClass = "feels-low-freeze";
-            else if (fLow <= 39) feelsLowClass = "feels-low-chilly";
-
-            // Severity
-            let sev = i <= 2 ? (rain > 0.5 || gust > 35 ? "⚠️ SLGT" : "✅ GEN") : (Math.abs(diff) > 12 ? "🚨 ANOM" : "⚖️ STBL");
+            let feelsClass = fL <= 32 ? "feels-low-freeze" : (fL <= 39 ? "feels-low-chilly" : "");
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><strong>${mmdd}</strong></td>
-                <td>${rain > 0.1 ? '🌧️' : '🌤️'}</td>
-                <td style="font-weight:bold">${sev}</td>
-                <td><span class="${tHigh > 80 ? 'temp-hot' : 'temp-cold'}">${tHigh.toFixed(0)}°</span> / ${tLow.toFixed(0)}°</td>
-                <td>${fHigh.toFixed(0)}° / <span class="${feelsLowClass}">${fLow.toFixed(0)}°</span></td>
-                <td><span class="norm-text">${h.avgH}/${h.avgL}</span> <span class="${diff >= 0 ? 'departure-pos' : 'departure-neg'}">${diff >= 0 ? '+' : ''}${diff}°</span></td>
-                <td><div style="color:#b91c1c">H: ${h.recH}°</div><div style="color:#1d4ed8">L: ${h.recL}°</div></td>
-                <td>${rain.toFixed(2)}"<div class="rain-goal">Goal: ${h.accP}"</div></td>
-                <td>${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span class="sub-val">G:${gust.toFixed(0)}</span></td>
+                <td>${rain > 0.05 ? '🌧️' : '🌤️'}</td>
+                <td><span class="${tH > 80 ? 'temp-hot' : 'temp-cold'}">${tH.toFixed(0)}°</span> / ${tL.toFixed(0)}°</td>
+                <td>${weather.daily.apparent_temperature_max[i].toFixed(0)}° / <span class="${feelsClass}">${fL.toFixed(0)}°</span></td>
+                <td style="color:#64748b">${h.avgH}° / ${h.avgL}°</td>
+                <td><div style="color:#b91c1c">H:${h.recH}°</div><div style="color:#1d4ed8">L:${h.recL}°</div></td>
+                <td><strong>${rain.toFixed(2)}"</strong> <span style="color:#64748b">(${prob}%)</span></td>
+                <td style="background:#f8fafc; font-weight:600">${h.accP}"</td>
+                <td>${sunH}h / <span class="${uv > 6 ? 'uv-high' : ''}">${uv}</span></td>
+                <td>${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span style="font-size:10px; color:#64748b">G:${weather.daily.wind_gusts_10m_max[i].toFixed(0)}</span></td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Hourly Averages (Cloud, Hum, Dew)
-        s.cloud = weather.hourly.cloud_cover.reduce((a,b)=>a+b,0) / weather.hourly.cloud_cover.length;
-        s.hum = weather.hourly.relative_humidity_2m.reduce((a,b)=>a+b,0) / weather.hourly.relative_humidity_2m.length;
-        s.dew = weather.hourly.dew_point_2m.reduce((a,b)=>a+b,0) / weather.hourly.dew_point_2m.length;
+        // SUMMARY LOGIC
+        const rainTarget = (s.goalEnd - s.goalStart).toFixed(2);
+        const rainDiff = (s.rain - rainTarget).toFixed(2);
+        const tempDiff = ((s.tSum - s.nSum) / 16).toFixed(1);
 
-        // Render Summary
-        const humClass = s.hum < 40 ? "bold-green" : (s.hum > 70 ? "bold-yellow" : "");
-        const dewClass = s.dew > 65 ? "bold-orange" : (s.dew > 55 ? "bold-yellow" : "");
+        document.getElementById("sumRain").innerText = `${s.rain.toFixed(2)}" vs ${rainTarget}"`;
+        document.getElementById("rainVerdict").innerHTML = rainDiff >= 0 ? 
+            `<span style="color:#059669">↑ AHEAD: +${rainDiff}" on 34.10" Pace</span>` : 
+            `<span style="color:#dc2626">↓ DEFICIT: ${rainDiff}" vs Norm</span>`;
 
-        document.getElementById("statsGrid").innerHTML = `
-            <div>16-Day Summary: <strong>${s.rain.toFixed(2)} in</strong></div>
-            <div>Avg Precip: ${(s.prob/16).toFixed(1)}%</div>
-            <div>Avg Cloud: ${s.cloud.toFixed(0)}%</div>
-            <div>Avg Hum: <span class="${humClass}">${s.hum.toFixed(0)}%</span></div>
-            <div>Avg Dew: <span class="${dewClass}">${s.dew.toFixed(1)}°F</span></div>
-            <div>Peak Gust: ${s.gust.toFixed(0)} mph</div>
-        `;
+        document.getElementById("sumTemp").innerText = `${(s.tSum/16).toFixed(1)}°F`;
+        document.getElementById("tempVerdict").innerHTML = `<span style="color:${tempDiff >= 0 ? '#dc2626':'#2563eb'}">${tempDiff >= 0 ? 'WARMER':'COOLER'} THAN 130-YR AVG BY ${Math.abs(tempDiff)}°</span>`;
 
-        document.getElementById("longSummary").innerHTML = `
-            Total rain: ${s.rain.toFixed(2)} in &bull; Avg precip chance: ${(s.prob/16).toFixed(1)}% &bull; Avg cloud: ${s.cloud.toFixed(0)}%<br>
-            Avg humidity: <span class="${humClass}">${s.hum.toFixed(0)}%</span> &bull; Avg dew point: <span class="${dewClass}">${s.dew.toFixed(1)}°F</span> &bull; 
-            Avg temp: ${((s.high+s.low)/32).toFixed(1)}°F (Range: ${(s.high/16).toFixed(1)}°F / ${(s.low/16).toFixed(1)}°F) &bull; Peak gust: ${s.gust.toFixed(0)} mph
-        `;
+        document.getElementById("sumPeaks").innerText = `UV ${s.peakUV} / ${s.peakGust.toFixed(0)} mph`;
+        document.getElementById("sumSunHours").innerText = `Total Sun: ${s.sunHrs.toFixed(1)} Hours`;
 
     } catch (err) { console.error(err); }
 }
