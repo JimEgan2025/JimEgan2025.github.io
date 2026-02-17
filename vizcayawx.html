@@ -5,35 +5,34 @@
     <title>Vizcaya Climate Command</title>
     <style>
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; padding: 30px; color: #1f2937; line-height: 1.5; }
-        .container { max-width: 1500px; margin: 0 auto; }
+        .container { max-width: 1750px; margin: 0 auto; }
         
         header { text-align: center; margin-bottom: 30px; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h1 { margin: 0; color: #1e3a8a; font-size: 2.2rem; }
         
         .table-wrapper { background: white; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 30px; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 16px; } /* Increased Font */
-        thead th { background: #1e3a8a; color: white; padding: 18px 10px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.05em; }
-        td { padding: 16px 12px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+        table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        thead th { background: #1e3a8a; color: white; padding: 18px 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+        td { padding: 16px 10px; border-bottom: 1px solid #e5e7eb; }
         
-        .date-col { font-weight: 700; font-size: 18px; color: #1e3a8a; }
-        .temp-hot { color: #b91c1c; font-weight: 800; font-size: 19px; }
-        .temp-cold { color: #1d4ed8; font-weight: 800; font-size: 19px; }
+        .date-col { font-weight: 700; font-size: 16px; color: #1e3a8a; text-align: left; padding-left: 20px; }
+        .day-label { font-size: 12px; color: #64748b; display: block; text-transform: uppercase; font-weight: 800; }
         
-        .feels-low-freeze { color: #1e40af; background: #dbeafe; font-weight: bold; border-radius: 6px; padding: 4px 10px; }
-        .feels-low-chilly { color: #2563eb; background: #eff6ff; font-weight: bold; border-radius: 6px; padding: 4px 10px; }
+        /* Severe Weather Styling */
+        .severe-low { color: #059669; font-weight: bold; }
+        .severe-med { color: #d97706; font-weight: bold; background: #fef3c7; border-radius: 4px; padding: 2px 6px; }
+        .severe-high { color: #dc2626; font-weight: 900; background: #fee2e2; border-radius: 4px; padding: 2px 6px; animation: pulse 2s infinite; }
         
-        .conf-high { color: #059669; font-weight: 700; }
-        .conf-low { color: #94a3b8; font-style: italic; }
-        
-        .rec-yr { font-size: 12px; color: #64748b; font-weight: 400; display: block; margin-top: 2px; }
-        .departure-pos { color: #dc2626; font-weight: bold; }
-        .departure-neg { color: #2563eb; font-weight: bold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
+        .temp-hot { color: #b91c1c; font-weight: 800; font-size: 18px; }
+        .temp-cold { color: #1d4ed8; font-weight: 800; font-size: 18px; }
+        .rec-yr { font-size: 11px; color: #64748b; font-weight: 400; display: block; }
+        
         .summary-footer { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); border-left: 10px solid #1e3a8a; }
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
-        .sum-val { font-size: 28px; font-weight: 800; display: block; margin-top: 8px; color: #1e293b; }
-        .sum-sub { font-size: 14px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; }
+        .sum-val { font-size: 26px; font-weight: 800; display: block; margin-top: 8px; color: #1e293b; }
     </style>
 </head>
 <body>
@@ -41,7 +40,7 @@
 <div class="container">
     <header>
         <h1>Vizcaya Climate Command</h1>
-        <div id="currentDateTime" style="font-size: 1.2rem; color: #4b5563; margin-top: 10px;"></div>
+        <div id="currentDateTime" style="font-size: 1.1rem; color: #4b5563; margin-top: 10px;"></div>
     </header>
 
     <div class="table-wrapper">
@@ -49,11 +48,11 @@
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Confidence</th>
-                    <th>Cloud %</th>
-                    <th>Actual (H/L)</th>
+                    <th>Conditions</th>
+                    <th>Severe Risk (CAPE)</th>
+                    <th>Clouds</th>
+                    <th>Temp (H/L)</th>
                     <th>Feels (H/L)</th>
-                    <th>Norms (H/L)</th>
                     <th>130yr Records</th>
                     <th>Rain (Prob)</th>
                     <th>Sun / UV</th>
@@ -67,19 +66,19 @@
     <div class="summary-footer">
         <div class="summary-grid">
             <div style="border-right: 2px solid #f1f5f9; padding-right: 15px;">
-                <span class="sum-sub">16-Day Rainfall Trend</span>
+                <span style="font-size: 13px; color: #64748b; font-weight: 700;">RAIN TREND</span>
                 <span class="sum-val" id="sumRain">--</span>
-                <span id="rainVerdict" style="font-size:16px; font-weight:bold;"></span>
+                <span id="rainVerdict" style="font-size:15px; font-weight:bold;"></span>
             </div>
             <div style="border-right: 2px solid #f1f5f9; padding-right: 15px;">
-                <span class="sum-sub">Temp vs. Historical Avg</span>
+                <span style="font-size: 13px; color: #64748b; font-weight: 700;">TEMP VARIANCE</span>
                 <span class="sum-val" id="sumTemp">--</span>
-                <span id="tempVerdict" style="font-size:16px; font-weight:bold;"></span>
+                <span id="tempVerdict" style="font-size:15px; font-weight:bold;"></span>
             </div>
             <div>
-                <span class="sum-sub">Forecast Quality</span>
-                <span class="sum-val" id="sumConf">--</span>
-                <span class="sum-sub" id="sumSunHours" style="color:#1e3a8a; font-size:15px; margin-top:10px; display:block;"></span>
+                <span style="font-size: 13px; color: #64748b; font-weight: 700;">STABILITY INDEX</span>
+                <span class="sum-val" id="peakCape">--</span>
+                <span style="color:#1e3a8a; font-size:14px; font-weight:600;">Max CAPE (Convective Energy)</span>
             </div>
         </div>
     </div>
@@ -96,74 +95,64 @@ async function loadDash() {
         const match = html.match(/const\s+almanacData\s*=\s*(\{[\s\S]*?\});/);
         const almanacData = eval('(' + match[1] + ')');
 
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max,sunshine_duration&hourly=cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
+        // Added CAPE and Lifted Index to the API call
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max,sunshine_duration&hourly=cloud_cover,cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=16`);
         const weather = await weatherRes.json();
 
-        let s = { rain:0, goalStart:0, goalEnd:0, tSum:0, nSum:0, sunHrs:0, peakGust:0, confAvg:0 };
-
+        let s = { rain:0, goalStart:0, goalEnd:0, tSum:0, nSum:0, maxCape:0 };
         tbody.innerHTML = "";
         
         weather.daily.time.forEach((i_date, i) => {
             const mmdd = i_date.slice(5);
+            const dateObj = new Date(i_date + 'T00:00:00');
+            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
             const h = almanacData[mmdd] || { avgH:0, avgL:0, recH:0, recHY:0, recL:0, recLY:0, accP:0 };
             
-            const tH = weather.daily.temperature_2m_max[i];
-            const tL = weather.daily.temperature_2m_min[i];
-            const fH = weather.daily.apparent_temperature_max[i];
-            const fL = weather.daily.apparent_temperature_min[i];
-            const rain = weather.daily.rain_sum[i];
-            const sunH = (weather.daily.sunshine_duration[i] / 3600).toFixed(1);
-            const uv = weather.daily.uv_index_max[i];
-
-            const confidence = Math.max(95 - (i * 5.3), 12).toFixed(0);
             const dayStart = i * 24;
+            const dayCape = Math.max(...weather.hourly.cape.slice(dayStart, dayStart + 24));
+            const dayLift = Math.min(...weather.hourly.lifted_index.slice(dayStart, dayStart + 24));
             const dayCloud = (weather.hourly.cloud_cover.slice(dayStart, dayStart + 24).reduce((a,b)=>a+b,0) / 24).toFixed(0);
 
-            s.rain += rain;
-            if(i === 0) s.goalStart = h.accP;
-            if(i === 15) s.goalEnd = h.accP;
-            s.tSum += (tH + tL) / 2;
-            s.nSum += (h.avgH + h.avgL) / 2;
-            s.sunHrs += parseFloat(sunH);
-            s.peakGust = Math.max(s.peakGust, weather.daily.wind_gusts_10m_max[i]);
-            s.confAvg += parseFloat(confidence);
-
-            let feelsClass = fL <= 32 ? "feels-low-freeze" : (fL <= 39 ? "feels-low-chilly" : "");
-            const diff = Math.round(tH - h.avgH);
+            // Severe Status Logic
+            let severeText = "Stable";
+            let severeClass = "severe-low";
+            if (dayCape > 2500 || (dayCape > 1500 && dayLift < -4)) { severeText = "STORM RISK (High)"; severeClass = "severe-high"; }
+            else if (dayCape > 1000 || dayLift < -2) { severeText = "Unstable (Med)"; severeClass = "severe-med"; }
+            
+            s.maxCape = Math.max(s.maxCape, dayCape);
+            const tH = weather.daily.temperature_2m_max[i];
+            const tL = weather.daily.temperature_2m_min[i];
+            const rain = weather.daily.rain_sum[i];
+            const sunH = (weather.daily.sunshine_duration[i] / 3600).toFixed(1);
 
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td class="date-col">${mmdd}</td>
-                <td><span class="${confidence > 60 ? 'conf-high' : 'conf-low'}">${confidence}%</span></td>
-                <td style="font-weight:600">${dayCloud}%</td>
-                <td><span class="${tH > 80 ? 'temp-hot' : 'temp-cold'}">${tH.toFixed(0)}°</span> / ${tL.toFixed(0)}°</td>
-                <td style="color:#475569; font-weight:600">${fH.toFixed(0)}° / <span class="${feelsClass}">${fL.toFixed(0)}°</span></td>
-                <td><span style="color:#64748b">${h.avgH}/${h.avgL}</span> <span class="${diff >= 0 ? 'departure-pos' : 'departure-neg'}">${diff >= 0 ? '+' : ''}${diff}°</span></td>
-                <td>
+                <td class="date-col"><span class="day-label">${dayName}</span>${mmdd}</td>
+                <td style="font-weight:600; color:#334155">${rain > 0.1 ? 'Rainy' : (dayCloud > 70 ? 'Cloudy' : 'Clear')}</td>
+                <td class="${severeClass}">${severeText} <span style="font-size:10px; opacity:0.7;">(${dayCape.toFixed(0)} J/kg)</span></td>
+                <td style="text-align:center">${dayCloud}%</td>
+                <td style="text-align:center"><span class="${tH > 85 ? 'temp-hot' : 'temp-cold'}">${tH.toFixed(0)}°</span> / ${tL.toFixed(0)}°</td>
+                <td style="text-align:center">${weather.daily.apparent_temperature_max[i].toFixed(0)}° / ${weather.daily.apparent_temperature_min[i].toFixed(0)}°</td>
+                <td style="text-align:center">
                     <div style="color:#b91c1c; font-weight:700;">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div>
                     <div style="color:#1d4ed8; font-weight:700;">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>
                 </td>
-                <td style="font-size:18px;"><strong>${rain.toFixed(2)}"</strong> <span style="font-size:13px; color:#64748b">(${weather.daily.precipitation_probability_max[i]}%)</span></td>
-                <td><span style="font-weight:600">${sunH}h</span> / <span class="${uv > 6 ? 'temp-hot' : ''}">${uv} UV</span></td>
-                <td>${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span style="font-size:11px; color:#64748b">G:${weather.daily.wind_gusts_10m_max[i].toFixed(0)}</span></td>
+                <td style="text-align:center"><strong>${rain.toFixed(2)}"</strong> <span style="font-size:11px; color:#64748b">(${weather.daily.precipitation_probability_max[i]}%)</span></td>
+                <td style="text-align:center">${sunH}h / ${weather.daily.uv_index_max[i]}</td>
+                <td style="text-align:center">${weather.daily.wind_speed_10m_max[i].toFixed(0)} <span style="font-size:11px; color:#64748b">G:${weather.daily.wind_gusts_10m_max[i].toFixed(0)}</span></td>
             `;
             tbody.appendChild(tr);
+            
+            s.rain += rain;
+            if(i === 0) s.goalStart = h.accP;
+            if(i === 15) s.goalEnd = h.accP;
+            s.tSum += (tH + tL) / 2; s.nSum += (h.avgH + h.avgL) / 2;
         });
 
         const rainTarget = (s.goalEnd - s.goalStart).toFixed(2);
-        const rainDiff = (s.rain - rainTarget).toFixed(2);
-        const tempDiff = ((s.tSum - s.nSum) / 16).toFixed(1);
-
         document.getElementById("sumRain").innerText = `${s.rain.toFixed(2)}" Total`;
-        document.getElementById("rainVerdict").innerHTML = rainDiff >= 0 ? 
-            `<span style="color:#059669">↑ Surplus: +${rainDiff}" vs Historical Period Norm</span>` : 
-            `<span style="color:#dc2626">↓ Deficit: ${rainDiff}" vs Historical Period Norm</span>`;
-
-        document.getElementById("sumTemp").innerText = `${(s.tSum/16).toFixed(1)}°F Avg`;
-        document.getElementById("tempVerdict").innerHTML = `<span style="color:${tempDiff >= 0 ? '#dc2626':'#2563eb'}">${tempDiff >= 0 ? 'WARMER':'COOLER'} BY ${Math.abs(tempDiff)}° VS 130-YR AVG</span>`;
-
-        document.getElementById("sumConf").innerText = `${(s.confAvg/16).toFixed(0)}% Avg`;
-        document.getElementById("sumSunHours").innerText = `Total Sun for Period: ${s.sunHrs.toFixed(1)} Hours`;
+        document.getElementById("peakCape").innerText = `${s.maxCape.toFixed(0)} J/kg`;
+        document.getElementById("tempVerdict").innerHTML = `<span style="color:${((s.tSum-s.nSum)/16) >= 0 ? '#dc2626':'#2563eb'}">${Math.abs((s.tSum-s.nSum)/16).toFixed(1)}° vs Norm</span>`;
 
     } catch (err) { console.error(err); }
 }
