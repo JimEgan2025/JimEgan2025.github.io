@@ -22,12 +22,6 @@
     tr:hover { background:#f1f5f9; }
     .high-temp { color:#b91c1c; font-weight:800; font-size:16px; }
     .low-temp { color:#1d4ed8; font-weight:800; font-size:16px; }
-    .severe-stable { color:#10b981; font-weight:700; }
-    .severe-risk { color:#dc2626; font-weight:800; }
-    .uv-low { color:#10b981; }
-    .uv-mod { color:#f59e0b; }
-    .uv-high { color:#ef4444; }
-    .uv-ext { color:#7c3aed; font-weight:800; }
     .rec-h { color:#991b1b; font-weight:600; font-size:12px; }
     .rec-l { color:#1e40af; font-weight:600; font-size:12px; }
     .rec-yr { font-size:10px; color:#64748b; font-weight:400; }
@@ -61,15 +55,15 @@
   <script>
     const LAT = 30.509747, LON = -97.692116;
     
-    // Historical averages for Vizcaya area (Round Rock, TX)
+    // Historical records for Vizcaya area (Round Rock, TX)
     const historicalAverages = {
-      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordLow: -8, year: 1899 },
-      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordLow: -8, year: 1899 },
-      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordLow: -6, year: 1899 },
-      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordLow: -5, year: 1899 },
-      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordLow: -4, year: 1899 },
-      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordLow: -3, year: 1899 },
-      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordLow: -2, year: 1899 }
+      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordHighYear: 1899, recordLow: -8, recordLowYear: 1899 },
+      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordHighYear: 1899, recordLow: -8, recordLowYear: 1899 },
+      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordHighYear: 1899, recordLow: -6, recordLowYear: 1899 },
+      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordHighYear: 1899, recordLow: -5, recordLowYear: 1899 },
+      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordHighYear: 1899, recordLow: -4, recordLowYear: 1899 },
+      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordHighYear: 1899, recordLow: -3, recordLowYear: 1899 },
+      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordHighYear: 1899, recordLow: -2, recordLowYear: 1899 }
     };
     
     function getWeatherDesc(cloudCover, rainProb) {
@@ -121,8 +115,10 @@
             label: 'Record High / Low (Year)',
             getData: i => {
               const mmdd = daily.time[i].slice(5);
-              const h = historicalAverages[mmdd] || { recordHigh: '--', recordLow: '--', year: '' };
-              return `<div class="rec-h">${h.recordHigh}° <span class="rec-yr">('${String(h.year).slice(-2)})</span></div><div class="rec-l">${h.recordLow}°</div>`;
+              const h = historicalAverages[mmdd] || { recordHigh: '--', recordHighYear: '', recordLow: '--', recordLowYear: '' };
+              const highYearStr = h.recordHighYear ? ` ('${String(h.recordHighYear).slice(-2)})` : '';
+              const lowYearStr = h.recordLowYear ? ` ('${String(h.recordLowYear).slice(-2)})` : '';
+              return `<div class="rec-h">${h.recordHigh}°<span class="rec-yr">${highYearStr}</span></div><div class="rec-l">${h.recordLow}°<span class="rec-yr">${lowYearStr}</span></div>`;
             }
           },
           {
