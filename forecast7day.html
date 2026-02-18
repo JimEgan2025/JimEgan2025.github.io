@@ -63,18 +63,18 @@
     
     // Historical averages for Vizcaya area (Round Rock, TX)
     const historicalAverages = {
-      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordLow: -8 },
-      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordLow: -8 },
-      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordLow: -6 },
-      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordLow: -5 },
-      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordLow: -4 },
-      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordLow: -3 },
-      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordLow: -2 }
+      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordLow: -8, year: 1899 },
+      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordLow: -8, year: 1899 },
+      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordLow: -6, year: 1899 },
+      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordLow: -5, year: 1899 },
+      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordLow: -4, year: 1899 },
+      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordLow: -3, year: 1899 },
+      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordLow: -2, year: 1899 }
     };
     
     function getWeatherDesc(cloudCover, rainProb) {
-      if (rainProb > 50) return cloudCover > 70 ? 'Rainy, Overcast' : 'Showers likely';
-      if (rainProb > 30) return cloudCover > 70 ? 'Mostly cloudy, chance rain' : 'Partly cloudy, scattered showers';
+      if (rainProb > 50) return cloudCover > 70 ? `Rainy with ${rainProb}% chance` : `Showers likely, ${rainProb}% chance`;
+      if (rainProb > 30) return cloudCover > 70 ? `Mostly cloudy with ${rainProb}% chance` : `Partly cloudy with ${rainProb}% chance`;
       if (cloudCover > 80) return 'Overcast';
       if (cloudCover > 50) return 'Mostly cloudy';
       if (cloudCover > 20) return 'Partly cloudy';
@@ -103,17 +103,26 @@
         
         const rows = [
           {
+            name: 'Conditions',
+            label: 'Sky / Precipitation',
+            getData: i => {
+              const clouds = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);
+              const cloudCover = clouds.length > 0 ? Math.round(clouds.reduce((a,b) => a+b)/clouds.length) : 0;
+              return getWeatherDesc(cloudCover, daily.precipitation_probability_max[i]);
+            }
+          },
+          {
             name: 'Temperatures',
             label: 'High / Low (°F)',
             getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
           },
           {
             name: 'Historical Records',
-            label: 'Record High / Low',
+            label: 'Record High / Low (Year)',
             getData: i => {
               const mmdd = daily.time[i].slice(5);
-              const h = historicalAverages[mmdd] || { recordHigh: '--', recordLow: '--' };
-              return `<div class="rec-h">${h.recordHigh}°</div><div class="rec-l">${h.recordLow}°</div>`;
+              const h = historicalAverages[mmdd] || { recordHigh: '--', recordLow: '--', year: '' };
+              return `<div class="rec-h">${h.recordHigh}° <span class="rec-yr">('${String(h.year).slice(-2)})</span></div><div class="rec-l">${h.recordLow}°</div>`;
             }
           },
           {
@@ -129,27 +138,9 @@
             }
           },
           {
-            name: 'Conditions',
-            label: 'Sky / Precipitation',
-            getData: i => {
-              const clouds = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);
-              const cloudCover = clouds.length > 0 ? Math.round(clouds.reduce((a,b) => a+b)/clouds.length) : 0;
-              return getWeatherDesc(cloudCover, daily.precipitation_probability_max[i]);
-            }
-          },
-          {
             name: 'Feels Like',
             label: 'High / Low',
             getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
-          },
-          {
-            name: 'UV Index',
-            label: 'Max',
-            getData: i => {
-              const uv = daily.uv_index_max[i];
-              const cls = uv >= 11 ? 'uv-ext' : uv >= 8 ? 'uv-high' : uv >= 3 ? 'uv-mod' : 'uv-low';
-              return `<span class="${cls}">${uv.toFixed(1)}</span>`;
-            }
           },
           {
             name: 'Precipitation',
@@ -175,6 +166,15 @@
               const sr = new Date(daily.sunrise[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               const ss = new Date(daily.sunset[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               return `${sr} / ${ss}`;
+            }
+          },
+          {
+            name: 'UV Index',
+            label: 'Max',
+            getData: i => {
+              const uv = daily.uv_index_max[i];
+              const cls = uv >= 11 ? 'uv-ext' : uv >= 8 ? 'uv-high' : uv >= 3 ? 'uv-mod' : 'uv-low';
+              return `<span class="${cls}">${uv.toFixed(1)}</span>`;
             }
           }
         ];
