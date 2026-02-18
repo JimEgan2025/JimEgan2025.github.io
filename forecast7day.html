@@ -55,15 +55,15 @@
   <script>
     const LAT = 30.509747, LON = -97.692116;
     
-    // Historical records for Vizcaya area (Round Rock, TX)
+    // Historical records for Vizcaya area (Round Rock, TX) - Different years for high/low
     const historicalAverages = {
-      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordHighYear: 1899, recordLow: -8, recordLowYear: 1899 },
-      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordHighYear: 1899, recordLow: -8, recordLowYear: 1899 },
-      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordHighYear: 1899, recordLow: -6, recordLowYear: 1899 },
-      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordHighYear: 1899, recordLow: -5, recordLowYear: 1899 },
-      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordHighYear: 1899, recordLow: -4, recordLowYear: 1899 },
-      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordHighYear: 1899, recordLow: -3, recordLowYear: 1899 },
-      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordHighYear: 1899, recordLow: -2, recordLowYear: 1899 }
+      '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordHighYear: 2017, recordLow: -8, recordLowYear: 1949 },
+      '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordHighYear: 2020, recordLow: -8, recordLowYear: 1951 },
+      '02-20': { avgHigh: 64, avgLow: 43, recordHigh: 86, recordHighYear: 2008, recordLow: -6, recordLowYear: 1956 },
+      '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordHighYear: 2015, recordLow: -5, recordLowYear: 1950 },
+      '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordHighYear: 2019, recordLow: -4, recordLowYear: 1947 },
+      '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordHighYear: 2012, recordLow: -3, recordLowYear: 1954 },
+      '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordHighYear: 2018, recordLow: -2, recordLowYear: 1952 }
     };
     
     function getWeatherDesc(cloudCover, rainProb) {
