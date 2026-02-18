@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>360-Hour Weather Forecast - Vizcaya Weather</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+      background: #f0f2f5; 
+      padding: 20px; 
+      color: #1f2937; 
+    }
+    .container { 
+      max-width: 100%; 
+      margin: 0 auto; 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+      overflow: hidden; 
+    }
+    .header { 
+      background: #1e3a8a; 
+      color: white; 
+      padding: 25px; 
+      text-align: center; 
+    }
+    .header h1 { font-size: 2.2em; margin-bottom: 5px; }
+    .controls {
+      background: #f8fafc;
+      padding: 15px 25px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .control-group label { font-weight: 600; color: #1e3a8a; }
+    .control-group select, .control-group input { 
+      padding: 8px 12px; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 6px; 
+      font-size: 14px;
+    }
+    .table-wrapper { 
+      overflow-x: auto; 
+      padding: 15px; 
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 13px; 
+    }
+    th { 
+      background: #1e3a8a; 
+      color: white; 
+      padding: 10px 5px; 
+      font-weight: 600; 
+      text-align: center; 
+      border: 1px solid #162e70; 
+      position: sticky;
+      top: 0;
+    }
+    td { 
+      padding: 10px 8px; 
+      border: 1px solid #e2e8f0; 
+      text-align: center; 
+      vertical-align: middle; 
+    }
+    .param-name { 
+      text-align: left; 
+      font-weight: 700; 
+      background: #f8fafc; 
+      min-width: 180px; 
+      padding-left: 15px; 
+      color: #1e3a8a; 
+      position: sticky;
+      left: 0;
+    }
+    .param-label { 
+      font-size: 11px; 
+      color: #64748b; 
+      font-weight: 400; 
+      display: block; 
+    }
+    .hour-col { font-weight: 700; color: white; font-size: 12px; }
+    .time-col { font-size: 11px; color: white; font-weight: 500; }
+    tr:nth-child(even) { background: #fdfdfd; }
+    tr:hover { background: #f1f5f9; }
+    .temp-high { color: #b91c1c; font-weight: 800; font-size: 14px; }
+    .temp-low { color: #1d4ed8; font-weight: 800; font-size: 14px; }
+    .gust-high { color: #dc2626; font-weight: 700; }
+    .gust-normal { color: #374151; }
+    .info-footer { 
+      padding: 15px 25px; 
+      background: #f8fafc; 
+      border-top: 1px solid #e2e8f0; 
+      font-size: 12px; 
+      color: #64748b; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>360-Hour Weather Forecast</h1>
+      <p id="updateTime"></p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <label>View Range:</label>
+        <select id="hourRange" onchange="updateDisplay()">
+          <option value="0-23">Hours 1-24 (Current Day)</option>
+          <option value="24-47">Hours 25-48 (Next Day)</option>
+          <option value="48-71">Hours 49-72 (2 Days Out)</option>
+          <option value="72-95">Hours 73-96 (3 Days Out)</option>
+          <option value="0-143">First 6 Days (144 hrs)</option>
+          <option value="144-287">Days 7-12 (144 hrs)</option>
+          <option value="288-359">Final Days (72 hrs)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Show Parameters:</label>
+        <select id="paramFilter" onchange="updateDisplay()" multiple style="height: 100px;">
+          <option value="all" selected>All</option>
+          <option value="temp">Temperature</option>
+          <option value="wind">Wind</option>
+          <option value="precip">Precipitation</option>
+          <option value="cloud">Cloud Cover</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="table-wrapper">
+      <table id="forecastTable">
+        <thead>
+          <tr id="headerRow"></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    
+    <div class="info-footer">
+      <span>Location: Vizcaya, Round Rock, TX | AI Weather Model: 360-Hour Hourly Forecast</span>
+      <span id="lastUpdate"></span>
+    </div>
+  </div>
+
+  <script>
+    const LAT = 30.509747, LON = -97.692116;
+    let forecastData = null;
+    
+    // Comprehensive 360-hour forecast data structure
+    async function loadForecastData() {
+      try {
+        const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=15`;
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        
+        forecastData = await res.json();
+        initializeDisplay();
+        updateDisplay();
+        document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastUpdate').textContent = 'Last fetch: ' + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="25" style="color:red; padding:20px;">Error loading forecast: ${err.message}</td></tr>`;
+      }
+    }
+    
+    function initializeDisplay() {
+      if (!forecastData) return;
+      const { hourly } = forecastData;
+      const startIdx = 0;
+      const endIdx = Math.min(24, hourly.time.length);
+      
+      const headerRow = document.getElementById('headerRow');
+      headerRow.innerHTML = '<th style="text-align:left; padding-left:15px;">Parameter</th>';
+      
+      for (let i = startIdx; i < endIdx; i++) {
+        const timeStr = hourly.time[i];
+        const dateObj = new Date(timeStr + 'Z');
+        const hour = dateObj.getUTCHours();
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+        const th = document.createElement('th');
+        th.innerHTML = `<div class="hour-col">HR ${i+1}</div><div class="time-col">${hour}:00</div><div class="time-col">${dayName}</div>`;
+        headerRow.appendChild(th);
+      }
+    }
+    
+    function updateDisplay() {
+      if (!forecastData) return;
+      const { hourly } = forecastData;
+      const rangeSelect = document.getElementById('hourRange').value;
+      const [startStr, endStr] = rangeSelect.split('-');
+      let startIdx = parseInt(startStr);
+      let endIdx = Math.min(parseInt(endStr) + 1, hourly.time.length);
+      
+      // Update header for selected range
+      const headerRow = document.getElementById('headerRow');
+      headerRow.innerHTML = '<th style="text-align:left; padding-left:15px;">Parameter</th>';
+      
+      for (let i = startIdx; i < endIdx; i++) {
+        const timeStr = hourly.time[i];
+        const dateObj = new Date(timeStr + 'Z');
+        const hour = dateObj.getUTCHours();
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+        const th = document.createElement('th');
+        th.innerHTML = `<div class="hour-col">HR ${i+1}</div><div class="time-col">${hour}:00</div><div class="time-col">${dayName}</div>`;
+        headerRow.appendChild(th);
+      }
+      
+      // Create table rows
+      const rows = [
+        {
+          name: 'Temperature',
+          label: '°F',
+          getData: i => `<span class="temp-high">${Math.round(hourly.temperature_2m[i])}°</span>`
+        },
+        {
+          name: 'Wind Speed',
+          label: 'MPH',
+          getData: i => {
+            const speed = Math.round(hourly.wind_speed_10m[i]);
+            const gust = Math.round(hourly.wind_gusts_10m[i]);
+            const gustClass = gust > 25 ? 'gust-high' : 'gust-normal';
+            return `${speed} / <span class="${gustClass}">G${gust}</span>`;
+          }
+        },
+        {
+          name: 'Wind Direction',
+          label: 'Degrees',
+          getData: i => `${Math.round(hourly.wind_direction_10m[i])}°`
+        },
+        {
+          name: 'Precipitation',
+          label: 'Inches',
+          getData: i => hourly.precipitation[i].toFixed(2)
+        },
+        {
+          name: 'Cloud Cover',
+          label: '%',
+          getData: i => `${Math.round(hourly.cloud_cover[i])}%`
+        },
+        {
+          name: 'Humidity',
+          label: '%',
+          getData: i => `${Math.round(hourly.relative_humidity_2m[i])}%`
+        },
+        {
+          name: 'Visibility',
+          label: 'Miles',
+          getData: i => (hourly.visibility[i] / 1609.34).toFixed(1)
+        }
+      ];
+      
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+      
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.className = 'param-name';
+        td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
+        tr.appendChild(td);
+        
+        for (let i = startIdx; i < endIdx; i++) {
+          const tc = document.createElement('td');
+          tc.innerHTML = row.getData(i);
+          tr.appendChild(tc);
+        }
+        tableBody.appendChild(tr);
+      });
+    }
+    
+    loadForecastData();
+    setInterval(loadForecastData, 3600000); // Refresh every hour
+  </script>
+</body>
+</html>
