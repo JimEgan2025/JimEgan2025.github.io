@@ -1,1 +1,180 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Next 7 Days - Vizcaya Weather</title><style>* { margin: 0; padding: 0; box-sizing: border-box; }body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; padding: 20px; color: #1f2937; }.container { max-width: 1700px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow: hidden; }.header { background: #1e3a8a; color: white; padding: 25px; text-align: center; }.header h1 { font-size: 2.2em; margin-bottom: 5px; }.table-wrapper { overflow-x: auto; padding: 15px; }table { width: 100%; border-collapse: collapse; font-size: 14px; }th { background: #1e3a8a; color: white; padding: 12px 5px; font-weight: 600; text-align: center; border: 1px solid #162e70; }td { padding: 12px 8px; border: 1px solid #e2e8f0; text-align: center; vertical-align: middle; }.param-name { text-align: left; font-weight: 700; background: #f8fafc; min-width: 220px; padding-left: 15px; color: #1e3a8a; }.param-label { font-size: 11px; color: #64748b; font-weight: 400; display: block; }.day-col { font-weight: 800; color: white; font-size: 15px; }.date-col { font-size: 12px; color: #94a3b8; font-weight: 500; }tr:nth-child(even) { background: #fdfdfd; }tr:hover { background: #f1f5f9; }.high-temp { color: #b91c1c; font-weight: 800; font-size: 16px; }.low-temp { color: #1d4ed8; font-weight: 800; font-size: 16px; }.severe-stable { color: #10b981; font-weight: 700; }.severe-risk { color: #dc2626; font-weight: 800; }.uv-low { color: #10b981; }.uv-mod { color: #f59e0b; }.uv-high { color: #ef4444; }.uv-ext { color: #7c3aed; font-weight: 800; }.info-footer { padding: 15px 25px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b; }</style></head><body><div class="container"><div class="header"><h1>Next 7 Days - Vizcaya Weather</h1><p id="updateTime"></p></div><div class="table-wrapper"><table id="forecastTable"><thead><tr id="headerRow"><th style="text-align: left; padding-left: 15px;">Day/Date</th></tr></thead><tbody id="tableBody"></tbody></table></div><div class="info-footer"><span>Location: Vizcaya, Round Rock, TX | Source: Open-Meteo</span><span id="lastUpdate"></span></div></div><script>const LAT = 30.509747, LON = -97.692116;async function init() {try {const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,uv_index_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset&hourly=cape,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=7`;const weatherRes = await fetch(weatherUrl);const data = await weatherRes.json();const { daily, hourly } = data;const headerRow = document.getElementById('headerRow');daily.time.forEach(dateStr => {const dateObj = new Date(dateStr + 'T00:00:00');const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();const mmdd = dateStr.slice(5);const th = document.createElement('th');th.innerHTML = `<div class="day-col">${dayName}</div><div class="date-col">${mmdd}</div>`;headerRow.appendChild(th);});const rows = [{name: 'Temperatures', label: 'High / Low (°F)', getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`},{name: 'Feels Like', label: 'Apparent Temps', getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`},{name: 'Severity Risk', label: 'Max CAPE (Stability)', getData: i => {const maxCape = Math.max(...hourly.cape.slice(i * 24, (i + 1) * 24));const label = maxCape > 2000 ? 'HIGH RISK' : maxCape > 1000 ? 'STORM RISK' : 'STABLE';return `<span class="${maxCape > 1000 ? 'severe-risk' : 'severe-stable'}">${label} (${Math.round(maxCape)})</span>`;}},{name: 'Sun & UV Index', label: 'Max UV Index', getData: i => {const uv = daily.uv_index_max[i];const cls = uv >= 11 ? 'uv-ext' : uv >= 8 ? 'uv-high' : uv >= 3 ? 'uv-mod' : 'uv-low';return `<span class="${cls}">Index: ${uv.toFixed(1)}</span>`;}},{name: 'Cloud Cover (%)', label: 'Hourly Average', getData: i => {const clouds = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);return `${Math.round(clouds.reduce((a, b) => a + b, 0) / 24)}%`;}},{name: 'Chance for Rain', label: 'Prob / Amount', getData: i => `<strong>${daily.precipitation_probability_max[i]}%</strong><br>${daily.rain_sum[i].toFixed(2)}"`},{name: 'Winds', label: 'Dominant / Gust', getData: i => {const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];const dir = directions[Math.round(daily.wind_direction_10m_dominant[i] / 22.5) % 16];return `${dir} ${Math.round(daily.wind_speed_10m_max[i])} mph<br><span style="font-size:11px; color:#64748b">G:${Math.round(daily.wind_gusts_10m_max[i])}</span>`;}},{name: 'Sun Times', label: 'Sunrise / Sunset', getData: i => `${new Date(daily.sunrise[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}<br>${new Date(daily.sunset[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}];const tbody = document.getElementById('tableBody');rows.forEach(row => {const tr = document.createElement('tr');const tdTitle = document.createElement('td');tdTitle.className = 'param-name';tdTitle.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;tr.appendChild(tdTitle);for (let i = 0; i < 7; i++) {const td = document.createElement('td');td.innerHTML = row.getData(i);tr.appendChild(td);}tbody.appendChild(tr);});document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });document.getElementById('lastUpdate').textContent = 'Last fetch: ' + new Date().toLocaleTimeString();} catch (err) {console.error(err);document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" style="color:red; padding:20px;">Error Loading Data</td></tr>';}}init();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Next 7 Days - Vizcaya Weather</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f0f2f5; padding:20px; color:#1f2937; }
+    .container { max-width:1700px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08); overflow:hidden; }
+    .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
+    .header h1 { font-size:2.2em; margin-bottom:5px; }
+    .table-wrapper { overflow-x:auto; padding:15px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    th { background:#1e3a8a; color:white; padding:12px 5px; font-weight:600; text-align:center; border:1px solid #162e70; }
+    td { padding:12px 8px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; }
+    .param-name { text-align:left; font-weight:700; background:#f8fafc; min-width:220px; padding-left:15px; color:#1e3a8a; }
+    .param-label { font-size:11px; color:#64748b; font-weight:400; display:block; }
+    .day-col { font-weight:800; color:white; font-size:15px; }
+    .date-col { font-size:12px; color:white; font-weight:500; }
+    tr:nth-child(even) { background:#fdfdfd; }
+    tr:hover { background:#f1f5f9; }
+    .high-temp { color:#b91c1c; font-weight:800; font-size:16px; }
+    .low-temp { color:#1d4ed8; font-weight:800; font-size:16px; }
+    .severe-stable { color:#10b981; font-weight:700; }
+    .severe-risk { color:#dc2626; font-weight:800; }
+    .uv-low { color:#10b981; }
+    .uv-mod { color:#f59e0b; }
+    .uv-high { color:#ef4444; }
+    .uv-ext { color:#7c3aed; font-weight:800; }
+    .rec-h { color:#991b1b; font-weight:600; font-size:12px; }
+    .rec-l { color:#1e40af; font-weight:600; font-size:12px; }
+    .rec-yr { font-size:10px; color:#64748b; font-weight:400; }
+    .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Next 7 Days - Vizcaya Weather</h1>
+      <p id="updateTime"></p>
+    </div>
+    <div class="table-wrapper">
+      <table id="forecastTable">
+        <thead>
+          <tr id="headerRow">
+            <th style="text-align:left; padding-left:15px;">Day/Date</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="info-footer">
+      <span>Location: Vizcaya, Round Rock, TX | Source: Open-Meteo & Historical Records</span>
+      <span id="lastUpdate"></span>
+    </div>
+  </div>
+
+  <script>
+    const LAT = 30.509747, LON = -97.692116;
+    const historicalRecords = {};
+    
+    async function init() {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,uv_index_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset&hourly=cape,cloud_cover&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=7`;
+        
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API error: ' + res.status);
+        const data = await res.json();
+        
+        const { daily, hourly } = data;
+        const headerRow = document.getElementById('headerRow');
+        
+        daily.time.forEach(dateStr => {
+          const dateObj = new Date(dateStr + 'T00:00:00');
+          const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+          const mmdd = dateStr.slice(5);
+          const th = document.createElement('th');
+          th.innerHTML = `<div class="day-col">${dayName}</div><div class="date-col">${mmdd}</div>`;
+          headerRow.appendChild(th);
+        });
+        
+        const rows = [
+          {
+            name: 'Temperatures',
+            label: 'High / Low (°F)',
+            getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
+          },
+          {
+            name: 'Historical Records',
+            label: 'Max / Min (Year)',
+            getData: i => {
+              const h = historicalRecords[daily.time[i].slice(5)] || { recH: '--', recHY: '', recL: '--', recLY: '' };
+              return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;
+            }
+          },
+          {
+            name: 'Severity Risk',
+            label: 'Max CAPE',
+            getData: i => {
+              const cape = hourly.cape.slice(i * 24, (i + 1) * 24);
+              const maxCape = cape.length > 0 ? Math.max(...cape) : 0;
+              const label = maxCape > 2000 ? 'HIGH' : maxCape > 1000 ? 'STORM' : 'STABLE';
+              return `<span class="${maxCape > 1000 ? 'severe-risk' : 'severe-stable'}">${label}</span>`;
+            }
+          },
+          {
+            name: 'UV Index',
+            label: 'Max',
+            getData: i => {
+              const uv = daily.uv_index_max[i];
+              const cls = uv >= 11 ? 'uv-ext' : uv >= 8 ? 'uv-high' : uv >= 3 ? 'uv-mod' : 'uv-low';
+              return `<span class="${cls}">${uv.toFixed(1)}</span>`;
+            }
+          },
+          {
+            name: 'Feels Like',
+            label: 'High / Low',
+            getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
+          },
+          {
+            name: 'Cloud Cover',
+            label: 'Avg %',
+            getData: i => {
+              const c = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);
+              return c.length > 0 ? Math.round(c.reduce((a,b) => a+b)/c.length) + '%' : 'N/A';
+            }
+          },
+          {
+            name: 'Precipitation',
+            label: 'Prob / Amount',
+            getData: i => `${daily.precipitation_probability_max[i]}% / ${daily.rain_sum[i].toFixed(2)}"`
+          },
+          {
+            name: 'Winds',
+            label: 'Dir / Gust',
+            getData: i => {
+              const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+              const dir = dirs[Math.round(daily.wind_direction_10m_dominant[i] / 22.5) % 16];
+              return `${dir} ${Math.round(daily.wind_speed_10m_max[i])} / ${Math.round(daily.wind_gusts_10m_max[i])}`;
+            }
+          },
+          {
+            name: 'Sun Times',
+            label: 'Rise / Set',
+            getData: i => {
+              const sr = new Date(daily.sunrise[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const ss = new Date(daily.sunset[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              return `${sr} / ${ss}`;
+            }
+          }
+        ];
+        
+        const tbody = document.getElementById('tableBody');
+        rows.forEach(row => {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.className = 'param-name';
+          td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
+          tr.appendChild(td);
+          for (let i = 0; i < 7; i++) {
+            const tc = document.createElement('td');
+            tc.innerHTML = row.getData(i);
+            tr.appendChild(tc);
+          }
+          tbody.appendChild(tr);
+        });
+        
+        document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastUpdate').textContent = 'Last fetch: ' + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" style="color:red; padding:20px;">Error: ${err.message}</td></tr>`;
+      }
+    }
+    
+    init();
+  </script>
+</body>
+</html>
