@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rain Meter - 10 Day Precipitation Forecast</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -43,7 +44,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             padding: 20px;
             background: #f8fafc;
             border-radius: 12px;
@@ -55,62 +56,15 @@
             font-size: 13px;
         }
         .legend-color { width: 20px; height: 20px; border-radius: 4px; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .chart-container {
+            position: relative;
+            height: 400px;
             margin: 20px 0;
-        }
-        thead {
-            background: #f1f5f9;
-            border-bottom: 2px solid #cbd5e1;
-        }
-        th {
-            padding: 12px 8px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 12px;
-            color: #1e3a8a;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
-        td {
-            padding: 12px 8px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            font-size: 13px;
-        }
-        .day-cell {
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-        .date-cell {
-            font-size: 11px;
-            color: #64748b;
-        }
-        .rain-amount {
-            font-size: 16px;
-            font-weight: 800;
-        }
-        .rain-bar {
-            display: inline-block;
-            height: 30px;
-            border-radius: 4px;
-            background-color: #3b82f6;
-            min-width: 10px;
-            vertical-align: middle;
-        }
-        .rain-label {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 4px;
-            color: white;
-        }
-        .rain-none { background: #10b981; }
-        .rain-light { background: #3b82f6; }
-        .rain-moderate { background: #f59e0b; }
-        .rain-heavy { background: #ef4444; }
-        tbody tr:hover { background: #f8fafc; }
         .info-footer {
             padding: 20px 25px;
             background: #f8fafc;
@@ -119,6 +73,21 @@
             color: #64748b;
             text-align: center;
         }
+        .data-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0 20px 0;
+        }
+        .summary-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-label { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
+        .summary-value { font-size: 24px; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -131,34 +100,46 @@
 
         <div class="content">
             <div class="scale-info">
-                <strong>Precipitation Scale:</strong> No rain: Dry conditions. Light (< 0.1"): Minimal precipitation. Moderate (0.1" - 0.5"): Noticeable rainfall. Heavy (> 0.5"): Significant precipitation.
+                <strong>Precipitation Scale:</strong> This chart displays the 10-day precipitation forecast showing rainfall amounts and probability trends. Dry conditions show 0.00", light precipitation is under 0.1", moderate ranges from 0.1" to 0.5", and heavy precipitation exceeds 0.5".
             </div>
 
             <div class="legend">
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #10b981;"></div>
-                    <span>Dry (No Rain)</span>
-                </div>
-                <div class="legend-item">
                     <div class="legend-color" style="background: #3b82f6;"></div>
-                    <span>Light (< 0.1")</span>
+                    <span>Precipitation Amount (inches)</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #f59e0b;"></div>
-                    <span>Moderate (0.1" - 0.5")</span>
+                    <span>Rain Probability (%)</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #ef4444;"></div>
-                    <span>Heavy (> 0.5")</span>
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <span>Dry Probability (%)</span>
                 </div>
             </div>
 
-            <table id="forecastTable">
-                <thead>
-                    <tr id="headerRow"></tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <div class="chart-container">
+                <canvas id="precipitationChart"></canvas>
+            </div>
+
+            <div class="data-summary">
+                <div class="summary-item">
+                    <div class="summary-label">Total Rainfall</div>
+                    <div class="summary-value" id="totalRain">0.00"</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Avg Daily Rainfall</div>
+                    <div class="summary-value" id="avgRain">0.00"</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Max Daily Rainfall</div>
+                    <div class="summary-value" id="maxRain">0.00"</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Rainy Days</div>
+                    <div class="summary-value" id="rainyDays">0</div>
+                </div>
+            </div>
         </div>
 
         <div class="info-footer">
@@ -168,13 +149,7 @@
 
     <script>
         const LAT = 30.509747, LON = -97.692116;
-
-        function getRainLevel(precipitation) {
-            if (precipitation === 0) return { level: 'Dry', color: '#10b981', label: 'DRY' };
-            if (precipitation < 0.1) return { level: 'Light', color: '#3b82f6', label: 'LIGHT' };
-            if (precipitation < 0.5) return { level: 'Moderate', color: '#f59e0b', label: 'MODERATE' };
-            return { level: 'Heavy', color: '#ef4444', label: 'HEAVY' };
-        }
+        let chart = null;
 
         async function loadForecastData() {
             try {
@@ -184,54 +159,147 @@
                 if (!res.ok) throw new Error('API error: ' + res.status);
 
                 const data = await res.json();
-                displayForecast(data);
+                displayChart(data);
                 document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
             } catch (err) {
                 console.error(err);
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" style="color:red;">Error loading forecast: ${err.message}</td></tr>`;
+                document.querySelector('.chart-container').innerHTML = `<div style="color:red; padding:20px; text-align:center;">Error loading forecast: ${err.message}</div>`;
             }
         }
 
-        function displayForecast(data) {
+        function displayChart(data) {
             const { daily } = data;
-            const headerRow = document.getElementById('headerRow');
-            const tableBody = document.getElementById('tableBody');
-            headerRow.innerHTML = '';
-            tableBody.innerHTML = '';
+            const labels = [];
+            const precipitationData = [];
+            const probabilityData = [];
+            const dryProbabilityData = [];
 
-            // Create header
-            headerRow.innerHTML = '<th>Day/Date</th><th>Rainfall</th><th>Amount</th><th>Probability</th><th>Rain Level</th>';
+            let totalRain = 0;
+            let rainyDays = 0;
+            let maxRain = 0;
 
-            // Create body rows
             for (let i = 0; i < daily.time.length && i < 10; i++) {
                 const date = new Date(daily.time[i] + 'T00:00:00');
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = date.getDate();
+                labels.push(`${dayName}\n${dayNum}`);
 
-                const precipitation = daily.precipitation_sum[i] || 0;
-                const probability = daily.precipitation_probability_max[i] || 0;
+                const precip = daily.precipitation_sum[i] || 0;
+                const prob = daily.precipitation_probability_max[i] || 0;
+                const dryProb = Math.max(0, 100 - prob);
 
-                const rainLevel = getRainLevel(precipitation);
-                const barWidth = Math.min(100, (precipitation / 1.0) * 100);
+                precipitationData.push(precip);
+                probabilityData.push(prob);
+                dryProbabilityData.push(dryProb);
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>
-                        <div class="day-cell">${dayName}</div>
-                        <div class="date-cell">${dateStr}</div>
-                    </td>
-                    <td>
-                        <div class="rain-bar" style="background: ${rainLevel.color}; width: ${Math.max(10, barWidth)}px;"></div>
-                    </td>
-                    <td class="rain-amount" style="color: ${rainLevel.color};">${precipitation.toFixed(2)}"</td>
-                    <td>${probability}%</td>
-                    <td>
-                        <div class="rain-label" style="background: ${rainLevel.color};">${rainLevel.label}</div>
-                    </td>
-                `;
-                tableBody.appendChild(row);
+                totalRain += precip;
+                if (precip > 0) rainyDays++;
+                if (precip > maxRain) maxRain = precip;
             }
+
+            // Update summary
+            document.getElementById('totalRain').textContent = totalRain.toFixed(2) + '"';
+            document.getElementById('avgRain').textContent = (totalRain / 10).toFixed(2) + '"';
+            document.getElementById('maxRain').textContent = maxRain.toFixed(2) + '"';
+            document.getElementById('rainyDays').textContent = rainyDays;
+
+            // Destroy existing chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Create new chart
+            const ctx = document.getElementById('precipitationChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Precipitation (inches)',
+                            data: precipitationData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#1e40af',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 8,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Rain Probability (%)',
+                            data: probabilityData,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f59e0b',
+                            pointBorderColor: '#d97706',
+                            pointBorderWidth: 1,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 13, weight: 'bold' },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            displayColors: true,
+                            borderColor: 'rgba(255,255,255,0.2)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: { display: false },
+                            ticks: { font: { size: 12, weight: 'bold' } }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Precipitation (inches)', font: { weight: 'bold' } },
+                            ticks: { font: { size: 11 } },
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Probability (%)', font: { weight: 'bold' } },
+                            ticks: { font: { size: 11 } },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
         }
 
         loadForecastData();
