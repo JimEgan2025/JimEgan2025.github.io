@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Next 7 Days - Vizcaya Weather</title>
+    <title>Next 14 Days - Vizcaya Weather</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f0f2f5; padding:20px; color:#1f2937; }
@@ -11,7 +11,8 @@
         .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
         .header h1 { font-size:2.2em; margin-bottom:5px; }
         .table-wrapper { overflow-x:auto; padding:15px; }
-        table { width:100%; border-collapse:collapse; font-size:14px; }
+        table { width:100%; border-collapse:collapse; font-size:14px; margin-bottom:30px; }
+        .table-title { background:#334155; color:white; padding:10px 20px; font-weight:700; font-size:1.1em; border-radius:8px 8px 0 0; }
         th { background:#1e3a8a; color:white; padding:12px 5px; font-weight:600; text-align:center; border:1px solid #162e70; }
         td { padding:12px 8px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; }
         .param-name { text-align:left; font-weight:700; background:#f8fafc; min-width:220px; padding-left:15px; color:#1e3a8a; }
@@ -37,19 +38,24 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Next 7 Days - Vizcaya Weather</h1>
+            <h1>Vizcaya Weather Dashboard</h1>
             <p id="updateTime"></p>
         </div>
+        
         <div class="table-wrapper">
+            <div class="table-title">7-Day Local Forecast</div>
             <table id="forecastTable">
-                <thead>
-                    <tr id="headerRow">
-                        <th style="text-align:left; padding-left:15px;">Day/Date</th>
-                    </tr>
-                </thead>
+                <thead><tr id="headerRow"></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
+
+            <div class="table-title">Extended 8-14 Day Forecast</div>
+            <table id="extendedTable">
+                <thead><tr id="extendedHeader"></tr></thead>
+                <tbody id="extendedBody"></tbody>
+            </table>
         </div>
+
         <div class="info-footer">
             <span>Location: Vizcaya, Round Rock, TX | Source: Open-Meteo GFS</span>
             <span id="lastUpdate"></span>
@@ -58,7 +64,6 @@
     <script>
         const LAT = 30.509747, LON = -97.692116;
 
-        // Historical records for Vizcaya area (Round Rock, TX) - Different years for high/low
         const historicalAverages = {
             '02-18': { avgHigh: 62, avgLow: 42, recordHigh: 85, recordHighYear: 2017, recordLow: -8, recordLowYear: 1949 },
             '02-19': { avgHigh: 63, avgLow: 42, recordHigh: 86, recordHighYear: 2020, recordLow: -8, recordLowYear: 1951 },
@@ -66,12 +71,20 @@
             '02-21': { avgHigh: 65, avgLow: 44, recordHigh: 88, recordHighYear: 2015, recordLow: -5, recordLowYear: 1950 },
             '02-22': { avgHigh: 66, avgLow: 45, recordHigh: 89, recordHighYear: 2019, recordLow: -4, recordLowYear: 1947 },
             '02-23': { avgHigh: 67, avgLow: 46, recordHigh: 90, recordHighYear: 2012, recordLow: -3, recordLowYear: 1954 },
-            '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordHighYear: 2018, recordLow: -2, recordLowYear: 1952 }
+            '02-24': { avgHigh: 68, avgLow: 47, recordHigh: 91, recordHighYear: 2018, recordLow: -2, recordLowYear: 1952 },
+            '02-25': { avgHigh: 68, avgLow: 47, recordHigh: 88, recordHighYear: 1996, recordLow: 15, recordLowYear: 1965 },
+            '02-26': { avgHigh: 69, avgLow: 48, recordHigh: 92, recordHighYear: 1917, recordLow: 16, recordLowYear: 1934 },
+            '02-27': { avgHigh: 69, avgLow: 48, recordHigh: 93, recordHighYear: 1917, recordLow: 14, recordLowYear: 1934 },
+            '02-28': { avgHigh: 70, avgLow: 49, recordHigh: 91, recordHighYear: 2006, recordLow: 15, recordLowYear: 1934 },
+            '03-01': { avgHigh: 70, avgLow: 49, recordHigh: 94, recordHighYear: 2006, recordLow: 14, recordLowYear: 1943 },
+            '03-02': { avgHigh: 71, avgLow: 50, recordHigh: 92, recordHighYear: 1916, recordLow: 10, recordLowYear: 1943 },
+            '03-03': { avgHigh: 71, avgLow: 50, recordHigh: 93, recordHighYear: 1916, recordLow: 15, recordLowYear: 1943 },
+            '03-04': { avgHigh: 72, avgLow: 51, recordHigh: 95, recordHighYear: 1916, recordLow: 12, recordLowYear: 1943 }
         };
 
         function getWeatherDesc(cloudCover, rainProb) {
-            if (rainProb > 50) return cloudCover > 70 ? `Rainy with ${rainProb}% chance` : `Showers likely, ${rainProb}% chance`;
-            if (rainProb > 30) return cloudCover > 70 ? `Mostly cloudy with ${rainProb}% chance` : `Partly cloudy with ${rainProb}% chance`;
+            if (rainProb > 50) return cloudCover > 70 ? `Rainy (${rainProb}%)` : `Showers (${rainProb}%)`;
+            if (rainProb > 30) return cloudCover > 70 ? `Cloudy (${rainProb}%)` : `Partly cloudy (${rainProb}%)`;
             if (cloudCover > 80) return 'Overcast';
             if (cloudCover > 50) return 'Mostly cloudy';
             if (cloudCover > 20) return 'Partly cloudy';
@@ -86,127 +99,122 @@
             return { text: 'NONE', cls: 'sev-none' };
         }
 
+        function createTableRows(container, data, startIndex, count) {
+            const { daily, hourly } = data;
+            
+            const rows = [
+                {
+                    name: 'Severe Potential',
+                    label: 'Max CAPE / Min LI',
+                    getData: i => {
+                        const dayCape = hourly.cape.slice(i * 24, (i + 1) * 24);
+                        const dayLI = hourly.lifted_index.slice(i * 24, (i + 1) * 24);
+                        const maxCape = Math.round(Math.max(...dayCape));
+                        const minLI = Math.min(...dayLI).toFixed(1);
+                        const sev = getSeverity(maxCape, Math.min(...dayLI));
+                        return `<div class="${sev.cls}">${sev.text}</div><span style="font-size:10px">${maxCape} / ${minLI}</span>`;
+                    }
+                },
+                {
+                    name: 'Conditions',
+                    label: 'Sky / Precipitation',
+                    getData: i => {
+                        const clouds = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);
+                        const cloudCover = clouds.length > 0 ? Math.round(clouds.reduce((a,b) => a+b)/clouds.length) : 0;
+                        return getWeatherDesc(cloudCover, daily.precipitation_probability_max[i]);
+                    }
+                },
+                {
+                    name: 'Temperatures',
+                    label: 'High / Low (°F)',
+                    getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
+                },
+                {
+                    name: 'Historical Records',
+                    label: 'Record High / Low',
+                    getData: i => {
+                        const mmdd = daily.time[i].slice(5);
+                        const h = historicalAverages[mmdd] || { recordHigh: '--', recordLow: '--' };
+                        return `<div class="rec-h">${h.recordHigh}°</div><div class="rec-l">${h.recordLow}°</div>`;
+                    }
+                },
+                {
+                    name: 'Feels Like',
+                    label: 'High / Low',
+                    getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
+                },
+                {
+                    name: 'Precipitation',
+                    label: 'Prob / Amount',
+                    getData: i => `${daily.precipitation_probability_max[i]}% / ${daily.precipitation_sum[i].toFixed(2)}"`
+                },
+                {
+                    name: 'Winds',
+                    label: 'Max / Gust (MPH)',
+                    getData: i => {
+                        const speed = Math.round(daily.wind_speed_10m_max[i]);
+                        const gust = Math.round(daily.wind_gusts_10m_max[i]);
+                        const gustClass = gust > 30 ? 'gust-high' : 'gust-normal';
+                        return `${speed} / <span class="${gustClass}">G${gust}</span>`;
+                    }
+                }
+            ];
+
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.className = 'param-name';
+                td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
+                tr.appendChild(td);
+                for (let i = startIndex; i < startIndex + count; i++) {
+                    const tc = document.createElement('td');
+                    tc.innerHTML = row.getData(i);
+                    tr.appendChild(tc);
+                }
+                container.appendChild(tr);
+            });
+        }
+
         async function init() {
             try {
-                // Using GFS for CAPE and LI data
-                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset,weather_code&hourly=cloud_cover,cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=7`;
+                // Fetch full 14 days
+                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code&hourly=cloud_cover,cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=14`;
 
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('API error: ' + res.status);
                 const data = await res.json();
 
-                const { daily, hourly } = data;
+                const { daily } = data;
+                
+                // Set headers for Table 1 (Days 1-7)
                 const headerRow = document.getElementById('headerRow');
-
-                daily.time.forEach(dateStr => {
-                    const dateObj = new Date(dateStr + 'T00:00:00');
+                headerRow.innerHTML = '<th style="text-align:left; padding-left:15px;">Day/Date</th>';
+                for (let i = 0; i < 7; i++) {
+                    const dateObj = new Date(daily.time[i] + 'T00:00:00');
                     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                    const mmdd = dateStr.slice(5);
+                    const mmdd = daily.time[i].slice(5);
                     const th = document.createElement('th');
                     th.innerHTML = `<div class="day-col">${dayName}</div><div class="date-col">${mmdd}</div>`;
                     headerRow.appendChild(th);
-                });
+                }
 
-                const rows = [
-                    {
-                        name: 'Severe Potential',
-                        label: 'Max CAPE / Min LI',
-                        getData: i => {
-                            const dayCape = hourly.cape.slice(i * 24, (i + 1) * 24);
-                            const dayLI = hourly.lifted_index.slice(i * 24, (i + 1) * 24);
-                            const maxCape = Math.round(Math.max(...dayCape));
-                            const minLI = Math.min(...dayLI).toFixed(1);
-                            const sev = getSeverity(maxCape, Math.min(...dayLI));
-                            return `<div class="${sev.cls}">${sev.text}</div><span style="font-size:10px">${maxCape} / ${minLI}</span>`;
-                        }
-                    },
-                    {
-                        name: 'Conditions',
-                        label: 'Sky / Precipitation',
-                        getData: i => {
-                            const clouds = hourly.cloud_cover.slice(i * 24, (i + 1) * 24);
-                            const cloudCover = clouds.length > 0 ? Math.round(clouds.reduce((a,b) => a+b)/clouds.length) : 0;
-                            return getWeatherDesc(cloudCover, daily.precipitation_probability_max[i]);
-                        }
-                    },
-                    {
-                        name: 'Temperatures',
-                        label: 'High / Low (°F)',
-                        getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
-                    },
-                    {
-                        name: 'Historical Records',
-                        label: 'Record High / Low (Year)',
-                        getData: i => {
-                            const mmdd = daily.time[i].slice(5);
-                            const h = historicalAverages[mmdd] || { recordHigh: '--', recordHighYear: '', recordLow: '--', recordLowYear: '' };
-                            const highYearStr = h.recordHighYear ? ` (${h.recordHighYear})` : '';
-                            const lowYearStr = h.recordLowYear ? ` (${h.recordLowYear})` : '';
-                            return `<div class="rec-h">${h.recordHigh}°<span class="rec-yr">${highYearStr}</span></div><div class="rec-l">${h.recordLow}°<span class="rec-yr">${lowYearStr}</span></div>`;
-                        }
-                    },
-                    {
-                        name: 'Avg vs Expected',
-                        label: 'Forecast / Normal',
-                        getData: i => {
-                            const mmdd = daily.time[i].slice(5);
-                            const h = historicalAverages[mmdd] || { avgHigh: '--', avgLow: '--' };
-                            const forecast = Math.round((daily.temperature_2m_max[i] + daily.temperature_2m_min[i]) / 2);
-                            const normal = h.avgHigh !== '--' ? Math.round((h.avgHigh + h.avgLow) / 2) : '--';
-                            const diff = h.avgHigh !== '--' ? (forecast - normal >= 0 ? '+' : '') + (forecast - normal) : '';
-                            return `${forecast}° (${normal}° / ${diff}°)` ;
-                        }
-                    },
-                    {
-                        name: 'Feels Like',
-                        label: 'High / Low',
-                        getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
-                    },
-                    {
-                        name: 'Precipitation',
-                        label: 'Prob / Amount',
-                        getData: i => `${daily.precipitation_probability_max[i]}% / ${daily.precipitation_sum[i].toFixed(2)}"`
-                    },
-                    {
-                        name: 'Winds',
-                        label: 'Dir / Speed / Gust',
-                        getData: i => {
-                            const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-                            const dir = dirs[Math.round(daily.wind_direction_10m_dominant[i] / 22.5) % 16];
-                            const speed = Math.round(daily.wind_speed_10m_max[i]);
-                            const gust = Math.round(daily.wind_gusts_10m_max[i]);
-                            const gustClass = gust > 30 ? 'gust-high' : 'gust-normal';
-                            return `${dir} ${speed} / <span class="${gustClass}">G${gust}</span>`;
-                        }
-                    },
-                    {
-                        name: 'Sun Times',
-                        label: 'Rise / Set',
-                        getData: i => {
-                            const sr = new Date(daily.sunrise[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            const ss = new Date(daily.sunset[i]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            return `${sr} / ${ss}`;
-                        }
-                    }
-                ];
+                // Set headers for Table 2 (Days 8-14)
+                const extendedHeader = document.getElementById('extendedHeader');
+                extendedHeader.innerHTML = '<th style="text-align:left; padding-left:15px;">Day/Date</th>';
+                for (let i = 7; i < 14; i++) {
+                    const dateObj = new Date(daily.time[i] + 'T00:00:00');
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                    const mmdd = daily.time[i].slice(5);
+                    const th = document.createElement('th');
+                    th.innerHTML = `<div class="day-col">${dayName}</div><div class="date-col">${mmdd}</div>`;
+                    extendedHeader.appendChild(th);
+                }
 
-                const tbody = document.getElementById('tableBody');
-                rows.forEach(row => {
-                    const tr = document.createElement('tr');
-                    const td = document.createElement('td');
-                    td.className = 'param-name';
-                    td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
-                    tr.appendChild(td);
-                    for (let i = 0; i < 7; i++) {
-                        const tc = document.createElement('td');
-                        tc.innerHTML = row.getData(i);
-                        tr.appendChild(tc);
-                    }
-                    tbody.appendChild(tr);
-                });
+                createTableRows(document.getElementById('tableBody'), data, 0, 7);
+                createTableRows(document.getElementById('extendedBody'), data, 7, 7);
 
                 document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                document.getElementById('lastUpdate').textContent = 'Last fetch (GFS): ' + new Date().toLocaleTimeString();
+                document.getElementById('lastUpdate').textContent = 'Last fetch (GFS 14-Day): ' + new Date().toLocaleTimeString();
             } catch (err) {
                 console.error(err);
                 document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" style="color:red; padding:20px;">Error: ${err.message}</td></tr>`;
