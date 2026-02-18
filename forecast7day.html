@@ -116,8 +116,8 @@
             getData: i => {
               const mmdd = daily.time[i].slice(5);
               const h = historicalAverages[mmdd] || { recordHigh: '--', recordHighYear: '', recordLow: '--', recordLowYear: '' };
-              const highYearStr = h.recordHighYear ? ` ('${String(h.recordHighYear).slice(-2)})` : '';
-              const lowYearStr = h.recordLowYear ? ` ('${String(h.recordLowYear).slice(-2)})` : '';
+              const highYearStr = h.recordHighYear ? ` (${h.recordHighYear})` : '';
+              const lowYearStr = h.recordLowYear ? ` (${h.recordLowYear})` : '';
               return `<div class="rec-h">${h.recordHigh}°<span class="rec-yr">${highYearStr}</span></div><div class="rec-l">${h.recordLow}°<span class="rec-yr">${lowYearStr}</span></div>`;
             }
           },
