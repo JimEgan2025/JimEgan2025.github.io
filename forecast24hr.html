@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next 24 Hours - Vizcaya Weather</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f0f2f5; padding:20px; color:#1f2937; }
+        .container { max-width:1900px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08); overflow:hidden; }
+        .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
+        .header h1 { font-size:2.2em; margin-bottom:5px; }
+        .table-wrapper { overflow-x:auto; padding:15px; }
+        table { width:100%; border-collapse:collapse; font-size:13px; }
+        th { background:#1e3a8a; color:white; padding:10px 4px; font-weight:600; text-align:center; border:1px solid #162e70; min-width:70px; }
+        td { padding:10px 6px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; }
+        .param-name { text-align:left; font-weight:700; background:#f8fafc; min-width:160px; padding-left:15px; color:#1e3a8a; position:sticky; left:0; z-index:10; }
+        .param-label { font-size:10px; color:#64748b; font-weight:400; display:block; }
+        .hour-col { font-weight:800; color:white; font-size:14px; }
+        .time-label { font-size:11px; color:#e0e7ff; font-weight:400; }
+        tr:nth-child(even) { background:#fdfdfd; }
+        tr:hover { background:#f1f5f9; }
+        .temp { font-weight:700; font-size:15px; }
+        .temp-high { color:#dc2626; }
+        .temp-low { color:#1d4ed8; }
+        .temp-mid { color:#f59e0b; }
+        .current-hour { background:#fef3c7 !important; border:2px solid #f59e0b; }
+        .gust-high { color:#dc2626; font-weight:700; }
+        .gust-normal { color:#374151; }
+        .precip-high { color:#1e40af; font-weight:700; }
+        .precip-low { color:#6b7280; }
+        .night { background:#e0e7ff; }
+        .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Next 24 Hours - Vizcaya Weather</h1>
+            <p id="updateTime"></p>
+        </div>
+        <div class="table-wrapper">
+            <table id="forecastTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th style="text-align:left; padding-left:15px;">Hour/Time</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="info-footer">
+            <span>Location: Vizcaya, Round Rock, TX | Source: Open-Meteo</span>
+            <span id="lastUpdate"></span>
+        </div>
+    </div>
+    <script>
+        const LAT = 30.509747, LON = -97.692116;
+
+        function getWeatherDesc(weatherCode, precipProb) {
+            const codes = {
+                0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Cloudy',
+                45: 'Foggy', 48: 'Foggy', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+                61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
+                71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
+                80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy rain showers',
+                95: 'Thunderstorm', 96: 'Thunderstorm w/ hail', 99: 'Severe thunderstorm'
+            };
+            const desc = codes[weatherCode] || 'Unknown';
+            return precipProb > 30 ? `${desc} (${precipProb}%)` : desc;
+        }
+
+        function getWindDirection(degrees) {
+            const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+            return dirs[Math.round(degrees / 22.5) % 16];
+        }
+
+        function getTempClass(temp, allTemps) {
+            const max = Math.max(...allTemps);
+            const min = Math.min(...allTemps);
+            const mid = (max + min) / 2;
+            if (temp >= mid + 5) return 'temp-high';
+            if (temp <= mid - 5) return 'temp-low';
+            return 'temp-mid';
+        }
+
+        async function init() {
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_hours=24`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error: ' + res.status);
+                const data = await res.json();
+
+                const { hourly } = data;
+                const now = new Date();
+                const currentHour = now.getHours();
+                const headerRow = document.getElementById('headerRow');
+
+                // Generate next 24 hours starting from current hour
+                const hours = [];
+                for (let i = 0; i < 24; i++) {
+                    const hourIndex = i;
+                    if (hourIndex < hourly.time.length) {
+                        hours.push({
+                            index: hourIndex,
+                            time: new Date(hourly.time[hourIndex]),
+                            isCurrent: i === 0
+                        });
+                    }
+                }
+
+                // Add hour headers
+                hours.forEach(h => {
+                    const th = document.createElement('th');
+                    const timeStr = h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                    const dayStr = h.time.toLocaleDateString('en-US', { weekday: 'short' });
+                    th.innerHTML = `<div class="hour-col">${timeStr}</div><div class="time-label">${dayStr}</div>`;
+                    if (h.isCurrent) th.classList.add('current-hour');
+                    headerRow.appendChild(th);
+                });
+
+                // Calculate temp range for coloring
+                const allTemps = hours.map(h => Math.round(hourly.temperature_2m[h.index]));
+
+                const rows = [
+                    {
+                        name: 'Conditions',
+                        label: 'Sky / Precipitation',
+                        getData: i => getWeatherDesc(hourly.weather_code[hours[i].index], hourly.precipitation_probability[hours[i].index])
+                    },
+                    {
+                        name: 'Temperature',
+                        label: '°F',
+                        getData: i => {
+                            const temp = Math.round(hourly.temperature_2m[hours[i].index]);
+                            const cls = getTempClass(temp, allTemps);
+                            return `<span class="temp ${cls}">${temp}°</span>`;
+                        }
+                    },
+                    {
+                        name: 'Feels Like',
+                        label: '°F',
+                        getData: i => `${Math.round(hourly.apparent_temperature[hours[i].index])}°`
+                    },
+                    {
+                        name: 'Precipitation',
+                        label: 'Prob / Amount',
+                        getData: i => {
+                            const prob = hourly.precipitation_probability[hours[i].index];
+                            const amt = hourly.precipitation[hours[i].index].toFixed(2);
+                            const cls = prob > 40 ? 'precip-high' : 'precip-low';
+                            return `<span class="${cls}">${prob}%</span> / ${amt}"`;
+                        }
+                    },
+                    {
+                        name: 'Winds',
+                        label: 'Dir / Speed / Gust',
+                        getData: i => {
+                            const dir = getWindDirection(hourly.wind_direction_10m[hours[i].index]);
+                            const speed = Math.round(hourly.wind_speed_10m[hours[i].index]);
+                            const gust = Math.round(hourly.wind_gusts_10m[hours[i].index]);
+                            const gustClass = gust > 25 ? 'gust-high' : 'gust-normal';
+                            return `${dir} ${speed} / <span class="${gustClass}">G${gust}</span>`;
+                        }
+                    },
+                    {
+                        name: 'Cloud Cover',
+                        label: '%',
+                        getData: i => `${Math.round(hourly.cloud_cover[hours[i].index])}%`
+                    },
+                    {
+                        name: 'Humidity',
+                        label: '%',
+                        getData: i => `${Math.round(hourly.relative_humidity_2m[hours[i].index])}%`
+                    }
+                ];
+
+                const tbody = document.getElementById('tableBody');
+                rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.className = 'param-name';
+                    td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
+                    tr.appendChild(td);
+                    for (let i = 0; i < hours.length; i++) {
+                        const tc = document.createElement('td');
+                        tc.innerHTML = row.getData(i);
+                        if (hours[i].isCurrent) tc.classList.add('current-hour');
+                        tr.appendChild(tc);
+                    }
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                document.getElementById('lastUpdate').textContent = 'Last fetch: ' + new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="25" style="color:red; padding:20px;">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
