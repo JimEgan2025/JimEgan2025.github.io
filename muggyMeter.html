@@ -1,276 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Muggy Meter - 10 Day Dew Point Forecast</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px; 
-      color: #1f2937; 
-      min-height: 100vh;
-    }
-    .container { 
-      max-width: 1200px; 
-      margin: 0 auto; 
-      background: white; 
-      border-radius: 16px; 
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
-      overflow: hidden; 
-    }
-    .header { 
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white; 
-      padding: 40px 25px; 
-      text-align: center; 
-    }
-    .header h1 { font-size: 2.5em; margin-bottom: 10px; }
-    .header p { font-size: 1.1em; opacity: 0.95; }
-    .content { padding: 30px 25px; }
-    .legend {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: #f8fafc;
-      border-radius: 12px;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-    }
-    .legend-color { width: 20px; height: 20px; border-radius: 4px; }
-    .day-card {
-      margin-bottom: 25px;
-      background: #ffffff;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    .day-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: #cbd5e1; }
-    .day-header {
-      background: #f1f5f9;
-      padding: 15px 20px;
-      border-bottom: 2px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .day-name { font-weight: 700; font-size: 16px; color: #1e3a8a; }
-    .day-date { font-size: 13px; color: #64748b; }
-    .day-content { padding: 20px; }
-    .dew-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .dew-label { font-weight: 600; color: #475569; }
-    .dew-value { font-size: 20px; font-weight: 800; }
-    .bar-container {
-      height: 40px;
-      background: #e2e8f0;
-      border-radius: 8px;
-      overflow: hidden;
-      position: relative;
-    }
-    .bar-fill {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding-left: 10px;
-      color: white;
-      font-weight: 700;
-      font-size: 13px;
-      transition: width 0.5s ease;
-    }
-    .mugginess-label {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 4px;
-      margin-top: 8px;
-    }
-    .comfort { background: #10b981; color: white; }
-    .slightly-muggy { background: #f59e0b; color: white; }
-    .muggy { background: #ef4444; color: white; }
-    .very-muggy { background: #991b1b; color: white; }
-    .dew-very-dry { width: 0%; background: #06b6d4; }
-    .dew-dry { width: 25%; background: #10b981; }
-    .dew-comfortable { width: 50%; background: #84cc16; }
-    .dew-slightly-muggy { width: 70%; background: #f59e0b; }
-    .dew-muggy { width: 85%; background: #ef4444; }
-    .dew-very-muggy { width: 100%; background: #991b1b; }
-    .info-footer { 
-      padding: 20px 25px; 
-      background: #f8fafc; 
-      border-top: 1px solid #e2e8f0; 
-      font-size: 12px; 
-      color: #64748b; 
-      text-align: center;
-    }
-    .scale-info {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #1e40af;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muggy Meter - 10 Day Dew Point Forecast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #1f2937;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 25px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.95; }
+        .content { padding: 30px 25px; }
+        .scale-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1e40af;
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        thead {
+            background: #f1f5f9;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        th {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #1e3a8a;
+            border: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        .day-cell {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .date-cell {
+            font-size: 11px;
+            color: #64748b;
+        }
+        .dew-point-cell {
+            font-size: 16px;
+            font-weight: 800;
+        }
+        .color-bar {
+            display: inline-block;
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        .mugginess-label {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+        }
+        tbody tr:hover { background: #f8fafc; }
+        .info-footer {
+            padding: 20px 25px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🌡️ Muggy Meter</h1>
-      <p>10-Day Dew Point & Humidity Forecast</p>
-      <p id="updateTime" style="font-size: 0.95em; margin-top: 10px;"></p>
-    </div>
-    
-    <div class="content">
-      <div class="scale-info">
-        <strong>Dew Point Scale:</strong> Lower dew points = drier, more comfortable air. Higher dew points = more moisture, muggier feeling.
-        Comfort threshold: Below 55°F is comfortable, 60°F+ becomes noticeably muggy, 65°F+ is quite muggy.
-      </div>
-      
-      <div class="legend">
-        <div class="legend-item">
-          <div class="legend-color" style="background: #06b6d4;"></div>
-          <span>Very Dry (&lt;40°F)</span>
+    <div class="container">
+        <div class="header">
+            <h1>🌡️ Muggy Meter</h1>
+            <p>10-Day Dew Point & Humidity Forecast</p>
+            <p id="updateTime" style="font-size: 0.95em; margin-top: 10px;"></p>
         </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #10b981;"></div>
-          <span>Dry (40-50°F)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #84cc16;"></div>
-          <span>Comfortable (50-60°F)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #f59e0b;"></div>
-          <span>Slightly Muggy (60-65°F)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #ef4444;"></div>
-          <span>Muggy (65-70°F)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color" style="background: #991b1b;"></div>
-          <span>Very Muggy (&gt;70°F)</span>
-        </div>
-      </div>
-      
-      <div id="forecastContainer"></div>
-    </div>
-    
-    <div class="info-footer">
-      <span>Location: Vizcaya, Round Rock, TX | Data Source: Open-Meteo GFS | Last update: <span id="lastUpdate"></span></span>
-    </div>
-  </div>
 
-  <script>
-    const LAT = 30.509747, LON = -97.692116;
-    
-    function getMugginessLevel(dewpoint) {
-      if (dewpoint < 40) return { level: 'Very Dry', class: 'dew-very-dry', label: 'VERY DRY', labelClass: 'comfort' };
-      if (dewpoint < 50) return { level: 'Dry', class: 'dew-dry', label: 'DRY', labelClass: 'comfort' };
-      if (dewpoint < 60) return { level: 'Comfortable', class: 'dew-comfortable', label: 'COMFORTABLE', labelClass: 'comfort' };
-      if (dewpoint < 65) return { level: 'Slightly Muggy', class: 'dew-slightly-muggy', label: 'SLIGHTLY MUGGY', labelClass: 'slightly-muggy' };
-      if (dewpoint < 70) return { level: 'Muggy', class: 'dew-muggy', label: 'MUGGY', labelClass: 'muggy' };
-      return { level: 'Very Muggy', class: 'dew-very-muggy', label: 'VERY MUGGY', labelClass: 'very-muggy' };
-    }
-    
-    async function loadForecastData() {
-      try {
-        const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=dew_point_2m_max,dew_point_2m_min,dew_point_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
-        
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('API error: ' + res.status);
-        
-        const data = await res.json();
-        displayForecast(data);
-        document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-      } catch (err) {
-        console.error(err);
-        document.getElementById('forecastContainer').innerHTML = `<div style="color:red; padding:20px;">Error loading forecast: ${err.message}</div>`;
-      }
-    }
-    
-    function displayForecast(data) {
-      const { daily } = data;
-      const container = document.getElementById('forecastContainer');
-      container.innerHTML = '';
-      
-      for (let i = 0; i < daily.time.length && i < 10; i++) {
-        const date = new Date(daily.time[i] + 'T00:00:00');
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        const dewpointMean = daily.dew_point_2m_mean[i];
-        const dewpointMax = daily.dew_point_2m_max[i];
-        const dewpointMin = daily.dew_point_2m_min[i];
-        const tempMax = daily.temperature_2m_max[i];
-        const humidity = daily.relative_humidity_2m_max[i];
-        
-        const mugginess = getMugginessLevel(dewpointMean);
-        
-        const card = document.createElement('div');
-        card.className = 'day-card';
-        card.innerHTML = `
-          <div class="day-header">
-            <div>
-              <div class="day-name">${dayName}</div>
-              <div class="day-date">${dateStr}</div>
+        <div class="content">
+            <div class="scale-info">
+                <strong>Dew Point Scale:</strong> Lower dew points = drier, more comfortable air. Higher dew points = more moisture, muggier feeling.
+                Comfort threshold: Below 55°F is comfortable, 60°F+ becomes noticeably muggy, 65°F+ is quite muggy.
             </div>
-            <div style="font-weight: 700; font-size: 14px;">${mugginess.level}</div>
-          </div>
-          <div class="day-content">
-            <div class="dew-info">
-              <div>
-                <div class="dew-label">Average Dew Point</div>
-                <div class="dew-value" style="color: ${getColorForDewpoint(dewpointMean)};">${Math.round(dewpointMean)}°F</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Range / Max Humidity</div>
-                <div style="font-weight: 700; font-size: 14px;">${Math.round(dewpointMin)}° - ${Math.round(dewpointMax)}°F / ${humidity}%</div>
-              </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #06b6d4;"></div>
+                    <span>Very Dry (<40°F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <span>Dry (40-50°F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #84cc16;"></div>
+                    <span>Comfortable (50-60°F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f59e0b;"></div>
+                    <span>Slightly Muggy (60-65°F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Muggy (65-70°F)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #991b1b;"></div>
+                    <span>Very Muggy (>70°F)</span>
+                </div>
             </div>
-            <div class="bar-container">
-              <div class="bar-fill ${mugginess.class}" style="width: ${Math.min(100, (dewpointMean / 75) * 100)}%;">
-                ${Math.round(dewpointMean)}°
-              </div>
-            </div>
-            <div>
-              <span class="mugginess-label ${mugginess.labelClass}">${mugginess.label}</span>
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      }
-    }
-    
-    function getColorForDewpoint(dewpoint) {
-      if (dewpoint < 40) return '#06b6d4';
-      if (dewpoint < 50) return '#10b981';
-      if (dewpoint < 60) return '#84cc16';
-      if (dewpoint < 65) return '#f59e0b';
-      if (dewpoint < 70) return '#ef4444';
-      return '#991b1b';
-    }
-    
-    loadForecastData();
-    setInterval(loadForecastData, 3600000); // Refresh every hour
-  </script>
+
+            <table id="forecastTable">
+                <thead>
+                    <tr id="headerRow"></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="info-footer">
+            <span>Location: Vizcaya, Round Rock, TX | Data Source: Open-Meteo GFS | Last update: <span id="lastUpdate"></span></span>
+        </div>
+    </div>
+
+    <script>
+        const LAT = 30.509747, LON = -97.692116;
+
+        function getMugginessLevel(dewpoint) {
+            if (dewpoint < 40) return { level: 'Very Dry', color: '#06b6d4', label: 'VERY DRY' };
+            if (dewpoint < 50) return { level: 'Dry', color: '#10b981', label: 'DRY' };
+            if (dewpoint < 60) return { level: 'Comfortable', color: '#84cc16', label: 'COMFORTABLE' };
+            if (dewpoint < 65) return { level: 'Slightly Muggy', color: '#f59e0b', label: 'SLIGHTLY MUGGY' };
+            if (dewpoint < 70) return { level: 'Muggy', color: '#ef4444', label: 'MUGGY' };
+            return { level: 'Very Muggy', color: '#991b1b', label: 'VERY MUGGY' };
+        }
+
+        async function loadForecastData() {
+            try {
+                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=dew_point_2m_max,dew_point_2m_min,dew_point_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('API error: ' + res.status);
+
+                const data = await res.json();
+                displayForecast(data);
+                document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" style="color:red;">Error loading forecast: ${err.message}</td></tr>`;
+            }
+        }
+
+        function displayForecast(data) {
+            const { daily } = data;
+            const headerRow = document.getElementById('headerRow');
+            const tableBody = document.getElementById('tableBody');
+            headerRow.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            // Create header
+            headerRow.innerHTML = '<th>Day/Date</th><th>Avg Dew<br/>Point</th><th>Range</th><th>Max<br/>Humidity</th><th>Mugginess</th>';
+
+            // Create body rows
+            for (let i = 0; i < daily.time.length && i < 10; i++) {
+                const date = new Date(daily.time[i] + 'T00:00:00');
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                const dewpointMean = daily.dew_point_2m_mean[i];
+                const dewpointMax = daily.dew_point_2m_max[i];
+                const dewpointMin = daily.dew_point_2m_min[i];
+                const humidity = daily.relative_humidity_2m_max[i];
+
+                const mugginess = getMugginessLevel(dewpointMean);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="day-cell">${dayName}</div>
+                        <div class="date-cell">${dateStr}</div>
+                    </td>
+                    <td class="dew-point-cell" style="color: ${mugginess.color};">${Math.round(dewpointMean)}°F</td>
+                    <td>${Math.round(dewpointMin)}° - ${Math.round(dewpointMax)}°F</td>
+                    <td>${humidity}%</td>
+                    <td>
+                        <div class="color-bar" style="background: ${mugginess.color};"></div><br/>
+                        <div class="mugginess-label" style="background: ${mugginess.color};">${mugginess.label}</div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        loadForecastData();
+        setInterval(loadForecastData, 3600000); // Refresh every hour
+    </script>
 </body>
 </html>
