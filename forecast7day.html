@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next 7 Days - Vizcaya Weather</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5aa8 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #1e3a8a;
+            color: white;
+            padding: 12px 8px;
+            font-weight: 600;
+            text-align: center;
+            border: 1px solid #0f1f3c;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .param-name {
+            text-align: left;
+            font-weight: 600;
+            background: #f9fafb;
+            min-width: 200px;
+            padding-left: 15px;
+        }
+        
+        .param-label {
+            font-size: 11px;
+            color: #666;
+            font-weight: 400;
+        }
+        
+        .day-col {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        
+        .date-col {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        tr:nth-child(odd) {
+            background: #fafbfc;
+        }
+        
+        tr:hover {
+            background: #e8eef5;
+        }
+        
+        .high-temp {
+            color: #dc2626;
+            font-weight: 700;
+        }
+        
+        .low-temp {
+            color: #2563eb;
+            font-weight: 700;
+        }
+        
+        .record {
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        
+        .alert {
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 700;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        
+        .wind-info {
+            font-size: 12px;
+        }
+        
+        .info {
+            padding: 20px;
+            background: #eff6ff;
+            border-left: 4px solid #1e3a8a;
+            margin: 20px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1e3a8a;
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        
+        .legend-item {
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #1e3a8a;
+        }
+        
+        .legend-item strong {
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Next 7 Days - Vizcaya Weather</h1>
+            <p id="updateTime"></p>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="forecastTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th>Day/Date</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="info">
+            <strong>Data Source:</strong> Open-Meteo weather API | <strong>Location:</strong> Vizcaya, Round Rock, TX | <strong>Last Updated:</strong> <span id="lastUpdate"></span>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <strong>Temperature Format:</strong> High / Low in °F
+            </div>
+            <div class="legend-item">
+                <strong>Wind Info:</strong> Speed at direction with gusts noted
+            </div>
+            <div class="legend-item">
+                <strong>Cloud Cover:</strong> Percentage (0-100%)
+            </div>
+            <div class="legend-item">
+                <strong>Rain Chance:</strong> Probability and forecasted amount
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LOCATION = {
+            lat: 30.509747,
+            lon: -97.692116,
+            name: 'Vizcaya, Round Rock, TX'
+        };
+        
+        const DAYS = 7;
+        
+        async function loadForecast() {
+            try {
+                // Fetch weather data from Open-Meteo
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${LOCATION.lat}&longitude=${LOCATION.lon}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,rain_sum,cloud_cover_max,cloud_cover_mean,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset&timezone=America/Chicago&forecast_days=${DAYS}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                const daily = data.daily;
+                
+                // Build header row with days
+                const headerRow = document.getElementById('headerRow');
+                const days = [];
+                
+                for (let i = 0; i < DAYS; i++) {
+                    const dateStr = daily.time[i];
+                    const date = new Date(dateStr + 'T00:00:00');
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                    const dateFormatted = dateStr.split('-').slice(1).join('-');
+                    
+                    const th = document.createElement('th');
+                    th.innerHTML = `<div class="day-col">${dayName}</div><div class="date-col">${dateFormatted}</div>`;
+                    headerRow.appendChild(th);
+                    
+                    days.push({ date, dateStr });
+                }
+                
+                // Define parameters to display
+                const params = [
+                    {
+                        name: 'Temperatures',
+                        label: 'High / Low',
+                        getData: (i) => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
+                    },
+                    {
+                        name: 'Feels Like',
+                        label: 'Apparent Temps',
+                        getData: (i) => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
+                    },
+                    {
+                        name: 'Cloud Cover (%)',
+                        label: 'Average coverage',
+                        getData: (i) => `${Math.round(daily.cloud_cover_mean[i])}%`
+                    },
+                    {
+                        name: 'Chance for Rain',
+                        label: 'Probability',
+                        getData: (i) => `${daily.precipitation_probability_max[i]}%`
+                    },
+                    {
+                        name: 'Average Rain Forecasted',
+                        label: 'Expected amount',
+                        getData: (i) => `${daily.rain_sum[i].toFixed(2)}"` 
+                    },
+                    {
+                        name: 'Winds',
+                        label: 'Speed / Gust',
+                        getData: (i) => {
+                            const speed = Math.round(daily.wind_speed_10m_max[i]);
+                            const gust = Math.round(daily.wind_gusts_10m_max[i]);
+                            const dir = getWindDirection(daily.wind_direction_10m_dominant[i]);
+                            return `${dir} ${speed} mph<br><span class="wind-info">G:${gust}</span>`;
+                        }
+                    },
+                    {
+                        name: 'Sunrise',
+                        label: 'Time',
+                        getData: (i) => formatTime(daily.sunrise[i])
+                    },
+                    {
+                        name: 'Sunset',
+                        label: 'Time',
+                        getData: (i) => formatTime(daily.sunset[i])
+                    }
+                ];
+                
+                // Build table rows
+                const tbody = document.getElementById('tableBody');
+                
+                for (const param of params) {
+                    const tr = document.createElement('tr');
+                    
+                    // Parameter name cell
+                    const tdName = document.createElement('td');
+                    tdName.className = 'param-name';
+                    tdName.innerHTML = `<div>${param.name}</div><div class="param-label">${param.label}</div>`;
+                    tr.appendChild(tdName);
+                    
+                    // Data cells for each day
+                    for (let i = 0; i < DAYS; i++) {
+                        const td = document.createElement('td');
+                        td.innerHTML = param.getData(i);
+                        tr.appendChild(td);
+                    }
+                    
+                    tbody.appendChild(tr);
+                }
+                
+                // Update timestamp
+                document.getElementById('updateTime').textContent = new Date().toLocaleString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error loading forecast:', error);
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #dc2626;">Error loading weather data. Please refresh the page.</td></tr>';
+            }
+        }
+        
+        function getWindDirection(degrees) {
+            const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            const index = Math.round(degrees / 22.5) % 16;
+            return directions[index];
+        }
+        
+        function formatTime(timeStr) {
+            const time = new Date(timeStr);
+            return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Load forecast when page loads
+        document.addEventListener('DOMContentLoaded', loadForecast);
+    </script>
+</body>
+</html>
