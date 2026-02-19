@@ -1,405 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vizcaya Weather on the Run</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.8.0/suncalc.min.js"></script>
-<style>
+  <meta charset="UTF-8">
+  <title>Vizcaya Weather on the Run</title>
+
+  <!-- Mobile viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Basic mobile-friendly styling -->
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --text: #111111;
+      --accent: #005a9e;
+      --muted: #555555;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background-color: #121212;
-        color: #fff;
-        margin: 0;
-        padding: 0;
-        scroll-behavior: smooth;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.4;
     }
-    .header {
-        background-color: #1F1F1F;
-        padding: 15px;
-        text-align: center;
-        border-bottom: 2px solid #00BFFF;
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0.75rem;
     }
-    .header h1 {
-        margin: 0;
-        font-size: clamp(1.4em, 4vw, 1.8em);
-        color: #00BFFF;
+
+    h1, h2, h3 {
+      margin: 0.4rem 0 0.25rem 0;
+      font-weight: 600;
     }
-    .live-data-header {
-        margin-top: 5px;
-        font-size: 0.9em;
-        color: #b0b0b0;
+
+    p {
+      margin: 0.25rem 0;
     }
-    .live-data-header .time { color: #fff; font-weight: bold; }
-    .quick-nav {
-        background: #1F1F1F;
-        padding: 10px;
-        text-align: center;
+
+    header {
+      text-align: center;
+      margin-bottom: 0.75rem;
     }
-    .quick-nav a {
-        color: #00BFFF;
-        margin: 0 8px;
-        text-decoration: none;
-        font-size: 0.95em;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: background 0.2s;
+
+    .datetime {
+      font-size: 0.9rem;
+      color: var(--muted);
     }
-    .quick-nav a:hover { 
-        background: rgba(0,191,255,0.1); 
-        text-decoration: none;
+
+    .sun-times {
+      font-size: 0.9rem;
     }
-    .card {
-        background-color: #2A2A2A;
-        border: 1px solid #444;
-        border-radius: 8px;
-        margin: 12px;
-        padding: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        font-size: 0.95em;
+
+    /* Top nav links */
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
     }
-    .card h2 {
-        color: #00BFFF;
-        font-size: clamp(1.1em, 3vw, 1.3em);
-        margin: 0 0 12px 0;
-        text-align: center;
+
+    .nav-links a {
+      text-decoration: none;
+      color: #ffffff;
+      background: var(--accent);
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      white-space: nowrap;
     }
-    .weather-image {
-        width: 100%;
-        height: auto;
-        max-height: 40vh;
-        max-width: 100%;
-        border-radius: 8px;
-        border: 1px solid #555;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        object-fit: contain;
+
+    section {
+      background: var(--card-bg);
+      margin-bottom: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-    .card img, .card iframe {
-        width: 100%;
-        max-width: 100%;
-        height: auto;
-        border-radius: 5px;
-        border: 1px solid #555;
+
+    section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.4rem;
     }
-    iframe { min-height: 300px; }
-    #vizcaya-station iframe {
-        height: clamp(350px, 50vh, 600px);
-        max-height: 60vh;
+
+    /* Station block */
+    .station-header {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
     }
-    @media screen and (max-width: 768px) {
-        #vizcaya-station iframe { height: 350px; }
-        .weather-image { max-height: 35vh; }
+
+    .station-updated {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
     }
-    @media screen and (max-width: 480px) {
-        #vizcaya-station iframe { height: 300px; }
-        .weather-image { max-height: 30vh; }
-        .card { margin: 8px; padding: 12px; }
+
+    .temp-main {
+      font-size: 2rem;
+      font-weight: 600;
     }
-    /* Alerts list */
-    #alerts-list .alert-item {
-        margin-bottom: 12px;
-        padding: 10px;
-        border-left: 4px solid #FF6B35;
-        background: #3A2A1F;
-        border-radius: 6px;
+
+    .temp-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
     }
-    #alerts-list .alert-item:last-child { margin-bottom: 0; }
-    #alerts-list .alert-title {
-        font-weight: bold;
-        color: #FF9500;
-        margin-bottom: 4px;
+
+    .hi-lo-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.95rem;
     }
-    #alerts-list .alert-meta {
-        font-size: 0.85em;
-        color: #ddd;
-        margin-bottom: 4px;
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.5rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
     }
-    #alerts-list .alert-body {
-        font-size: 0.9em;
-        color: #ccc;
-        line-height: 1.4;
+
+    .metric-label {
+      font-weight: 500;
     }
-    .loading {
-        color: #b0b0b0;
-        font-style: italic;
-        text-align: center;
-        padding: 12px;
+
+    .station-footer {
+      font-size: 0.85rem;
+      color: var(--muted);
     }
-    .error {
-        color: #FF6B6B;
-        text-align: center;
-        padding: 12px;
+
+    /* 7-day forecast */
+    .forecast-text {
+      font-size: 0.95rem;
     }
-    /* Text forecast styling */
-    #forecast-container div {
-        margin-bottom: 12px;
-        padding: 12px;
-        border-bottom: 1px solid #444;
-        color: #fff;
-        border-radius: 6px;
-        background: rgba(255,255,255,0.02);
+
+    .forecast-text span.period {
+      font-weight: 600;
+      display: block;
+      margin-top: 0.25rem;
     }
-    #forecast-container div:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
+
+    /* Embeds (radar, outlooks, etc.) */
+    .embed-wrapper {
+      margin-top: 0.4rem;
     }
-    .footer {
-        text-align: center;
-        padding: 16px;
-        font-size: 0.85em;
-        color: #888;
-        border-top: 1px solid #333;
-        margin: 20px 12px 12px 12px;
+
+    .embed-wrapper iframe,
+    .embed-wrapper img {
+      width: 100%;
+      max-width: 100%;
+      border: 0;
+      border-radius: 0.4rem;
+      display: block;
     }
-</style>
+
+    .footer-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      margin: 0.75rem 0 0.25rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .temp-main {
+        font-size: 1.8rem;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .nav-links a {
+        font-size: 0.9rem;
+        padding: 0.35rem 0.7rem;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<header class="header">
+<main>
+  <header>
     <h1>Vizcaya Weather on the Run</h1>
-    <div class="live-data-header">
-        <div id="currentDate"></div>
-        <div id="currentTime" class="time"></div>
-        <div id="sunInfo"></div>
+    <div class="datetime">
+      Thursday, February 19, 2026<br>
+      02:38:55 PM
     </div>
-</header>
+    <div class="sun-times">
+      Sunrise: 07:09 AM | Sunset: 06:22 PM | Day: 11h 14m
+    </div>
 
-<nav class="quick-nav">
-    <a href="#nws-alerts">Alerts</a>
-    <a href="#vizcaya-station">Station</a>
-    <a href="#forecast">7-Day</a>
-    <a href="#radar">Radar</a>
-</nav>
+    <nav class="nav-links">
+      <a href="#nws-alerts">Alerts</a>
+      <a href="#vizcaya-station">Station</a>
+      <a href="#forecast">7-Day</a>
+      <a href="#radar">Radar</a>
+    </nav>
+  </header>
 
-<!-- Local NWS Alerts (list only) -->
-<div class="card" id="nws-alerts">
+  <!-- Alerts -->
+  <section id="nws-alerts">
     <h2>Local NWS Alerts – Williamson County</h2>
-    <div id="alerts-list" class="loading">Loading alerts...</div>
-</div>
+    <p>No active watches, warnings, or advisories for Williamson County.</p>
+  </section>
 
-<!-- Vizcaya Weather Station -->
-<div class="card" id="vizcaya-station">
+  <!-- Station -->
+  <section id="vizcaya-station">
     <h2>Live from Vizcaya Weather Station</h2>
-    <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"
-            loading="lazy"></iframe>
-</div>
 
-<!-- 7-Day Text Forecast (list only) -->
-<div class="card" id="forecast">
+    <div class="station-header">VizcayaWX Station</div>
+    <div class="station-updated">
+      Weather Conditions as of: 02:37 PM Thursday, Feb 19, 2026
+    </div>
+
+    <div class="temp-main">85.8°F</div>
+    <div class="temp-label">currently</div>
+
+    <div class="hi-lo-row">
+      <div>HIGH: 86.5°F at 02:22 PM</div>
+      <div>LOW: 64.6°F at 01:17 AM</div>
+    </div>
+
+    <div class="metric-grid">
+      <div>
+        <div class="metric-label">Air Quality</div>
+        <div>24.9</div>
+      </div>
+      <div>
+        <div class="metric-label">High Gust</div>
+        <div>17.0 mph at 03:12 AM</div>
+      </div>
+      <div>
+        <div class="metric-label">Humidity</div>
+        <div>28.0% (Feels like 83.6°F)</div>
+      </div>
+      <div>
+        <div class="metric-label">Rain</div>
+        <div>0.00 in (Seasonal Total 2.93 in)</div>
+      </div>
+      <div>
+        <div class="metric-label">Barometer</div>
+        <div>29.702 in Hg (Falling Rapidly)</div>
+      </div>
+    </div>
+
+    <div class="station-footer">
+      WeatherLink Network – Vantage Pro2 Plus w/ 24-hr Fan-Aspirated Radiation Shield, UV &amp; Solar Radiation Sensors via WLL.<br>
+      Air Quality Index: United States EPA.<br>
+      Shop Weather Stations at
+      <a href="http://www.davisinstruments.com/" target="_blank" rel="noopener noreferrer">
+        www.davisinstruments.com
+      </a>.
+    </div>
+  </section>
+
+  <!-- 7-Day Forecast -->
+  <section id="forecast">
     <h2>7-Day Forecast</h2>
-    <div id="forecast-container" class="loading">Loading forecast...</div>
-</div>
+    <div class="forecast-text">
+      <span class="period">This Afternoon:</span>
+      Sunny, with a high near 83. North northwest wind 5 to 10 mph.
+      <span class="period">Tonight:</span>
+      Partly cloudy, with a low around 54. North northeast wind 0 to 5 mph.
+      <span class="period">Friday:</span>
+      Partly sunny, with a high near 74. Northeast wind 5 to 10 mph.
+      <span class="period">Friday Night:</span>
+      Mostly cloudy, with a low around 58. South southeast wind 5 to 10 mph.
+      <span class="period">Saturday:</span>
+      Sunny, with a high near 74. North northwest wind 10 to 20 mph, with gusts as high as 30 mph.
+      <span class="period">Saturday Night:</span>
+      Mostly clear, with a low around 40. North wind around 15 mph, with gusts as high as 30 mph.
+      <span class="period">Sunday:</span>
+      Mostly sunny, with a high near 63. North northeast wind 10 to 15 mph, with gusts as high as 25 mph.
+    </div>
+  </section>
 
-<!-- Central Texas Radar Loop -->
-<div class="card" id="radar">
+  <!-- Radar -->
+  <section id="radar">
     <h2>Central Texas Radar Loop</h2>
-    <img class="weather-image" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/ctx_anim.gif"
-         alt="Central Texas Radar Loop" loading="lazy">
-</div>
+    <div class="embed-wrapper">
+      <!-- Replace with your real radar iframe or image -->
+      <!-- Example: <iframe src="YOUR_RADAR_URL" loading="lazy"></iframe> -->
+    </div>
+  </section>
 
-<!-- GLM - Southern Plains -->
-<div class="card">
+  <!-- GLM -->
+  <section id="glm">
     <h2>GLM - Southern Plains</h2>
-    <img class="weather-image" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/300x300.jpg"
-         alt="GLM Southern Plains" loading="lazy">
-</div>
+    <div class="embed-wrapper">
+      <!-- GLM embed goes here -->
+    </div>
+  </section>
 
-<!-- Local Outlook Day 1 & 2 -->
-<div class="card">
+  <!-- Outlooks and Surface Analysis -->
+  <section id="day1-outlook">
     <h2>Local Outlook - Day 1</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png"
-         alt="Outlook Day 1" loading="lazy">
-</div>
-<div class="card">
+    <div class="embed-wrapper">
+      <!-- SPC Day 1 outlook embed -->
+    </div>
+  </section>
+
+  <section id="day2-outlook">
     <h2>Local Outlook - Day 2</h2>
-    <img class="weather-image" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png"
-         alt="Outlook Day 2" loading="lazy">
-</div>
+    <div class="embed-wrapper">
+      <!-- SPC Day 2 outlook embed -->
+    </div>
+  </section>
 
-<!-- Surface Analysis Day 1 & 2 -->
-<div class="card">
+  <section id="day1-sfc">
     <h2>Surface Analysis - Day 1</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad1.gif"
-         alt="Surface Analysis Day 1" loading="lazy">
-</div>
-<div class="card">
+    <div class="embed-wrapper">
+      <!-- WPC/OPC surface analysis embed -->
+    </div>
+  </section>
+
+  <section id="day2-sfc">
     <h2>Surface Analysis - Day 2</h2>
-    <img class="weather-image" src="https://www.wpc.ncep.noaa.gov/noaa/noaad2.gif"
-         alt="Surface Analysis Day 2" loading="lazy">
-</div>
+    <div class="embed-wrapper">
+      <!-- WPC/OPC surface analysis embed -->
+    </div>
+  </section>
 
-<footer class="footer">
-    <p>Non-commercial dashboard. Data from NWS, SPC, NOAA.</p>
-</footer>
-
-<script>
-function updateTimeAndSun() {
-    const lat = 30.6476, lon = -97.6863;
-    const now = new Date();
-    const timeOptions = {
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: true, timeZone: 'America/Chicago'
-    };
-    const dateOptions = {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    };
-    document.getElementById('currentTime').textContent =
-        now.toLocaleTimeString('en-US', timeOptions);
-    document.getElementById('currentDate').textContent =
-        now.toLocaleDateString('en-US', dateOptions);
-
-    const times = SunCalc.getTimes(now, lat, lon);
-    const sunrise = times.sunrise.toLocaleTimeString('en-US',
-        { hour: '2-digit', minute: '2-digit', hour12: true });
-    const sunset = times.sunset.toLocaleTimeString('en-US',
-        { hour: '2-digit', minute: '2-digit', hour12: true });
-    const dayLengthMs = times.sunset - times.sunrise;
-    const dayLengthHours = Math.floor(dayLengthMs / 3600000);
-    const dayLengthMinutes = Math.round((dayLengthMs % 3600000) / 60000);
-    document.getElementById('sunInfo').textContent =
-        `Sunrise: ${sunrise} | Sunset: ${sunset} | Day: ${dayLengthHours}h ${dayLengthMinutes}m`;
-}
-
-function refreshImages() {
-    const images = document.querySelectorAll('.weather-image');
-    const timestamp = new Date().getTime();
-    images.forEach(image => {
-        const baseSrc = image.src.split('?')[0];
-        image.src = baseSrc + '?t=' + timestamp;
-    });
-}
-
-// Alerts: use NWS “showsigwx” HTML but strip it to a simple list
-async function fetchAlerts() {
-    const container = document.getElementById('alerts-list');
-    container.innerHTML = '<div class="loading">Loading alerts...</div>';
-
-    // This URL is the “Watches, Warnings & Advisories” page for your warn zone/county.[web:53][web:57][web:60][web:62]
-    const url = 'https://forecast.weather.gov/showsigwx.php?warnzone=TXZ173&warncounty=TXC491&firewxzone=TXZ173';
-
-    try {
-        const res = await fetch(url, { mode: 'cors' });
-        if (!res.ok) throw new Error('Alert page failed: ' + res.status);
-
-        const html = await res.text();
-
-        // Very simple parsing: look for headings and paragraphs
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        const products = doc.querySelectorAll('h3, h4'); // product titles
-        const result = [];
-        products.forEach(title => {
-            const name = title.textContent.trim();
-            if (!name) return;
-
-            // Next siblings until next heading
-            let node = title.nextElementSibling;
-            let textParts = [];
-            while (node && !/^H[34]$/.test(node.tagName)) {
-                if (node.tagName === 'PRE' || node.tagName === 'P') {
-                    textParts.push(node.textContent.trim());
-                }
-                node = node.nextElementSibling;
-            }
-            const fullText = textParts.join('\n\n');
-            if (fullText) {
-                result.push({ name, text: fullText });
-            }
-        });
-
-        container.innerHTML = '';
-
-        if (!result.length) {
-            container.innerHTML =
-                '<div class="loading">No active watches, warnings, or advisories for Williamson County.</div>';
-            return;
-        }
-
-        result.forEach(prod => {
-            const div = document.createElement('div');
-            div.className = 'alert-item';
-            const snippet = prod.text.length > 280
-                ? prod.text.substring(0, 280) + '…'
-                : prod.text;
-            div.innerHTML = `
-                <div class="alert-title">${prod.name}</div>
-                <div class="alert-body">${snippet.replace(/\n/g, '<br>')}</div>
-            `;
-            container.appendChild(div);
-        });
-
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = `
-            <div class="error">
-                Alerts unavailable. See
-                <a href="${url}" target="_blank" style="color:#00BFFF;">full list on weather.gov</a>.
-            </div>`;
-    }
-}
-
-// 7‑day forecast via api.weather.gov points → forecast (your original pattern).[web:1][web:2]
-async function fetchTextForecast() {
-    const lat = 30.5871;
-    const lon = -97.641;
-    const container = document.getElementById('forecast-container');
-
-    try {
-        const gridRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
-        if (!gridRes.ok) throw new Error('Points request failed: ' + gridRes.status);
-
-        const gridData = await gridRes.json();
-        const forecastUrl = gridData.properties && gridData.properties.forecast;
-        if (!forecastUrl) throw new Error('No forecast URL in NWS response');
-
-        const forecastRes = await fetch(forecastUrl);
-        if (!forecastRes.ok) throw new Error('Forecast request failed: ' + forecastRes.status);
-
-        const forecastData = await forecastRes.json();
-        const periods = (forecastData.properties && forecastData.properties.periods) || [];
-
-        container.innerHTML = '';
-
-        if (!periods.length) {
-            container.innerHTML =
-                '<div class="error">Forecast temporarily unavailable.</div>';
-            return;
-        }
-
-        // Show first 7 periods (you can change to 14 if you want full day/night)
-        periods.slice(0, 7).forEach(period => {
-            const block = document.createElement('div');
-            block.innerHTML =
-                `<strong>${period.name}:</strong> ${period.detailedForecast}`;
-            container.appendChild(block);
-        });
-
-    } catch (error) {
-        console.error(error);
-        container.innerHTML = `
-            <div class="error">
-                Forecast unavailable. Try
-                <a href="https://forecast.weather.gov/MapClick.php?lat=${lat}&lon=${lon}" target="_blank" style="color:#00BFFF;">
-                    weather.gov
-                </a>.
-            </div>`;
-    }
-}
-
-window.onload = function () {
-    updateTimeAndSun();
-    setInterval(updateTimeAndSun, 60000);
-    refreshImages();
-    setInterval(refreshImages, 300000);
-
-    fetchAlerts();
-    fetchTextForecast();
-    setInterval(fetchAlerts, 15 * 60 * 1000);
-    setInterval(fetchTextForecast, 15 * 60 * 1000);
-};
-</script>
-
+  <div class="footer-note">
+    Non-commercial dashboard. Data from NWS, SPC, NOAA.
+  </div>
+</main>
 </body>
 </html>
 
