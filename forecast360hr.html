@@ -121,10 +121,10 @@
       <div class="control-group">
         <label>View Range:</label>
         <select id="hourRange" onchange="updateDisplay()">
-          <option value="0-23">Hours 1-24 (Current Window)</option>
-          <option value="24-47">Hours 25-48</option>
-          <option value="48-71">Hours 49-72</option>
-          <option value="72-95">Hours 73-96</option>
+          <option value="0-23">Hours 1-24 (Current Day)</option>
+          <option value="24-47">Hours 25-48 (Next Day)</option>
+          <option value="48-71">Hours 49-72 (2 Days Out)</option>
+          <option value="72-95">Hours 73-96 (3 Days Out)</option>
           <option value="0-143">First 6 Days (144 hrs)</option>
           <option value="144-287">Days 7-12 (144 hrs)</option>
           <option value="288-359">Final Days (72 hrs)</option>
@@ -158,30 +158,12 @@
   </div>
 
   <script>
-    const LAT = 30.5871 LON = -97.641;
+    // You can use either coordinate set here; this version keeps your Vizcaya point
+    const LAT = 30.5871, LON = -97.641;
+    // If you want the original point instead, revert to:
+    // const LAT = 30.509747, LON = -97.692116;
+
     let forecastData = null;
-
-    // Find index whose forecast time is closest to "now" (America/Chicago)
-    function getNearestHourIndex() {
-      if (!forecastData) return 0;
-      const { hourly } = forecastData;
-      const now = new Date(); // local time, timezone=America/Chicago in API
-      let nearestIdx = 0;
-      let smallestDiff = Infinity;
-
-      for (let i = 0; i < hourly.time.length; i++) {
-        const t = new Date(hourly.time[i] + 'Z'); // API times are UTC ISO
-        const diff = Math.abs(t.getTime() - now.getTime());
-        if (diff < smallestDiff) {
-          smallestDiff = diff;
-          nearestIdx = i;
-        } else {
-          // Optional early break once we pass "now"
-          if (t.getTime() > now.getTime()) break;
-        }
-      }
-      return nearestIdx;
-    }
     
     async function loadForecastData() {
       try {
@@ -211,9 +193,8 @@
       if (!forecastData) return;
       const { hourly } = forecastData;
 
-      const baseIdx = getNearestHourIndex();
-      const startIdx = baseIdx;
-      const endIdx = Math.min(baseIdx + 24, hourly.time.length);
+      const startIdx = 0;
+      const endIdx = Math.min(24, hourly.time.length);
       
       const headerRow = document.getElementById('headerRow');
       headerRow.innerHTML = '<th style="text-align:left; padding-left:15px;">Parameter</th>';
@@ -221,10 +202,10 @@
       for (let i = startIdx; i < endIdx; i++) {
         const timeStr = hourly.time[i];
         const dateObj = new Date(timeStr + 'Z');
-        const hourLabel = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const hour = dateObj.getUTCHours();
         const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
         const th = document.createElement('th');
-        th.innerHTML = `<div class="hour-col">HR ${i - baseIdx + 1}</div><div class="time-col">${hourLabel}</div><div class="time-col">${dayName}</div>`;
+        th.innerHTML = `<div class="hour-col">HR ${i+1}</div><div class="time-col">${hour}:00</div><div class="time-col">${dayName}</div>`;
         headerRow.appendChild(th);
       }
     }
@@ -232,43 +213,24 @@
     function updateDisplay() {
       if (!forecastData) return;
       const { hourly } = forecastData;
-
-      const baseIdx = getNearestHourIndex(); // anchor at current time
-
       const rangeSelect = document.getElementById('hourRange').value;
       const paramFilter = Array.from(document.getElementById('paramFilter').selectedOptions).map(o => o.value);
 
-      // Define ranges as offsets from baseIdx
-      const ranges = {
-        '0-23':  [0, 23],
-        '24-47': [24, 47],
-        '48-71': [48, 71],
-        '72-95': [72, 95],
-        '0-143': [0, 143],
-        '144-287': [144, 287],
-        '288-359': [288, 359]
-      };
-      const [offStart, offEnd] = ranges[rangeSelect] || [0, 23];
-
-      let startIdx = baseIdx + offStart;
-      let endIdx = Math.min(baseIdx + offEnd + 1, hourly.time.length);
-
-      // Guard against going past available data
-      if (startIdx >= hourly.time.length) {
-        startIdx = hourly.time.length - 1;
-        endIdx = hourly.time.length;
-      }
-
+      const [startStr, endStr] = rangeSelect.split('-');
+      let startIdx = parseInt(startStr, 10);
+      let endIdx = Math.min(parseInt(endStr, 10) + 1, hourly.time.length);
+      
+      // Update header for selected range
       const headerRow = document.getElementById('headerRow');
       headerRow.innerHTML = '<th style="text-align:left; padding-left:15px;">Parameter</th>';
       
       for (let i = startIdx; i < endIdx; i++) {
         const timeStr = hourly.time[i];
         const dateObj = new Date(timeStr + 'Z');
-        const hourLabel = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const hour = dateObj.getUTCHours();
         const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
         const th = document.createElement('th');
-        th.innerHTML = `<div class="hour-col">HR ${i - baseIdx + 1}</div><div class="time-col">${hourLabel}</div><div class="time-col">${dayName}</div>`;
+        th.innerHTML = `<div class="hour-col">HR ${i+1}</div><div class="time-col">${hour}:00</div><div class="time-col">${dayName}</div>`;
         headerRow.appendChild(th);
       }
       
@@ -350,3 +312,4 @@
   </script>
 </body>
 </html>
+
