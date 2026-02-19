@@ -134,7 +134,9 @@
             label: 'Record High / Low (Year)',                    getData: i => {
                         const mmdd = daily.time[i].slice(5);
                         const h = historicalAverages[mmdd] || { recordHigh: '--', recordLow: '--' };
-            return `<div class="rec-h">${h.recordHigh}° (${h.recordHighYear})</div><div class="rec-l">${h.recordLow}° (${h.recordLowYear})</div>`;                },
+            return `<div class="rec-h">${h.recordHigh}° (${h.recordHighYear})</div><div class="rec-l">${h.recordLow}° (${h.recordLowYear})</div>`;
+            }
+        },
                 {
                     name: 'Feels Like',
                     label: 'High / Low',
