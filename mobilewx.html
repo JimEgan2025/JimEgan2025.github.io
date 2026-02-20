@@ -1,390 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Vizcaya Community Mobile Weather</title>
+<meta charset="UTF-8">
+<title>Vizcaya Community Mobile Weather</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #e6f0ff;
-      --card-bg: #ffffff;
-      --text: #102a43;
-      --accent: #005a9e;
-      --accent-soft: #cce0ff;
-      --muted: #5c6c80;
-      --border: #b3c7e6;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #f5fbff 0, #e6f0ff 40%, #d4e2ff 100%);
-      color: var(--text);
-      line-height: 1.4;
-    }
-
-    main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0.75rem;
-    }
-
-    h1, h2, h3 {
-      margin: 0.4rem 0 0.25rem 0;
-      font-weight: 650;
-    }
-
-    p { margin: 0.25rem 0; }
-
-    header {
-      text-align: center;
-      margin-bottom: 0.9rem;
-      padding: 0.6rem 0.75rem 0.8rem;
-      border-radius: 0.75rem;
-      background: linear-gradient(135deg, #005a9e 0%, #2196f3 60%, #64b5f6 100%);
-      color: #ffffff;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-    }
-
-    header h1 {
-      margin-bottom: 0.25rem;
-      font-size: 1.45rem;
-    }
-
-    .datetime {
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-
-    .sun-times {
-      font-size: 0.9rem;
-      margin-top: 0.25rem;
-      opacity: 0.95;
-    }
-
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 0.45rem;
-      margin: 0.65rem 0 0;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: #005a9e;
-      background: #ffffff;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-    }
-
-    section {
-      background: var(--card-bg);
-      margin-bottom: 0.75rem;
-      padding: 0.6rem 0.75rem;
-      border-radius: 0.6rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.12);
-      border: 1px solid var(--border);
-    }
-
-    section h2 {
-      font-size: 1.05rem;
-      margin-bottom: 0.35rem;
-      color: var(--accent);
-    }
-
-    .section-tagline {
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
-
-    .station-header {
-      font-weight: 600;
-      margin-bottom: 0.2rem;
-      color: var(--muted);
-    }
-
-    .station-updated {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 0.45rem;
-    }
-
-    .temp-main {
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: #d84315;
-    }
-
-    .temp-label {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
-
-    .hi-lo-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 0.4rem;
-      font-size: 0.95rem;
-    }
-
-    .hi-lo-row span {
-      padding: 0.15rem 0.4rem;
-      border-radius: 999px;
-      background: var(--accent-soft);
-    }
-
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0.5rem 1rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
-    }
-
-    .metric-label {
-      font-weight: 500;
-    }
-
-    .metric-value {
-      color: var(--muted);
-    }
-
-    .station-footer {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .forecast-text {
-      font-size: 0.95rem;
-    }
-
-    .forecast-text span.period {
-      font-weight: 600;
-      display: block;
-      margin-top: 0.25rem;
-      color: #1565c0;
-    }
-
-    .embed-wrapper {
-      margin-top: 0.4rem;
-      background: #f3f6ff;
-      padding: 0.35rem;
-      border-radius: 0.5rem;
-    }
-
-    .embed-wrapper h3 {
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
-      color: #174a8a;
-    }
-
-    .embed-wrapper iframe,
-    .embed-wrapper img {
-      width: 100%;
-      max-width: 100%;
-      border: 0;
-      border-radius: 0.4rem;
-      display: block;
-    }
-
-    .footer-note {
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-align: center;
-      margin: 0.75rem 0 0.25rem 0;
-    }
-
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 1.3rem;
-      }
-
-      .temp-main {
-        font-size: 1.9rem;
-      }
-
-      .metric-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .nav-links a {
-        font-size: 0.85rem;
-        padding: 0.3rem 0.6rem;
-      }
-    }
-  </style>
+<style>
+:root {
+  --bg:#e6f0ff;
+  --card:#ffffff;
+  --text:#102a43;
+  --accent:#005a9e;
+  --muted:#5c6c80;
+  --border:#b3c7e6;
+}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:radial-gradient(circle at top,#f5fbff 0,#e6f0ff 40%,#d4e2ff 100%);
+  color:var(--text);
+}
+main{max-width:900px;margin:auto;padding:.75rem;}
+header{
+  text-align:center;
+  padding:.75rem;
+  border-radius:.75rem;
+  background:linear-gradient(135deg,#005a9e,#2196f3,#64b5f6);
+  color:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.2);
+}
+section{
+  background:var(--card);
+  margin:.75rem 0;
+  padding:.75rem;
+  border-radius:.6rem;
+  border:1px solid var(--border);
+  box-shadow:0 2px 5px rgba(0,0,0,.12);
+}
+h2{margin:.3rem 0;color:var(--accent);}
+.section-tagline{font-size:.85rem;color:var(--muted);margin-bottom:.4rem;}
+.embed-wrapper img, iframe{
+  width:100%;
+  border-radius:.5rem;
+}
+.alert-box{
+  background:#ffe8e8;
+  border-left:5px solid #c62828;
+  padding:.5rem;
+  margin-bottom:.5rem;
+  border-radius:.4rem;
+}
+.footer-note{
+  font-size:.85rem;
+  text-align:center;
+  color:var(--muted);
+  margin-top:1rem;
+}
+</style>
 </head>
+
 <body>
 <main>
-  <header>
-    <h1>Vizcaya Community Mobile Weather</h1>
-    <div class="datetime">
-      Thursday, February 19, 2026 · 03:02 PM
-    </div>
-    <div class="sun-times">
-      Georgetown, Texas · Sunrise: 07:09 AM · Sunset: 06:22 PM
-    </div>
 
-    <nav class="nav-links">
-      <a href="#nws-alerts">Alerts</a>
-      <a href="#vizcaya-station">Station</a>
-      <a href="#forecast">7-Day</a>
-      <a href="#radar">Radar</a>
-      <a href="#sat-glm">Satellite</a>
-      <a href="#local-outlook">Outlook</a>
-    </nav>
-  </header>
+<header>
+<h1>Vizcaya Community Mobile Weather</h1>
+<div id="liveDateTime"></div>
+<div>Georgetown, Texas</div>
+</header>
 
-  <!-- Alerts -->
-  <section id="nws-alerts">
-    <h2>Local NWS Alerts – Williamson County</h2>
-    <div class="section-tagline">Check here first for watches, warnings, and advisories.</div>
-    <p>No active watches, warnings, or advisories for Williamson County.</p>
-  </section>
+<!-- ALERTS -->
+<section>
+<h2>Local NWS Alerts</h2>
+<div class="section-tagline">Williamson County watches & warnings</div>
+<div id="alerts">Loading alerts...</div>
+</section>
 
-  <!-- Station -->
-  <section id="vizcaya-station">
-    <h2>Live from Vizcaya Weather Station</h2>
-    <div class="section-tagline">Current backyard conditions in Vizcaya.</div>
+<!-- STATION -->
+<section>
+<h2>Live Vizcaya Weather Station</h2>
+<div class="section-tagline">Powered by WeatherLink</div>
 
-    <div class="station-header">VizcayaWX Station</div>
-    <div class="station-updated">
-      Weather Conditions as of: 03:02 PM Thursday, Feb 19, 2026
-    </div>
+<iframe
+src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/wide"
+height="500"
+frameborder="0"
+scrolling="no">
+</iframe>
 
-    <div class="temp-main">85.8°F</div>
-    <div class="temp-label">current temperature</div>
+</section>
 
-    <div class="hi-lo-row">
-      <span>High: 86.5°F at 02:22 PM</span>
-      <span>Low: 64.6°F at 01:17 AM</span>
-    </div>
+<!-- FORECAST -->
+<section>
+<h2>7-Day Forecast</h2>
+<div class="section-tagline">Official forecast from NWS Austin/San Antonio</div>
+<div id="forecast">Loading forecast...</div>
+</section>
 
-    <div class="metric-grid">
-      <div>
-        <div class="metric-label">Air Quality</div>
-        <div class="metric-value">24.9 (Good)</div>
-      </div>
-      <div>
-        <div class="metric-label">High Gust</div>
-        <div class="metric-value">17.0 mph at 03:12 AM</div>
-      </div>
-      <div>
-        <div class="metric-label">Humidity</div>
-        <div class="metric-value">28.0% (Feels like 83.6°F)</div>
-      </div>
-      <div>
-        <div class="metric-label">Rain Today</div>
-        <div class="metric-value">0.00 in (Season 2.93 in)</div>
-      </div>
-      <div>
-        <div class="metric-label">Barometer</div>
-        <div class="metric-value">29.702 in Hg (Falling Rapidly)</div>
-      </div>
-    </div>
+<!-- RADAR -->
+<section>
+<h2>Central Texas Radar Loop</h2>
+<div class="embed-wrapper">
+<img id="radarImg"
+src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif"
+alt="KGRK Radar Loop">
+</div>
+</section>
 
-    <div class="station-footer">
-      WeatherLink Network – Vantage Pro2 Plus w/ 24‑hr Fan‑Aspirated Shield, UV &amp; Solar Radiation Sensors via WLL.<br>
-      Air Quality Index: United States EPA. Hardware by
-      <a href="https://www.davisinstruments.com/" target="_blank" rel="noopener noreferrer">
-        Davis Instruments
-      </a>.
-    </div>
-  </section>
+<!-- SATELLITE -->
+<section>
+<h2>Southern Plains Satellite</h2>
+<div class="embed-wrapper">
+<img id="satImg"
+src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg"
+alt="Southern Plains Satellite">
+</div>
+</section>
 
-  <!-- 7-Day Forecast -->
-  <section id="forecast">
-    <h2>7-Day Forecast</h2>
-    <div class="section-tagline">Text forecast for Georgetown and Vizcaya area.</div>
-    <div class="forecast-text">
-      <span class="period">This Afternoon:</span>
-      Sunny, with a high near 83. North northwest wind 5 to 10 mph.
-      <span class="period">Tonight:</span>
-      Partly cloudy, with a low around 54. North northeast wind 0 to 5 mph.
-      <span class="period">Friday:</span>
-      Partly sunny, with a high near 74. Northeast wind 5 to 10 mph.
-      <span class="period">Friday Night:</span>
-      Mostly cloudy, with a low around 58. South southeast wind 5 to 10 mph.
-      <span class="period">Saturday:</span>
-      Sunny, with a high near 74. North northwest wind 10 to 20 mph, with gusts as high as 30 mph.
-      <span class="period">Saturday Night:</span>
-      Mostly clear, with a low around 40. North wind around 15 mph, with gusts as high as 30 mph.
-      <span class="period">Sunday:</span>
-      Mostly sunny, with a high near 63. North northeast wind 10 to 15 mph, with gusts as high as 25 mph.
-    </div>
-  </section>
+<!-- WPC -->
+<section>
+<h2>WPC National Forecast Charts</h2>
 
-  <!-- Radar -->
-  <section id="radar">
-    <h2>Central Texas Radar Loop</h2>
-    <div class="section-tagline">Regional reflectivity loop centered near KGRK.</div>
-    <div class="embed-wrapper">
-      <img
-        src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif"
-        alt="KGRK Radar Loop"
-      >
-    </div>
-  </section>
+<div class="embed-wrapper">
+<h3>Day 1</h3>
+<img id="wpc1"
+src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png">
+</div>
 
-  <!-- Southern Plains Satellite -->
-  <section id="sat-glm">
-    <h2>Southern Plains Satellite</h2>
-    <div class="section-tagline">GOES‑East Southern Plains GeoColor imagery.</div>
-    <div class="embed-wrapper">
-      <img
-        src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg"
-        alt="GOES-16 Southern Plains GeoColor"
-      >
-    </div>
-  </section>
+<div class="embed-wrapper">
+<h3>Day 2</h3>
+<img id="wpc2"
+src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png">
+</div>
 
-  <!-- Local Outlook: WPC National Forecast Chart Day 1–3 -->
-  <section id="local-outlook">
-    <h2>Local Outlook – WPC National Forecast</h2>
-    <div class="section-tagline">National forecast charts from the Weather Prediction Center.</div>
+<div class="embed-wrapper">
+<h3>Day 3</h3>
+<img id="wpc3"
+src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png">
+</div>
 
-    <div class="embed-wrapper">
-      <h3>Day 1 Forecast</h3>
-      <img
-        src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png"
-        alt="WPC National Forecast Chart Day 1"
-      >
-    </div>
+</section>
 
-    <div class="embed-wrapper">
-      <h3>Day 2 Forecast</h3>
-      <img
-        src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png"
-        alt="WPC National Forecast Chart Day 2"
-      >
-    </div>
+<div class="footer-note">
+Data & imagery © NWS, NOAA, WPC, NESDIS STAR
+</div>
 
-    <div class="embed-wrapper">
-      <h3>Day 3 Forecast</h3>
-      <img
-        src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png"
-        alt="WPC National Forecast Chart Day 3"
-      >
-    </div>
-  </section>
-
-  <div class="footer-note">
-    Non‑commercial community page. Data & imagery © NWS, WPC, NOAA, NESDIS STAR.[web:1][web:17]
-  </div>
 </main>
+
+<script>
+
+// ======================
+// LIVE CLOCK
+// ======================
+function updateClock(){
+  const now = new Date();
+  document.getElementById("liveDateTime").innerText =
+    now.toLocaleDateString("en-US",{weekday:'long',year:'numeric',month:'long',day:'numeric'}) +
+    " · " +
+    now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit'});
+}
+updateClock();
+setInterval(updateClock,60000);
+
+// ======================
+// NWS FORECAST
+// ======================
+const lat=30.6333;
+const lon=-97.6772;
+
+async function loadForecast(){
+  try{
+    const p=await fetch(`https://api.weather.gov/points/${lat},${lon}`,{cache:"no-store"});
+    const pdata=await p.json();
+    const f=await fetch(pdata.properties.forecast,{cache:"no-store"});
+    const fdata=await f.json();
+    const periods=fdata.properties.periods.slice(0,7);
+    let html="";
+    periods.forEach(p=>{
+      html+=`<div style="margin-bottom:.5rem;"><strong>${p.name}:</strong> ${p.detailedForecast}</div>`;
+    });
+    document.getElementById("forecast").innerHTML=html;
+  }catch(e){
+    document.getElementById("forecast").innerText="Forecast unavailable.";
+  }
+}
+loadForecast();
+setInterval(loadForecast,1800000);
+
+// ======================
+// NWS ALERTS
+// ======================
+async function loadAlerts(){
+  try{
+    const res=await fetch(`https://api.weather.gov/alerts/active?zone=TXZ171`,{cache:"no-store"});
+    const data=await res.json();
+    if(data.features.length===0){
+      document.getElementById("alerts").innerHTML="No active alerts.";
+      return;
+    }
+    let html="";
+    data.features.forEach(a=>{
+      html+=`<div class="alert-box"><strong>${a.properties.headline}</strong><br>${a.properties.description}</div>`;
+    });
+    document.getElementById("alerts").innerHTML=html;
+  }catch(e){
+    document.getElementById("alerts").innerText="Alert data unavailable.";
+  }
+}
+loadAlerts();
+setInterval(loadAlerts,600000);
+
+// ======================
+// FORCE IMAGE REFRESH
+// ======================
+setInterval(()=>{
+  document.getElementById("radarImg").src=
+    "https://radar.weather.gov/ridge/standard/KGRK_loop.gif?"+Date.now();
+  document.getElementById("satImg").src=
+    "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg?"+Date.now();
+  document.getElementById("wpc1").src=
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png?"+Date.now();
+  document.getElementById("wpc2").src=
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png?"+Date.now();
+  document.getElementById("wpc3").src=
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png?"+Date.now();
+},300000);
+
+</script>
+
 </body>
 </html>
 
