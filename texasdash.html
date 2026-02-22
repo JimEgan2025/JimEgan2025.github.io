@@ -19,14 +19,15 @@
   .story-box { border-left:8px solid #1e3a8a; background:#f8fafc; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; }
   .story-box h3 { margin-top:0; color:#1e3a8a; }
   .story-list { padding-left:20px; line-height:1.8; font-size:1.1rem; margin:0; }
+  .story-list li { margin-bottom:0.8rem; }
   .alerts-box { background:#fef3f2; border-left:4px solid #ef4444; padding:1rem; border-radius:0 4px 4px 0; margin:1rem 0; }
   .alerts-box ul { margin:0.5rem 0; padding-left:1.2rem; }
   .alerts-box li { margin-bottom:0.6rem; line-height:1.5; }
   .no-alerts { color:#6b7280; font-style:italic; padding:1rem; background:#f8f9fa; border-radius:6px; }
-  .narrative-lead-box { background:#fffbeb; border:2px solid #f59e0b; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; line-height:1.7; font-size:1.1rem; color:#1f2937; }
+  .narrative-lead-box { background:#fffbeb; border:2px solid #f59e0b; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; line-height:1.7; font-size:1.1rem; color:#1f2937; white-space: pre-wrap; }
   .region-group { margin-bottom:1rem; }
   .region-group strong { color:#1e3a8a; display:block; margin-bottom:0.4rem; font-size:1.05rem; }
-  .key-msg-box { background:#f8fafc; border-left:4px solid #3b82f6; padding:1.25rem; margin-bottom:1rem; border-radius:0 4px 4px 0; line-height:1.65; }
+  .key-msg-box { background:#f8fafc; border-left:4px solid #3b82f6; padding:1.25rem; margin-bottom:1rem; border-radius:0 4px 4px 0; line-height:1.65; white-space: pre-wrap; }
   .error-msg { color:#dc2626; font-weight:bold; padding:1rem; background:#fee2e2; border-radius:8px; margin:1rem 0; }
   .timestamp { font-size:0.9rem; color:#6b7280; margin-top:0.75rem; display:block; }
   .refresh-btn { padding:0.5rem 1rem; background:#1e3a8a; color:white; border:none; border-radius:6px; cursor:pointer; margin-bottom:1rem; }
@@ -44,7 +45,6 @@
     <h1>Texas Weather Dashboard</h1>
     <p style="margin:0.5rem 0 0; font-size:0.95rem;">Real-time NWS data • Key messages + smart alerts</p>
   </header>
-
   <div class="tabs" id="tabsContainer"></div>
   <button class="refresh-btn" id="refreshBtn" style="display:none;">Refresh Current Tab</button>
   <div id="contentContainer"></div>
@@ -87,7 +87,6 @@ let currentTabIndex = 0;
 function init() {
   const tabs = document.getElementById('tabsContainer');
   const content = document.getElementById('contentContainer');
-
   CITIES.forEach((city, i) => {
     const tab = document.createElement('div');
     tab.className = 'tab' + (i === 0 ? ' active' : '');
@@ -102,7 +101,8 @@ function init() {
   });
 
   document.getElementById('refreshBtn').onclick = () => loadCityDataAsync(CITIES[currentTabIndex], currentTabIndex);
-  CITIES.forEach((city, i) => loadCityDataAsync(city, i));
+  // Load all, but ensure summary waits a bit
+  Promise.all(CITIES.map((city, i) => loadCityDataAsync(city, i)));
 }
 
 function switchTab(idx) {
@@ -130,16 +130,18 @@ async function loadTexasSummary(container) {
       const data = await res.json();
       const msg = extractKeyMessages(data.productText);
       if (msg) officeMsgs[city.name] = msg;
-    } catch (e) {}
+    } catch (e) { console.error(`AFD fetch error for ${city.name}:`, e); }
   }));
+
+  console.log('Extracted office key messages:', officeMsgs); // Debug: check in console
 
   // Dynamic Weather Story
   const storyBox = document.getElementById('story-box');
   let storyHTML = '<h3>Current Texas Weather Story</h3><ul class="story-list">';
-  let themes = { warm:0, humid:0, thunderstorm:0, severe:0, hail:0, wind:0, rainLow:0, fire:0, clearing:0 };
-  let stormTiming = '', stormAreas = '';
+  let themes = { warm:0, humid:0, thunderstorm:0, severe:0, hail:0, wind:0, rainLow:0, fire:0, clearing:0, freeze:0 };
+  let stormTiming = '', stormAreas = '', fireAreas = '';
 
-  Object.entries(officeMsgs).forEach(([_, msg]) => {
+  Object.entries(officeMsgs).forEach(([name, msg]) => {
     const lower = msg.toLowerCase();
     if (lower.includes('warm') || lower.includes('above normal')) themes.warm++;
     if (lower.includes('humid') || lower.includes('moisture') || lower.includes('fog')) themes.humid++;
@@ -152,48 +154,73 @@ async function loadTexasSummary(container) {
     if (lower.includes('hail')) themes.hail++;
     if (lower.includes('wind') || lower.includes('gust')) themes.wind++;
     if (lower.includes('low side') || lower.includes('less than')) themes.rainLow++;
-    if (lower.includes('fire weather') || lower.includes('critical')) themes.fire++;
+    if (lower.includes('fire weather') || lower.includes('critical') || lower.includes('elevated') || lower.includes('wildfire')) {
+      themes.fire++;
+      if (lower.includes('central') || lower.includes('south') || lower.includes('hill country')) fireAreas = 'especially Central/South-Central Texas';
+    }
     if (lower.includes('clear') || lower.includes('breezy') || lower.includes('sunday')) themes.clearing++;
+    if (lower.includes('freeze') || lower.includes('freezing') || lower.includes('chilly')) themes.freeze++;
   });
 
-  if (themes.warm > 1 || themes.humid > 1) storyHTML += `<li><strong>Warm & Humid Conditions:</strong> Well above-average temperatures (70s to mid-80s) and Gulf moisture persist across much of Texas.</li>`;
-  if (themes.thunderstorm > 2 || themes.severe > 1) {
-    let detail = 'Scattered to widespread showers and thunderstorms expected';
-    if (stormTiming) detail += ` ${stormTiming}`;
-    if (stormAreas) detail += ` across ${stormAreas}`;
-    if (themes.severe > 1) detail += `; Marginal risk for severe weather (large hail, damaging winds possible)`;
-    storyHTML += `<li><strong>Thunderstorm Threat:</strong> ${detail}.</li>`;
+  if (themes.fire > 1) {
+    storyHTML += `<li><strong>Fire Weather Risk:</strong> Elevated to near-critical conditions ${fireAreas || 'in parts of the state'} due to gusty winds, low humidity, and dry fuels. Avoid outdoor burning.</li>`;
   }
-  if (themes.rainLow > 1) storyHTML += `<li><strong>Rainfall:</strong> Amounts generally on the low side (mostly under 1 inch).</li>`;
-  if (themes.fire > 1 || themes.clearing > 1) storyHTML += `<li><strong>Aftermath & Fire Weather:</strong> Storms taper overnight; Sunday brings clearing skies but breezy winds and elevated fire weather risks.</li>`;
-
-  if (storyHTML === '<h3>Current Texas Weather Story</h3><ul class="story-list">') storyHTML += '<li><strong>General Conditions:</strong> Mild to warm weather across Texas with scattered showers possible.</li>';
+  if (themes.freeze > 1) {
+    storyHTML += `<li><strong>Cool Start:</strong> Chilly mornings with light freeze possible in North/Central valleys; lows in 20s-30s Panhandle, 30s-40s elsewhere.</li>`;
+  }
+  if (themes.warm > 1) {
+    storyHTML += `<li><strong>Warming Trend:</strong> Temperatures rebound mid-week to above normal (70s-80s+ in many areas).</li>`;
+  }
+  if (themes.thunderstorm > 1) {
+    let detail = 'Scattered showers/thunderstorms possible';
+    if (stormTiming) detail += ` ${stormTiming}`;
+    if (stormAreas) detail += ` in ${stormAreas}`;
+    storyHTML += `<li><strong>Thunderstorm Potential:</strong> ${detail}.</li>`;
+  }
+  if (storyHTML === '<h3>Current Texas Weather Story</h3><ul class="story-list">') {
+    storyHTML += '<li><strong>General Conditions:</strong> Dry, quiet, and seasonably cool today with fire weather the main concern; warming and mostly sunny through the week.</li>';
+  }
   storyHTML += '</ul><p style="font-size:0.9rem; color:#6b7280; margin-top:0.8rem;">Synthesized from regional NWS key messages (as of ' + new Date().toLocaleTimeString() + ' CST).</p>';
   storyBox.innerHTML = storyHTML;
   storyBox.classList.remove('loading');
 
-  // Consolidated key messages by region (restored)
+  // Consolidated key messages by region
   const narrativeBox = document.getElementById('state-narrative-box');
   let html = '<h3>Key Forecaster Messages Across Texas</h3>';
   REGION_GROUPS.forEach(group => {
     const msgs = group.offices.filter(o => officeMsgs[o]).map(o => `${o}: ${officeMsgs[o]}`);
-    if (msgs.length) html += `<div class="region-group"><strong>${group.name}:</strong> ${msgs.join(' • ')}</div>`;
+    if (msgs.length) html += `<div class="region-group"><strong>${group.name}:</strong><br>${msgs.join('<br>')}</div>`;
   });
-  if (Object.keys(officeMsgs).length === 0) html += '<p class="error-msg">No key messages available right now. Try refreshing.</p>';
-  else html += '<p style="font-size:0.9rem; color:#6b7280; margin-top:1rem;">Main impacts and hazards from each NWS office (grouped by region).</p>';
+  if (Object.keys(officeMsgs).length === 0) {
+    html += '<p class="error-msg">No key messages available right now. Try refreshing later.</p>';
+  } else {
+    html += '<p style="font-size:0.9rem; color:#6b7280; margin-top:1rem;">Main impacts and hazards from each NWS office (grouped by region).</p>';
+  }
   narrativeBox.innerHTML = html;
 }
 
 function extractKeyMessages(text) {
   if (!text) return "";
-  const match = text.match(/\.KEY\s*(MESSAGES|POINTS|SUMMARY|TAKEAWAYS)\.\.\.([\s\S]*?)(?=\.[A-Z0-9\s\/]+\.\.\.|&&)/i);
-  if (!match) return "";
-  return match[2].trim()
-    .replace(/^- /gm, '')
-    .replace(/\n\s*\n/g, ' ')
-    .replace(/\n/g, ' ')
-    .replace(/\s+/g, ' ')
+
+  // Primary match for 2026 format: .KEY MESSAGES... (with three dots)
+  let match = text.match(/\.KEY\s+MESSAGES\.{3}\s*([\s\S]*?)(?=\.[A-Z0-9\s\/-]+\.{3}|&&|$)/i);
+
+  // Fallback for slight variations (e.g., no dots, colon, etc.)
+  if (!match || !match[1]?.trim()) {
+    match = text.match(/\.KEY\s+MESSAGES[\.\s:]*\s*([\s\S]*?)(?=\.[A-Z0-9\s\/-]+\.{3}|&&|$)/i);
+  }
+
+  if (!match || !match[1]) return "";
+
+  // Clean and format: preserve newlines for bullets, convert - to •
+  let keyText = match[1]
+    .trim()
+    .replace(/^\s*-\s*/gm, '• ')
+    .replace(/^\s*•\s*/gm, '• ')  // Already bullets
+    .replace(/\n\s*\n/g, '\n')    // Collapse extras
     .trim();
+
+  return keyText;
 }
 
 /* ==================== CITY / OFFICE TABS ==================== */
@@ -228,7 +255,7 @@ async function loadCityDataAsync(city, idx) {
   `;
 
   try {
-    const ptsRes = await fetch(`https://api.weather.gov/points/${city.lat},${city.lon}`, { headers: HEADERS });
+    const ptsRes = await fetch(`https://api.weather.gov/points/${Number(city.lat).toFixed(4)},${Number(city.lon).toFixed(4)}`, { headers: HEADERS });
     if (!ptsRes.ok) throw new Error('Point fetch failed');
     const pts = await ptsRes.json();
 
@@ -266,23 +293,21 @@ async function loadCityDataAsync(city, idx) {
     const afd = await afdRes.json();
     const keyMsg = extractKeyMessages(afd.productText);
     const narrativeBox = document.getElementById(`narrative-${idx}`);
-    narrativeBox.innerHTML = keyMsg || 'No key messages section available in latest AFD.';
+    narrativeBox.innerHTML = keyMsg || 'No key messages section found in latest AFD.';
     narrativeBox.classList.remove('loading');
     narrativeBox.insertAdjacentHTML('beforeend', `<div class="timestamp">From AFD issued: ${new Date(afd.issuanceTime).toLocaleString()}</div>`);
 
-    // Smart Alerts: Point first → Zone fallback
+    // Smart Alerts: Point → Zone fallback
     const alertsBox = document.getElementById(`alerts-${idx}`);
+    let features = [];
     try {
-      let features = [];
-
-      // 1. Point query
-      let res = await fetch(`https://api.weather.gov/alerts/active?point=${city.lat},${city.lon}`, { headers: HEADERS });
+      // Point query
+      let res = await fetch(`https://api.weather.gov/alerts/active?point=${Number(city.lat).toFixed(4)},${Number(city.lon).toFixed(4)}`, { headers: HEADERS });
       if (res.ok) {
         const data = await res.json();
         features = data.features || [];
       }
-
-      // 2. Fallback to forecast zone if nothing at point
+      // Fallback to zone
       if (features.length === 0 && pts.properties.forecastZone) {
         const zoneID = pts.properties.forecastZone.split('/').pop();
         res = await fetch(`https://api.weather.gov/alerts/active?zone=${zoneID}`, { headers: HEADERS });
@@ -293,7 +318,7 @@ async function loadCityDataAsync(city, idx) {
       }
 
       if (features.length === 0) {
-        alertsBox.innerHTML = '<div class="no-alerts">No active watches, warnings, or advisories affecting this area right now.</div>';
+        alertsBox.innerHTML = '<div class="no-alerts">No active watches, warnings, or advisories right now.</div>';
       } else {
         let html = '<ul>';
         features.forEach(f => {
