@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Texas Weather – Sortable Cities Table</title>
+  <title>Texas Weather – Cities Table</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -50,10 +50,10 @@
   </style>
 </head>
 <body>
-  <h1>Texas Weather – Cities Table</h1>
+  <h1>Texas Weather</h1>
   <div id="summary">Loading weather data…</div>
   <div class="small">
-    Columns are sortable by clicking headers. Initial sort is Current °F (hot to cool).
+Click headers to sort; initial sort is Current °F (hot to cool).
   </div>
 
   <table id="weatherTable" data-sort-dir="desc">
@@ -71,7 +71,7 @@
   </table>
 
   <script>
-    const stations = [
+  const stations = [
   {city:"Nacogdoches – A L Mangham Jr. Regional", lat:31.5753, lon:-94.7095,  region:"East Texas"},
   {city:"Abilene – Regional",                     lat:32.4113, lon:-99.6819,  region:"West Texas"},
   {city:"Dallas – Addison Airport",              lat:32.9686, lon:-96.8364,  region:"North TX Metro"},
@@ -301,120 +301,135 @@
   {city:"Johnson City – City Center",            lat:30.2744, lon:-98.4114,  region:"Hill Country"}
 ];
 
+  function cToF(c) {
+    return (c * 9/5) + 32;
+  }
 
-    function cToF(c) { return (c * 9/5 + 32); }
+  async function fetchWeather() {
+    const tbody = document.querySelector("#weatherTable tbody");
+    tbody.innerHTML = ""; // Clear table
 
-    async function fetchWeather() {
-      const tbody = document.querySelector("#weatherTable tbody");
-      tbody.innerHTML = "";
+    let maxCurrent = -999, minCurrent = 999;
+    let hottestNow = "", coldestNow = "";
+    let maxHigh = -999, minLow = 999, maxRain = 0;
+    let hottestCity = "", coldestCity = "", wettestCity = "";
 
-      let maxCurrent = -999, minCurrent = 999;
-      let hottestNow = "", coldestNow = "";
+    // Create an array of promises – fetches happen in parallel!
+    const promises = stations.map(async (station) => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}` +
+                  `&longitude=${station.lon}` +
+                  `&current_weather=true&hourly=temperature_2m,precipitation` +
+                  `&timezone=America/Chicago`;
 
-      let maxHigh = -999, minLow = 999, maxRain = 0;
-      let hottestCity = "", coldestCity = "", wettestCity = "";
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
 
-      for (const station of stations) {
-        const url =
-          `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}` +
-          `&longitude=${station.lon}` +
-          `&current_weather=true&hourly=temperature_2m,precipitation` +
-          `&timezone=America/Chicago`;
+        const nowTempC = data.current_weather.temperature;
+        const nowTempF = cToF(nowTempC);
 
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        const times = data.hourly.time;
+        const temps = data.hourly.temperature_2m;
+        const prec = data.hourly.precipitation;
 
-          const nowTempC = data.current_weather.temperature;
-          const nowTempF = cToF(nowTempC);
-
-          const now = new Date();
-          const today = now.toISOString().split("T")[0];
-          const times = data.hourly.time;
-          const temps = data.hourly.temperature_2m;
-          const prec  = data.hourly.precipitation;
-
-          let highC = -999, lowC = 999, totalPrec = 0;
-          for (let i = 0; i < times.length; i++) {
-            if (times[i].startsWith(today)) {
-              if (temps[i] > highC) highC = temps[i];
-              if (temps[i] < lowC)  lowC = temps[i];
-              totalPrec += prec[i];
-            }
+        let highC = -999, lowC = 999, totalPrec = 0;
+        for (let i = 0; i < times.length; i++) {
+          if (times[i].startsWith(today)) {
+            if (temps[i] > highC) highC = temps[i];
+            if (temps[i] < lowC) lowC = temps[i];
+            totalPrec += prec[i];
           }
-
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${station.city}</td>
-            <td>${station.region}</td>
-            <td>${nowTempF.toFixed(1)}</td>
-            <td>${cToF(highC).toFixed(1)}</td>
-            <td>${cToF(lowC).toFixed(1)}</td>
-            <td>${totalPrec.toFixed(2)}</td>
-          `;
-          tbody.appendChild(row);
-
-          // current hottest/coolest
-          if (nowTempC > maxCurrent) { maxCurrent = nowTempC; hottestNow = station.city; }
-          if (nowTempC < minCurrent) { minCurrent = nowTempC; coldestNow = station.city; }
-
-          // daily hottest/coldest/wettest
-          if (highC > maxHigh) { maxHigh = highC; hottestCity = station.city; }
-          if (lowC  < minLow)  { minLow  = lowC;  coldestCity = station.city; }
-          if (totalPrec > maxRain) { maxRain = totalPrec; wettestCity = station.city; }
-
-        } catch (e) {
-          console.log("Error fetching:", station.city, e);
         }
-      }
 
-      document.getElementById("summary").innerText =
-        `Current Hottest: ${hottestNow} ${cToF(maxCurrent).toFixed(1)}°F | ` +
-        `Current Coolest: ${coldestNow} ${cToF(minCurrent).toFixed(1)}°F | ` +
-        `Daily Hottest: ${hottestCity} ${cToF(maxHigh).toFixed(1)}°F | ` +
-        `Daily Coldest: ${coldestCity} ${cToF(minLow).toFixed(1)}°F | ` +
-        `Wettest: ${wettestCity} ${maxRain.toFixed(2)} in`;
+        // Build table row
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${station.city}</td>
+          <td>${station.region}</td>
+          <td>${nowTempF.toFixed(1)}</td>
+          <td>${cToF(highC).toFixed(1)}</td>
+          <td>${cToF(lowC).toFixed(1)}</td>
+          <td>${totalPrec.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
 
-      // initial sort by Current °F (column index 2), high → low
-      sortTable(2, "desc");
-    }
-
-    function sortTable(colIndex, direction) {
-      const table = document.getElementById("weatherTable");
-      const tbody = table.tBodies[0];
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-
-      // toggle direction if none provided (click header)
-      let dir = direction;
-      if (!dir) {
-        const current = table.getAttribute("data-sort-dir") || "desc";
-        dir = current === "asc" ? "desc" : "asc";
-        table.setAttribute("data-sort-dir", dir);
-      }
-
-      rows.sort((a, b) => {
-        let x = a.cells[colIndex].innerText.trim();
-        let y = b.cells[colIndex].innerText.trim();
-        const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
-        if (isNumeric) { x = parseFloat(x); y = parseFloat(y); }
-        else { x = x.toLowerCase(); y = y.toLowerCase(); }
-
-        if (dir === "asc") {
-          if (x > y) return 1;
-          if (x < y) return -1;
-          return 0;
-        } else {
-          if (x < y) return 1;
-          if (x > y) return -1;
-          return 0;
+        // Update running extremes
+        if (nowTempC > maxCurrent) {
+          maxCurrent = nowTempC;
+          hottestNow = station.city;
         }
-      });
+        if (nowTempC < minCurrent) {
+          minCurrent = nowTempC;
+          coldestNow = station.city;
+        }
+        if (highC > maxHigh) {
+          maxHigh = highC;
+          hottestCity = station.city;
+        }
+        if (lowC < minLow) {
+          minLow = lowC;
+          coldestCity = station.city;
+        }
+        if (totalPrec > maxRain) {
+          maxRain = totalPrec;
+          wettestCity = station.city;
+        }
 
-      rows.forEach(r => tbody.appendChild(r));
+        return true; // Success
+      } catch (e) {
+        console.log("Error fetching:", station.city, e);
+        return false;
+      }
+    });
+
+    // Wait for ALL fetches to complete (parallel!)
+    await Promise.all(promises);
+
+    // Now update the summary – only once everything is done
+    document.getElementById("summary").innerText = 
+      `Current Hottest: ${hottestNow} ${cToF(maxCurrent).toFixed(1)}°F | ` +
+      `Current Coolest: ${coldestNow} ${cToF(minCurrent).toFixed(1)}°F | ` +
+      `Daily Hottest: ${hottestCity} ${cToF(maxHigh).toFixed(1)}°F | ` +
+      `Daily Coldest: ${coldestCity} ${cToF(minLow).toFixed(1)}°F | ` +
+      `Wettest: ${wettestCity} ${maxRain.toFixed(2)} in`;
+
+    // Re-sort table to initial hot-to-cool order
+    sortTable(2, "desc");
+  }
+
+  function sortTable(colIndex, direction) {
+    // Your existing sortTable function – unchanged
+    const table = document.getElementById("weatherTable");
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    let dir = direction || table.getAttribute("data-sort-dir") || "desc";
+    if (!direction) {
+      dir = dir === "asc" ? "desc" : "asc";
+      table.setAttribute("data-sort-dir", dir);
     }
+    rows.sort((a, b) => {
+      let x = a.cells[colIndex].innerText.trim();
+      let y = b.cells[colIndex].innerText.trim();
+      const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
+      if (isNumeric) {
+        x = parseFloat(x);
+        y = parseFloat(y);
+      } else {
+        x = x.toLowerCase();
+        y = y.toLowerCase();
+      }
+      if (dir === "asc") return x > y ? 1 : x < y ? -1 : 0;
+      return x < y ? 1 : x > y ? -1 : 0;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
 
-    document.addEventListener("DOMContentLoaded", fetchWeather);
-  </script>
+  // Start fetching when page loads
+  document.addEventListener("DOMContentLoaded", fetchWeather);
+</script>
 </body>
 </html>
 
