@@ -71,179 +71,188 @@
   </table>
 
   <script>
-    const stations = [
-      // Central / I-35 corridor – airports and city centers
-      {city:"Austin – Austin Executive",             lat:30.3975, lon:-97.5664,  region:"Central / I-35"},
-      {city:"Austin – Bergstrom Intl",               lat:30.1945, lon:-97.6699,  region:"Central / I-35"},
-      {city:"Austin – Camp Mabry",                   lat:30.3167, lon:-97.7667,  region:"Central / I-35"},
-      {city:"Temple – Draughon-Miller",              lat:31.1525, lon:-97.4078,  region:"Central / I-35"},
-      {city:"Killeen – Killeen-Fort Hood Regional",  lat:31.0649, lon:-97.8278,  region:"Central / I-35"},
-      {city:"Waco – McGregor Executive",             lat:31.4886, lon:-97.316,   region:"Central / I-35"},
-      {city:"Waco – TSTC Waco",                      lat:31.6378, lon:-97.0741,  region:"Central / I-35"},
-      {city:"Waco – Waco Regional",                  lat:31.6113, lon:-97.2305,  region:"Central / I-35"},
-      {city:"New Braunfels – New Braunfels National",lat:29.7045, lon:-98.0422,  region:"Central / I-35"},
-      {city:"San Marcos – San Marcos Regional",      lat:29.8927, lon:-97.8647,  region:"Central / I-35"},
+  const stations = [
+    // Your full list – unchanged
+    {city:"Austin – Austin Executive", lat:30.3975, lon:-97.5664, region:"Central / I-35"},
+    {city:"Austin – Bergstrom Intl", lat:30.1945, lon:-97.6699, region:"Central / I-35"},
+    {city:"Austin – Camp Mabry", lat:30.3167, lon:-97.7667, region:"Central / I-35"},
+    {city:"Temple – Draughon-Miller", lat:31.1525, lon:-97.4078, region:"Central / I-35"},
+    {city:"Killeen – Killeen-Fort Hood Regional", lat:31.0649, lon:-97.8278, region:"Central / I-35"},
+    {city:"Waco – McGregor Executive", lat:31.4886, lon:-97.316, region:"Central / I-35"},
+    {city:"Waco – TSTC Waco", lat:31.6378, lon:-97.0741, region:"Central / I-35"},
+    {city:"Waco – Waco Regional", lat:31.6113, lon:-97.2305, region:"Central / I-35"},
+    {city:"New Braunfels – New Braunfels National",lat:29.7045, lon:-98.0422, region:"Central / I-35"},
+    {city:"San Marcos – San Marcos Regional", lat:29.8927, lon:-97.8647, region:"Central / I-35"},
+    {city:"Round Rock – City Center", lat:30.5083, lon:-97.6789, region:"Central / I-35"},
+    {city:"Georgetown – City Center", lat:30.6327, lon:-97.6772, region:"Central / I-35"},
+    {city:"Cameron – City Center", lat:30.8788, lon:-96.9716, region:"Central / I-35"},
+    {city:"Taylor – City Center", lat:30.5713, lon:-97.4437, region:"Central / I-35"},
+    {city:"Vizcaya – Neighborhood", lat:30.5871, lon:-97.641, region:"Central / I-35"},
+    {city:"Grainger – City Center", lat:30.71, lon:-97.45, region:"Central / I-35"},
+    {city:"Salado – City Center", lat:30.9477, lon:-97.5384, region:"Central / I-35"},
+    {city:"Jarrell – City Center", lat:30.824, lon:-97.6056, region:"Central / I-35"},
+    {city:"Buda – City Center", lat:30.083, lon:-97.8403, region:"Central / I-35"},
+    {city:"Kyle – City Center", lat:29.989, lon:-97.8772, region:"Central / I-35"},
+    {city:"Junction – Kimble County Airport", lat:30.5113, lon:-99.7635, region:"Hill Country"},
+    {city:"Junction – City Approx", lat:30.49, lon:-99.77, region:"Hill Country"},
+    {city:"Boerne – Boerne Stage", lat:29.7253, lon:-98.6912, region:"Hill Country"},
+    {city:"Brownwood – Brownwood Regional", lat:31.7936, lon:-98.9565, region:"Hill Country"},
+    {city:"Burnet – Burnet Municipal", lat:30.7389, lon:-98.2386, region:"Hill Country"},
+    {city:"Coleman – Coleman Municipal", lat:31.842, lon:-99.4036, region:"Hill Country"},
+    {city:"Comanche – Comanche County-City", lat:31.9205, lon:-98.6007, region:"Hill Country"},
+    {city:"Kerrville – Kerrville Municipal", lat:29.9767, lon:-99.0857, region:"Hill Country"},
+    {city:"Lampasas – Lampasas Municipal", lat:31.106, lon:-98.195, region:"Hill Country"},
+    {city:"Llano – Llano Municipal", lat:30.7836, lon:-98.6617, region:"Hill Country"},
+    {city:"San Saba – San Saba County", lat:31.2333, lon:-98.7167, region:"Hill Country"},
+    {city:"Stephenville – Stephenville Regional", lat:32.2153, lon:-98.1777, region:"Hill Country"},
+    {city:"Lake Buchanan", lat:30.8183, lon:-98.4227, region:"Hill Country"},
+    {city:"Luckenbach", lat:30.1787, lon:-98.7572, region:"Hill Country"},
+    {city:"Fredericksburg – City Center", lat:30.2752, lon:-98.8720, region:"Hill Country"},
+    {city:"Blanco – City Center", lat:30.0980, lon:-98.4214, region:"Hill Country"},
+    {city:"Johnson City – City Center", lat:30.2744, lon:-98.4114, region:"Hill Country"},
+    {city:"Bastrop – City Center", lat:30.1117, lon:-97.3178, region:"Central / I-35"},
+    {city:"Smithville – City Center", lat:30.0044, lon:-97.1489, region:"Central / I-35"},
+    {city:"Leander – City Center", lat:30.5736, lon:-97.8567, region:"Central / I-35"},
+    {city:"Manor – City Center", lat:30.3431, lon:-97.5567, region:"Central / I-35"},
+    {city:"Liberty Hill – City Center", lat:30.6640, lon:-97.9200, region:"Central / I-35"},
+    {city:"Marble Falls – City Center", lat:30.5784, lon:-98.2751, region:"Hill Country"},
+    {city:"Horseshoe Bay – City Center", lat:30.5400, lon:-98.3530, region:"Hill Country"},
+    {city:"Comfort – City Center", lat:29.9677, lon:-98.9050, region:"Hill Country"},
+    {city:"Mason – City Center", lat:30.7420, lon:-99.2258, region:"Hill Country"},
+    {city:"Canyon Lake – City Center", lat:29.8750, lon:-98.2620, region:"Hill Country"},
+    {city:"Florence – City Center", lat:30.841, lon:-97.793, region:"Hill Country"}
+  ];
 
-      {city:"Round Rock – City Center",              lat:30.5083, lon:-97.6789,  region:"Central / I-35"},
-      {city:"Georgetown – City Center",              lat:30.6327, lon:-97.6772,  region:"Central / I-35"}, // [web:219][web:228]
-      {city:"Cameron – City Center",                 lat:30.8788, lon:-96.9716,  region:"Central / I-35"}, // reuse your earlier coords
-      {city:"Taylor – City Center",                  lat:30.5713, lon:-97.4437,  region:"Central / I-35"}, // same as Taylor Muni
-      {city:"Vizcaya – Neighborhood",                lat:30.5871, lon:-97.641,   region:"Central / I-35"},
-      {city:"Grainger – City Center",                lat:30.71,   lon:-97.45,    region:"Central / I-35"},
-      {city:"Salado – City Center",                  lat:30.9477, lon:-97.5384,  region:"Central / I-35"},
-      {city:"Jarrell – City Center",                 lat:30.824,  lon:-97.6056,  region:"Central / I-35"},
-      {city:"Buda – City Center",                    lat:30.083,  lon:-97.8403,  region:"Central / I-35"},
-      {city:"Kyle – City Center",                    lat:29.989,  lon:-97.8772,  region:"Central / I-35"},
+  function cToF(c) {
+    return (c * 9/5) + 32;
+  }
 
-      // Junction is in your original Hill Country/Brush Country list as an airport; we include both:
-      {city:"Junction – Kimble County Airport",      lat:30.5113, lon:-99.7635,  region:"Hill Country"},  // from KJCT[web:226][web:229]
-      {city:"Junction – City Approx",                lat:30.49,   lon:-99.77,    region:"Hill Country"},
+  async function fetchWeather() {
+    const tbody = document.querySelector("#weatherTable tbody");
+    tbody.innerHTML = ""; // Clear table
 
-      // Hill Country – airports and city points
-      {city:"Boerne – Boerne Stage",                 lat:29.7253, lon:-98.6912,  region:"Hill Country"},
-      {city:"Brownwood – Brownwood Regional",        lat:31.7936, lon:-98.9565,  region:"Hill Country"},
-      {city:"Burnet – Burnet Municipal",             lat:30.7389, lon:-98.2386,  region:"Hill Country"},
-      {city:"Coleman – Coleman Municipal",           lat:31.842,  lon:-99.4036,  region:"Hill Country"},
-      {city:"Comanche – Comanche County-City",       lat:31.9205, lon:-98.6007,  region:"Hill Country"},
-      {city:"Kerrville – Kerrville Municipal",       lat:29.9767, lon:-99.0857,  region:"Hill Country"},
-      {city:"Lampasas – Lampasas Municipal",         lat:31.106,  lon:-98.195,   region:"Hill Country"},
-      {city:"Llano – Llano Municipal",               lat:30.7836, lon:-98.6617,  region:"Hill Country"},
-      {city:"San Saba – San Saba County",            lat:31.2333, lon:-98.7167,  region:"Hill Country"},
-      {city:"Stephenville – Stephenville Regional",  lat:32.2153, lon:-98.1777,  region:"Hill Country"},
-      {city:"Lake Buchanan",                         lat:30.8183, lon:-98.4227,  region:"Hill Country"},
-      {city:"Luckenbach",                            lat:30.1787, lon:-98.7572,  region:"Hill Country"},
-      {city:"Fredericksburg – City Center",          lat:30.2752, lon:-98.8720,  region:"Hill Country"},
-      {city:"Blanco – City Center",                  lat:30.0980, lon:-98.4214,  region:"Hill Country"},
-      {city:"Johnson City – City Center",            lat:30.2744, lon:-98.4114,  region:"Hill Country"},
-// New Central / I-35 & nearby additions
-{city:"Bastrop – City Center",        lat:30.1117, lon:-97.3178, region:"Central / I-35"},
-{city:"Smithville – City Center",     lat:30.0044, lon:-97.1489, region:"Central / I-35"},
-{city:"Leander – City Center",        lat:30.5736, lon:-97.8567, region:"Central / I-35"},
-{city:"Manor – City Center",          lat:30.3431, lon:-97.5567, region:"Central / I-35"},
-{city:"Liberty Hill – City Center",   lat:30.6640, lon:-97.9200, region:"Central / I-35"},
+    let maxCurrent = -999, minCurrent = 999;
+    let hottestNow = "", coldestNow = "";
+    let maxHigh = -999, minLow = 999, maxRain = 0;
+    let hottestCity = "", coldestCity = "", wettestCity = "";
 
-// Hill Country / Highland Lakes
-{city:"Marble Falls – City Center",   lat:30.5784, lon:-98.2751, region:"Hill Country"},
-{city:"Horseshoe Bay – City Center",  lat:30.5400, lon:-98.3530, region:"Hill Country"},
+    // Create an array of promises – fetches happen in parallel!
+    const promises = stations.map(async (station) => {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}` +
+                  `&longitude=${station.lon}` +
+                  `&current_weather=true&hourly=temperature_2m,precipitation` +
+                  `&timezone=America/Chicago`;
 
-// Hill Country west/southwest of you
-{city:"Comfort – City Center",        lat:29.9677, lon:-98.9050, region:"Hill Country"},
-{city:"Mason – City Center",          lat:30.7420, lon:-99.2258, region:"Hill Country"},
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Fetch failed');
+        const data = await res.json();
 
-// Canyon Lake area (pick one representative point)
-{city:"Canyon Lake – City Center",    lat:29.8750, lon:-98.2620, region:"Hill Country"},
-      // Florence lies just NW of Georgetown; approximate city center
-      {city:"Florence – City Center",                lat:30.841,  lon:-97.793,   region:"Hill Country"}
-    ];
+        const nowTempC = data.current_weather.temperature;
+        const nowTempF = cToF(nowTempC);
 
-    function cToF(c) { return (c * 9/5 + 32); }
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        const times = data.hourly.time;
+        const temps = data.hourly.temperature_2m;
+        const prec = data.hourly.precipitation;
 
-    async function fetchWeather() {
-      const tbody = document.querySelector("#weatherTable tbody");
-      tbody.innerHTML = "";
-
-      let maxCurrent = -999, minCurrent = 999;
-      let hottestNow = "", coldestNow = "";
-
-      let maxHigh = -999, minLow = 999, maxRain = 0;
-      let hottestCity = "", coldestCity = "", wettestCity = "";
-
-      for (const station of stations) {
-        const url =
-          `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}` +
-          `&longitude=${station.lon}` +
-          `&current_weather=true&hourly=temperature_2m,precipitation` +
-          `&timezone=America/Chicago`;
-
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-
-          const nowTempC = data.current_weather.temperature;
-          const nowTempF = cToF(nowTempC);
-
-          const now = new Date();
-          const today = now.toISOString().split("T")[0];
-          const times = data.hourly.time;
-          const temps = data.hourly.temperature_2m;
-          const prec  = data.hourly.precipitation;
-
-          let highC = -999, lowC = 999, totalPrec = 0;
-          for (let i = 0; i < times.length; i++) {
-            if (times[i].startsWith(today)) {
-              if (temps[i] > highC) highC = temps[i];
-              if (temps[i] < lowC)  lowC = temps[i];
-              totalPrec += prec[i];
-            }
+        let highC = -999, lowC = 999, totalPrec = 0;
+        for (let i = 0; i < times.length; i++) {
+          if (times[i].startsWith(today)) {
+            if (temps[i] > highC) highC = temps[i];
+            if (temps[i] < lowC) lowC = temps[i];
+            totalPrec += prec[i];
           }
-
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${station.city}</td>
-            <td>${station.region}</td>
-            <td>${nowTempF.toFixed(1)}</td>
-            <td>${cToF(highC).toFixed(1)}</td>
-            <td>${cToF(lowC).toFixed(1)}</td>
-            <td>${totalPrec.toFixed(2)}</td>
-          `;
-          tbody.appendChild(row);
-
-          if (nowTempC > maxCurrent) { maxCurrent = nowTempC; hottestNow = station.city; }
-          if (nowTempC < minCurrent) { minCurrent = nowTempC; coldestNow = station.city; }
-
-          if (highC > maxHigh) { maxHigh = highC; hottestCity = station.city; }
-          if (lowC  < minLow)  { minLow  = lowC;  coldestCity = station.city; }
-          if (totalPrec > maxRain) { maxRain = totalPrec; wettestCity = station.city; }
-
-        } catch (e) {
-          console.log("Error fetching:", station.city, e);
         }
-      }
 
-      document.getElementById("summary").innerText =
-        `Current Hottest: ${hottestNow} ${cToF(maxCurrent).toFixed(1)}°F | ` +
-        `Current Coolest: ${coldestNow} ${cToF(minCurrent).toFixed(1)}°F | ` +
-        `Daily Hottest: ${hottestCity} ${cToF(maxHigh).toFixed(1)}°F | ` +
-        `Daily Coldest: ${coldestCity} ${cToF(minLow).toFixed(1)}°F | ` +
-        `Wettest: ${wettestCity} ${maxRain.toFixed(2)} in`;
+        // Build table row
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${station.city}</td>
+          <td>${station.region}</td>
+          <td>${nowTempF.toFixed(1)}</td>
+          <td>${cToF(highC).toFixed(1)}</td>
+          <td>${cToF(lowC).toFixed(1)}</td>
+          <td>${totalPrec.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
 
-      sortTable(2, "desc");
-    }
-
-    function sortTable(colIndex, direction) {
-      const table = document.getElementById("weatherTable");
-      const tbody = table.tBodies[0];
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-
-      let dir = direction;
-      if (!dir) {
-        const current = table.getAttribute("data-sort-dir") || "desc";
-        dir = current === "asc" ? "desc" : "asc";
-        table.setAttribute("data-sort-dir", dir);
-      }
-
-      rows.sort((a, b) => {
-        let x = a.cells[colIndex].innerText.trim();
-        let y = b.cells[colIndex].innerText.trim();
-        const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
-        if (isNumeric) { x = parseFloat(x); y = parseFloat(y); }
-        else { x = x.toLowerCase(); y = y.toLowerCase(); }
-
-        if (dir === "asc") {
-          if (x > y) return 1;
-          if (x < y) return -1;
-          return 0;
-        } else {
-          if (x < y) return 1;
-          if (x > y) return -1;
-          return 0;
+        // Update running extremes
+        if (nowTempC > maxCurrent) {
+          maxCurrent = nowTempC;
+          hottestNow = station.city;
         }
-      });
+        if (nowTempC < minCurrent) {
+          minCurrent = nowTempC;
+          coldestNow = station.city;
+        }
+        if (highC > maxHigh) {
+          maxHigh = highC;
+          hottestCity = station.city;
+        }
+        if (lowC < minLow) {
+          minLow = lowC;
+          coldestCity = station.city;
+        }
+        if (totalPrec > maxRain) {
+          maxRain = totalPrec;
+          wettestCity = station.city;
+        }
 
-      rows.forEach(r => tbody.appendChild(r));
+        return true; // Success
+      } catch (e) {
+        console.log("Error fetching:", station.city, e);
+        return false;
+      }
+    });
+
+    // Wait for ALL fetches to complete (parallel!)
+    await Promise.all(promises);
+
+    // Now update the summary – only once everything is done
+    document.getElementById("summary").innerText = 
+      `Current Hottest: ${hottestNow} ${cToF(maxCurrent).toFixed(1)}°F | ` +
+      `Current Coolest: ${coldestNow} ${cToF(minCurrent).toFixed(1)}°F | ` +
+      `Daily Hottest: ${hottestCity} ${cToF(maxHigh).toFixed(1)}°F | ` +
+      `Daily Coldest: ${coldestCity} ${cToF(minLow).toFixed(1)}°F | ` +
+      `Wettest: ${wettestCity} ${maxRain.toFixed(2)} in`;
+
+    // Re-sort table to initial hot-to-cool order
+    sortTable(2, "desc");
+  }
+
+  function sortTable(colIndex, direction) {
+    // Your existing sortTable function – unchanged
+    const table = document.getElementById("weatherTable");
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    let dir = direction || table.getAttribute("data-sort-dir") || "desc";
+    if (!direction) {
+      dir = dir === "asc" ? "desc" : "asc";
+      table.setAttribute("data-sort-dir", dir);
     }
+    rows.sort((a, b) => {
+      let x = a.cells[colIndex].innerText.trim();
+      let y = b.cells[colIndex].innerText.trim();
+      const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
+      if (isNumeric) {
+        x = parseFloat(x);
+        y = parseFloat(y);
+      } else {
+        x = x.toLowerCase();
+        y = y.toLowerCase();
+      }
+      if (dir === "asc") return x > y ? 1 : x < y ? -1 : 0;
+      return x < y ? 1 : x > y ? -1 : 0;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
 
-    document.addEventListener("DOMContentLoaded", fetchWeather);
-  </script>
+  // Start fetching when page loads
+  document.addEventListener("DOMContentLoaded", fetchWeather);
+</script>
+</body>
+</html>
 </body>
 </html>
