@@ -70,6 +70,24 @@
             <span id="precip" class="value">--</span>
         </div>
     </div>
+  <div style="margin-top: 40px;">
+  <h3 style="text-align: center; color: #2c3e50;">Next 14 Days – Historical Almanac</h3>
+  <div id="next14TableContainer" style="overflow-x: auto; max-height: 400px;">
+    <table id="next14Table" style="width:100%; border-collapse: collapse; font-size: 0.95em;">
+      <thead style="background: #3498db; color: white; position: sticky; top: 0;">
+        <tr>
+          <th style="padding: 10px; border: 1px solid #ddd;">Date</th>
+          <th style="padding: 10px; border: 1px solid #ddd;">Record High</th>
+          <th style="padding: 10px; border: 1px solid #ddd;">Record Low</th>
+          <th style="padding: 10px; border: 1px solid #ddd;">Avg High</th>
+          <th style="padding: 10px; border: 1px solid #ddd;">Avg Low</th>
+          <th style="padding: 10px; border: 1px solid #ddd;">Cum. Precip Norm</th>
+        </tr>
+      </thead>
+      <tbody id="next14Body"></tbody>
+    </table>
+  </div>
+</div>
 </div>
 
 <script>
@@ -467,6 +485,62 @@
         document.getElementById('daySelect').value = dd;
         getAlmanacData();
     };
+  
+  // ────────────────────────────────────────────────
+// Generate next 14 days table on page load
+// ────────────────────────────────────────────────
+function loadNext14DaysTable() {
+  const today = new Date();
+  const tbody = document.getElementById('next14Body');
+  tbody.innerHTML = ''; // clear any previous content
+
+  for (let i = 0; i < 14; i++) {
+    const futureDate = new Date(today);
+    futureDate.setDate(today.getDate() + i);
+
+    const mm = String(futureDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(futureDate.getDate()).padStart(2, '0');
+    const key = `${mm}-${dd}`;
+
+    const data = almanacData[key];
+
+    const monthName = futureDate.toLocaleString('default', { month: 'short' });
+    const dateStr = `${monthName} ${futureDate.getDate()}`;
+
+    let rowContent = `
+      <td style="padding: 8px; border: 1px solid #eee; text-align: center;">${dateStr}</td>
+    `;
+
+    if (data) {
+      rowContent += `
+        <td style="padding: 8px; border: 1px solid #eee;">${data.recH}° (${data.recHY})</td>
+        <td style="padding: 8px; border: 1px solid #eee;">${data.recL}° (${data.recLY})</td>
+        <td style="padding: 8px; border: 1px solid #eee;">${data.avgH}°</td>
+        <td style="padding: 8px; border: 1px solid #eee;">${data.avgL}°</td>
+        <td style="padding: 8px; border: 1px solid #eee;">${data.accP}"</td>
+      `;
+    } else {
+      rowContent += `
+        <td colspan="5" style="padding: 8px; border: 1px solid #eee; text-align: center; color: #e74c3c;">
+          No historical data yet
+        </td>
+      `;
+    }
+
+    tbody.innerHTML += `<tr>${rowContent}</tr>`;
+  }
+}
+
+// Call it when the page loads (together with today's data)
+window.onload = function() {
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('monthSelect').value = mm;
+  document.getElementById('daySelect').value = dd;
+  getAlmanacData();
+  loadNext14DaysTable();   // ← new call
+};
 </script>
 </body>
 </html>
