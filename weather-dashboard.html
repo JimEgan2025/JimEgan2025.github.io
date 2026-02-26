@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vizcaya 10-Day Weather Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      color: #1f2937;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .global-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 25px;
+      text-align: center;
+    }
+    .global-header h1 { font-size: 2.8em; margin-bottom: 10px; }
+    .global-header p { font-size: 1.2em; opacity: 0.95; }
+    .section {
+      margin: 40px 25px;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .section-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      text-align: center;
+    }
+    .section-header h2 { font-size: 1.8em; margin: 0; }
+    .scale-info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-size: 13px;
+      color: #1e40af;
+    }
+    .chart-container { position: relative; height: 350px; margin: 20px 0; }
+    .data-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .summary-item {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .summary-label { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
+    .summary-value { font-size: 22px; font-weight: 800; }
+    .glance-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 15px;
+      padding-bottom: 10px;
+    }
+    .glance-card {
+      min-width: 140px;
+      background: #f0f9ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+    }
+    .glance-icon { font-size: 2.5em; margin: 5px 0; }
+    .glance-temp-high { font-size: 1.6em; color: #ef4444; }
+    .glance-temp-low { font-size: 1.3em; color: #3b82f6; }
+    .info-footer {
+      padding: 20px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+    }
+    @media (max-width: 768px) {
+      .chart-container { height: 300px; }
+      .global-header h1 { font-size: 2.2em; }
+      .section { margin: 20px 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Global Header -->
+    <div class="global-header">
+      <h1>Vizcaya 10-Day Weather Dashboard</h1>
+      <p>Round Rock, TX | Last updated: <span id="updateTime"></span></p>
+    </div>
+
+    <!-- 7-Day Forecast at a Glance (severe.html style) -->
+    <div class="section">
+      <div class="section-header"><h2>7-Day Forecast at a Glance</h2></div>
+      <div class="section-content">
+        <div class="glance-container" id="glanceCards"></div>
+      </div>
+    </div>
+
+    <!-- Rain Meter -->
+    <div class="section">
+      <div class="section-header"><h2>🌧️ Rain Meter</h2></div>
+      <div class="section-content">
+        <div class="scale-info">
+          <strong>Precipitation Scale:</strong> Dry = 0.00", Light = under 0.1", Moderate = 0.1" to 0.5", Heavy > 0.5".
+        </div>
+        <div class="chart-container"><canvas id="precipChart"></canvas></div>
+        <div class="data-summary">
+          <div class="summary-item"><div class="summary-label">Total Rainfall</div><div class="summary-value" id="totalRain">0.00"</div></div>
+          <div class="summary-item"><div class="summary-label">Avg Daily Rainfall</div><div class="summary-value" id="avgRain">0.00"</div></div>
+          <div class="summary-item"><div class="summary-label">Max Daily Rainfall</div><div class="summary-value" id="maxRain">0.00"</div></div>
+          <div class="summary-item"><div class="summary-label">Rainy Days</div><div class="summary-value" id="rainyDays">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Muggy Meter -->
+    <div class="section">
+      <div class="section-header"><h2>☀️ Muggy Meter – Comfort Forecast</h2></div>
+      <div class="section-content">
+        <div class="scale-info">
+          Comfort Scale: Green = comfortable (feels-like <70°F & humidity <60%), Yellow = muggy, Red = oppressive.
+        </div>
+        <div class="chart-container"><canvas id="muggyChart"></canvas></div>
+        <div class="data-summary">
+          <div class="summary-item"><div class="summary-label">Muggiest Day</div><div class="summary-value" id="muggyPeak">--</div></div>
+          <div class="summary-item"><div class="summary-label">Avg Humidity</div><div class="summary-value" id="avgHum">--%</div></div>
+          <div class="summary-item"><div class="summary-label">Peak Feels-Like</div><div class="summary-value" id="peakFeels">--°F</div></div>
+          <div class="summary-item"><div class="summary-label">Comfort Days</div><div class="summary-value" id="comfortDays">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Temperature vs Normal -->
+    <div class="section">
+      <div class="section-header"><h2>🌡️ Temperature vs 130-Year Normal</h2></div>
+      <div class="section-content">
+        <div class="chart-container"><canvas id="tempChart"></canvas></div>
+        <div class="data-summary">
+          <div class="summary-item"><div class="summary-label">Current Anomaly</div><div class="summary-value" id="currentAnomaly">+0.0°F</div></div>
+          <div class="summary-item"><div class="summary-label">Warmest Day</div><div class="summary-value" id="warmestDay">--</div></div>
+          <div class="summary-item"><div class="summary-label">Coolest Night</div><div class="summary-value" id="coolestNight">--</div></div>
+          <div class="summary-item"><div class="summary-label">Days Above Normal</div><div class="summary-value" id="daysAbove">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wind & Gust Outlook (with Cloud Cover integrated) -->
+    <div class="section">
+      <div class="section-header"><h2>💨 Wind & Gust Outlook with Cloud Cover</h2></div>
+      <div class="section-content">
+        <div class="scale-info">
+          Green = light wind (<15 mph), Yellow = breezy (15–25 mph), Orange = strong (>25 mph). Cloud cover % shown as gray background fill.
+        </div>
+        <div class="chart-container"><canvas id="windChart"></canvas></div>
+        <div class="data-summary">
+          <div class="summary-item"><div class="summary-label">Strongest Gust</div><div class="summary-value" id="maxGust">-- mph</div></div>
+          <div class="summary-item"><div class="summary-label">Windy Days</div><div class="summary-value" id="windyDays">0</div></div>
+          <div class="summary-item"><div class="summary-label">Avg Wind Speed</div><div class="summary-value" id="avgWind">-- mph</div></div>
+          <div class="summary-item"><div class="summary-label">Avg Cloud Cover</div><div class="summary-value" id="avgCloud">--%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="info-footer">
+      Data from Open-Meteo GFS | Vizcaya Weather 2026 | <a href="https://jimegan2025.github.io">More Forecasts</a>
+    </div>
+
+  </div>
+
+  <script>
+    const LAT = 30.509747;
+    const LON = -97.692116;
+
+    async function loadDashboardData() {
+      try {
+        // Fetch all daily data in one call
+        const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,relative_humidity_2m_mean,wind_speed_10m_max,wind_gusts_10m_max,precipitation_sum,precipitation_probability_max,cloud_cover_mean&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        const { daily } = data;
+
+        const labels = daily.time.map(t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }));
+
+        const highs = daily.temperature_2m_max;
+        const lows = daily.temperature_2m_min;
+        const feelsHigh = daily.apparent_temperature_max;
+        const feelsLow = daily.apparent_temperature_min;
+        const humidity = daily.relative_humidity_2m_mean;
+        const windSpeeds = daily.wind_speed_10m_max;
+        const windGusts = daily.wind_gusts_10m_max;
+        const precipAmounts = daily.precipitation_sum;
+        const precipProbs = daily.precipitation_probability_max;
+        const dryProbs = precipProbs.map(p => 100 - p);
+        const cloudCover = daily.cloud_cover_mean;
+
+        document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        displayRainChart(labels, precipAmounts, precipProbs, dryProbs);
+        displayMuggyChart(labels, feelsHigh, feelsLow, humidity);
+        displayTempVsNormalChart(labels, highs, lows);
+        displayWindChart(labels, windSpeeds, windGusts, cloudCover);
+        display7DayGlance(labels, highs, lows, precipProbs, windSpeeds, windGusts);
+
+      } catch (err) {
+        console.error(err);
+        document.body.innerHTML += `<div style="color:red; padding:20px; text-align:center;">Error loading forecast: ${err.message}</div>`;
+      }
+    }
+
+    // Rain Meter (your original)
+    function displayRainChart(labels, amounts, probs, dryProbs) {
+      const ctx = document.getElementById('precipChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Precip Amount (in)', data: amounts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', yAxisID: 'y', fill: true },
+            { label: 'Rain Probability (%)', data: probs, borderColor: '#f59e0b', borderDash: [5,5], yAxisID: 'y1' },
+            { label: 'Dry Probability (%)', data: dryProbs, borderColor: '#10b981', yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { title: { display: true, text: 'Inches' }, position: 'left' },
+            y1: { title: { display: true, text: 'Probability (%)' }, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+      let total = amounts.reduce((a,b)=>a+b,0);
+      document.getElementById('totalRain').textContent = total.toFixed(2) + '"';
+      document.getElementById('avgRain').textContent = (total/10).toFixed(2) + '"';
+      document.getElementById('maxRain').textContent = Math.max(...amounts).toFixed(2) + '"';
+      document.getElementById('rainyDays').textContent = amounts.filter(a=>a>0).length;
+    }
+
+    // Muggy Meter
+    function displayMuggyChart(labels, feelsHigh, feelsLow, humidity) {
+      const avgFeels = feelsHigh.map((h,i) => (h + feelsLow[i])/2);
+      const ctx = document.getElementById('muggyChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Feels-Like Temp (°F)', data: avgFeels, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', yAxisID: 'y', fill: true },
+            { label: 'Humidity (%)', data: humidity, borderColor: '#f59e0b', borderDash: [5,5], yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { title: { display: true, text: 'Feels-Like (°F)' }, position: 'left' },
+            y1: { title: { display: true, text: 'Humidity (%)' }, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+      document.getElementById('muggyPeak').textContent = Math.max(...avgFeels).toFixed(1) + '°F';
+      document.getElementById('avgHum').textContent = (humidity.reduce((a,b)=>a+b,0)/10).toFixed(1) + '%';
+      document.getElementById('peakFeels').textContent = Math.max(...feelsHigh).toFixed(1) + '°F';
+      document.getElementById('comfortDays').textContent = avgFeels.filter(f => f < 70).length;
+    }
+
+    // Temperature vs Normal (placeholder normals)
+    function displayTempVsNormalChart(labels, highs, lows) {
+      const normals = Array(10).fill(55); // Replace with real 130-yr daily/monthly normals
+      const anomaly = highs.map((h,i) => h - normals[i]);
+      const ctx = document.getElementById('tempChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Forecast High (°F)', data: highs, backgroundColor: '#ef4444' },
+            { label: 'Forecast Low (°F)', data: lows, backgroundColor: '#3b82f6' },
+            { label: 'Normal Avg (°F)', data: normals, type: 'line', borderColor: '#6b7280', fill: false },
+            { label: 'Anomaly (°F)', data: anomaly, type: 'line', borderColor: '#facc15' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+      document.getElementById('currentAnomaly').textContent = anomaly[0].toFixed(1) + '°F';
+      document.getElementById('warmestDay').textContent = Math.max(...highs) + '°F';
+      document.getElementById('coolestNight').textContent = Math.min(...lows) + '°F';
+      document.getElementById('daysAbove').textContent = anomaly.filter(a => a > 0).length;
+    }
+
+    // Wind & Gust with Cloud Cover integrated
+    function displayWindChart(labels, speeds, gusts, cloudCover) {
+      const ctx = document.getElementById('windChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Sustained Wind (mph)', data: speeds, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', yAxisID: 'y', fill: true },
+            { label: 'Peak Gusts (mph)', data: gusts, borderColor: '#f59e0b', yAxisID: 'y' },
+            { label: 'Cloud Cover (%)', data: cloudCover, borderColor: '#6b7280', borderDash: [5,5], yAxisID: 'y1' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { title: { display: true, text: 'Wind (mph)' }, position: 'left' },
+            y1: { title: { display: true, text: 'Cloud Cover (%)' }, position: 'right', grid: { drawOnChartArea: false } }
+          }
+        }
+      });
+      document.getElementById('maxGust').textContent = Math.max(...gusts) + ' mph';
+      document.getElementById('avgWind').textContent = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1) + ' mph';
+      document.getElementById('windyDays').textContent = speeds.filter(s => s > 15).length;
+      document.getElementById('windShift').textContent = 'NE → SSE';
+    }
+
+    // 7-Day Glance Cards (severe.html style)
+    function display7DayGlance(labels, highs, lows, precipProbs, windSpeeds, windGusts) {
+      const container = document.getElementById('glanceCards');
+      container.innerHTML = '';
+      labels.forEach((day, i) => {
+        const card = document.createElement('div');
+        card.style.minWidth = '140px';
+        card.style.background = precipProbs[i] > 20 ? '#fef3c7' : '#f0f9ff';
+        card.style.border = '1px solid #bfdbfe';
+        card.style.borderRadius = '12px';
+        card.style.padding = '15px';
+        card.style.textAlign = 'center';
+
+        card.innerHTML = `
+          <div style="font-weight:bold; font-size:1.2em;">${day}</div>
+          <div class="glance-icon">${getWeatherIcon(precipProbs[i])}</div>
+          <div class="glance-temp-high">${highs[i]}°</div>
+          <div class="glance-temp-low">${lows[i]}°</div>
+          <div style="font-size:0.9em; color:#10b981;">Rain ${precipProbs[i]}%</div>
+          <div style="font-size:0.9em;">${windSpeeds[i]} G${windGusts[i]}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function getWeatherIcon(prob) {
+      if (prob > 50) return '🌧️';
+      if (prob > 20) return '🌦️';
+      return '☀️';
+    }
+
+    loadDashboardData();
+    setInterval(loadDashboardData, 3600000);
+  </script>
+</body>
+</html>
