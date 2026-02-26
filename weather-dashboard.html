@@ -111,7 +111,7 @@
       <p>Round Rock, TX | Last updated: <span id="updateTime"></span></p>
     </div>
 
-    <!-- 7-Day Forecast at a Glance (severe.html style) -->
+    <!-- 7-Day Forecast at a Glance -->
     <div class="section">
       <div class="section-header"><h2>7-Day Forecast at a Glance</h2></div>
       <div class="section-content">
@@ -167,19 +167,31 @@
       </div>
     </div>
 
-    <!-- Wind & Gust Outlook (with Cloud Cover integrated) -->
+    <!-- Wind & Gust Outlook with Cloud Cover -->
     <div class="section">
       <div class="section-header"><h2>💨 Wind & Gust Outlook with Cloud Cover</h2></div>
       <div class="section-content">
         <div class="scale-info">
-          Green = light wind (<15 mph), Yellow = breezy (15–25 mph), Orange = strong (>25 mph). Cloud cover % shown as gray background fill.
+          Green = light wind (<15 mph), Yellow = breezy (15–25 mph), Orange = strong (>25 mph). Cloud cover % shown as gray dashed line.
         </div>
         <div class="chart-container"><canvas id="windChart"></canvas></div>
         <div class="data-summary">
-          <div class="summary-item"><div class="summary-label">Strongest Gust</div><div class="summary-value" id="maxGust">-- mph</div></div>
-          <div class="summary-item"><div class="summary-label">Windy Days</div><div class="summary-value" id="windyDays">0</div></div>
-          <div class="summary-item"><div class="summary-label">Avg Wind Speed</div><div class="summary-value" id="avgWind">-- mph</div></div>
-          <div class="summary-item"><div class="summary-label">Avg Cloud Cover</div><div class="summary-value" id="avgCloud">--%</div></div>
+          <div class="summary-item">
+            <div class="summary-label">Strongest Gust</div>
+            <div class="summary-value" id="maxGust">-- mph</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Windy Days</div>
+            <div class="summary-value" id="windyDays">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Avg Wind Speed</div>
+            <div class="summary-value" id="avgWind">-- mph</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-label">Avg Cloud Cover</div>
+            <div class="summary-value" id="avgCloud">--%</div>
+          </div>
         </div>
       </div>
     </div>
@@ -197,42 +209,42 @@
 
     async function loadDashboardData() {
       try {
-        // Fetch all daily data in one call
         const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,relative_humidity_2m_mean,wind_speed_10m_max,wind_gusts_10m_max,precipitation_sum,precipitation_probability_max,cloud_cover_mean&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
+        console.log('Fetching data from:', url);
         const res = await fetch(url);
-        if (!res.ok) throw new Error('API error');
+        if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
         const data = await res.json();
-        const { daily } = data;
+        console.log('API response received. Daily keys:', Object.keys(data.daily || {}));
 
+        const { daily } = data;
         const labels = daily.time.map(t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }));
 
-        const highs = daily.temperature_2m_max;
-        const lows = daily.temperature_2m_min;
-        const feelsHigh = daily.apparent_temperature_max;
-        const feelsLow = daily.apparent_temperature_min;
-        const humidity = daily.relative_humidity_2m_mean;
-        const windSpeeds = daily.wind_speed_10m_max;
-        const windGusts = daily.wind_gusts_10m_max;
-        const precipAmounts = daily.precipitation_sum;
-        const precipProbs = daily.precipitation_probability_max;
+        const highs = daily.temperature_2m_max || [];
+        const lows = daily.temperature_2m_min || [];
+        const feelsHigh = daily.apparent_temperature_max || [];
+        const feelsLow = daily.apparent_temperature_min || [];
+        const humidity = daily.relative_humidity_2m_mean || [];
+        const windSpeeds = daily.wind_speed_10m_max || [];
+        const windGusts = daily.wind_gusts_10m_max || [];
+        const precipAmounts = daily.precipitation_sum || [];
+        const precipProbs = daily.precipitation_probability_max || [];
         const dryProbs = precipProbs.map(p => 100 - p);
-        const cloudCover = daily.cloud_cover_mean;
+        const cloudCover = daily.cloud_cover_mean || [];
 
         document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+        display7DayGlance(labels, highs, lows, precipProbs, windSpeeds, windGusts);
         displayRainChart(labels, precipAmounts, precipProbs, dryProbs);
         displayMuggyChart(labels, feelsHigh, feelsLow, humidity);
         displayTempVsNormalChart(labels, highs, lows);
         displayWindChart(labels, windSpeeds, windGusts, cloudCover);
-        display7DayGlance(labels, highs, lows, precipProbs, windSpeeds, windGusts);
 
       } catch (err) {
-        console.error(err);
-        document.body.innerHTML += `<div style="color:red; padding:20px; text-align:center;">Error loading forecast: ${err.message}</div>`;
+        console.error('Dashboard load error:', err);
+        document.body.innerHTML += `<div style="color:red; padding:20px; text-align:center;">Error loading forecast: ${err.message}. Check console for details.</div>`;
       }
     }
 
-    // Rain Meter (your original)
     function displayRainChart(labels, amounts, probs, dryProbs) {
       const ctx = document.getElementById('precipChart').getContext('2d');
       new Chart(ctx, {
@@ -255,13 +267,16 @@
         }
       });
       let total = amounts.reduce((a,b)=>a+b,0);
-      document.getElementById('totalRain').textContent = total.toFixed(2) + '"';
-      document.getElementById('avgRain').textContent = (total/10).toFixed(2) + '"';
-      document.getElementById('maxRain').textContent = Math.max(...amounts).toFixed(2) + '"';
-      document.getElementById('rainyDays').textContent = amounts.filter(a=>a>0).length;
+      const totalEl = document.getElementById('totalRain');
+      if (totalEl) totalEl.textContent = total.toFixed(2) + '"';
+      const avgEl = document.getElementById('avgRain');
+      if (avgEl) avgEl.textContent = (total/10).toFixed(2) + '"';
+      const maxEl = document.getElementById('maxRain');
+      if (maxEl) maxEl.textContent = Math.max(...amounts).toFixed(2) + '"';
+      const rainyEl = document.getElementById('rainyDays');
+      if (rainyEl) rainyEl.textContent = amounts.filter(a=>a>0).length;
     }
 
-    // Muggy Meter
     function displayMuggyChart(labels, feelsHigh, feelsLow, humidity) {
       const avgFeels = feelsHigh.map((h,i) => (h + feelsLow[i])/2);
       const ctx = document.getElementById('muggyChart').getContext('2d');
@@ -283,15 +298,18 @@
           }
         }
       });
-      document.getElementById('muggyPeak').textContent = Math.max(...avgFeels).toFixed(1) + '°F';
-      document.getElementById('avgHum').textContent = (humidity.reduce((a,b)=>a+b,0)/10).toFixed(1) + '%';
-      document.getElementById('peakFeels').textContent = Math.max(...feelsHigh).toFixed(1) + '°F';
-      document.getElementById('comfortDays').textContent = avgFeels.filter(f => f < 70).length;
+      const peakEl = document.getElementById('muggyPeak');
+      if (peakEl) peakEl.textContent = Math.max(...avgFeels).toFixed(1) + '°F';
+      const avgHumEl = document.getElementById('avgHum');
+      if (avgHumEl) avgHumEl.textContent = (humidity.reduce((a,b)=>a+b,0)/10).toFixed(1) + '%';
+      const peakFeelsEl = document.getElementById('peakFeels');
+      if (peakFeelsEl) peakFeelsEl.textContent = Math.max(...feelsHigh).toFixed(1) + '°F';
+      const comfortEl = document.getElementById('comfortDays');
+      if (comfortEl) comfortEl.textContent = avgFeels.filter(f => f < 70).length;
     }
 
-    // Temperature vs Normal (placeholder normals)
     function displayTempVsNormalChart(labels, highs, lows) {
-      const normals = Array(10).fill(55); // Replace with real 130-yr daily/monthly normals
+      const normals = Array(10).fill(55); // Replace with real normals
       const anomaly = highs.map((h,i) => h - normals[i]);
       const ctx = document.getElementById('tempChart').getContext('2d');
       new Chart(ctx, {
@@ -307,13 +325,16 @@
         },
         options: { responsive: true, maintainAspectRatio: false }
       });
-      document.getElementById('currentAnomaly').textContent = anomaly[0].toFixed(1) + '°F';
-      document.getElementById('warmestDay').textContent = Math.max(...highs) + '°F';
-      document.getElementById('coolestNight').textContent = Math.min(...lows) + '°F';
-      document.getElementById('daysAbove').textContent = anomaly.filter(a => a > 0).length;
+      const anomalyEl = document.getElementById('currentAnomaly');
+      if (anomalyEl) anomalyEl.textContent = anomaly[0].toFixed(1) + '°F';
+      const warmEl = document.getElementById('warmestDay');
+      if (warmEl) warmEl.textContent = Math.max(...highs) + '°F';
+      const coolEl = document.getElementById('coolestNight');
+      if (coolEl) coolEl.textContent = Math.min(...lows) + '°F';
+      const daysEl = document.getElementById('daysAbove');
+      if (daysEl) daysEl.textContent = anomaly.filter(a => a > 0).length;
     }
 
-    // Wind & Gust with Cloud Cover integrated
     function displayWindChart(labels, speeds, gusts, cloudCover) {
       const ctx = document.getElementById('windChart').getContext('2d');
       new Chart(ctx, {
@@ -335,28 +356,28 @@
           }
         }
       });
-      document.getElementById('maxGust').textContent = Math.max(...gusts) + ' mph';
-      document.getElementById('avgWind').textContent = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1) + ' mph';
-      document.getElementById('windyDays').textContent = speeds.filter(s => s > 15).length;
-      document.getElementById('windShift').textContent = 'NE → SSE';
+      const maxGustEl = document.getElementById('maxGust');
+      if (maxGustEl) maxGustEl.textContent = Math.max(...gusts) + ' mph';
+      const avgWindEl = document.getElementById('avgWind');
+      if (avgWindEl) avgWindEl.textContent = (speeds.reduce((a,b)=>a+b,0)/speeds.length).toFixed(1) + ' mph';
+      const windyEl = document.getElementById('windyDays');
+      if (windyEl) windyEl.textContent = speeds.filter(s => s > 15).length;
+      const avgCloudEl = document.getElementById('avgCloud');
+      if (avgCloudEl) avgCloudEl.textContent = (cloudCover.reduce((a,b)=>a+b,0)/cloudCover.length).toFixed(1) + '%';
+      const shiftEl = document.getElementById('windShift');
+      if (shiftEl) shiftEl.textContent = 'NE → SSE';
     }
 
-    // 7-Day Glance Cards (severe.html style)
     function display7DayGlance(labels, highs, lows, precipProbs, windSpeeds, windGusts) {
       const container = document.getElementById('glanceCards');
+      if (!container) return;
       container.innerHTML = '';
       labels.forEach((day, i) => {
         const card = document.createElement('div');
-        card.style.minWidth = '140px';
-        card.style.background = precipProbs[i] > 20 ? '#fef3c7' : '#f0f9ff';
-        card.style.border = '1px solid #bfdbfe';
-        card.style.borderRadius = '12px';
-        card.style.padding = '15px';
-        card.style.textAlign = 'center';
-
+        card.className = 'glance-card';
         card.innerHTML = `
           <div style="font-weight:bold; font-size:1.2em;">${day}</div>
-          <div class="glance-icon">${getWeatherIcon(precipProbs[i])}</div>
+          <div class="glance-icon">${precipProbs[i] > 50 ? '🌧️' : precipProbs[i] > 20 ? '🌦️' : '☀️'}</div>
           <div class="glance-temp-high">${highs[i]}°</div>
           <div class="glance-temp-low">${lows[i]}°</div>
           <div style="font-size:0.9em; color:#10b981;">Rain ${precipProbs[i]}%</div>
@@ -366,14 +387,10 @@
       });
     }
 
-    function getWeatherIcon(prob) {
-      if (prob > 50) return '🌧️';
-      if (prob > 20) return '🌦️';
-      return '☀️';
-    }
-
     loadDashboardData();
     setInterval(loadDashboardData, 3600000);
   </script>
+</body>
+</html>
 </body>
 </html>
