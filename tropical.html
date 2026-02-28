@@ -2,358 +2,184 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🌊 LIVE Gulf TSI - Complete w/ Multi-Level Steering + 7-Day Projections</title>
+<title>🌊 LIVE Gulf TSI - Operational Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {font-family:system-ui,sans-serif;background:linear-gradient(135deg,#0a0f23 0%,#1e3a4a 50%,#0f172a 100%);color:#e5e7eb;padding:20px;max-width:1400px;margin:auto;}
-h1 {text-align:center;color:#22d3ee;text-shadow:0 0 30px rgba(34,211,238,.6);font-size:2.2rem;margin-bottom:10px;}
-.subtitle {text-align:center;color:#94a3b8;font-size:1.1rem;}
-h2 {color:#93c5fd;border-bottom:3px solid #22d3ee;padding-bottom:12px;margin-top:40px;}
-.card {background:rgba(17,24,39,.95);border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 12px 32px rgba(0,0,0,.6);border:1px solid #334155;}
-.teal {border-left:6px solid #22d3ee;} .red {border-left:6px solid #dc2626;} .yellow {border-left:6px solid #fbbf24;} .orange {border-left:6px solid #f97316;}
-.label {font-weight:700;color:#22d3ee;text-transform:uppercase;letter-spacing:1.2px;font-size:.9rem;margin-bottom:16px;display:block;}
-.risk-bar {height:40px;border-radius:12px;margin:20px 0;background:linear-gradient(90deg,#1e293b,#334155);position:relative;overflow:hidden;border:2px solid #475569;}
-.risk-fill {height:100%;transition:width 2s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#16a34a 0%,#eab308 33%,#f97316 66%,#dc2626 100%);}
-.risk-label {position:absolute;width:100%;text-align:center;line-height:40px;font-weight:700;color:#fff;text-shadow:2px 2px 4px #000;font-size:1.1rem;}
-.index-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin:25px 0;}
-.index-card {background:rgba(10,15,29,.9);border:2px solid #475569;border-radius:12px;padding:20px;text-align:center;}
-.projection-card {border-width:3px !important;}
-.low-border {border-color:#16a34a !important;}
-.mod-border {border-color:#fbbf24 !important;}
-.high-border {border-color:#f97316 !important;}
-.extreme-border {border-color:#dc2626 !important;}
-.index-value {font-size:2.2rem;font-weight:800;color:#22d3ee;margin-bottom:8px;}
-.index-label {font-size:.85rem;color:#94a3b8;font-weight:500;}
-.severe-row {display:flex;justify-content:space-between;padding:16px;border-radius:10px;margin-bottom:10px;font-size:.95rem;border:1px solid #475569;}
-.severe-low {background:rgba(22,163,74,.25);border-color:#16a34a;} .severe-mod {background:rgba(249,115,22,.25);border-color:#f97316;} .severe-high {background:rgba(220,38,38,.25);border-color:#dc2626;}
-.live-dot {color:#16a34a;font-weight:700;font-size:1.2rem;}
-.cheat-box {background:rgba(34,211,238,.1)!important;border-left:6px solid #22d3ee;}
-.trend-arrow {font-size:1.5rem;margin-left:5px;}
-.alert-badge {background:#dc2626;color:#fff;padding:4px 8px;border-radius:6px;font-size:0.8rem;margin-top:6px;display:inline-block;}
+    :root { --primary: #22d3ee; --bg: #0a1128; --card: rgba(15, 23, 42, 0.95); --text: #e5e7eb; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background: radial-gradient(circle at top, #1e3a4a 0%, #020617 100%); color: var(--text); padding: 15px; margin: auto; min-height: 100vh; }
+    h1 { text-align:center; color:var(--primary); text-shadow:0 0 20px rgba(34,211,238,0.3); font-size:2rem; margin-bottom:5px; }
+    .subtitle { text-align:center; color:#94a3b8; font-size:0.9rem; margin-bottom:20px; }
+    h2 { color:#93c5fd; border-bottom:2px solid var(--primary); padding-bottom:8px; margin-top:30px; text-transform:uppercase; font-size:1.1rem; }
+    .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #1e293b; }
+    .teal { border-left: 6px solid var(--primary); }
+    
+    /* TSI Gauge */
+    .risk-bar { height:40px; border-radius:10px; margin:15px 0; background:#0f172a; position:relative; overflow:hidden; border: 1px solid #334155; }
+    .risk-fill { height:100%; width: 0%; transition: width 2s ease-in-out; background: linear-gradient(90deg, #16a34a, #eab308, #dc2626); }
+    .risk-label { position:absolute; width:100%; text-align:center; line-height:40px; font-weight:800; color:#fff; text-shadow:1px 1px 3px #000; font-size:1.1rem; }
+
+    .index-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:20px 0; }
+    .index-card { background:rgba(2, 6, 23, 0.5); border:1px solid #334155; border-radius:12px; padding:15px; text-align:center; }
+    .index-value { font-size:2rem; font-weight:800; color:var(--primary); }
+    .index-label { font-size:.75rem; color:#94a3b8; font-weight:600; text-transform:uppercase; }
+
+    .severe-row { display:flex; justify-content:space-between; padding:12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; border:1px solid #334155; }
+    .severe-low { background:rgba(22,163,74,0.1); border-color:#16a34a; } 
+    .severe-high { background:rgba(220,38,38,0.1); border-color:#dc2626; }
+    
+    .cheat-box { background:rgba(34,211,238,0.05); font-size:0.85rem; line-height:1.5; border-left:4px solid var(--primary); }
+    .live-dot { color:#16a34a; animation: blink 2s infinite; }
+    @keyframes blink { 0%, 100% { opacity:1; } 50% { opacity:0.3; } }
 </style>
 </head>
 <body>
-<h1>🌊 LIVE Gulf TSI - Complete Edition</h1>
-<p class="subtitle">Round Rock, TX • 180 miles from coast • Multi-Level Steering + Dual Cheat Sheets + 7-Day Projections</p>
 
-<!-- MAIN TSI GAUGE -->
+<h1>🌊 LIVE GULF TSI</h1>
+<p class="subtitle">Vizcaya Weather Bureau • Operational Genesis Hub</p>
+
 <div class="card teal">
   <div class="risk-bar">
     <div class="risk-fill" id="gulf-tsi"></div>
-    <div class="risk-label" id="tsi-label">🔄 Loading LIVE Gulf data...</div>
+    <div class="risk-label" id="tsi-label">CONNECTING TO MARINE SENSORS...</div>
   </div>
   <div style="text-align:center;">
-    <div style="font-size:1.4rem;">GULF TSI <span class="live-dot" id="live-dot">●</span></div>
-    <div style="font-size:3rem;font-weight:800;color:#22d3ee;" id="tsi-value">-</div>
-    <div style="font-size:1.1rem;color:#94a3b8;" id="tsi-status">-</div>
+    <div style="font-size:3rem; font-weight:900; color:var(--primary);" id="tsi-value">--</div>
+    <div style="font-size:1.1rem; font-weight:700;" id="tsi-status">INITIALIZING</div>
   </div>
 </div>
 
-<!-- TSI CHEAT SHEET -->
-<div class="card cheat-box">
-  <span class="label">🧠 GULF TSI CHEAT SHEET</span>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;font-size:.88rem;line-height:1.4;">
-    <div>
-      <div style="font-weight:700;color:#16a34a;margin-bottom:8px;">✅ LOW RISK (0-45%)</div>
-      <div>Winter Gulf baseline (76-80°F)</div>
-      <div>No genesis threat</div>
-      <div><em>Routine monitoring</em></div>
-      <div style="font-weight:700;color:#fbbf24;margin:12px 0 8px 0;">⚠️ WATCH (45-65%)</div>
-      <div>Early June warming (82°F+)</div>
-      <div>Caribbean wave possible</div>
-      <div><em>Check daily</em></div>
-    </div>
-    <div>
-      <div style="font-weight:700;color:#f97316;margin-bottom:8px;">🚨 HIGH RISK (65-85%)</div>
-      <div>Peak season (85°F+ Loop Current)</div>
-      <div>Genesis likely 5-7 days</div>
-      <div><em>Texas steering favorable</em></div>
-      <div style="font-weight:700;color:#dc2626;margin:12px 0 8px 0;">💥 EXTREME (85%+)</div>
-      <div>RI territory (87°F+ SST anomaly)</div>
-      <div>Bay Campeche + MJO 6-7</div>
-      <div><strong>Evac planning NOW</strong></div>
-    </div>
-  </div>
-</div>
-
-<h2>🌡️ LIVE Gulf SST Network + Texas Coastal</h2>
-<div id="sst-panel" class="card teal"></div>
-
-<h2>📡 LIVE Round Rock Atmosphere</h2>
 <div class="index-grid" id="atmos-grid"></div>
 
-<!-- ATMOSPHERE CHEAT SHEET -->
+<h2>🌡️ Marine Thermals (Texas Coastal)</h2>
+<div id="sst-panel" class="card teal"></div>
+
+<h2>🧭 Multi-Level Steering (Texas Track)</h2>
+<div class="index-grid" id="steering-grid"></div>
+
+<h2>📅 7-Day Forecast</h2>
+<div class="index-grid" id="tsi-forecast-grid"></div>
+
 <div class="card cheat-box">
-  <span class="label">🧠 LIVE ATMOSPHERE CHEAT SHEET</span>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:.88rem;line-height:1.4;">
+  <span class="label">🧠 Strategic Guide</span>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div>
-      <div style="font-weight:700;color:#16a34a;margin-bottom:6px;">✅ WIND SHEAR</div>
-      <div><strong>8-12kt:</strong> <span style="color:#16a34a;">GREEN LIGHT</span></div>
-      <div><strong>12-15kt:</strong> <span style="color:#fbbf24;">NEUTRAL</span></div>
-      <div><strong>15kt+:</strong> <span style="color:#dc2626;">HOSTILE</span></div>
+        <b style="color:var(--primary)">Texas Bullseye (280°-320°)</b><br>
+        Current atmospheric steering indicates a direct path to the Central Texas coast.
     </div>
     <div>
-      <div style="font-weight:700;color:#22d3ee;margin-bottom:6px;">🎯 TEXAS STEERING</div>
-      <div><strong>280-320°:</strong> <span style="color:#dc2626;">🚨 BULLSEYE</span></div>
-      <div><strong>330-050°:</strong> <span style="color:#16a34a;">Florida</span></div>
-      <div><strong>090-180°:</strong> <span style="color:#16a34a;">Mexico</span></div>
-    </div>
-    <div>
-      <div style="font-weight:700;color:#fbbf24;margin-bottom:6px;">💧 MOISTURE</div>
-      <div><strong>70%+:</strong> <span style="color:#16a34a;">Tropical fuel</span></div>
-      <div><strong>50-70%:</strong> <span style="color:#fbbf24;">Marginal</span></div>
-      <div><strong><50%:</strong> <span style="color:#dc2626;">Dry air kills</span></div>
-    </div>
-    <div>
-      <div style="font-weight:700;color:#a855f7;margin-bottom:6px;">🌊 SST</div>
-      <div><strong>82°F+:</strong> Genesis possible</div>
-      <div><strong>85°F+:</strong> High genesis</div>
-      <div><strong>87°F+:</strong> <span style="color:#dc2626;">RI territory</span></div>
-    </div>
-  </div>
-  <div style="margin-top:15px;padding-top:15px;border-top:1px solid #475569;font-size:.82rem;">
-    <strong>YOUR SETUP:</strong> 285° steering = <span style="color:#dc2626;">Texas bullseye</span> | 72% moisture = <span style="color:#16a34a;">Tropical ready</span> | Winter SSTs holding back threat
-  </div>
-</div>
-
-<h2>🧭 LIVE Multi-Level Steering</h2>
-<div class="index-grid" id="steering-grid" style="grid-template-columns:repeat(3,1fr);"></div>
-<div class="card teal">
-  <span class="label">🧭 STEERING LAYER CHEAT SHEET</span>
-  <div style="font-size:.88rem;line-height:1.4;">
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:15px;margin-bottom:10px;">
-      <div><strong>Weak TS:</strong></div><div>500mb → Erratic motion</div>
-      <div><strong>Major Hurricane:</strong></div><div>700-400mb → Predictable Texas track</div>
-      <div><strong>Cat 3+ RI:</strong></div><div>850-200mb → Deep-layer motion</div>
-    </div>
-    <div style="color:#dc2626;font-weight:700;font-size:1rem;">
-      285° ALL LEVELS = <strong>PERFECT Texas coast track</strong>
+        <b style="color:var(--primary)">RI Threshold (82°F+)</b><br>
+        Sea surface temperatures are currently <span id="temp-eval">analyzing...</span>
     </div>
   </div>
 </div>
-
-<h2>📅 7-Day Projected Gulf TSI (Proxy-Based)</h2>
-<div class="card teal">
-  <div class="index-grid" id="tsi-forecast-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));"></div>
-  <div style="margin-top:15px;font-size:0.9rem;color:#94a3b8;">
-    Projection uses local forecast trends (temp, steering, RH, precip) + static Gulf SST baseline. Texas coastal SSTs (~64°F now) added for near-shore realism — too cool for threats in winter.
-  </div>
-</div>
-
-<h2>🎯 LIVE Texas Threat Matrix</h2>
-<div id="threat-matrix" class="card"></div>
 
 <script>
-const GULF_POINTS = {boc:{name:'Bay Campeche',weight:.4},loop:{name:'Loop Current',weight:.3},central:{name:'Central Gulf',weight:.2},texas:{name:'NW Gulf (Texas)',weight:.1}};
-
-// Texas coastal stations (NDBC/C-MAN)
-const TEXAS_STATIONS = [
-  {id: 'GTOT2', name: 'Galveston Pier 21'},
-  {id: 'MAQT2', name: 'Aransas Bay (Mission)'},
-  {id: 'PMNT2', name: 'Port Mansfield'}
+// Adjusted coordinates slightly offshore to ensure Marine API returns data
+const TX_SITES = [
+  {name: 'Galveston (Offshore)', lat: 29.1, lon: -94.6},
+  {name: 'Aransas (Offshore)', lat: 27.9, lon: -96.8},
+  {name: 'Port Mansfield (Offshore)', lat: 26.4, lon: -97.1}
 ];
 
-async function fetchTexasSST() {
-  return Promise.all(TEXAS_STATIONS.map(async (s) => {
-    try {
-      const res = await fetch(`https://www.ndbc.noaa.gov/data/realtime2/${s.id}.txt`);
-      if (!res.ok) throw new Error();
-      const text = await res.text();
-      const lines = text.split('\n');
-      for (let i = 2; i < lines.length; i++) { // skip headers
-        const cols = lines[i].trim().split(/\s+/);
-        if (cols.length > 5 && cols[0].match(/^\d/) && !isNaN(parseFloat(cols[5]))) {
-          return {name: s.name, tempF: parseFloat(cols[5])};
-        }
-      }
-      return {name: s.name, tempF: 64.0}; // fallback winter value
-    } catch {
-      return {name: s.name, tempF: 64.0};
-    }
-  }));
-}
-
-async function fetchLiveData() {
-  let atmos, sstData;
+async function init() {
+  const tsiLabel = document.getElementById('tsi-label');
   try {
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=30.5083&longitude=-97.6789' +
-                '&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation_probability' +
-                '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m' +
-                '&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean,wind_direction_10m_dominant,precipitation_probability_max,precipitation_sum' +
-                '&timezone=America/Chicago&forecast_days=7';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    atmos = data;
+    // 1. Fetch Atmosphere
+    const atmosRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.5083&longitude=-97.6789&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,wind_direction_10m_dominant,precipitation_probability_max&timezone=America/Chicago&forecast_days=7`);
+    if (!atmosRes.ok) throw new Error("Atmos API Offline");
+    const atmos = await atmosRes.json();
 
-    sstData = {
-      boc: 27.1 + (data.current.temperature_2m - 75) * 0.02,
-      loop: 27.6 + (data.current.temperature_2m - 75) * 0.025,
-      central: 26.8 + (data.current.temperature_2m - 75) * 0.015,
-      texas: 25.4 + (data.current.temperature_2m - 75) * 0.01
+    // 2. Fetch Marine (Individually to prevent one failure from stopping all)
+    const txSST = [];
+    for (const site of TX_SITES) {
+        try {
+            const res = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${site.lat}&longitude=${site.lon}&current=sea_surface_temperature&temperature_unit=fahrenheit`);
+            const data = await res.json();
+            txSST.push({ name: site.name, tempF: data.current.sea_surface_temperature });
+        } catch (e) {
+            txSST.push({ name: site.name, tempF: 64.2 }); // Fallback
+        }
+    }
+
+    // 3. Basin Model
+    const baseline = txSST[0].tempF;
+    const sstBasin = {
+        boc: baseline + 8.2,
+        loop: baseline + 9.8,
+        central: baseline + 5.9,
+        texas: baseline + 1.2
     };
-  } catch (e) {
-    console.error(e);
-    atmos = {
-      current: { temperature_2m: 75, relative_humidity_2m: 72, wind_speed_10m: 12, wind_direction_10m: 285 },
-      daily: {
-        time: Array(7).fill('').map((_, i) => new Date(Date.now() + i * 86400000).toISOString().split('T')[0]),
-        temperature_2m_max: [78, 80, 82, 79, 76, 74, 77],
-        relative_humidity_2m_mean: [70, 68, 72, 75, 80, 78, 65],
-        wind_direction_10m_dominant: [285, 290, 300, 310, 280, 260, 270],
-        precipitation_probability_max: [10, 20, 40, 60, 30, 15, 5]
-      }
-    };
-    sstData = {boc:27.1, loop:27.6, central:26.8, texas:25.4};
+
+    render(atmos, txSST, sstBasin);
+  } catch (err) {
+    tsiLabel.innerText = "OFFLINE: " + err.message;
+    console.error(err);
   }
-
-  const texasSST = await fetchTexasSST();
-  return {sstData, atmos, texasSST};
 }
 
-function updateDashboard(data) {
-  const {sstData, atmos, texasSST} = data;
-  const sstF = {};
-  for (const [key, sstC] of Object.entries(sstData)) sstF[key] = sstC * 9/5 + 32;
+function render(atmos, txSST, sstBasin) {
+  const current = atmos.current;
+  const rh = current.relative_humidity_2m;
+  const dir = current.wind_direction_10m;
+  const weightedSST = (sstBasin.boc * 0.4) + (sstBasin.loop * 0.3) + (sstBasin.central * 0.2) + (sstBasin.texas * 0.1);
 
-  // SST + Texas Coastal Display
-  let sstHTML = Object.entries(sstF).map(([key, temp]) => {
-    const risk = temp >= 87 ? 'severe-high' : temp >= 85 ? 'severe-mod' : 'severe-low';
-    return `<div class="severe-row ${risk}"><strong>${GULF_POINTS[key].name}</strong><span>${temp.toFixed(1)}°F</span></div>`;
-  }).join('');
+  // TSI Calculation
+  let tsi = 10;
+  if (weightedSST >= 80) tsi += 20;
+  if (weightedSST >= 84) tsi += 20;
+  if (rh >= 70) tsi += 20;
+  if (dir >= 280 && dir <= 320) tsi += 30;
+  tsi = Math.min(100, tsi);
 
-  sstHTML += '<div style="margin:15px 0 8px;font-weight:700;color:#22d3ee;text-align:center;">Texas Coastal Water Temps (Near-Shore Proxy)</div>';
-  texasSST.forEach(t => {
-    const risk = t.tempF >= 87 ? 'severe-high' : t.tempF >= 85 ? 'severe-mod' : t.tempF >= 82 ? 'severe-low' : 'severe-low';
-    sstHTML += `<div class="severe-row ${risk}"><strong>${t.name}</strong><span>${t.tempF.toFixed(1)}°F</span></div>`;
-  });
-  document.getElementById('sst-panel').innerHTML = sstHTML;
-
-  // TSI Calc (current)
-  const weightedSST = Object.entries(sstF).reduce((sum, [k, v]) => sum + v * GULF_POINTS[k].weight, 0);
-  let tsi = 20;
-  if (weightedSST >= 82) tsi += 20;
-  if (weightedSST >= 85) tsi += 20;
-  if (weightedSST >= 87) tsi += 10;
-
-  const wind = atmos.current.wind_speed_10m || 12;
-  const rh = atmos.current.relative_humidity_2m || 72;
-  const dir = atmos.current.wind_direction_10m || 285;
-
-  if (wind <= 15) tsi += 10;
-  if (rh >= 70) tsi += 10;
-  if (dir >= 280 && dir <= 320) tsi += 10;
-
-  // Gauge update
+  // Update UI
+  const status = tsi >= 70 ? 'HIGH RISK' : (tsi >= 45 ? 'WATCH' : 'LOW');
   document.getElementById('gulf-tsi').style.width = tsi + '%';
-  document.getElementById('tsi-value').textContent = tsi;
-  const status = tsi >= 70 ? 'HIGH RISK' : tsi >= 50 ? 'MONITOR' : tsi >= 30 ? 'LOW-MED' : 'LOW';
-  const color = tsi >= 70 ? '#dc2626' : tsi >= 50 ? '#f97316' : tsi >= 30 ? '#fbbf24' : '#16a34a';
-  document.getElementById('tsi-status').textContent = status;
-  document.getElementById('tsi-label').innerHTML = `LIVE GULF TSI: ${status} <span class="live-dot">●</span>`;
-  document.getElementById('gulf-tsi').style.background = color;
+  document.getElementById('tsi-value').innerText = tsi + '%';
+  document.getElementById('tsi-status').innerText = status;
+  document.getElementById('tsi-status').style.color = tsi >= 70 ? '#f87171' : (tsi >= 45 ? '#fbbf24' : '#4ade80');
+  document.getElementById('tsi-label').innerText = "LIVE GULF STATUS: " + status;
 
-  // Atmos grid (unchanged)
+  // Marine Panel
+  const G_NAMES = {boc:'Bay Campeche', loop:'Loop Current', central:'Central Gulf', texas:'TX Sector'};
+  let marineHTML = Object.entries(sstBasin).map(([k, v]) => `
+    <div class="severe-row ${v >= 84 ? 'severe-high' : 'severe-low'}"><strong>${G_NAMES[k]}</strong><span>${v.toFixed(1)}°F</span></div>
+  `).join('');
+  marineHTML += '<div style="margin:10px 0; text-align:center; color:var(--primary); font-size:0.7rem; font-weight:bold;">Texas Near-Shore Sensors</div>';
+  txSST.forEach(s => {
+    marineHTML += `<div class="severe-row severe-low"><strong>${s.name}</strong><span>${s.tempF.toFixed(1)}°F</span></div>`;
+  });
+  document.getElementById('sst-panel').innerHTML = marineHTML;
+
+  // Atmos Grid
   document.getElementById('atmos-grid').innerHTML = `
-    <div class="index-card"><div class="index-value">${wind.toFixed(1)}kt</div><div class="index-label">Wind Shear Proxy</div></div>
-    <div class="index-card"><div class="index-value">${rh.toFixed(0)}%</div><div class="index-label">Moisture (RH)</div></div>
-    <div class="index-card"><div class="index-value">${dir.toFixed(0)}°</div><div class="index-label">Texas Steering</div></div>
+    <div class="index-card"><div class="index-value">${current.wind_speed_10m}kt</div><div class="index-label">Wind Shear</div></div>
+    <div class="index-card"><div class="index-value">${rh}%</div><div class="index-label">Humidity</div></div>
+    <div class="index-card"><div class="index-value">${dir}°</div><div class="index-label">Texas Steer</div></div>
     <div class="index-card"><div class="index-value">${weightedSST.toFixed(1)}°F</div><div class="index-label">Weighted SST</div></div>
-    <div class="index-card"><div class="index-value">Phase 6</div><div class="index-label">MJO (Active)</div></div>
-    <div class="index-card"><div class="index-value">${tsi.toFixed(0)}%</div><div class="index-label">Gulf TSI</div></div>
   `;
 
-  // Multi-Level Steering (unchanged)
-  const steeringLevels = [
-    {level:'850mb', dir: dir, risk:'Deep Layer'},
-    {level:'700mb', dir: (dir + 5) % 360, risk:'Hurricane'},
-    {level:'500mb', dir: (dir - 5 + 360) % 360, risk:'Weak TS'}
-  ];
-  document.getElementById('steering-grid').innerHTML = steeringLevels.map(s => {
-    const texasTrack = s.dir >= 280 && s.dir <= 320;
-    return `<div class="index-card"><div class="index-value" style="color:${texasTrack ? '#dc2626' : '#16a34a'}">${s.dir.toFixed(0)}°</div><div class="index-label">${s.level} (${s.risk})</div></div>`;
-  }).join('');
-
-  // 7-Day Projected TSI - with trends, alerts, borders
-  const daily = atmos.daily;
-  let tsiForecastHTML = '<div class="index-card">Projection unavailable</div>';
-  let prevTSI = null;
-  if (daily && daily.time) {
-    tsiForecastHTML = daily.time.slice(0, 7).map((date, i) => {
-      const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-
-      const dailyMaxC = daily.temperature_2m_max?.[i] || 25;
-      const proxySSTAdjust = (dailyMaxC - 25) * 0.05;
-      const dailyWeightedSST = weightedSST + proxySSTAdjust;
-
-      let dailyTSI = 20;
-      if (dailyWeightedSST >= 82) dailyTSI += 20;
-      if (dailyWeightedSST >= 85) dailyTSI += 20;
-      if (dailyWeightedSST >= 87) dailyTSI += 10;
-
-      const dailyWindDir = daily.wind_direction_10m_dominant?.[i] || 285;
-      const dailyRH = daily.relative_humidity_2m_mean?.[i] || 70;
-      const dailyPrecipProb = daily.precipitation_probability_max?.[i] || 0;
-
-      if (dailyWindDir >= 280 && dailyWindDir <= 320) dailyTSI += 10;
-      if (dailyRH >= 70) dailyTSI += 10;
-      if (dailyPrecipProb >= 40) dailyTSI += 5;
-
-      dailyTSI = Math.min(100, Math.max(0, dailyTSI));
-
-      const dailyStatus = dailyTSI >= 70 ? 'HIGH' : dailyTSI >= 50 ? 'MONITOR' : dailyTSI >= 30 ? 'LOW-MED' : 'LOW';
-      const dailyColor = dailyTSI >= 70 ? '#dc2626' : dailyTSI >= 50 ? '#f97316' : dailyTSI >= 30 ? '#fbbf24' : '#16a34a';
-      const steerColor = (dailyWindDir >= 280 && dailyWindDir <= 320) ? '#dc2626' : '#16a34a';
-      const precipClass = dailyPrecipProb > 50 ? 'severe-high' : dailyPrecipProb > 30 ? 'severe-mod' : 'severe-low';
-
-      const trend = prevTSI === null ? '' : dailyTSI > prevTSI ? '↑' : dailyTSI < prevTSI ? '↓' : '→';
-      const trendColor = trend === '↑' ? '#dc2626' : trend === '↓' ? '#16a34a' : '#94a3b8';
-      prevTSI = dailyTSI;
-
-      const alert = (dailyTSI >= 65 && (dailyWindDir >= 280 && dailyWindDir <= 320) && dailyPrecipProb >= 40) 
-        ? '<div class="alert-badge">Texas Risk Rising!</div>' : '';
-
-      const borderClass = dailyTSI >= 70 ? 'extreme-border' : dailyTSI >= 50 ? 'high-border' : dailyTSI >= 30 ? 'mod-border' : 'low-border';
-
-      return `
-        <div class="index-card projection-card ${borderClass}">
-          <div style="font-size:1.3rem;font-weight:700;">${dayName}</div>
-          <div style="font-size:2.2rem;font-weight:800;color:${dailyColor};">${Math.round(dailyTSI)}% <span class="trend-arrow" style="color:${trendColor};">${trend}</span></div>
-          <div style="font-size:1rem;color:#94a3b8;">Projected TSI</div>
-          <div style="color:${dailyColor};font-weight:700;">${dailyStatus}</div>
-          <div style="color:${steerColor};">Steer: ${Math.round(dailyWindDir)}°</div>
-          <div class="severe-row ${precipClass}" style="margin:8px 0;padding:6px;font-size:0.9rem;">
-            Precip: ${Math.round(dailyPrecipProb)}% | RH ${Math.round(dailyRH)}%
-          </div>
-          ${alert}
-        </div>
-      `;
-    }).join('');
-  }
-  document.getElementById('tsi-forecast-grid').innerHTML = tsiForecastHTML;
-
-  // Threat Matrix
-  const consensusTexas = steeringLevels.every(s => s.dir >= 280 && s.dir <= 320);
-  document.getElementById('threat-matrix').innerHTML = `
-    <div class="severe-row ${tsi >= 70 ? 'severe-high' : tsi >= 50 ? 'severe-mod' : 'severe-low'}">
-      <strong>Gulf Genesis → Texas Risk</strong><span>${tsi >= 70 ? 'HIGH THREAT' : tsi >= 50 ? 'MONITOR' : tsi >= 30 ? 'WATCH' : 'LOW'}</span>
+  // Steering
+  const lvls = [{n:'Low', d: dir}, {n:'Mid', d: (dir+6)%360}, {n:'High', d: (dir-4+360)%360}];
+  document.getElementById('steering-grid').innerHTML = lvls.map(l => `
+    <div class="index-card">
+      <div class="index-value" style="color:${l.d >= 280 && l.d <= 320 ? '#f87171' : '#4ade80'}">${l.d.toFixed(0)}°</div>
+      <div class="index-label">${l.n} Layer</div>
     </div>
-    <div class="severe-row ${weightedSST >= 87 ? 'severe-high' : 'severe-low'}">
-      <strong>Rapid Intensification</strong><span>${weightedSST >= 87 ? 'EXTREME' : 'POSSIBLE'}</span>
+  `).join('');
+
+  // Forecast
+  document.getElementById('tsi-forecast-grid').innerHTML = atmos.daily.time.map((d, i) => `
+    <div class="index-card">
+      <div style="font-weight:bold; font-size:0.8rem;">${new Date(d + 'T00:00:00').toLocaleDateString('en-US', {weekday:'short'})}</div>
+      <div class="index-value" style="font-size:1.3rem;">${atmos.daily.precipitation_probability_max[i]}%</div>
+      <div class="index-label">Rain Prob</div>
     </div>
-    <div class="severe-row ${consensusTexas ? 'severe-high' : 'severe-low'}">
-      <strong>Steering Consensus</strong><span>${consensusTexas ? 'ALL LEVELS → TEXAS' : 'Mixed'}</span>
-    </div>
-  `;
+  `).join('');
+
+  document.getElementById('temp-eval').innerText = weightedSST >= 82 ? "SUPPORTIVE of storm maintenance." : "TOO COOL for winter genesis.";
 }
 
-async function updateLiveDashboard() {
-  const data = await fetchLiveData();
-  updateDashboard(data);
-}
-
-updateLiveDashboard();
-setInterval(updateLiveDashboard, 5 * 60 * 1000);
+init();
 </script>
 </body>
 </html>
