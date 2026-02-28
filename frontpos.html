@@ -1,140 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Texas-NM Arctic Ridge: Final Master Lab</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #eee; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        #map { height: 55vh; width: 100%; border-bottom: 3px solid #00ffcc; }
-        .dashboard { flex: 1; padding: 10px; overflow-y: auto; background: #0f1218; }
-        
-        .cheaters-box { background: #1a1a2e; border: 2px solid #ff4444; border-left: 8px solid #ff4444; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9em; color: #58a6ff; line-height: 1.4; }
-        .stability-key { background: #161b22; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.75em; border: 1px solid #30363d; color: #8b949e; }
-        
-        .controls { background: #1c2128; padding: 10px; border-radius: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 15px; border: 1px solid #30363d; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 8px; }
-        
-        .card { background: #161b22; padding: 8px; border-radius: 6px; border: 1px solid #30363d; font-size: 0.8em; border-top: 5px solid #3e94ff; }
-        .vizcaya { border: 2px solid #00ffcc !important; background: #0d2a2a !important; border-top: 5px solid #00ffcc !important; }
-        .nm-tag { border-top: 5px solid #ffaa00 !important; }
+<meta charset="UTF-8">
+<title>Vizcaya Aviation Hub | Frontal & Trough Analysis</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root { --primary: #00ffcc; --bg: #020617; --card: #0f172a; --text: #e2e8f0; --dryline: #fb923c; --moisture: #10b981; --falling: #ef4444; --rising: #3b82f6; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+  
+  .layout-grid { display: grid; grid-template-columns: 340px 1fr; gap: 15px; }
+  
+  .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #1e293b; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 15px; }
+  h3 { margin-top: 0; color: var(--primary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 10px; }
+  
+  #map { height: 550px; border-radius: 12px; border: 1px solid #334155; z-index: 1; }
+  
+  /* City Grid */
+  #city-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 15px; }
+  .city-card { background: #111827; padding: 10px; border-radius: 8px; font-size: 0.8rem; border-left: 4px solid #334155; }
+  .city-card.vizcaya { border-left-color: var(--primary); background: #162238; }
+  .city-card.west-lead { border-left-color: var(--dryline); } /* Western dryline markers */
+  
+  .trend-up { color: var(--rising); font-weight: 800; }
+  .trend-down { color: var(--falling); font-weight: 800; }
+  
+  /* Map Markers */
+  .marker-box { background: rgba(0,0,0,0.85); border: 1px solid #fff; border-radius: 4px; padding: 3px; color: white; font-size: 0.7rem; text-align: center; min-width: 45px; }
+  .wind-arrow { font-size: 1.3rem; line-height: 1; display: inline-block; margin: 2px 0; }
 
-        /* TALL WIND ARROWS (.75 Scale) */
-        .marker-body { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; background: rgba(62, 148, 255, 0.85); cursor: pointer; }
-        .wind-arrow { font-size: 42px; font-weight: 900; color: white; text-shadow: 2px 2px 4px #000; }
-        
-        .metric { font-weight: bold; color: #fff; }
-    </style>
+  .resource-link { display: block; background: #1e293b; color: var(--primary); padding: 10px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.8rem; text-align: center; border: 1px solid var(--primary); transition: 0.2s; }
+  .resource-link:hover { background: var(--primary); color: #000; }
+
+  .signature-box { font-size: 0.75rem; line-height: 1.5; color: #94a3b8; }
+  .signature-item { margin-bottom: 10px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); }
+  .signature-item b { color: var(--primary); display: block; margin-bottom: 3px; font-size: 0.85rem; }
+</style>
 </head>
 <body>
-    <div id="map"></div>
-    <div class="dashboard">
-        <div id="cheaters-box" class="cheaters-box">
-            <strong>🛰️ PILOT SYNOPSIS:</strong> 1038mb (30.65") Ridge Analysis. 
-            <span id="synopsis">Calculating stability...</span>
+
+<div class="layout-grid">
+    <div class="sidebar">
+        <div class="card">
+            <h3>📈 Vizcaya Altimeter</h3>
+            <div id="synopsis" style="font-size: 1rem; font-weight: bold;">Syncing...</div>
         </div>
 
-        <div class="controls">
-            <b>12HR FORECAST:</b> <input type="range" id="ts" min="0" max="12" value="0" style="flex-grow:1;">
-            <span id="hourVal" style="color:#ff4444; font-weight:bold; min-width:40px;">NOW</span>
+        <div class="card">
+            <h3>🔗 Aviation Forecasts</h3>
+            <a href="https://aviationweather.gov/gfa/#progchart" target="_blank" class="resource-link">Interactive GFA Prog Chart</a>
+            <p style="font-size: 0.7rem; color: #64748b; margin-top: 8px; text-align: center;">Compare model data against official NWS forecasts.</p>
         </div>
 
-        <div id="city-grid" class="grid"></div>
+        <div class="card">
+            <h3>🛰️ Observed Frontal Map</h3>
+            <img src="https://www.wpc.ncep.noaa.gov/sfc/usasfc.gif" style="width:100%; border-radius:6px;" referrerpolicy="no-referrer">
+            <p style="font-size: 0.65rem; color: #64748b; margin-top: 5px; text-align: center;">Official Analysis (Past 3 Hours)</p>
+        </div>
 
-        <div class="stability-key">
-            <strong>🧠 STABILITY DECODER:</strong><br>
-            • <b>CAPE (Thunderstorm Fuel):</b> Measures energy available for rising air. Under this 30.60"+ Ridge, CAPE is <b>0</b> because air is sinking.<br>
-            • <b>LI (Lifted Index):</b> +8 or higher means "Rock Solid" stability. Values below 0 indicate storm potential.
+        <div class="card">
+            <h3>🧭 Dryline Logic</h3>
+            <div class="signature-box">
+                <div class="signature-item">
+                    <b>Boundary Watch</b><br>
+                    Watch for 20°+ Dewpoint drops between <b>Pecos/Stockton</b> and <b>Vizcaya</b>.
+                </div>
+            </div>
         </div>
     </div>
 
+    <div class="main-content">
+        <div id="map"></div>
+        
+        <div class="card" style="margin-top:15px; display:flex; align-items:center; gap:20px;">
+            <span style="font-weight:bold; font-size:0.8rem; color:var(--primary);">MODEL TIMELINE:</span>
+            <input type="range" id="ts" min="0" max="12" value="0" style="flex:1; accent-color:var(--primary); cursor:pointer;">
+            <div id="hourVal" style="font-weight:900; font-size:1.3rem; color:var(--primary); min-width:70px; text-align:right;">NOW</div>
+        </div>
+
+        <div id="city-grid"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const map = L.map('map').setView([31.0, -100.0], 6);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-    const markers = L.layerGroup().addTo(map);
+const locations = [
+  { name: "Vizcaya", lat: 30.5083, lon: -97.6789, hub: true },
+  { name: "Clovis, NM", lat: 34.40, lon: -103.20, lead: true },
+  { name: "Roswell, NM", lat: 33.39, lon: -104.52, lead: true },
+  { name: "Pecos", lat: 31.42, lon: -103.49, lead: true },
+  { name: "Fort Stockton", lat: 30.88, lon: -102.87, lead: true },
+  { name: "Amarillo", lat: 35.22, lon: -101.83 },
+  { name: "Lubbock", lat: 33.57, lon: -101.88 },
+  { name: "Midland", lat: 31.99, lon: -102.07 },
+  { name: "San Angelo", lat: 31.46, lon: -100.43 },
+  { name: "Del Rio", lat: 29.36, lon: -100.89 },
+  { name: "Dallas/FW", lat: 32.89, lon: -97.04 },
+  { name: "Austin/KAUS", lat: 30.19, lon: -97.66 },
+  { name: "Houston", lat: 29.76, lon: -95.36 },
+  { name: "Corpus Christi", lat: 27.80, lon: -97.39 },
+  { name: "Brownsville", lat: 25.90, lon: -97.49 }
+];
 
-    const locations = [
-        { name: "Vizcaya", lat: 30.587, lon: -97.64, hub: true },
-        { name: "Clovis", lat: 34.40, lon: -103.20, nm: true },
-        { name: "Roswell", lat: 33.39, lon: -104.52, nm: true },
-        { name: "Amarillo", lat: 35.22, lon: -101.83 },
-        { name: "Childress", lat: 34.42, lon: -100.20 },
-        { name: "Lubbock", lat: 33.57, lon: -101.88 },
-        { name: "Wichita Falls", lat: 33.91, lon: -98.49 },
-        { name: "Dallas", lat: 32.77, lon: -96.79 },
-        { name: "Abilene", lat: 32.44, lon: -99.73 },
-        { name: "Waco", lat: 31.54, lon: -97.14 },
-        { name: "San Angelo", lat: 31.46, lon: -100.43 },
-        { name: "Midland", lat: 31.99, lon: -102.07 },
-        { name: "Pecos", lat: 31.42, lon: -103.49 },
-        { name: "Fort Stockton", lat: 30.89, lon: -102.87 },
-        { name: "Del Rio", lat: 29.36, lon: -100.89 },
-        { name: "Austin", lat: 30.26, lon: -97.74 },
-        { name: "Houston", lat: 29.76, lon: -95.36 },
-        { name: "Corpus Christi", lat: 27.80, lon: -97.39 },
-        { name: "Brownsville", lat: 25.90, lon: -97.50 }
-    ];
+const map = L.map('map', { zoomControl: false }).setView([31.2, -100.5], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+const markers = L.layerGroup().addTo(map);
 
-    let cache = {};
+let cache = {};
 
-    async function load() {
-        for (let l of locations) {
-            try {
-                const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${l.lat}&longitude=${l.lon}&hourly=temperature_2m,dewpoint_2m,wind_direction_10m,pressure_msl,cape,lifted_index&timezone=auto&forecast_days=2&temperature_unit=fahrenheit`);
-                cache[l.name] = await r.json();
-            } catch(e) { console.error(l.name + " failed"); }
-        }
-        draw(0);
+async function init() {
+    for (let l of locations) {
+        try {
+            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${l.lat}&longitude=${l.lon}&hourly=temperature_2m,dewpoint_2m,wind_direction_10m,wind_speed_10m,pressure_msl&timezone=America/Chicago&forecast_days=2&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+            cache[l.name] = await r.json();
+        } catch(e) { console.error(l.name + " failed"); }
     }
+    draw(0);
+}
 
-    function draw(off) {
-        const hr = new Date().getHours() + parseInt(off);
-        markers.clearLayers();
-        const grid = document.getElementById('city-grid');
-        grid.innerHTML = '';
+function draw(offset) {
+    markers.clearLayers();
+    const grid = document.getElementById('city-grid');
+    grid.innerHTML = '';
+    
+    const now = new Date();
+    const hr = now.getHours() + parseInt(offset);
 
-        locations.forEach(c => {
-            const d = cache[c.name]?.hourly;
-            if(!d || d.temperature_2m[hr] === undefined) return;
+    locations.forEach(c => {
+        const d = cache[c.name]?.hourly;
+        if(!d) return;
 
-            const t = Math.round(d.temperature_2m[hr]);
-            const dp = Math.round(d.dewpoint_2m[hr]);
-            const p = (d.pressure_msl[hr] * 0.02953).toFixed(2);
-            const wd = d.wind_direction_10m[hr];
-            const cape = Math.round(d.cape[hr] || 0);
-            const li = Math.round(d.lifted_index[hr] || 12);
+        const temp = Math.round(d.temperature_2m[hr]);
+        const dew = Math.round(d.dewpoint_2m[hr]);
+        const press = (d.pressure_msl[hr] * 0.02953).toFixed(2);
+        
+        const pNow = d.pressure_msl[hr];
+        const pPast = d.pressure_msl[hr - 3] || d.pressure_msl[hr];
+        const delta = (pNow - pPast).toFixed(2);
+        
+        let trendIcon = '', trendCls = '';
+        if (delta > 0.6) { trendIcon = '↑↑'; trendCls = 'trend-up'; }
+        else if (delta > 0) { trendIcon = '↑'; trendCls = 'trend-up'; }
+        else if (delta < -0.6) { trendIcon = '↓↓'; trendCls = 'trend-down'; }
+        else if (delta < 0) { trendIcon = '↓'; trendCls = 'trend-down'; }
 
-            const icon = L.divIcon({
-                className: '',
-                html: `<div class="marker-body" style="${c.hub ? 'border-color:#00ffcc;' : ''} ${c.nm ? 'border-color:#ffaa00;' : ''}">
-                        <div class="wind-arrow" style="transform: rotate(${wd+180}deg);">↑</div>
-                       </div>`,
-                iconSize: [52, 52], iconAnchor: [26, 26]
-            });
+        const wd = d.wind_direction_10m[hr];
+        const ws = Math.round(d.wind_speed_10m[hr]);
+        const windColor = (wd > 300 || wd < 50) ? '#60a5fa' : '#fb923c';
 
-            L.marker([c.lat, c.lon], {icon}).addTo(markers)
-             .bindPopup(`<b>${c.name}</b><br>Press: ${p}"<br>CAPE: ${cape}<br>LI: +${li}`);
-
-            const card = document.createElement('div');
-            card.className = `card ${c.hub ? 'vizcaya' : ''} ${c.nm ? 'nm-tag' : ''}`;
-            card.innerHTML = `
-                <strong>${c.name}</strong><br>
-                Baro: <span class="metric">${p}"</span><br>
-                Temp: <span class="metric">${t}°F</span> | DP: <span class="metric" style="color:#58a6ff">${dp}°F</span><br>
-                <span style="font-size:0.85em; color:#ff7b72">CAPE: ${cape} | LI: +${li}</span>
-            `;
-            grid.appendChild(card);
-
-            if(c.hub) {
-                document.getElementById('synopsis').innerText = `HUB STATUS: Vizcaya Pressure at ${p}". High Plains air (NM Orange Tags) is exceptionally dry at ${dp}°F. Combined with CAPE 0, the ridge is creating absolute vertical suppression.`;
-            }
+        const icon = L.divIcon({
+            className: '',
+            html: `<div class="marker-box" style="border-color:${c.hub ? 'var(--primary)' : (c.lead ? 'var(--dryline)' : '#444')}">
+                    <div style="font-weight:900; font-size:0.8rem;">${temp}°</div>
+                    <div style="color:var(--moisture); font-weight:bold;">${dew}°</div>
+                    <div class="wind-arrow" style="transform: rotate(${wd+180}deg); color:${windColor}">↑</div>
+                    <div class="${trendCls}" style="font-size:9px">${trendIcon}</div>
+                   </div>`,
+            iconSize: [50, 60]
         });
-        document.getElementById('hourVal').innerText = off == 0 ? "NOW" : "+"+off+"H";
-    }
+        L.marker([c.lat, c.lon], {icon}).addTo(markers);
 
-    load();
-    document.getElementById('ts').oninput = (e) => draw(e.target.value);
+        const card = document.createElement('div');
+        card.className = `city-card ${c.hub ? 'vizcaya' : ''} ${c.lead ? 'west-lead' : ''}`;
+        card.innerHTML = `
+            <div style="font-weight:bold; color:var(--primary);">${c.name}</div>
+            <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                <span>Press: <b>${press}"</b> <span class="${trendCls}">${trendIcon}</span></span>
+            </div>
+            <div style="margin-top:3px;">Temp: <b>${temp}°</b> | DP: <b>${dew}°</b></div>
+            <div style="font-size:0.7rem; color:#94a3b8; margin-top:3px;">Wind: ${ws} mph @ ${wd}°</div>
+        `;
+        grid.appendChild(card);
+
+        if(c.hub && offset == 0) {
+            document.getElementById('synopsis').innerHTML = `
+                <span style="font-size:1.5rem; color:#fff;">${press}"</span> 
+                <span class="${trendCls}" style="font-size:1.2rem;">${trendIcon}</span><br>
+                <small style="color:var(--primary)">TREND: ${delta > 0 ? '+' : ''}${delta} mb / 3hr</small>
+            `;
+        }
+    });
+
+    document.getElementById('hourVal').innerText = offset == 0 ? "NOW" : "+" + offset + "H";
+}
+
+init();
+document.getElementById('ts').oninput = (e) => draw(e.target.value);
 </script>
 </body>
 </html>
