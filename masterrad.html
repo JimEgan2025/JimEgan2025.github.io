@@ -5,17 +5,22 @@
     <title>Station Monitor - Master Control v10</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; background: #111; font-family: sans-serif; }
-        #map { height: 100vh; width: 100%; }
+        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #map { height: 100vh; width: 100%; background: #050505; }
         
         /* Popup & UI Styling */
-        .alert-header { color: #d32f2f; font-weight: bold; border-bottom: 2px solid #eee; margin-bottom: 5px; text-transform: uppercase; }
-        .time-label { font-weight: bold; color: #555; font-size: 11px; }
-        .desc-text { background: #f4f4f4; padding: 10px; border-radius: 4px; margin-top: 10px; font-style: italic; font-size: 12px; border-left: 4px solid #FFD700; color: #222; max-height: 200px; overflow-y: auto; }
+        .alert-header { color: #ff3b3b; font-weight: 800; border-bottom: 2px solid #333; margin-bottom: 8px; text-transform: uppercase; font-size: 14px; }
+        .time-label { font-weight: bold; color: #94a3b8; font-size: 11px; text-transform: uppercase; }
+        .desc-text { background: #1e293b; padding: 12px; border-radius: 6px; margin-top: 10px; font-style: italic; font-size: 12px; border-left: 4px solid #FFD700; color: #e2e8f0; max-height: 180px; overflow-y: auto; line-height: 1.5; }
         
-        .ui-panel { background: rgba(30,30,30,0.9); color: white; padding: 12px; border-radius: 8px; width: 190px; font-size: 11px; border: 1px solid #444; }
-        input[type=range] { width: 100%; accent-color: #0f0; cursor: pointer; }
-        button { width: 100%; background: #444; color: #FFD700; border: 1px solid #666; padding: 6px; cursor: pointer; margin-top: 8px; font-weight: bold; }
+        .ui-panel { background: rgba(15, 23, 42, 0.95); color: white; padding: 15px; border-radius: 12px; width: 210px; font-size: 11px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .ui-panel label { font-weight: 800; color: #94a3b8; letter-spacing: 1px; display: block; margin-bottom: 8px; }
+        input[type=range] { width: 100%; accent-color: #FFD700; cursor: pointer; margin-bottom: 15px; }
+        button { width: 100%; background: #1e3a8a; color: white; border: 1px solid #3b82f6; padding: 8px; cursor: pointer; margin-top: 8px; font-weight: bold; border-radius: 6px; transition: 0.2s; }
+        button:hover { background: #2563eb; }
+        
+        .leaflet-popup-content-wrapper { background: #0f172a; color: white; border: 1px solid #334155; }
+        .leaflet-popup-tip { background: #0f172a; }
     </style>
 </head>
 <body>
@@ -26,67 +31,66 @@
 
 <script>
     var stationPos = [30.5871, -97.641];
-    var map = L.map('map').setView(stationPos, 6);
+    var map = L.map('map', {zoomControl: false}).setView(stationPos, 7);
 
-    // 1. BASE MAP (Bottom Layer)
+    // 1. BASE MAP (Dark)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
 
-    // 2. STATE OUTLINES (Added as a non-blocking layer)
+    // 2. STATE OUTLINES
     var stateBorders = L.layerGroup().addTo(map);
     fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
         .then(res => res.json())
         .then(data => {
             L.geoJson(data, {
-                style: { color: "#ffffff", weight: 1, opacity: 0.4, fill: false, interactive: false } 
+                style: { color: "#ffffff", weight: 1, opacity: 0.3, fill: false, interactive: false } 
             }).addTo(stateBorders);
         });
 
     // 3. WEATHER LAYERS
     var radar = L.tileLayer.wms('https://opengeo.ncep.noaa.gov/geoserver/conus/conus_bref_qcd/ows', { 
-        layers: 'conus_bref_qcd', format: 'image/png', transparent: true, opacity: 0.7 
+        layers: 'conus_bref_qcd', format: 'image/png', transparent: true, opacity: 0.7, zIndex: 500
     }).addTo(map);
 
     var fireRisk = L.tileLayer.wms('https://mapservices.weather.noaa.gov/vector/services/fire_weather/SPC_firewx/MapServer/WMSServer', { 
         layers: '1', format: 'image/png', transparent: true, opacity: 0.5 
-    }).addTo(map);
+    });
 
     var warnings = L.tileLayer.wms('https://mapservices.weather.noaa.gov/eventdriven/services/WWA/watch_warn_adv/MapServer/WMSServer', { 
-        layers: '0', format: 'image/png', transparent: true, opacity: 0.5 
+        layers: '0', format: 'image/png', transparent: true, opacity: 0.4 
     }).addTo(map);
 
     // 4. RANGE RINGS
     var rings = L.layerGroup().addTo(map);
-    [100, 200, 300, 400].forEach(d => {
-        L.circle(stationPos, { radius: d * 1609.34, color: '#00FFFF', weight: 1, fill: false, dashArray: '5,10', interactive: false }).addTo(rings);
+    [50, 100, 150, 200].forEach(d => {
+        L.circle(stationPos, { radius: d * 1609.34, color: '#00FFFF', weight: 1, fill: false, dashArray: '5,10', opacity: 0.4, interactive: false }).addTo(rings);
     });
 
-    // 5. CITY LABELS (Force to Top)
+    // 5. CITY LABELS (Forced to Top)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { zIndex: 1000 }).addTo(map);
 
     // 6. STATION MARKER
-    var goldDot = L.circleMarker(stationPos, { radius: 12, fillColor: "#FFD700", color: "#fff", weight: 3, fillOpacity: 1, zIndexOffset: 2000 }).addTo(map);
-    goldDot.bindPopup("<b>Round Rock Station</b>");
+    var goldDot = L.circleMarker(stationPos, { radius: 8, fillColor: "#FFD700", color: "#fff", weight: 2, fillOpacity: 1, zIndexOffset: 2000 }).addTo(map);
+    goldDot.bindPopup("<b style='color:#000'>VIZCAYA STATION</b>");
 
-    // 7. TOGGLE CONTROLS (Top Right)
+    // 7. TOGGLE CONTROLS
     var overlays = {
-        "📡 Radar": radar,
-        "🔥 Fire Risk": fireRisk,
-        "⚠️ Warnings": warnings,
+        "📡 NEXRAD Radar": radar,
+        "🔥 SPC Fire Risk": fireRisk,
+        "⚠️ NWS Warnings": warnings,
         "🗺️ State Borders": stateBorders,
         "⭕ Range Rings": rings
     };
     L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
 
-    // 8. INTENSITY & TOOLS (Bottom Right)
+    // 8. UI PANEL
     var ui = L.control({position: 'bottomright'});
     ui.onAdd = function() {
         var div = L.DomUtil.create('div', 'ui-panel');
         div.innerHTML = `
-            <div style="font-weight:bold; color:#FFD700; margin-bottom:5px;">STATION TOOLS</div>
             <label>RADAR INTENSITY</label>
             <input type="range" min="0" max="1" step="0.1" value="0.7" id="opac">
-            <button onclick="map.setView([35.2, -101.8], 6)">🔭 GOTO RED FLAG</button>
-            <button onclick="location.reload()">🔄 FULL REBOOT</button>
+            <button onclick="map.setView(stationPos, 10)">📍 CENTER ON VIZCAYA</button>
+            <button onclick="map.setView([35.2, -101.8], 6)">🔭 PAN TO PANHANDLE</button>
         `;
         L.DomEvent.disableClickPropagation(div);
         return div;
@@ -97,25 +101,25 @@
         if(e.target.id === 'opac') radar.setOpacity(e.target.value);
     });
 
-    // 9. CLICK INTELLIGENCE (Restored & Fixed)
+    // 9. POINT-CLICK INTELLIGENCE
     map.on('click', function(e) {
-        var popup = L.popup().setLatLng(e.latlng).setContent("Querying NWS Database...").openOn(map);
+        var popup = L.popup().setLatLng(e.latlng).setContent("<span style='color:#94a3b8'>Interrogating NWS Alerts...</span>").openOn(map);
         fetch(`https://api.weather.gov/alerts/active?point=${e.latlng.lat.toFixed(4)},${e.latlng.lng.toFixed(4)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.features && data.features.length > 0) {
                     const alert = data.features[0].properties;
-                    const onset = new Date(alert.onset).toLocaleString();
-                    const expires = new Date(alert.ends || alert.expires).toLocaleString();
+                    const onset = new Date(alert.onset).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                    const expires = new Date(alert.ends || alert.expires).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
                     popup.setContent(`
                         <div class="alert-header">${alert.event}</div>
-                        <span class="time-label">STARTS:</span> ${onset}<br>
-                        <span class="time-label">EXPIRES:</span> ${expires}<br>
-                        <div class="desc-text">${alert.description || "No full text provided."}</div>
+                        <div style="margin-bottom:5px;"><span class="time-label">Onset:</span> ${onset}</div>
+                        <div><span class="time-label">Expires:</span> ${expires}</div>
+                        <div class="desc-text">${alert.headline || alert.description}</div>
                     `);
-                } else { popup.setContent("No active warnings at this location."); }
+                } else { popup.setContent("<b style='color:#10b981'>✅ NO ACTIVE HAZARDS</b><br><small style='color:#94a3b8'>Point clear of NWS warnings.</small>"); }
             })
-            .catch(() => popup.setContent("API Error. Check connection."));
+            .catch(() => popup.setContent("API Error."));
     });
 
 </script>
