@@ -10,7 +10,7 @@ body {
   background: #020617;
   color: #e5e7eb;
   padding: 15px;
-  max-width: 1100px;
+  max-width: 1150px;
   margin: auto;
 }
 h1, h2 { text-align: center; margin-bottom: 15px; color: #f8fafc; letter-spacing: -1px; }
@@ -52,7 +52,7 @@ h1, h2 { text-align: center; margin-bottom: 15px; color: #f8fafc; letter-spacing
   padding: 8px 4px;
   display: flex;
   flex-direction: column;
-  min-height: 240px; /* Increased to fit 8 rows */
+  min-height: 260px; /* Fits 9 rows */
 }
 
 .timeline-day-label {
@@ -72,18 +72,19 @@ h1, h2 { text-align: center; margin-bottom: 15px; color: #f8fafc; letter-spacing
 }
 
 .timeline-hazard-name {
-  width: 55px;
+  width: 58px;
   font-size: 8px;
   color: #94a3b8;
   text-align: right;
-  padding-right: 4px;
+  padding-right: 5px;
   flex-shrink: 0;
+  font-weight: bold;
 }
 
 .timeline-hazard-bar {
   flex: 1;
   height: 9px;
-  border-radius: 3px;
+  border-radius: 2px;
   background: rgba(255,255,255,0.03);
 }
 
@@ -140,8 +141,6 @@ h1, h2 { text-align: center; margin-bottom: 15px; color: #f8fafc; letter-spacing
 .severe-low { background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); }
 .severe-mod { background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); }
 .severe-high{ background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3); }
-
-#output p { margin: 0; line-height: 1.5; font-size: 0.95rem; }
 </style>
 </head>
 <body>
@@ -150,25 +149,26 @@ h1, h2 { text-align: center; margin-bottom: 15px; color: #f8fafc; letter-spacing
 
 <div id="severity-index">
   <div id="severity-bar"></div>
-  <div id="severity-text">Syncing Operational Data...</div>
+  <div id="severity-text">Analyzing Projections...</div>
 </div>
 
-<div id="alerts">Scanning NWS...</div>
+<div id="alerts">Scanning National Weather Service...</div>
 
 <h2>🗓 7-Day Operational Hazard Timeline</h2>
-<p style="text-align:center; font-size:0.7rem; color:#94a3b8; margin-bottom:10px; letter-spacing: 1px;">TOMORROW THROUGH DAY 8</p>
+<p style="text-align:center; font-size:0.7rem; color:#94a3b8; margin-bottom:10px; letter-spacing: 1px;">PROJECTIONS STARTING TOMORROW MORNING</p>
 <div id="timeline-grid"></div>
 
 <div id="output"></div>
 
-<h2>⚡ Infrastructure & Safety Indices</h2>
+<h2>⚡ Infrastructure Stress Indices</h2>
 <div id="severe-panel" class="severe-panel-grid">Processing...</div>
 
 <div class="card" style="margin-top:20px;">
-  <span class="label">Operational Threshold Definitions</span>
-  <p style="font-size:0.75rem; line-height:1.5; color:#94a3b8; margin:0;">
-    <b>Plumbing</b>: Critical &lt; 20°F | <b>Ice</b>: ≤ 32°F + Precip Prob ≥ 20% | <b>Heavy Rain</b>: Rate ≥ 0.15"/hr | <b>Wind</b>: Gusts ≥ 30mph<br>
-    <b>Fire</b>: Wind &gt; 15mph + Humidity &lt; 25% | <b>Heat</b>: Index ≥ 95°F | <b>SPC/Tropical</b>: NWS Severe/Hurricane Keywords
+  <span class="label">Operational Thresholds</span>
+  <p style="font-size:0.75rem; line-height:1.6; color:#94a3b8; margin:0;">
+    <b>Freeze</b>: ≤ 32°F | <b>Plumbing</b>: Critical &lt; 20°F | <b>Ice</b>: ≤ 32°F + Precip Prob ≥ 20% | <b>Snow</b>: ≥ 0.1" Rate<br>
+    <b>Fog</b>: NWS Weather Code 45/48 | <b>Instab</b>: CAPE ≥ 1000 + LI ≤ -2 | <b>Heat</b>: Index ≥ 95°F | <b>Wind</b>: Gusts ≥ 30mph<br>
+    <b>Fire</b>: Wind &gt; 15mph + Humidity &lt; 25% | <b>Tropical</b>: Precip ≥ 70% + Wind ≥ 30mph (6hr signal)
   </p>
 </div>
 
@@ -178,7 +178,7 @@ const LAT = 30.5083, LON = -97.6789;
 async function runRiskEngine() {
   try {
     const [weatherRes, alertRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation_probability,precipitation,snowfall,weathercode,cape,lifted_index,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=8&timezone=auto`),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation_probability,snowfall,weathercode,cape,lifted_index,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=8&timezone=auto`),
       fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`, { headers: { 'User-Agent': 'VizcayaRiskEngine/4.0' }})
     ]);
 
@@ -187,24 +187,26 @@ async function runRiskEngine() {
     const h = weather.hourly;
     const alerts = alertData.features || [];
 
-    // DATA SLICE: Start Tomorrow (Index 24)
+    // SLICE DATA: Start Tomorrow (24 hours in)
     const startIdx = 24; 
     const times = h.time.slice(startIdx);
     const temps = h.temperature_2m.slice(startIdx);
     const appTemps = h.apparent_temperature.slice(startIdx);
     const gusts = h.wind_gusts_10m.slice(startIdx);
     const pops = h.precipitation_probability.slice(startIdx);
-    const rainRates = h.precipitation.slice(startIdx);
-    const snowRates = h.snowfall.slice(startIdx);
+    const snows = h.snowfall.slice(startIdx);
+    const codes = h.weathercode.slice(startIdx);
+    const capes = h.cape.slice(startIdx);
+    const lis = h.lifted_index.slice(startIdx);
     const rhs = h.relative_humidity_2m.slice(startIdx);
 
-    // Global Alert Scanning
+    // Global Alert Scanning for Keywords
     const alertText = alerts.map(a => (a.properties.event + " " + a.properties.headline).toLowerCase()).join(" ");
-    const hasFloodAlert = alertText.includes("flood");
-    const hasSPCTropical = ["severe", "hurricane", "tropical", "surge", "tornado"].some(word => alertText.includes(word));
+    const hasTropicalAlert = ["hurricane", "tropical", "surge"].some(word => alertText.includes(word));
+    const hasSevereAlert = alertText.includes("severe");
 
     const hazards = {
-      freeze: [], ice: [], snow: [], rain: [], wind: [], tropical: [], heat: [], fire: []
+      freeze: [], ice: [], snow: [], fog: [], instab: [], heat: [], wind: [], fire: [], tropical: []
     };
 
     for(let i=0; i < times.length; i++) {
@@ -213,12 +215,21 @@ async function runRiskEngine() {
       
       if (temps[i] <= 32) hazards.freeze.push(dayKey);
       if (temps[i] <= 32 && pops[i] >= 20) hazards.ice.push(dayKey);
-      if (snowRates[i] >= 0.1) hazards.snow.push(dayKey);
-      if (rainRates[i] >= 0.15 || hasFloodAlert) hazards.rain.push(dayKey);
-      if (gusts[i] >= 30) hazards.wind.push(dayKey);
-      if (hasSPCTropical) hazards.tropical.push(dayKey);
+      if (snows[i] >= 0.1) hazards.snow.push(dayKey);
+      if (codes[i] === 45 || codes[i] === 48) hazards.fog.push(dayKey);
+      if ((capes[i] >= 1000 && lis[i] <= -2) || hasSevereAlert) hazards.instab.push(dayKey);
       if (appTemps[i] >= 95) hazards.heat.push(dayKey);
+      if (gusts[i] >= 30) hazards.wind.push(dayKey);
       if (gusts[i] > 15 && rhs[i] < 25) hazards.fire.push(dayKey);
+
+      // Tropical Streak Check (6 consecutive hours of Rain >= 70% + Wind >= 30mph)
+      let tropicalStreak = 0;
+      if (i <= times.length - 6) {
+        for (let j = 0; j < 6; j++) {
+           if (pops[i+j] >= 70 && gusts[i+j] >= 30) tropicalStreak++;
+        }
+      }
+      if (tropicalStreak === 6 || hasTropicalAlert) hazards.tropical.push(dayKey);
     }
 
     // SCORING
@@ -227,34 +238,34 @@ async function runRiskEngine() {
     const maxApp = Math.max(...appTemps);
     let score = 0;
     if (minTemp <= 32) score += 20;
-    if (minTemp < 20) score += 25;
+    if (minTemp < 20) score += 20;
     if (hazards.ice.length > 0) score += 30;
     if (hazards.snow.length > 0) score += 15;
     if (maxWind >= 30) score += 15;
-    if (hasSPCTropical) score += 20;
+    if (hazards.tropical.length > 0) score += 40;
+    if (hazards.instab.length > 0) score += 15;
     if (hazards.fire.length > 0) score += 15;
-    if (maxApp >= 95) score += 10;
     const finalScore = Math.min(100, score);
 
     // SEVERITY UI
     const sevBar = document.getElementById("severity-bar");
-    const sevText = document.getElementById("severity-text");
     sevBar.style.width = finalScore + "%";
-    sevBar.style.background = finalScore > 70 ? "#dc2626" : (finalScore > 35 ? "#f97316" : "#16a34a");
-    sevText.innerText = `${finalScore > 70 ? 'HIGH' : (finalScore > 35 ? 'MODERATE' : 'LOW')} OPERATIONAL RISK: ${finalScore}%`;
+    sevBar.style.background = finalScore > 75 ? "#dc2626" : (finalScore > 35 ? "#f97316" : "#16a34a");
+    document.getElementById("severity-text").innerText = `IMPACT RISK: ${finalScore}%`;
 
-    // TIMELINE GRID (8 ROWS)
+    // TIMELINE GRID (ALL 9 ROWS)
     const grid = document.getElementById("timeline-grid");
     grid.innerHTML = "";
     const hazardConfigs = [
       { key: 'freeze',   label: 'FREEZE',    color: '#3b82f6' },
       { key: 'ice',      label: 'ICE/SLEET', color: '#ef4444' },
       { key: 'snow',     label: 'SNOW',      color: '#a855f7' },
-      { key: 'rain',     label: 'HEAVY RAIN',color: '#22d3ee' },
-      { key: 'wind',     label: 'HIGH WIND', color: '#fbbf24' },
-      { key: 'tropical', label: 'SPC/TROP',  color: '#ec4899' },
+      { key: 'fog',      label: 'FOG',       color: '#64748b' },
+      { key: 'instab',   label: 'INSTAB',    color: '#22c55e' },
       { key: 'heat',     label: 'HEAT',      color: '#f97316' },
-      { key: 'fire',     label: 'FIRE',      color: '#fb923c' }
+      { key: 'wind',     label: 'HIGH WIND', color: '#fbbf24' },
+      { key: 'fire',     label: 'FIRE',      color: '#fb923c' },
+      { key: 'tropical', label: 'TROPICAL',  color: '#ec4899' }
     ];
 
     for(let d=0; d<7; d++) {
@@ -268,52 +279,43 @@ async function runRiskEngine() {
         dayBox.innerHTML += `
           <div class="timeline-hazard-row">
             <div class="timeline-hazard-name">${h.label}</div>
-            <div class="timeline-hazard-bar" style="${hasHazard ? `background:${h.color}; box-shadow: 0 0 5px ${h.color};` : ''}"></div>
+            <div class="timeline-hazard-bar" style="${hasHazard ? `background:${h.color}; box-shadow: 0 0 4px ${h.color};` : ''}"></div>
           </div>`;
       });
       grid.appendChild(dayBox);
     }
 
-    // INDICES PANEL (ALL 8 CATEGORIES)
+    // INDICES PANEL
     const plumbingStatus = minTemp < 20 ? ["CRITICAL", "severe-high"] : (minTemp <= 32 ? ["MODERATE", "severe-mod"] : ["LOW", "severe-low"]);
-    const rainStatus = hazards.rain.length > 0 ? ["THREAT", "severe-mod"] : ["LOW", "severe-low"];
-    const heatStatus = maxApp >= 95 ? ["STRESS", "severe-mod"] : ["NORMAL", "severe-low"];
-    const snowStatus = hazards.snow.length > 0 ? ["POTENTIAL", "severe-mod"] : ["NONE", "severe-low"];
+    const tropicalStatus = hazards.tropical.length > 0 ? ["DETECTED", "severe-high"] : ["NONE", "severe-low"];
 
     document.getElementById("severe-panel").innerHTML = `
       <div class="severe-row ${plumbingStatus[1]}"><strong>Plumbing Stress</strong><span>${plumbingStatus[0]}</span></div>
-      <div class="severe-row ${hazards.ice.length ? 'severe-high' : 'severe-low'}"><strong>Icing Potential</strong><span>${hazards.ice.length ? 'HIGH' : 'LOW'}</span></div>
-      <div class="severe-row ${snowStatus[1]}"><strong>Snow Potential</strong><span>${snowStatus[0]}</span></div>
-      <div class="severe-row ${rainStatus[1]}"><strong>Rain Threat</strong><span>${rainStatus[0]}</span></div>
-      <div class="severe-row ${maxWind >= 30 ? 'severe-mod' : 'severe-low'}"><strong>Wind Load</strong><span>${maxWind.toFixed(0)} MPH</span></div>
-      <div class="severe-row ${hasSPCTropical ? 'severe-high' : 'severe-low'}"><strong>SPC/Tropical</strong><span>${hasSPCTropical ? 'ACTIVE' : 'NONE'}</span></div>
-      <div class="severe-row ${heatStatus[1]}"><strong>Heat Stress</strong><span>${heatStatus[0]}</span></div>
+      <div class="severe-row ${hazards.ice.length ? 'severe-high' : 'severe-low'}"><strong>Icing Risk</strong><span>${hazards.ice.length ? 'HIGH' : 'LOW'}</span></div>
+      <div class="severe-row ${tropicalStatus[1]}"><strong>Tropical Presence</strong><span>${tropicalStatus[0]}</span></div>
+      <div class="severe-row ${hazards.instab.length ? 'severe-mod' : 'severe-low'}"><strong>Convective Instab.</strong><span>${hazards.instab.length ? 'ACTIVE' : 'LOW'}</span></div>
       <div class="severe-row ${hazards.fire.length ? 'severe-high' : 'severe-low'}"><strong>Fire Weather</strong><span>${hazards.fire.length ? 'RED FLAG' : 'LOW'}</span></div>
+      <div class="severe-row ${maxWind >= 30 ? 'severe-mod' : 'severe-low'}"><strong>Peak Wind Load</strong><span>${maxWind.toFixed(0)} MPH</span></div>
     `;
 
     // ALERTS
-    const alertsEl = document.getElementById("alerts");
     if (alerts.length > 0) {
-      alertsEl.innerHTML = alerts.map(a => `<div class="alert-card">⚠️ ${a.properties.event}<br><small>${a.properties.headline}</small></div>`).join("");
+      document.getElementById("alerts").innerHTML = alerts.map(a => `<div class="alert-card">⚠️ ${a.properties.event}<br><small>${a.properties.headline}</small></div>`).join("");
     } else {
-      alertsEl.innerHTML = `<div class="card safe">✅ No active NWS alerts for tomorrow's 7-day outlook.</div>`;
+      document.getElementById("alerts").innerHTML = `<div class="card safe">✅ No active operational watches or warnings for the 7-day outlook.</div>`;
     }
 
     // NARRATIVE
     const outEl = document.getElementById("output");
-    let msg = `Projections starting tomorrow indicate a min temperature of <b>${minTemp}°F</b>. `;
-    if (hazards.ice.length) msg += `<b>Icing risk</b> is detected for local bridges/overpasses. `;
-    if (hazards.snow.length) msg += `<b>Accumulating snow</b> is possible within the window. `;
-    if (hazards.rain.length) msg += `<b>Heavy rain rates</b> (≥0.15"/hr) may impact drainage. `;
-    if (maxWind >= 30) msg += `Peak gusts of <b>${maxWind.toFixed(0)} MPH</b> will stress loose outdoor items. `;
-    if (maxApp >= 95) msg += `Heat stress conditions (<b>${maxApp.toFixed(0)}°F</b> Index) likely. `;
+    let msg = `Projections indicate a floor of <b>${minTemp}°F</b> and peak gusts of <b>${maxWind.toFixed(0)} MPH</b>. `;
+    if (minTemp < 20) msg += `<b>CRITICAL plumbing threat detected.</b> `;
+    if (hazards.ice.length) msg += `<b>Icing potential</b> exists for elevated surfaces. `;
+    if (hazards.tropical.length) msg += `<b>Tropical-style environment signaled.</b> Monitor for sustained high rain/wind. `;
+    if (hazards.instab.length) msg += `Convective instability supports severe thunderstorm potential. `;
     
-    outEl.innerHTML = `<div class="card ${finalScore > 50 ? 'orange' : 'yellow'}"><span class="label">Operational Impact Narrative</span><p>${msg}</p></div>`;
+    outEl.innerHTML = `<div class="card ${finalScore > 40 ? 'orange' : 'safe'}"><span class="label">Impact Narrative</span><p>${msg}</p></div>`;
 
-  } catch (err) {
-    console.error(err);
-    document.getElementById("severity-text").innerText = "Sync failure - check API connection";
-  }
+  } catch (err) { console.error(err); }
 }
 
 runRiskEngine();
