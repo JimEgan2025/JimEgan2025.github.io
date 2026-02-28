@@ -5,81 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Texas Weather Dashboard</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin:0; padding:20px; background:#f0f2f5; color:#1f2937; }
+  :root { --primary: #1e3a8a; --bg: #f0f2f5; --card: #ffffff; --text: #1f2937; --accent: #f59e0b; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; margin:0; padding:10px; background: var(--bg); color: var(--text); }
   .container { max-width:1200px; margin:0 auto; }
-  header { background:#1e3a8a; color:#fff; padding:1rem 1.5rem; border-radius:12px; margin-bottom:2rem; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); }
-  header h1 { margin:0; font-size:1.8rem; }
-  .tabs { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; }
-  .tab { padding:0.5rem 1rem; border-radius:6px; background:#e5e7eb; cursor:pointer; transition: all 0.2s; }
-  .tab.active { background:#1e3a8a; color:#fff; }
-  .tab:hover { background:#cbd5e1; }
+  
+  header { background: var(--primary); color:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+  header h1 { margin:0; font-size:1.6rem; }
+  
+  .tabs { display:flex; overflow-x: auto; gap:10px; margin-bottom:15px; padding-bottom: 5px; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding:10px 18px; border-radius:25px; background:#e5e7eb; cursor:pointer; transition: 0.2s; white-space: nowrap; font-weight: 600; font-size: 0.9rem; border: 1px solid transparent; }
+  .tab.active { background: var(--primary); color:#fff; border-color: #fff; }
+
   .content { display:none; }
-  .content.active { display:block; }
-  .card { background:#fff; padding:1.5rem; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:1.5rem; }
-  .story-box { border-left:8px solid #1e3a8a; background:#f8fafc; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; }
-  .story-box h3 { margin-top:0; color:#1e3a8a; }
-  .story-list { padding-left:20px; line-height:1.8; font-size:1.1rem; margin:0; }
-  .story-list li { margin-bottom:0.8rem; }
-  .alerts-box { background:#fef3f2; border-left:4px solid #ef4444; padding:1rem; border-radius:0 4px 4px 0; margin:1rem 0; }
-  .alerts-box ul { margin:0.5rem 0; padding-left:1.2rem; }
-  .alerts-box li { margin-bottom:0.6rem; line-height:1.5; }
-  .no-alerts { color:#6b7280; font-style:italic; padding:1rem; background:#f8f9fa; border-radius:6px; }
-  .narrative-lead-box { background:#fffbeb; border:2px solid #f59e0b; padding:1.5rem; border-radius:12px; margin-bottom:1.5rem; line-height:1.7; font-size:1.1rem; color:#1f2937; white-space: pre-wrap; }
-  .region-group { margin-bottom:1rem; }
-  .region-group strong { color:#1e3a8a; display:block; margin-bottom:0.4rem; font-size:1.05rem; }
-  .key-msg-box { background:#f8fafc; border-left:4px solid #3b82f6; padding:1.25rem; margin-bottom:1rem; border-radius:0 4px 4px 0; line-height:1.65; white-space: pre-wrap; }
-  .error-msg { color:#dc2626; font-weight:bold; padding:1rem; background:#fee2e2; border-radius:8px; margin:1rem 0; }
-  .timestamp { font-size:0.9rem; color:#6b7280; margin-top:0.75rem; display:block; }
-  .refresh-btn { padding:0.5rem 1rem; background:#1e3a8a; color:white; border:none; border-radius:6px; cursor:pointer; margin-bottom:1rem; }
-  .refresh-btn:hover { background:#1e40af; }
-  .loading { color:#6b7280; font-style:italic; }
-  .forecast-item { border-bottom:1px solid #f3f4f6; padding:0.75rem 0; }
-  .forecast-header { display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; }
-  img.weather-layer { width:100%; border-radius:8px; display:block; margin-top:10px; }
-  @media (max-width: 768px) { .tabs { justify-content:center; } }
+  .content.active { display:block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card { background: var(--card); padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:20px; }
+  
+  .story-box { border-left:10px solid var(--primary); background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; }
+  .story-box h3 { margin:0 0 10px 0; color: var(--primary); }
+  .story-list { list-style: none; padding: 0; margin: 0; }
+  .story-list li { margin-bottom:12px; line-height:1.6; font-size:1.05rem; display: flex; }
+  .story-list li::before { content: "▶"; color: var(--primary); font-size: 0.8rem; margin-right: 12px; margin-top: 4px; }
+
+  .narrative-lead-box { background:#fffbeb; border:2px solid var(--accent); padding:15px; border-radius:12px; margin-bottom:15px; line-height:1.6; font-size:0.95rem; white-space: pre-wrap; }
+  .region-group { margin-bottom:15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+  .region-group strong { color: var(--primary); font-size:1.1rem; display: block; margin-bottom: 5px; }
+
+  .alerts-box { background:#fef3f2; border-left:5px solid #ef4444; padding:15px; border-radius:8px; margin:10px 0; font-size: 0.9rem; }
+  .forecast-item { border-bottom:1px solid #f3f4f6; padding:12px 0; }
+  .forecast-header { display:flex; justify-content:space-between; font-weight:bold; color: var(--primary); }
+  
+  img.weather-layer { width:100%; border-radius:8px; display:block; margin-top:10px; background: #000; min-height: 250px; }
+  .refresh-btn { padding:10px 20px; background: var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; margin-bottom:20px; font-weight: bold; }
 </style>
 </head>
 <body>
+
 <div class="container">
   <header>
-    <h1>Texas Weather Dashboard</h1>
-    <p style="margin:0.5rem 0 0; font-size:0.95rem;">Real-time NWS data • Key messages + smart alerts</p>
+    <h1>Texas State Weather Dashboard</h1>
+    <div id="currentTime" style="font-size: 0.85rem; opacity: 0.8;"></div>
   </header>
+
   <div class="tabs" id="tabsContainer"></div>
-  <button class="refresh-btn" id="refreshBtn" style="display:none;">Refresh Current Tab</button>
+  <button class="refresh-btn" id="refreshBtn" style="display:none;">Refresh Current Data</button>
+  
   <div id="contentContainer"></div>
 </div>
 
 <script>
 const CITIES = [
   { name:'Texas Summary', code:'TX', type:'summary' },
-  { name:'Austin/San Antonio', code:'EWX', lat:30.2672, lon:-97.7431, radar:'KEWX', type:'city' },
-  { name:'Houston', code:'HGX', lat:29.7604, lon:-95.3698, radar:'KHGX', type:'city' },
-  { name:'Dallas/Fort Worth', code:'FWD', lat:32.7767, lon:-96.7970, radar:'KFWS', type:'city' },
-  { name:'El Paso', code:'EPZ', lat:31.7619, lon:-106.4850, radar:'KEPZ', type:'city' },
-  { name:'Amarillo', code:'AMA', lat:35.2210, lon:-101.8313, radar:'KAMA', type:'city' },
-  { name:'Brownsville', code:'BRO', lat:25.9017, lon:-97.4975, radar:'KBRO', type:'city' },
-  { name:'Corpus Christi', code:'CRP', lat:27.8006, lon:-97.3964, radar:'KCRP', type:'city' },
-  { name:'San Angelo', code:'SJT', lat:31.4638, lon:-100.4370, radar:'KSJT', type:'city' },
-  { name:'Beaumont', code:'LCH', lat:30.0802, lon:-94.1266, radar:'KLCH', type:'city' },
-  { name:'Lubbock', code:'LUB', lat:33.5779, lon:-101.8552, radar:'KLBB', type:'city' },
-  { name:'Midland', code:'MAF', lat:31.9974, lon:-102.0779, radar:'KMAF', type:'city' },
-  { name:'Texarkana', code:'SHV', lat:33.4251, lon:-94.0477, radar:'KSHV', type:'city' }
+  { name:'Austin/SAT', code:'EWX', lat:30.2672, lon:-97.7431, radar:'KEWX' },
+  { name:'Houston', code:'HGX', lat:29.7604, lon:-95.3698, radar:'KHGX' },
+  { name:'Dallas/FW', code:'FWD', lat:32.7767, lon:-96.7970, radar:'KFWS' },
+  { name:'Amarillo', code:'AMA', lat:35.2210, lon:-101.8313, radar:'KAMA' },
+  { name:'El Paso', code:'EPZ', lat:31.7619, lon:-106.4850, radar:'KEPZ' },
+  { name:'Brownsville', code:'BRO', lat:25.9017, lon:-97.4975, radar:'KBRO' },
+  { name:'Corpus Christi', code:'CRP', lat:27.8006, lon:-97.3964, radar:'KCRP' },
+  { name:'San Angelo', code:'SJT', lat:31.4638, lon:-100.4370, radar:'KSJT' },
+  { name:'Lubbock', code:'LUB', lat:33.5779, lon:-101.8552, radar:'KLBB' },
+  { name:'Midland', code:'MAF', lat:31.9974, lon:-102.0779, radar:'KMAF' }
 ];
 
-const HEADERS = {
-  'User-Agent': 'TexasWeatherDashboard/1.3 (personal; Jim.egan@gmail.com)',
-  'Accept': 'application/geo+json, application/ld+json'
-};
+const HEADERS = { 'User-Agent': 'JimEganWxDash/4.0 (jim.egan@gmail.com)' };
 
-const REGION_GROUPS = [
-  { name: 'North Texas', offices: ['Dallas/Fort Worth'] },
-  { name: 'Panhandle & Northwest', offices: ['Amarillo', 'Lubbock'] },
-  { name: 'West Texas', offices: ['El Paso', 'Midland'] },
-  { name: 'Central / South Central', offices: ['Austin/San Antonio', 'San Angelo'] },
-  { name: 'Coastal / Southeast', offices: ['Houston', 'Beaumont'] },
-  { name: 'South Texas', offices: ['Brownsville', 'Corpus Christi'] },
-  { name: 'Northeast / East Texas', offices: ['Texarkana'] }
+const REGIONS = [
+  { name: 'North / Panhandle', offices: ['Dallas/FW', 'Amarillo', 'Lubbock'] },
+  { name: 'Central / West', offices: ['Austin/SAT', 'San Angelo', 'El Paso', 'Midland'] },
+  { name: 'Gulf Coast / South', offices: ['Houston', 'Brownsville', 'Corpus Christi'] }
 ];
 
 let currentTabIndex = 0;
@@ -87,6 +83,7 @@ let currentTabIndex = 0;
 function init() {
   const tabs = document.getElementById('tabsContainer');
   const content = document.getElementById('contentContainer');
+  
   CITIES.forEach((city, i) => {
     const tab = document.createElement('div');
     tab.className = 'tab' + (i === 0 ? ' active' : '');
@@ -98,11 +95,12 @@ function init() {
     cont.className = 'content' + (i === 0 ? ' active' : '');
     cont.id = 'content-' + i;
     content.appendChild(cont);
+    
+    loadTabData(i);
   });
 
-  document.getElementById('refreshBtn').onclick = () => loadCityDataAsync(CITIES[currentTabIndex], currentTabIndex);
-  // Load all, but ensure summary waits a bit
-  Promise.all(CITIES.map((city, i) => loadCityDataAsync(city, i)));
+  document.getElementById('currentTime').textContent = "Updated: " + new Date().toLocaleString();
+  document.getElementById('refreshBtn').onclick = () => loadTabData(currentTabIndex);
 }
 
 function switchTab(idx) {
@@ -112,239 +110,99 @@ function switchTab(idx) {
   document.getElementById('refreshBtn').style.display = idx === 0 ? 'none' : 'inline-block';
 }
 
-/* ==================== TEXAS SUMMARY ==================== */
-async function loadTexasSummary(container) {
-  container.innerHTML = `
-    <h2>Texas Statewide Summary</h2>
-    <div id="story-box" class="story-box loading">Compiling current weather story...</div>
-    <div id="state-narrative-box" class="narrative-lead-box">Gathering key messages from NWS offices...</div>
-    <div class="card"><h3>Satellite (GOES-16 GEOCOLOR)</h3><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" alt="GOES-16 Satellite"></div>
-    <div class="card"><h3>Radar Loop</h3><img class="weather-layer" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/state_tx_anim.gif" alt="Texas Radar Loop"></div>
-  `;
-
-  let officeMsgs = {};
-  await Promise.allSettled(CITIES.slice(1).map(async city => {
-    try {
-      const res = await fetch(`https://api.weather.gov/products/types/AFD/locations/${city.code}/latest`, { headers: HEADERS });
-      if (!res.ok) return;
-      const data = await res.json();
-      const msg = extractKeyMessages(data.productText);
-      if (msg) officeMsgs[city.name] = msg;
-    } catch (e) { console.error(`AFD fetch error for ${city.name}:`, e); }
-  }));
-
-  console.log('Extracted office key messages:', officeMsgs); // Debug: check in console
-
-  // Dynamic Weather Story
-  const storyBox = document.getElementById('story-box');
-  let storyHTML = '<h3>Current Texas Weather Story</h3><ul class="story-list">';
-  let themes = { warm:0, humid:0, thunderstorm:0, severe:0, hail:0, wind:0, rainLow:0, fire:0, clearing:0, freeze:0 };
-  let stormTiming = '', stormAreas = '', fireAreas = '';
-
-  Object.entries(officeMsgs).forEach(([name, msg]) => {
-    const lower = msg.toLowerCase();
-    if (lower.includes('warm') || lower.includes('above normal')) themes.warm++;
-    if (lower.includes('humid') || lower.includes('moisture') || lower.includes('fog')) themes.humid++;
-    if (lower.includes('thunderstorm') || lower.includes('shower')) {
-      themes.thunderstorm++;
-      if (lower.includes('afternoon') || lower.includes('evening')) stormTiming = 'afternoon through evening';
-      if (lower.includes('central') || lower.includes('south') || lower.includes('east')) stormAreas = 'Central, South-Central, and Eastern Texas';
-    }
-    if (lower.includes('severe') || lower.includes('marginal')) themes.severe++;
-    if (lower.includes('hail')) themes.hail++;
-    if (lower.includes('wind') || lower.includes('gust')) themes.wind++;
-    if (lower.includes('low side') || lower.includes('less than')) themes.rainLow++;
-    if (lower.includes('fire weather') || lower.includes('critical') || lower.includes('elevated') || lower.includes('wildfire')) {
-      themes.fire++;
-      if (lower.includes('central') || lower.includes('south') || lower.includes('hill country')) fireAreas = 'especially Central/South-Central Texas';
-    }
-    if (lower.includes('clear') || lower.includes('breezy') || lower.includes('sunday')) themes.clearing++;
-    if (lower.includes('freeze') || lower.includes('freezing') || lower.includes('chilly')) themes.freeze++;
-  });
-
-  if (themes.fire > 1) {
-    storyHTML += `<li><strong>Fire Weather Risk:</strong> Elevated to near-critical conditions ${fireAreas || 'in parts of the state'} due to gusty winds, low humidity, and dry fuels. Avoid outdoor burning.</li>`;
-  }
-  if (themes.freeze > 1) {
-    storyHTML += `<li><strong>Cool Start:</strong> Chilly mornings with light freeze possible in North/Central valleys; lows in 20s-30s Panhandle, 30s-40s elsewhere.</li>`;
-  }
-  if (themes.warm > 1) {
-    storyHTML += `<li><strong>Warming Trend:</strong> Temperatures rebound mid-week to above normal (70s-80s+ in many areas).</li>`;
-  }
-  if (themes.thunderstorm > 1) {
-    let detail = 'Scattered showers/thunderstorms possible';
-    if (stormTiming) detail += ` ${stormTiming}`;
-    if (stormAreas) detail += ` in ${stormAreas}`;
-    storyHTML += `<li><strong>Thunderstorm Potential:</strong> ${detail}.</li>`;
-  }
-  if (storyHTML === '<h3>Current Texas Weather Story</h3><ul class="story-list">') {
-    storyHTML += '<li><strong>General Conditions:</strong> Dry, quiet, and seasonably cool today with fire weather the main concern; warming and mostly sunny through the week.</li>';
-  }
-  storyHTML += '</ul><p style="font-size:0.9rem; color:#6b7280; margin-top:0.8rem;">Synthesized from regional NWS key messages (as of ' + new Date().toLocaleTimeString() + ' CST).</p>';
-  storyBox.innerHTML = storyHTML;
-  storyBox.classList.remove('loading');
-
-  // Consolidated key messages by region
-  const narrativeBox = document.getElementById('state-narrative-box');
-  let html = '<h3>Key Forecaster Messages Across Texas</h3>';
-  REGION_GROUPS.forEach(group => {
-    const msgs = group.offices.filter(o => officeMsgs[o]).map(o => `${o}: ${officeMsgs[o]}`);
-    if (msgs.length) html += `<div class="region-group"><strong>${group.name}:</strong><br>${msgs.join('<br>')}</div>`;
-  });
-  if (Object.keys(officeMsgs).length === 0) {
-    html += '<p class="error-msg">No key messages available right now. Try refreshing later.</p>';
-  } else {
-    html += '<p style="font-size:0.9rem; color:#6b7280; margin-top:1rem;">Main impacts and hazards from each NWS office (grouped by region).</p>';
-  }
-  narrativeBox.innerHTML = html;
-}
-
 function extractKeyMessages(text) {
-  if (!text) return "";
-
-  // Primary match for 2026 format: .KEY MESSAGES... (with three dots)
-  let match = text.match(/\.KEY\s+MESSAGES\.{3}\s*([\s\S]*?)(?=\.[A-Z0-9\s\/-]+\.{3}|&&|$)/i);
-
-  // Fallback for slight variations (e.g., no dots, colon, etc.)
-  if (!match || !match[1]?.trim()) {
-    match = text.match(/\.KEY\s+MESSAGES[\.\s:]*\s*([\s\S]*?)(?=\.[A-Z0-9\s\/-]+\.{3}|&&|$)/i);
-  }
-
-  if (!match || !match[1]) return "";
-
-  // Clean and format: preserve newlines for bullets, convert - to •
-  let keyText = match[1]
-    .trim()
-    .replace(/^\s*-\s*/gm, '• ')
-    .replace(/^\s*•\s*/gm, '• ')  // Already bullets
-    .replace(/\n\s*\n/g, '\n')    // Collapse extras
-    .trim();
-
-  return keyText;
+    if (!text) return "";
+    let regex = /(?:\.|\s|^)KEY\s+MESSAGES[\.\s:]+([\s\S]*?)(?=\n\.[A-Z]|\n&&|\nSYNOPSIS|\nSHORT TERM|$)/i;
+    let match = text.match(regex);
+    if (!match) {
+        regex = /(?:\.|\s|^)SYNOPSIS[\.\s:]+([\s\S]*?)(?=\n\.[A-Z]|\n&&|\nNEAR TERM|$)/i;
+        match = text.match(regex);
+    }
+    if (!match) return "";
+    return match[1].trim().replace(/^\s*-\s*/gm, '• ').split('\n').filter(line => line.trim().length > 10).slice(0, 5).join('\n');
 }
 
-/* ==================== CITY / OFFICE TABS ==================== */
-async function loadCityDataAsync(city, idx) {
+async function loadTabData(idx) {
+  const city = CITIES[idx];
   const container = document.getElementById(`content-${idx}`);
-  if (city.type === 'summary') {
-    await loadTexasSummary(container);
-    return;
-  }
+  if (city.type === 'summary') { renderSummary(container); } 
+  else { renderCity(city, container, idx); }
+}
+
+async function renderSummary(container) {
+  container.innerHTML = `<div style="text-align:center; padding:40px;">📡 Analyzing Texas regional data...</div>`;
+  let officeMsgs = {};
+  const promises = CITIES.slice(1).map(async (office) => {
+    try {
+      const res = await fetch(`https://api.weather.gov/products/types/AFD/locations/${office.code}/latest`, { headers: HEADERS });
+      const data = await res.json();
+      const extracted = extractKeyMessages(data.productText);
+      if (extracted) officeMsgs[office.name] = extracted;
+    } catch (e) { console.warn(`Office ${office.name} down`); }
+  });
+  await Promise.allSettled(promises);
+
+  const allText = Object.values(officeMsgs).join(' ').toLowerCase();
+  const storyPoints = [];
+  if (allText.includes('severe') || allText.includes('tornado') || allText.includes('hail')) storyPoints.push("<strong>Storm Watch:</strong> Regional offices are monitoring severe thunderstorm potential.");
+  if (allText.includes('fire') || allText.includes('red flag')) storyPoints.push("<strong>Fire Weather:</strong> High fire danger in dry/windy sectors.");
+  if (allText.includes('warm') || allText.includes('above normal')) storyPoints.push("<strong>Warming:</strong> Trend toward above-average temperatures expected.");
+  if (storyPoints.length === 0) storyPoints.push("<strong>Quiet Pattern:</strong> State-wide weather remains seasonal and generally stable.");
+
+  let regionHTML = `<div class="card"><h3>Regional Highlights</h3>`;
+  REGIONS.forEach(reg => {
+    const activeOffices = reg.offices.filter(o => officeMsgs[o]);
+    if (activeOffices.length > 0) {
+      regionHTML += `<div class="region-group"><strong>${reg.name}</strong>`;
+      activeOffices.forEach(o => { regionHTML += `<div class="narrative-lead-box"><b>${o}:</b><br>${officeMsgs[o]}</div>`; });
+      regionHTML += `</div>`;
+    }
+  });
 
   container.innerHTML = `
+    <div class="story-box"><h3>Weather Story</h3><ul class="story-list">${storyPoints.map(p => `<li>${p}</li>`).join('')}</ul></div>
+    
     <div class="card">
-      <h2>${city.name} Key Impacts Summary</h2>
-      <div id="narrative-${idx}" class="key-msg-box loading">Loading key messages...</div>
+        <h3>Statewide Radar Loop</h3>
+        <img class="weather-layer" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/state_tx_anim.gif" referrerpolicy="no-referrer">
     </div>
+
     <div class="card">
-      <h2>Active Alerts for ${city.name} Area</h2>
-      <div id="alerts-${idx}" class="alerts-box loading">Loading alerts...</div>
+        <h3>Texas Sector Satellite (GEOCOLOR)</h3>
+        <img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" referrerpolicy="no-referrer">
     </div>
-    <div class="card">
-      <h2>Current Conditions</h2>
-      <div id="obs-${idx}" class="loading">Loading...</div>
-    </div>
-    <div class="card">
-      <h2>7-Day Forecast (First 6 Periods)</h2>
-      <div id="fc-${idx}" class="loading">Loading...</div>
-    </div>
-    <div class="card">
-      <h2>Radar Loop (${city.radar})</h2>
-      <img class="weather-layer" src="https://radar.weather.gov/ridge/standard/${city.radar}_loop.gif" alt="${city.name} Radar Loop">
-    </div>
+
+    ${regionHTML}
   `;
-
-  try {
-    const ptsRes = await fetch(`https://api.weather.gov/points/${Number(city.lat).toFixed(4)},${Number(city.lon).toFixed(4)}`, { headers: HEADERS });
-    if (!ptsRes.ok) throw new Error('Point fetch failed');
-    const pts = await ptsRes.json();
-
-    // Forecast
-    const fcRes = await fetch(pts.properties.forecast, { headers: HEADERS });
-    const forecast = await fcRes.json();
-    document.getElementById(`fc-${idx}`).innerHTML = forecast.properties.periods.slice(0, 6).map(p => `
-      <div class="forecast-item">
-        <div class="forecast-header"><span>${p.name}</span><span>${p.temperature}°${p.temperatureUnit}</span></div>
-        <div>${p.shortForecast} — ${p.detailedForecast}</div>
-        <small class="timestamp">Valid: ${new Date(p.startTime).toLocaleString([], {hour:'numeric', minute:'2-digit', weekday:'short'})}</small>
-      </div>
-    `).join('');
-
-    // Observations
-    const stnsRes = await fetch(pts.properties.observationStations, { headers: HEADERS });
-    const stns = await stnsRes.json();
-    if (stns.features.length > 0) {
-      const obsRes = await fetch(`${stns.features[0].id}/observations/latest`, { headers: HEADERS });
-      const obs = await obsRes.json();
-      const p = obs.properties;
-      const tempF = p.temperature?.value ? Math.round(p.temperature.value * 9/5 + 32) : '--';
-      const feelF = p.heatIndex?.value ? Math.round(p.heatIndex.value * 9/5 + 32) : (p.windChill?.value ? Math.round(p.windChill.value * 9/5 + 32) : tempF);
-      document.getElementById(`obs-${idx}`).innerHTML = `
-        <b>${p.textDescription || 'Conditions N/A'}</b><br>
-        Temp: ${tempF}°F (Feels like: ${feelF}°F)<br>
-        Humidity: ${Math.round(p.relativeHumidity?.value || 0)}%<br>
-        Wind: ${p.windSpeed?.value || '--'} mph ${p.windDirection?.value ? `from ${p.windDirection.value}°` : ''}<br>
-        <small class="timestamp">Observed: ${new Date(p.timestamp).toLocaleString()}</small>
-      `;
-    }
-
-    // AFD Key Messages
-    const afdRes = await fetch(`https://api.weather.gov/products/types/AFD/locations/${city.code}/latest`, { headers: HEADERS });
-    const afd = await afdRes.json();
-    const keyMsg = extractKeyMessages(afd.productText);
-    const narrativeBox = document.getElementById(`narrative-${idx}`);
-    narrativeBox.innerHTML = keyMsg || 'No key messages section found in latest AFD.';
-    narrativeBox.classList.remove('loading');
-    narrativeBox.insertAdjacentHTML('beforeend', `<div class="timestamp">From AFD issued: ${new Date(afd.issuanceTime).toLocaleString()}</div>`);
-
-    // Smart Alerts: Point → Zone fallback
-    const alertsBox = document.getElementById(`alerts-${idx}`);
-    let features = [];
-    try {
-      // Point query
-      let res = await fetch(`https://api.weather.gov/alerts/active?point=${Number(city.lat).toFixed(4)},${Number(city.lon).toFixed(4)}`, { headers: HEADERS });
-      if (res.ok) {
-        const data = await res.json();
-        features = data.features || [];
-      }
-      // Fallback to zone
-      if (features.length === 0 && pts.properties.forecastZone) {
-        const zoneID = pts.properties.forecastZone.split('/').pop();
-        res = await fetch(`https://api.weather.gov/alerts/active?zone=${zoneID}`, { headers: HEADERS });
-        if (res.ok) {
-          const data = await res.json();
-          features = data.features || [];
-        }
-      }
-
-      if (features.length === 0) {
-        alertsBox.innerHTML = '<div class="no-alerts">No active watches, warnings, or advisories right now.</div>';
-      } else {
-        let html = '<ul>';
-        features.forEach(f => {
-          const p = f.properties;
-          const expires = new Date(p.expires).toLocaleString([], {dateStyle:'short', timeStyle:'short'});
-          html += `
-            <li>
-              <strong>${p.event}</strong> (${p.severity}) – ${p.areaDesc ? p.areaDesc.replace(/;/g, ', ') : 'Affected area'}<br>
-              <em>${p.headline}</em><br>
-              Urgency: ${p.urgency} | Expires: ${expires}
-            </li>
-          `;
-        });
-        html += '</ul><div class="timestamp">Alerts last updated: ' + new Date().toLocaleTimeString() + '</div>';
-        alertsBox.innerHTML = html;
-      }
-    } catch (e) {
-      alertsBox.innerHTML = `<p class="error-msg">Unable to load alerts right now.</p>`;
-    }
-
-  } catch (e) {
-    console.error(e);
-    container.innerHTML += `<p class="error-msg">Error loading data: ${e.message}. Try refreshing.</p>`;
-  }
 }
 
+async function renderCity(city, container, idx) {
+  container.innerHTML = `<div style="text-align:center; padding:40px;">Fetching ${city.name} impacts...</div>`;
+  try {
+    const ptsRes = await fetch(`https://api.weather.gov/points/${city.lat},${city.lon}`, { headers: HEADERS });
+    const pts = await ptsRes.json();
+    const [fcRes, afdRes, alertRes] = await Promise.all([
+        fetch(pts.properties.forecast, { headers: HEADERS }),
+        fetch(`https://api.weather.gov/products/types/AFD/locations/${city.code}/latest`, { headers: HEADERS }),
+        fetch(`https://api.weather.gov/alerts/active?point=${city.lat},${city.lon}`, { headers: HEADERS })
+    ]);
+    const fc = await fcRes.json();
+    const afd = await afdRes.json();
+    const alerts = await alertRes.json();
+    const keyMsgs = extractKeyMessages(afd.productText);
+    const alertHTML = alerts.features.length > 0 ? alerts.features.map(f => `<div class="alerts-box"><strong>${f.properties.event}</strong><br>${f.properties.headline}</div>`).join('') : '<div style="color:#666; padding:10px;">No active alerts.</div>';
+
+    container.innerHTML = `
+      <div class="card"><h3>Local Impacts</h3>${alertHTML}<div class="narrative-lead-box" style="margin-top:15px;">${keyMsgs || "Summary unavailable."}</div></div>
+      <div class="card"><h3>Radar Loop (${city.radar})</h3>
+        <img class="weather-layer" src="https://radar.weather.gov/ridge/standard/${city.radar}_loop.gif" referrerpolicy="no-referrer">
+      </div>
+      <div class="card"><h3>7-Day Outlook</h3>
+        ${fc.properties.periods.slice(0, 6).map(p => `<div class="forecast-item"><div class="forecast-header"><span>${p.name}</span><span>${p.temperature}°${p.temperatureUnit}</span></div><div style="font-size:0.9rem;">${p.detailedForecast}</div></div>`).join('')}
+      </div>
+    `;
+  } catch (e) { container.innerHTML = `<div class="card" style="color:red;">Error loading data.</div>`; }
+}
 init();
 </script>
 </body>
