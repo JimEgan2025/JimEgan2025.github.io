@@ -5,54 +5,111 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vizcaya WX Intelligence Center</title>
 <style>
-  :root { --primary: #1e3a8a; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #00d2ff; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; margin:0; background: var(--bg); color: var(--text); overflow: hidden; }
-  
-  /* Top Banner - Davis Live Ground-Truth */
-  .live-banner { background: #000; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); }
-  .station-label { font-size: 0.8rem; color: var(--accent); font-weight: 800; letter-spacing: 2px; }
-  .live-stats { display: flex; gap: 30px; font-weight: bold; font-size: 1.2rem; }
-  .live-stats span { color: white; }
-  .live-stats em { font-style: normal; color: #94a3b8; font-size: 0.75rem; margin-right: 8px; text-transform: uppercase; }
-
+  :root {
+    --primary: #1e3a8a;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --accent: #00d2ff;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+  /* Top Banner - Simplified, no live stats */
+  .live-banner {
+    background: #000;
+    padding: 12px 25px;
+    display: flex;
+    justify-content: center; /* Center the label */
+    align-items: center;
+    border-bottom: 2px solid var(--primary);
+  }
+  .station-label {
+    font-size: 1rem;
+    color: var(--accent);
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
   /* Layout */
-  .main-layout { display: flex; height: calc(100vh - 54px); }
-  
+  .main-layout {
+    display: flex;
+    height: calc(100vh - 54px);
+  }
   /* Navigation Sidebar */
-  nav { width: 250px; background: #111827; padding: 20px 12px; border-right: 1px solid #1e293b; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
-  .nav-group-label { font-size: 0.65rem; font-weight: 800; color: #475569; margin: 15px 0 5px 10px; text-transform: uppercase; letter-spacing: 1.5px; }
-  .nav-btn { padding: 10px 15px; border-radius: 8px; cursor: pointer; border: none; background: transparent; color: #94a3b8; text-align: left; font-weight: 600; transition: 0.2s; display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
-  .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
-  .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-
+  nav {
+    width: 250px;
+    background: #111827;
+    padding: 20px 12px;
+    border-right: 1px solid #1e293b;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  .nav-group-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #475569;
+    margin: 15px 0 5px 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .nav-btn {
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    text-align: left;
+    font-weight: 600;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+  }
+  .nav-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+  }
+  .nav-btn.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
   /* Content Viewer */
-  .viewer { flex: 1; background: #000; position: relative; }
-  iframe { width: 100%; height: 100%; border: none; display: none; background: white; }
-  iframe.active { display: block; }
-
-  /* Daily Report Automator Overlay */
-  .post-utility { position: absolute; bottom: 20px; right: 20px; width: 340px; background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--primary); box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 100; }
-  textarea { width: 100%; height: 110px; background: #020617; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: 10px; font-size: 0.85rem; margin-top: 10px; resize: none; font-family: inherit; line-height: 1.4; box-sizing: border-box; }
-  .btn-copy { width: 100%; margin-top: 12px; background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; }
+  .viewer {
+    flex: 1;
+    background: #000;
+    position: relative;
+  }
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none;
+    background: white;
+  }
+  iframe.active {
+    display: block;
+  }
 </style>
 </head>
 <body>
 
-<!-- TOP BANNER -->
+<!-- TOP BANNER - Just label, no stats or sync -->
 <div class="live-banner">
-  <div class="station-label">📍 VIZCAYA LIVE GROUND-TRUTH</div>
-  <div class="live-stats">
-    <div><em>Outside</em> <span id="live-temp">--°F</span></div>
-    <div><em>Wind</em> <span id="live-wind">-- mph</span></div>
-    <div><em>Daily Rain</em> <span id="live-rain">--.--"</span></div>
-  </div>
-  <div id="sync-status" style="font-size: 0.65rem; color: #475569; font-family: monospace;">SYNCING...</div>
+  <div class="station-label">📍 VIZCAYA WX INTELLIGENCE CENTER</div>
 </div>
 
 <div class="main-layout">
   <nav>
     <div class="nav-group-label">Resident Planning</div>
-    <!-- OPENING TAB SET TO ACTIVE -->
     <button class="nav-btn active" onclick="switchView('forecast', this)"><span>📅</span> 14-Day Dashboard</button>
     <button class="nav-btn" onclick="switchView('risk', this)"><span>🌩</span> Risk Engine</button>
     <button class="nav-btn" onclick="switchView('safety', this)"><span>📋</span> Safety Sequence</button>
@@ -68,7 +125,7 @@
     
     <div class="nav-group-label">Hardware</div>
     <button class="nav-btn" onclick="switchView('davis', this)"><span>💻</span> Davis Console</button>
-
+    
     <div style="margin-top: auto; padding: 10px; border-top: 1px solid #1e293b; font-size: 0.7rem; color: #475569; line-height: 1.4;">
       <strong>Vizcaya Weather Bureau</strong><br>
       Strategic Operations v12.0<br>
@@ -79,7 +136,6 @@
   <main class="viewer">
     <!-- 14-DAY DASHBOARD SET TO ACTIVE BY DEFAULT -->
     <iframe id="view-forecast" src="https://jimegan2025.github.io/forecast7day.html" class="active"></iframe>
-    
     <!-- OTHER VIEWS -->
     <iframe id="view-risk" src="https://jimegan2025.github.io/risk.html"></iframe>
     <iframe id="view-safety" src="https://jimegan2025.github.io/safety.html"></iframe>
@@ -89,16 +145,6 @@
     <iframe id="view-tropical" src="https://jimegan2025.github.io/tropical.html"></iframe>
     <iframe id="view-texas" src="https://jimegan2025.github.io/texasdash.html"></iframe>
     <iframe id="view-davis" src="https://jimegan2025.github.io/index.html"></iframe>
-
-    <!-- 5:00 PM REPORT AUTOMATOR -->
-    <div class="post-utility">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.75rem; font-weight: 900; color: var(--accent); letter-spacing: 1px;">DAILY REPORT AUTOMATOR</span>
-        <button onclick="syncDavisData()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.7rem;">[Refresh]</button>
-      </div>
-      <textarea id="group-post">Awaiting live data sync...</textarea>
-      <button class="btn-copy" onclick="copyPost()">Copy Report & Prepare Screenshot</button>
-    </div>
   </main>
 </div>
 
@@ -109,51 +155,7 @@
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
-
-  // SYNC LOGIC: Updates the master header from your index page
-  async function syncDavisData() {
-    try {
-      const res = await fetch('https://jimegan2025.github.io/index.html');
-      const html = await res.text();
-      
-      const tempMatch = html.match(/(\d+\.?\d*)°/);
-      const windMatch = html.match(/Wind[:\s]*(\d+)/i);
-      const rainMatch = html.match(/Rain[:\s]*(\d+\.\d{2})/i);
-
-      if (tempMatch) document.getElementById('live-temp').innerText = tempMatch[0];
-      if (windMatch) document.getElementById('live-wind').innerText = windMatch[1] + " mph";
-      if (rainMatch) document.getElementById('live-rain').innerText = rainMatch[1] + '"';
-      
-      document.getElementById('sync-status').innerText = "LIVE SYNC: " + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      generateReport();
-    } catch (e) { 
-      document.getElementById('sync-status').innerText = "SYNC OFFLINE";
-    }
-  }
-
-  function generateReport() {
-    const temp = document.getElementById('live-temp').innerText;
-    const wind = document.getElementById('live-wind').innerText;
-    const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    
-    const post = `Good evening Vizcaya! 🌆 Report for ${date}:\n\n` +
-                 `Current Davis Ground-Truth:\n` +
-                 `🌡 Temp: ${temp}\n` +
-                 `💨 Wind: ${wind}\n\n` +
-                 `I have updated the Operational dashboards for tomorrow. Please check the attached charts for upcoming plumbing stress, convective outlooks, and our 14-day sequence. Stay safe!`;
-    
-    document.getElementById('group-post').value = post;
-  }
-
-  function copyPost() {
-    const copyText = document.getElementById("group-post");
-    copyText.select();
-    document.execCommand("copy");
-    alert("Report text copied!");
-  }
-
-  syncDavisData();
-  setInterval(syncDavisData, 60000); 
 </script>
+
 </body>
 </html>
