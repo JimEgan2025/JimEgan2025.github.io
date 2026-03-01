@@ -203,7 +203,7 @@ async function runRiskEngine() {
     // Global Alert Scanning for Keywords
     const alertText = alerts.map(a => (a.properties.event + " " + a.properties.headline).toLowerCase()).join(" ");
     const hasTropicalAlert = ["hurricane", "tropical", "surge"].some(word => alertText.includes(word));
-    const hasSevereAlert = alertText.includes("severe");
+    const hasSevereAlert = alertText.includes("severe") || alertText.includes("cig");
 
     const hazards = {
       freeze: [], ice: [], snow: [], fog: [], instab: [], heat: [], wind: [], fire: [], tropical: []
