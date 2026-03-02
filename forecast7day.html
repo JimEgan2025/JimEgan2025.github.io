@@ -5,48 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vizcaya Weather Dashboard | 14-Day Forecast</title>
     <style>
+        /* (Your existing styles unchanged) */
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:15px; color:#1f2937; }
         .container { max-width:1700px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
-        
         .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
         .header h1 { font-size:2.2em; margin-bottom:5px; }
-        
         .table-wrapper { overflow-x:auto; padding:15px; }
         .table-title { background:#334155; color:white; padding:12px 20px; font-weight:700; font-size:1.1em; border-radius:8px 8px 0 0; margin-top:20px; }
         table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px; min-width: 1000px; table-layout: fixed; }
-        
         th { background:#1e3a8a; color:white; padding:12px 5px; font-weight:600; text-align:center; border:1px solid #162e70; }
         td { padding:10px 5px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; line-height: 1.4; }
-        
         .param-name { text-align:left; font-weight:700; background:#f8fafc; width:200px; padding-left:15px; color:#1e3a8a; border-left: 5px solid #1e3a8a; }
         .param-label { font-size:10px; color:#64748b; font-weight:400; display:block; text-transform: uppercase; margin-top: 2px; }
-        
         .day-col { font-weight:800; color:white; font-size:14px; }
         .date-col { font-size:11px; color:rgba(255,255,255,0.8); }
-
         .high-temp { color:#b91c1c; font-weight:800; font-size:15px; }
         .low-temp { color:#1d4ed8; font-weight:800; font-size:15px; }
         .rec-h { color:#991b1b; font-weight:600; font-size:12px; }
         .rec-l { color:#1e40af; font-weight:600; font-size:12px; }
         .rec-yr { font-size:10px; color:#64748b; }
-        
         .sev-none { color:#10b981; font-weight:700; }
         .sev-low { color:#f59e0b; font-weight:700; }
         .sev-mod { color:#ef4444; font-weight:800; }
         .sev-high { color:#b91c1c; font-weight:900; background:#fee2e2; border-radius:4px; padding: 2px; }
-        
         .gust-high { color:#dc2626; font-weight:800; }
         .humidity-val { color: #0891b2; font-weight: 600; }
         .dew-val { color: #4b5563; font-weight: 600; }
-
         .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
         #status { text-align:center; padding:50px; font-weight:bold; color:#1e3a8a; line-height: 1.6; }
         .error-box { border: 2px solid red; background: #fff5f5; color: red; padding: 20px; border-radius: 8px; display: inline-block; text-align: left; }
+        /* Hidden AI Data Layer */
+        #ai-data { display:none; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
         <h1>Vizcaya Weather Dashboard</h1>
@@ -75,6 +68,9 @@
         <span>Location: Round Rock, TX | Data Source: Open-Meteo GFS | <b style="color:#1e3a8a">Displaying Tomorrow + 14 Days</b></span>
         <span id="lastUpdate"></span>
     </div>
+
+    <!-- AI Data Layer: hidden, JSON formatted -->
+    <div id="ai-data"></div>
 </div>
 
 <script>
@@ -84,26 +80,16 @@
     let almanacData = {};
 
     function getWeatherUI(code) {
-        const mapping = {
-            0: { icon: '☀️', desc: 'Clear' },
-            1: { icon: '🌤️', desc: 'Mostly Clear' },
-            2: { icon: '⛅', desc: 'Partly Cloudy' },
-            3: { icon: '☁️', desc: 'Overcast' },
-            45: { icon: '🌫️', desc: 'Fog' },
-            51: { icon: '🌦️', desc: 'Drizzle' },
-            61: { icon: '🌧️', desc: 'Rain' },
-            80: { icon: '🌦️', desc: 'Showers' },
-            95: { icon: '⛈️', desc: 'Thunderstorms' }
-        };
-        return mapping[code] || { icon: '☁️', desc: 'Cloudy' };
+        const mapping = {0: {icon:'☀️',desc:'Clear'},1:{icon:'🌤️',desc:'Mostly Clear'},2:{icon:'⛅',desc:'Partly Cloudy'},3:{icon:'☁️',desc:'Overcast'},45:{icon:'🌫️',desc:'Fog'},51:{icon:'🌦️',desc:'Drizzle'},61:{icon:'🌧️',desc:'Rain'},80:{icon:'🌦️',desc:'Showers'},95:{icon:'⛈️',desc:'Thunderstorms'}};
+        return mapping[code] || {icon:'☁️',desc:'Cloudy'};
     }
 
     function getSeverity(cape, li) {
-        if (cape >= 2500 || li <= -8) return { text: 'EXTREME', cls: 'sev-high' };
-        if (cape >= 1500 || li <= -5) return { text: 'HIGH', cls: 'sev-high' };
-        if (cape >= 1000 || li <= -3) return { text: 'MODERATE', cls: 'sev-mod' };
-        if (cape >= 300 || li <= -1) return { text: 'LOW', cls: 'sev-low' };
-        return { text: 'NONE', cls: 'sev-none' };
+        if (cape >= 2500 || li <= -8) return {text:'EXTREME',cls:'sev-high'};
+        if (cape >= 1500 || li <= -5) return {text:'HIGH',cls:'sev-high'};
+        if (cape >= 1000 || li <= -3) return {text:'MODERATE',cls:'sev-mod'};
+        if (cape >= 300 || li <= -1) return {text:'LOW',cls:'sev-low'};
+        return {text:'NONE',cls:'sev-none'};
     }
 
     async function sourceAlmanac() {
@@ -111,14 +97,12 @@
             const response = await fetch(ALMANAC_SOURCE_URL);
             if (!response.ok) throw new Error("Almanac source unreachable.");
             const htmlText = await response.text();
-            
             const startMarker = "almanacData";
             const startIndex = htmlText.indexOf(startMarker);
             const openingBraceIndex = htmlText.indexOf("{", startIndex);
             const scriptTagEnd = "</" + "script>"; 
             const scriptEndIndex = htmlText.indexOf(scriptTagEnd, openingBraceIndex);
             const closingBraceIndex = htmlText.lastIndexOf("}", scriptEndIndex);
-
             const objectString = htmlText.substring(openingBraceIndex, closingBraceIndex + 1);
             almanacData = new Function("return " + objectString)();
             return true;
@@ -130,89 +114,24 @@
 
     function createRows(container, data, start, count) {
         const { daily, hourly } = data;
-        
         const rowConfigs = [
-            {
-                name: 'Conditions', label: 'Sky / Emoji',
-                getData: i => {
-                    const ui = getWeatherUI(daily.weather_code[i]);
-                    return `<span style="font-size:1.5em">${ui.icon}</span><br><b>${ui.desc}</b>`;
-                }
-            },
-            {
-                name: 'Severe Potential', label: 'Max CAPE / Min LI',
-                getData: i => {
-                    const dayCape = hourly.cape.slice(i * 24, (i + 1) * 24);
-                    const dayLI = hourly.lifted_index.slice(i * 24, (i + 1) * 24);
-                    const maxCape = Math.round(Math.max(...dayCape));
-                    const minLI = Math.min(...dayLI).toFixed(1);
-                    const sev = getSeverity(maxCape, minLI);
-                    return `<div class="${sev.cls}">${sev.text}</div><div style="font-size:10px">${maxCape} / ${minLI}</div>`;
-                }
-            },
-            {
-                name: 'Temperatures', label: 'High / Low (°F)',
-                getData: i => `<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`
-            },
-            {
-                name: 'Dewpoint', label: 'Average Daily (°F)',
-                getData: i => {
-                    const slice = hourly.dew_point_2m.slice(i * 24, (i + 1) * 24);
-                    const avg = Math.round(slice.reduce((a, b) => a + b) / 24);
-                    return `<span class="dew-val">${avg}°</span>`;
-                }
-            },
-            {
-                name: 'Humidity', label: 'Average Relative (%)',
-                getData: i => {
-                    const slice = hourly.relative_humidity_2m.slice(i * 24, (i + 1) * 24);
-                    const avg = Math.round(slice.reduce((a, b) => a + b) / 24);
-                    return `<span class="humidity-val">${avg}%</span>`;
-                }
-            },
-            {
-                name: 'Historical Records', label: 'Record High / Low (Year)',
-                getData: i => {
-                    const mmdd = daily.time[i].slice(5);
-                    const h = almanacData[mmdd];
-                    if (!h) return '--';
-                    return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;
-                }
-            },
-            {
-                name: 'Historical Averages', label: 'Avg High / Low',
-                getData: i => {
-                    const mmdd = daily.time[i].slice(5);
-                    const h = almanacData[mmdd];
-                    return h ? `${h.avgH}° / ${h.avgL}°` : '--';
-                }
-            },
-            {
-                name: 'Feels Like', label: 'Apparent High / Low',
-                getData: i => `${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`
-            },
-            {
-                name: 'Precipitation', label: 'Prob / Amount (Inches)',
-                getData: i => `<b>${daily.precipitation_probability_max[i]}%</b><br>${daily.precipitation_sum[i].toFixed(2)}"`
-            },
-            {
-                name: 'Winds', label: 'Max / Gust (MPH)',
-                getData: i => {
-                    const speed = Math.round(daily.wind_speed_10m_max[i]);
-                    const gust = Math.round(daily.wind_gusts_10m_max[i]);
-                    const gustCls = gust > 25 ? 'gust-high' : '';
-                    return `${speed} / <span class="${gustCls}">G${gust}</span>`;
-                }
-            }
+            {name:'Conditions',label:'Sky / Emoji',getData:i=>{const ui=getWeatherUI(daily.weather_code[i]);return `<span style="font-size:1.5em">${ui.icon}</span><br><b>${ui.desc}</b>`;}},
+            {name:'Severe Potential',label:'Max CAPE / Min LI',getData:i=>{const dayCape=hourly.cape.slice(i*24,(i+1)*24);const dayLI=hourly.lifted_index.slice(i*24,(i+1)*24);const maxCape=Math.round(Math.max(...dayCape));const minLI=Math.min(...dayLI).toFixed(1);const sev=getSeverity(maxCape,minLI);return `<div class="${sev.cls}">${sev.text}</div><div style="font-size:10px">${maxCape} / ${minLI}</div>`;}},
+            {name:'Temperatures',label:'High / Low (°F)',getData:i=>`<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`},
+            {name:'Dewpoint',label:'Average Daily (°F)',getData:i=>{const slice=hourly.dew_point_2m.slice(i*24,(i+1)*24);const avg=Math.round(slice.reduce((a,b)=>a+b)/24);return `<span class="dew-val">${avg}°</span>`;}},
+            {name:'Humidity',label:'Average Relative (%)',getData:i=>{const slice=hourly.relative_humidity_2m.slice(i*24,(i+1)*24);const avg=Math.round(slice.reduce((a,b)=>a+b)/24);return `<span class="humidity-val">${avg}%</span>`;}},
+            {name:'Historical Records',label:'Record High / Low (Year)',getData:i=>{const mmdd=daily.time[i].slice(5);const h=almanacData[mmdd];if(!h)return '--';return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;}},
+            {name:'Historical Averages',label:'Avg High / Low',getData:i=>{const mmdd=daily.time[i].slice(5);const h=almanacData[mmdd];return h?`${h.avgH}° / ${h.avgL}°`:'--';}},
+            {name:'Feels Like',label:'Apparent High / Low',getData:i=>`${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`},
+            {name:'Precipitation',label:'Prob / Amount (Inches)',getData:i=>`<b>${daily.precipitation_probability_max[i]}%</b><br>${daily.precipitation_sum[i].toFixed(2)}"`},
+            {name:'Winds',label:'Max / Gust (MPH)',getData:i=>{const speed=Math.round(daily.wind_speed_10m_max[i]);const gust=Math.round(daily.wind_gusts_10m_max[i]);const gustCls=gust>25?'gust-high':'';return `${speed} / <span class="${gustCls}">G${gust}</span>`;}}
         ];
 
-        rowConfigs.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="param-name"><div>${row.name}</div><span class="param-label">${row.label}</span></td>`;
-            for (let i = start; i < start + count; i++) {
-                const td = document.createElement('td');
-                td.innerHTML = row.getData(i);
-                tr.appendChild(td);
+        rowConfigs.forEach(row=>{
+            const tr=document.createElement('tr');
+            tr.innerHTML=`<td class="param-name"><div>${row.name}</div><span class="param-label">${row.label}</span></td>`;
+            for(let i=start;i<start+count;i++){
+                const td=document.createElement('td'); td.innerHTML=row.getData(i); tr.appendChild(td);
             }
             container.appendChild(tr);
         });
@@ -220,40 +139,45 @@
 
     async function init() {
         const almanacReady = await sourceAlmanac();
-        if (!almanacReady) return;
+        if(!almanacReady) return;
 
         try {
-            // Updated to forecast_days=15 to allow skipping index 0 (Today)
-            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code&hourly=cape,lifted_index,dew_point_2m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
-            
+            const url=`https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code&hourly=cape,lifted_index,dew_point_2m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
             const res = await fetch(url);
             const data = await res.json();
 
-            const renderHeader = (rowId, start, count) => {
-                const row = document.getElementById(rowId);
-                row.innerHTML = '<th>Day / Date</th>';
-                for (let i = start; i < start + count; i++) {
-                    const d = new Date(data.daily.time[i] + 'T00:00:00');
-                    const day = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                    const mmdd = data.daily.time[i].split('-').slice(1).join('/');
-                    row.innerHTML += `<th><div class="day-col">${day}</div><div class="date-col">${mmdd}</div></th>`;
+            const renderHeader = (rowId,start,count)=>{
+                const row=document.getElementById(rowId);
+                row.innerHTML='<th>Day / Date</th>';
+                for(let i=start;i<start+count;i++){
+                    const d=new Date(data.daily.time[i]+'T00:00:00');
+                    const day=d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();
+                    const mmdd=data.daily.time[i].split('-').slice(1).join('/');
+                    row.innerHTML+=`<th><div class="day-col">${day}</div><div class="date-col">${mmdd}</div></th>`;
                 }
             };
 
-            // SHIFTED INDICES: Start at 1 (Tomorrow), skip 0 (Today)
-            renderHeader('head1', 1, 7);
-            renderHeader('head2', 8, 7);
-            
-            createRows(document.getElementById('body1'), data, 1, 7);
-            createRows(document.getElementById('body2'), data, 8, 7);
+            renderHeader('head1',1,7);
+            renderHeader('head2',8,7);
 
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('updateTime').innerText = "Forecast Outlook (Starts Tomorrow)";
-            document.getElementById('lastUpdate').innerText = 'Last Model Sync (GFS): ' + new Date().toLocaleTimeString();
+            createRows(document.getElementById('body1'),data,1,7);
+            createRows(document.getElementById('body2'),data,8,7);
 
-        } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Forecast Sync Error:</b><br>${err.message}</div>`;
+            document.getElementById('status').style.display='none';
+            document.getElementById('mainContent').style.display='block';
+            document.getElementById('updateTime').innerText="Forecast Outlook (Starts Tomorrow)";
+            document.getElementById('lastUpdate').innerText='Last Model Sync (GFS): '+new Date().toLocaleTimeString();
+
+            // === AI Data Layer ===
+            const aiData = {
+                station: {lat:LAT, lon:LON},
+                forecast_daily: data.daily,
+                forecast_hourly: data.hourly
+            };
+            document.getElementById('ai-data').textContent = JSON.stringify(aiData);
+
+        } catch(err){
+            document.getElementById('status').innerHTML=`<div class="error-box"><b>Forecast Sync Error:</b><br>${err.message}</div>`;
         }
     }
 
