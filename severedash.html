@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jim's Critical Indicators - Quick Glance</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#020617; color:#e2e8f0; margin:0; padding:20px; }
+    h1 { color:#00ffcc; text-align:center; }
+    #top-summary {
+      background:#1e293b; border:1px solid #334155; border-radius:12px; padding:15px; margin-bottom:20px; text-align:center;
+    }
+    #top-summary span { font-weight:bold; margin:0 15px; font-size:1.1rem; }
+    .critical { color:#ef4444; } /* red for high concern */
+    .moderate { color:#fb923c; } /* orange */
+    .low { color:#10b981; }     /* green */
+    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:20px; }
+    .card { background:#0f172a; border:1px solid #334155; border-radius:12px; padding:15px; }
+    .card h2 { color:#00ffcc; margin-top:0; }
+    iframe { width:100%; height:500px; border:none; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <h1>Critical Indicators - Quick Reference</h1>
+
+  <!-- Top-line summary - update these manually or via JS if you add fetches -->
+  <div id="top-summary">
+    <span>Tropical Gulf: <span class="low">LOW (10%)</span></span>
+    <span>Impact Risk: <span class="moderate">30%</span></span>
+    <span>Active Alerts: <span class="critical">1 (Flood Warning)</span></span>
+    <span>Dryline Contrast: <span class="critical">24°F (Vizcaya 45° vs Pecos 21°)</span></span>
+    <span>Pressure Trend: <span class="critical">-2.20 mb/3hr</span></span>
+    <span>SPC Severe: <span class="low">NONE</span></span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Alerts</h2>
+      <iframe src="https://jimegan2025.github.io/alerts.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>Tropical Gulf TSI</h2>
+      <iframe src="https://jimegan2025.github.io/tropical.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>Severe / Risk Engine</h2>
+      <iframe src="https://jimegan2025.github.io/severe.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>Frontal Positions & Vizcaya</h2>
+      <iframe src="https://jimegan2025.github.io/frontpos.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>SPC/WPC Central TX</h2>
+      <iframe src="https://jimegan2025.github.io/spcwpc.html"></iframe>
+    </div>
+  </div>
+
+  <p style="text-align:center; color:#94a3b8; margin-top:20px;">
+    Reload page for fresh iframes. Manually update top summary as needed. Add more cards if you want region.html or masterrad.html.
+  </p>
+</body>
+</html>
