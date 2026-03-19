@@ -26,7 +26,30 @@
     h1 {
       color: var(--primary);
       text-align: center;
+      margin-bottom: 15px;
+    }
+    #last-updated {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    #local-alert-banner {
+      display: none;
+      background: var(--alert);
+      color: white;
+      padding: 18px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+      border-radius: 10px;
       margin-bottom: 25px;
+      box-shadow: 0 6px 20px rgba(239,68,68,0.4);
+      animation: flash 2s infinite;
+    }
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
     #top-summary {
       background: #1e293b;
@@ -78,6 +101,10 @@
       overflow: hidden;
       box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     }
+    /* Color-coded left borders */
+    .card.critical { border-left: 6px solid var(--alert); }
+    .card.moderate { border-left: 6px solid var(--moderate); }
+    .card.low     { border-left: 6px solid var(--low); }
     .card h3 {
       color: var(--primary);
       margin: 0 0 12px 0;
@@ -126,14 +153,23 @@
 
   <h1>Critical Indicators - Quick Reference</h1>
 
-  <!-- Top-line critical summary - update manually when values change -->
+  <!-- Auto-updating timestamp -->
+  <p id="last-updated">
+    Last refreshed: <span id="timestamp"></span> (Central Time)
+  </p>
+
+  <!-- Williamson County full-width alert banner (hidden by default) -->
+  <div id="local-alert-banner">
+    ⚠️ WILLIAMSON COUNTY WARNING ACTIVE: [insert details here - e.g., Severe Thunderstorm Warning until 7:00 PM]
+  </div>
+
+  <!-- Top-line critical summary -->
   <div id="top-summary">
     <h2>At-a-Glance Status (as of March 19, 2026 ~5:30 PM CDT)</h2>
     <div class="indicators">
       <div class="indicator">
         <strong>Williamson Co Local Alert</strong>
         <span class="low">NO ACTIVE WARNINGS</span>
-        <!-- When active: change to <span class="critical">Severe Thunderstorm Warning - until 7:00 PM</span> -->
       </div>
       <div class="indicator">
         <strong>Tropical Gulf Status</strong>
@@ -161,38 +197,37 @@
       </div>
     </div>
     <p style="font-size:0.85rem; margin-top:15px; color:#94a3b8;">
-      Update these numbers manually from your pages/NWS when they change (takes ~20 seconds). 
-      Williamson Co alert is top priority for local aviation impacts at Vizcaya hub.
+      Update these numbers manually when they change (takes ~20 seconds). Williamson Co alert is top priority for Vizcaya hub.
     </p>
   </div>
 
-  <!-- Embedded live pages with direct clickable links -->
+  <!-- Embedded live pages with clickable links -->
   <div class="grid">
-    <div class="card">
+    <div class="card critical">  <!-- Example: color-coded based on current alert status -->
       <h3>Priority Alerts</h3>
       <iframe src="https://jimegan2025.github.io/alerts.html"></iframe>
       <a href="https://jimegan2025.github.io/alerts.html" target="_blank" class="link-btn">Open Full Alerts Dashboard →</a>
     </div>
 
-    <div class="card">
+    <div class="card low">
       <h3>Tropical Gulf TSI Dashboard</h3>
       <iframe src="https://jimegan2025.github.io/tropical.html"></iframe>
       <a href="https://jimegan2025.github.io/tropical.html" target="_blank" class="link-btn">Open Full Tropical Dashboard →</a>
     </div>
 
-    <div class="card">
+    <div class="card moderate">
       <h3>Severe / Risk Engine</h3>
       <iframe src="https://jimegan2025.github.io/severe.html"></iframe>
       <a href="https://jimegan2025.github.io/severe.html" target="_blank" class="link-btn">Open Full Risk Engine →</a>
     </div>
 
-    <div class="card">
+    <div class="card critical">
       <h3>Frontal Positions & Vizcaya Hub</h3>
       <iframe src="https://jimegan2025.github.io/frontpos.html"></iframe>
       <a href="https://jimegan2025.github.io/frontpos.html" target="_blank" class="link-btn">Open Full Frontal Analysis →</a>
     </div>
 
-    <div class="card">
+    <div class="card low">
       <h3>SPC/WPC Central TX Outlook</h3>
       <iframe src="https://jimegan2025.github.io/spcwpc.html"></iframe>
       <a href="https://jimegan2025.github.io/spcwpc.html" target="_blank" class="link-btn">Open Full SPC/WPC Central TX →</a>
@@ -200,9 +235,20 @@
   </div>
 
   <div class="footer">
-    One-page quick reference • Click buttons below each card to open full dashboards in new tab • 
-    Reload page for fresh iframes • Edit summary values directly in the HTML • Safe ops from Mobile, AL
+    One-page quick reference • Auto-refreshes every 10 min • Click buttons to open full dashboards • 
+    Edit summary values & card classes directly in HTML • Safe ops from Mobile, AL
   </div>
+
+  <script>
+    // Update timestamp on load
+    document.getElementById('timestamp').innerText = new Date().toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+
+    // Auto-refresh the page every 10 minutes
+    setTimeout(() => location.reload(), 10 * 60 * 1000);
+  </script>
 
 </body>
 </html>
