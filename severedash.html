@@ -5,59 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jim's Critical Indicators - Quick Glance</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#020617; color:#e2e8f0; margin:0; padding:20px; }
-    h1 { color:#00ffcc; text-align:center; }
-    #top-summary {
-      background:#1e293b; border:1px solid #334155; border-radius:12px; padding:15px; margin-bottom:20px; text-align:center;
+    :root {
+      --primary: #00ffcc;
+      --bg: #020617;
+      --card: #0f172a;
+      --text: #e2e8f0;
+      --alert: #ef4444;
+      --moderate: #fb923c;
+      --low: #10b981;
+      --border: #334155;
     }
-    #top-summary span { font-weight:bold; margin:0 15px; font-size:1.1rem; }
-    .critical { color:#ef4444; } /* red for high concern */
-    .moderate { color:#fb923c; } /* orange */
-    .low { color:#10b981; }     /* green */
-    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:20px; }
-    .card { background:#0f172a; border:1px solid #334155; border-radius:12px; padding:15px; }
-    .card h2 { color:#00ffcc; margin-top:0; }
-    iframe { width:100%; height:500px; border:none; border-radius:8px; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    h1 {
+      color: var(--primary);
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    #top-summary {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #top-summary h2 {
+      margin: 0 0 15px 0;
+      color: var(--primary);
+      font-size: 1.4rem;
+    }
+    .indicators {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .indicator {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 18px;
+      min-width: 200px;
+      text-align: center;
+    }
+    .indicator strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+    .critical { color: var(--alert); font-weight: bold; }
+    .moderate { color: var(--moderate); font-weight: bold; }
+    .low { color: var(--low); font-weight: bold; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 25px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    }
+    .card h3 {
+      color: var(--primary);
+      margin: 0 0 12px 0;
+      font-size: 1.3rem;
+    }
+    .card .link-btn {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 24px;
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .card .link-btn:hover {
+      background: var(--primary);
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,255,204,0.4);
+    }
+    iframe {
+      width: 100%;
+      height: 580px;
+      border: none;
+      border-radius: 8px;
+    }
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-top: 40px;
+    }
+    @media (max-width: 768px) {
+      .indicators { flex-direction: column; align-items: center; gap: 15px; }
+      iframe { height: 500px; }
+      .card .link-btn { width: 100%; text-align: center; }
+    }
   </style>
 </head>
 <body>
+
   <h1>Critical Indicators - Quick Reference</h1>
 
-  <!-- Top-line summary - update these manually or via JS if you add fetches -->
+  <!-- Top-line critical summary - update manually when values change -->
   <div id="top-summary">
-    <span>Tropical Gulf: <span class="low">LOW (10%)</span></span>
-    <span>Impact Risk: <span class="moderate">30%</span></span>
-    <span>Active Alerts: <span class="critical">1 (Flood Warning)</span></span>
-    <span>Dryline Contrast: <span class="critical">24°F (Vizcaya 45° vs Pecos 21°)</span></span>
-    <span>Pressure Trend: <span class="critical">-2.20 mb/3hr</span></span>
-    <span>SPC Severe: <span class="low">NONE</span></span>
+    <h2>At-a-Glance Status (as of March 19, 2026 ~5:30 PM CDT)</h2>
+    <div class="indicators">
+      <div class="indicator">
+        <strong>Williamson Co Local Alert</strong>
+        <span class="low">NO ACTIVE WARNINGS</span>
+        <!-- When active: change to <span class="critical">Severe Thunderstorm Warning - until 7:00 PM</span> -->
+      </div>
+      <div class="indicator">
+        <strong>Tropical Gulf Status</strong>
+        <span class="low">LOW (10%)</span>
+      </div>
+      <div class="indicator">
+        <strong>Impact Risk Engine</strong>
+        <span class="moderate">30%</span>
+      </div>
+      <div class="indicator">
+        <strong>Active NWS Alerts (TX)</strong>
+        <span class="critical">1 (Flood Warning - East TX)</span>
+      </div>
+      <div class="indicator">
+        <strong>Dryline Dew Contrast</strong>
+        <span class="critical">24°F (Vizcaya 45° vs Pecos 21°)</span>
+      </div>
+      <div class="indicator">
+        <strong>Hub Pressure Trend</strong>
+        <span class="critical">-2.20 mb/3hr</span>
+      </div>
+      <div class="indicator">
+        <strong>SPC Severe Risk (Days 1-3)</strong>
+        <span class="low">NONE</span>
+      </div>
+    </div>
+    <p style="font-size:0.85rem; margin-top:15px; color:#94a3b8;">
+      Update these numbers manually from your pages/NWS when they change (takes ~20 seconds). 
+      Williamson Co alert is top priority for local aviation impacts at Vizcaya hub.
+    </p>
   </div>
 
+  <!-- Embedded live pages with direct clickable links -->
   <div class="grid">
     <div class="card">
-      <h2>Alerts</h2>
+      <h3>Priority Alerts</h3>
       <iframe src="https://jimegan2025.github.io/alerts.html"></iframe>
+      <a href="https://jimegan2025.github.io/alerts.html" target="_blank" class="link-btn">Open Full Alerts Dashboard →</a>
     </div>
+
     <div class="card">
-      <h2>Tropical Gulf TSI</h2>
+      <h3>Tropical Gulf TSI Dashboard</h3>
       <iframe src="https://jimegan2025.github.io/tropical.html"></iframe>
+      <a href="https://jimegan2025.github.io/tropical.html" target="_blank" class="link-btn">Open Full Tropical Dashboard →</a>
     </div>
+
     <div class="card">
-      <h2>Severe / Risk Engine</h2>
+      <h3>Severe / Risk Engine</h3>
       <iframe src="https://jimegan2025.github.io/severe.html"></iframe>
+      <a href="https://jimegan2025.github.io/severe.html" target="_blank" class="link-btn">Open Full Risk Engine →</a>
     </div>
+
     <div class="card">
-      <h2>Frontal Positions & Vizcaya</h2>
+      <h3>Frontal Positions & Vizcaya Hub</h3>
       <iframe src="https://jimegan2025.github.io/frontpos.html"></iframe>
+      <a href="https://jimegan2025.github.io/frontpos.html" target="_blank" class="link-btn">Open Full Frontal Analysis →</a>
     </div>
+
     <div class="card">
-      <h2>SPC/WPC Central TX</h2>
+      <h3>SPC/WPC Central TX Outlook</h3>
       <iframe src="https://jimegan2025.github.io/spcwpc.html"></iframe>
+      <a href="https://jimegan2025.github.io/spcwpc.html" target="_blank" class="link-btn">Open Full SPC/WPC Central TX →</a>
     </div>
   </div>
 
-  <p style="text-align:center; color:#94a3b8; margin-top:20px;">
-    Reload page for fresh iframes. Manually update top summary as needed. Add more cards if you want region.html or masterrad.html.
-  </p>
+  <div class="footer">
+    One-page quick reference • Click buttons below each card to open full dashboards in new tab • 
+    Reload page for fresh iframes • Edit summary values directly in the HTML • Safe ops from Mobile, AL
+  </div>
+
 </body>
 </html>
