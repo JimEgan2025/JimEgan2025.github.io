@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NWS AFD Key Messages - Texas Offices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+            color: #1e2937;
+        }
+        h1 { text-align: center; color: #1e40af; }
+        p.center { text-align: center; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 18px;
+        }
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .office { font-weight: bold; font-size: 1.15em; color: #1e40af; }
+        .wfo { font-size: 0.9em; color: #64748b; }
+        .time { font-size: 0.85em; color: #475569; margin-bottom: 12px; }
+        button {
+            padding: 7px 14px;
+            background: #1e40af;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        button:hover { background: #1e3a8a; }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .messages {
+            font-size: 0.96em;
+            line-height: 1.65;
+            background: #f8fafc;
+            padding: 16px;
+            border-left: 5px solid #3b82f6;
+            border-radius: 6px;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        .messages ul {
+            margin: 0 0 0 22px;
+            padding: 0;
+            list-style-type: disc;
+        }
+        .messages li {
+            margin-bottom: 14px;
+        }
+        .loading { color: #64748b; font-style: italic; }
+        .error { color: #ef4444; }
+        footer { text-align: center; margin-top: 30px; font-size: 0.85em; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h1>NWS Area Forecast Discussion - Key Messages (Texas Offices)</h1>
+    <p class="center">
+        <button onclick="refreshAll()">🔄 Refresh All Texas Offices</button>
+    </p>
+    <div class="grid" id="grid"></div>
+    <footer>
+        Data from official NWS public text products • Auto-refreshes every 30 minutes
+    </footer>
+
+    <script>
+        const offices = [
+            { id: "AMA", name: "Amarillo" },
+            { id: "BRO", name: "Brownsville" },
+            { id: "CRP", name: "Corpus Christi" },
+            { id: "EPZ", name: "El Paso" },
+            { id: "EWX", name: "Austin / San Antonio" },
+            { id: "FWD", name: "Dallas / Fort Worth" },
+            { id: "HGX", name: "Houston / Galveston" },
+            { id: "LUB", name: "Lubbock" },
+            { id: "MAF", name: "Midland / Odessa" },
+            { id: "SJT", name: "San Angelo" }
+        ];
+
+        const grid = document.getElementById('grid');
+
+        function createCard(office) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="header">
+                    <div>
+                        <span class="office">${office.name}</span>
+                        <span class="wfo">(${office.id})</span>
+                    </div>
+                    <button onclick="loadAFD('${office.id}', this)">Refresh</button>
+                </div>
+                <div class="time" id="time-${office.id}">Loading issuance time...</div>
+                <div class="messages" id="msg-${office.id}">
+                    <span class="loading">Fetching latest AFD Key Messages for ${office.id}...</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        }
+
+        function cleanKeyMessages(text) {
+            if (!text || text.length < 10) return '<p>No messages available.</p>';
+
+            const lines = text.split('\n');
+            let bullets = [];
+            let current = '';
+
+            lines.forEach(rawLine => {
+                const trimmed = rawLine.trim();
+
+                if (trimmed.length < 3) return;
+
+                // Remove header and "Issued at..." line
+                if (/KEY MESSAGES/i.test(trimmed) || /^Issued at/i.test(trimmed)) {
+                    return;
+                }
+
+                // New bullet starts with "- "
+                const bulletMatch = rawLine.match(/^\s*-\s*(.+)/);
+                if (bulletMatch) {
+                    if (current) bullets.push(current.trim());
+                    current = bulletMatch[1].trim();
+                } 
+                // Continuation line (indented text with no leading "-")
+                else if (current && rawLine.trim().length > 0) {
+                    current += ' ' + rawLine.trim();
+                } 
+                // Fallback for first bullet
+                else if (!current) {
+                    current = trimmed;
+                }
+            });
+
+            if (current) bullets.push(current.trim());
+
+            if (bullets.length === 0) {
+                return `<p>${text.replace(/\n/g, '<br>')}</p>`;
+            }
+
+            const listItems = bullets.map(b => `<li>${b}</li>`).join('');
+            return `<ul>${listItems}</ul>`;
+        }
+
+        async function loadAFD(wfo, button = null) {
+            const msgDiv = document.getElementById(`msg-${wfo}`);
+            const timeDiv = document.getElementById(`time-${wfo}`);
+            if (button) button.disabled = true;
+
+            msgDiv.innerHTML = `<span class="loading">Loading AFD for ${wfo}...</span>`;
+
+            try {
+                const url = `https://forecast.weather.gov/product.php?site=${wfo}&issuedby=${wfo}&product=AFD&format=txt&version=1`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const fullText = await response.text();
+
+                // Extract issuance time
+                const timeMatch = fullText.match(/(\d{1,4} [A-Z]{3} \w+ \w+ \d{4})/i);
+                const issued = timeMatch ? timeMatch[0] : 'Unknown time';
+
+                // Extract .KEY MESSAGES section
+                let messages = '';
+                const keyIndex = fullText.search(/\.?\s*KEY MESSAGES/i);
+                if (keyIndex !== -1) {
+                    let endIndex = fullText.indexOf('&&', keyIndex);
+                    if (endIndex === -1) endIndex = fullText.indexOf('.SYNOPSIS', keyIndex);
+                    if (endIndex === -1) endIndex = fullText.length;
+                    messages = fullText.substring(keyIndex, endIndex).trim();
+                } else {
+                    messages = fullText.substring(0, 1200).trim() + 
+                        '\n\n[No ".KEY MESSAGES" section found — showing start of discussion]';
+                }
+
+                timeDiv.textContent = `Issued: ${issued}`;
+                msgDiv.innerHTML = cleanKeyMessages(messages);
+
+            } catch (err) {
+                console.error(err);
+                msgDiv.innerHTML = `<span class="error">Failed to load ${wfo}. Try Refresh.</span>`;
+                timeDiv.textContent = 'Error loading time';
+            }
+
+            if (button) button.disabled = false;
+        }
+
+        function refreshAll() {
+            offices.forEach(office => loadAFD(office.id));
+        }
+
+        // Initialize
+        offices.forEach(office => {
+            createCard(office);
+            loadAFD(office.id);
+        });
+
+        // Auto-refresh every 30 minutes
+        setInterval(refreshAll, 30 * 60 * 1000);
+    </script>
+</body>
+</html>
