@@ -3,88 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Weather Pro | 360-Hour Meteorological Suite</title>
+    <title>Vizcaya Pro Weather | High-Visibility Suite</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         
         body { 
             font-family:'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background:#f0f2f5; color:#1f2937; line-height:1.4; 
-            padding-top: 70px; /* Offset for the fixed blue header */
+            background:#f0f2f5; color:#111827; line-height:1.5; 
+            padding-top: 90px; 
         }
 
-        /* 1. FIXED TOP NAV (Z-INDEX 4000) */
+        /* FIXED COMMAND HEADER */
         .header { 
-            background:#1e3a8a; color:white; padding:10px 20px; text-align:center; 
-            position: fixed; top: 0; width: 100%; height: 70px; z-index: 4000; 
+            background:#1e3a8a; color:white; padding:15px 25px; text-align:center; 
+            position: fixed; top: 0; width: 100%; height: 90px; z-index: 4000; 
             display: flex; flex-direction: column; justify-content: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
-        .header h1 { font-size: 1.4em; letter-spacing: 1px; }
-        .header p { font-size: 0.8em; opacity: 0.9; }
+        .header h1 { font-size: 2.2em; letter-spacing: 1px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
 
-        .container { max-width: 1600px; margin: 0 auto; padding: 0 10px; }
+        .container { max-width: 1950px; margin: 0 auto; padding: 0 15px; }
 
-        /* 2. TABLE CONTAINER - Must not have overflow:hidden for sticky to work globally */
         .table-container { 
-            background: white; border-radius: 0 0 12px 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-            border: 1px solid #e2e8f0;
+            background: white; border-radius: 0 0 15px 15px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 2px solid #cbd5e1; 
         }
 
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 
-        /* 3. COLUMN HEADERS (Z-INDEX 3000) - Sticks to top: 70px */
+        /* STICKY COLUMN LABELS */
         thead th { 
-            background: #334155; color: white; padding: 12px 5px; font-size: 10px; 
-            text-transform: uppercase; 
-            position: sticky; top: 70px; 
-            z-index: 3000; 
-            border-right: 1px solid #475569; text-align: center;
+            background: #1f2937; color: white; padding: 15px 5px; 
+            font-size: 15px; text-transform: uppercase; letter-spacing: 1px;
+            position: sticky; top: 90px; z-index: 3500; 
+            border-right: 1px solid #4b5563; text-align: center;
         }
 
-        /* 4. DAY SEPARATOR (Z-INDEX 2000) - Sticks to top: 110px (under column headers) */
+        /* STICKY DAY SEPARATOR */
         .day-separator td { 
-            background: #cbd5e1 !important; font-weight: 800; color: #1e3a8a; font-size: 13px; 
-            padding: 12px 15px; 
-            position: sticky; top: 109px; 
-            z-index: 2000; 
-            border-bottom: 2px solid #94a3b8; text-align: left;
+            background: #334155 !important; font-weight: 900; color: #ffffff; 
+            font-size: 22px; padding: 20px 25px; 
+            position: sticky; top: 141px; z-index: 3000; 
+            border-bottom: 4px solid #1e3a8a; text-align: left;
         }
-
-        .day-summary { float: right; font-weight: 400; color: #475569; font-size: 11px; margin-top: 2px; }
-        .summary-val { font-weight: 800; color: #1e3a8a; margin-right: 12px; }
+        .day-summary { float: right; font-weight: 700; color: #facc15; font-size: 18px; }
+        .summary-val { color: #ffffff; margin-right: 15px; }
 
         /* DATA ROWS */
-        tr { border-bottom: 1px solid #f1f5f9; }
-        td { padding: 10px 4px; font-size: 13px; vertical-align: middle; border-right: 1px solid #f1f5f9; text-align: center; background: white; }
-
-        /* ROW HIGHLIGHTS */
-        .is-now td { background-color: #fffbeb !important; border-top: 2px solid #f59e0b; border-bottom: 2px solid #f59e0b; }
-        .is-night td { background-color: #f9fafb !important; color: #94a3b8; }
-        .has-storm td { background-color: #fff1f2 !important; }
-        .has-rain td { background-color: #f0f9ff !important; }
-        .solar-event td { background: #fff7ed !important; color: #9a3412; font-size: 10px; font-weight: 800; padding: 6px; border: none; }
-
-        /* COLUMN SPECIFICS */
-        .temp-cell { font-weight: 800; color: #b91c1c; font-size: 1.15em; }
-        .precip-prob { color: #2563eb; font-weight: 800; font-size: 1.1em; }
-        .pressure-cell { font-family: 'Courier New', monospace; color: #64748b; font-size: 11px; font-weight: 700; }
-
-        /* BADGES */
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; display: inline-block; }
-        .cape-active { background: #f59e0b; }
-        .cape-none { background: #e2e8f0; color: #94a3b8; font-weight: 400; }
-        .uv-badge { background: #ef4444; }
-
-        #topBtn {
-            position: fixed; bottom: 25px; right: 25px; z-index: 5000;
-            background: #1e3a8a; color: white; border: none; width: 50px; height: 50px;
-            border-radius: 50%; cursor: pointer; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            font-weight: bold; font-size: 18px;
+        tr { border-bottom: 2px solid #e2e8f0; }
+        td { 
+            padding: 15px 5px; font-size: 19px; 
+            vertical-align: middle; border-right: 1px solid #f1f5f9; 
+            text-align: center; background: white; font-weight: 600;
         }
 
-        @media (max-width: 900px) { .hide-mobile { display: none; } }
+        /* SOLAR EVENTS (Sunrise/Sunset) */
+        .sunrise-row td { background: #fef3c7 !important; color: #92400e !important; font-size: 20px !important; font-weight: 900; border: none; padding: 12px; }
+        .sunset-row td { background: #e0e7ff !important; color: #1e3a8a !important; font-size: 20px !important; font-weight: 900; border: none; padding: 12px; }
+
+        /* ROW HIGHLIGHTS */
+        .is-now td { background-color: #fefce8 !important; border-top: 3px solid #f59e0b; border-bottom: 3px solid #f59e0b; }
+        .is-night td { background-color: #f8fafc !important; color: #64748b; }
+        .has-storm td { background-color: #fff1f2 !important; }
+        .has-rain td { background-color: #eff6ff !important; }
+
+        /* COLUMN SPECIFICS */
+        .time-cell { font-weight: 800; color: #1e3a8a; font-size: 1.1em; }
+        .temp-cell { font-weight: 900; color: #b91c1c; font-size: 1.45em; display: block; }
+        .feels-label { font-size: 15px; color: #4b5563; font-weight: 600; display: block; margin-top: 4px; }
+        
+        .precip-prob { color: #1d4ed8; font-weight: 900; font-size: 1.25em; display: block; }
+        .precip-amt { color: #1e40af; font-size: 16px; font-weight: 800; margin-top: 5px; display: block; }
+        
+        .et-cell { color: #15803d; font-weight: 900; font-size: 18px; }
+        .pressure-cell { font-family: 'Courier New', monospace; color: #111827; font-size: 17px; font-weight: 800; }
+        
+        .cloud-cell { font-size: 17px; font-weight: 700; line-height: 1.3; }
+        .theory-label { font-size: 14px; color: #4b5563; display: block; margin-top: 5px; font-weight: 700; text-transform: uppercase; }
+
+        /* BADGES */
+        .badge { padding: 5px 10px; border-radius: 8px; font-size: 15px; font-weight: 900; color: white; display: inline-block; }
+        .cape-active { background: #ea580c; }
+        .cape-none { background: #e5e7eb; color: #6b7280; font-weight: 600; }
+        .uv-badge { background: #dc2626; border: 2px solid #7f1d1d; }
+
+        #topBtn {
+            position: fixed; bottom: 30px; right: 30px; z-index: 5000;
+            background: #1e3a8a; color: white; border: none; width: 70px; height: 70px;
+            border-radius: 50%; cursor: pointer; display: none; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            font-size: 35px; font-weight: bold;
+        }
+
+        #status { text-align:center; padding:150px; font-size: 28px; font-weight: bold; color: #1e3a8a; }
+
+        @media (max-width: 1300px) { .hide-tablet { display: none; } }
     </style>
 </head>
 <body>
@@ -93,29 +106,30 @@
 
 <div class="header">
     <h1>Vizcaya Pro Weather Suite</h1>
-    <p id="updateTime">Syncing High-Resolution 360-Hour Meteorological Data...</p>
+    <p id="updateTime">Syncing Meteorological High-Visibility Data...</p>
 </div>
 
 <div class="container">
-    <div id="status" style="text-align:center; padding:100px; font-weight:bold;">📡 Initializing Sticky Dashboard...</div>
+    <div id="status">📡 Establishing High-Res Connection...</div>
     
     <div id="mainContent" class="table-container" style="display:none;">
         <table>
             <thead>
                 <tr>
-                    <th style="width:100px">Time</th>
-                    <th style="width:50px"></th>
-                    <th style="text-align:left; padding-left:15px">Conditions</th>
-                    <th style="width:85px">Temp / Feels</th>
-                    <th style="width:65px">Dew Pt</th>
-                    <th style="width:95px">Precip Prob/Amt</th>
-                    <th style="width:110px">Wind / Gust</th>
-                    <th style="width:55px">Dir</th>
-                    <th style="width:80px" class="hide-mobile">Pres (inHg)</th>
-                    <th style="width:75px" class="hide-mobile">Solar W/m²</th>
-                    <th style="width:80px">CAPE</th>
-                    <th style="width:45px">UV</th>
-                    <th style="width:45px">Risk</th>
+                    <th style="width:140px">Time</th>
+                    <th style="width:70px"></th>
+                    <th style="text-align:left; padding-left:25px">Conditions</th>
+                    <th style="width:120px">Temp / Feels</th>
+                    <th style="width:100px">Dew Pt</th>
+                    <th style="width:130px">Precip Prob/Amt</th>
+                    <th style="width:100px">ET (Loss)</th>
+                    <th style="width:140px">Wind / Gust</th>
+                    <th style="width:80px">Dir</th>
+                    <th style="width:110px" class="hide-tablet">Pres (inHg)</th>
+                    <th style="width:120px" class="hide-tablet">Solar Energy</th>
+                    <th style="width:150px">Cloud Base / Vis</th>
+                    <th style="width:110px">CAPE</th>
+                    <th style="width:80px">Risk</th>
                 </tr>
             </thead>
             <tbody id="hourlyBody"></tbody>
@@ -130,10 +144,9 @@
 
     const getWindDir = deg => ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg / 45) % 8];
     const getMoonIcon = phase => {
-        if (phase === 0 || phase === 1) return '🌑'; 
-        if (phase < 0.25) return '🌙'; if (phase === 0.25) return '🌓';
-        if (phase < 0.5) return '🌔'; if (phase === 0.5) return '🌕'; 
-        if (phase < 0.75) return '🌖'; if (phase === 0.75) return '🌗'; return '🌘';
+        if (phase === 0 || phase === 1) return '🌑'; if (phase < 0.25) return '🌙'; if (phase === 0.25) return '🌓';
+        if (phase < 0.5) return '🌔'; if (phase === 0.5) return '🌕'; if (phase < 0.75) return '🌖';
+        if (phase === 0.75) return '🌗'; return '🌘';
     };
 
     function getWeatherIcon(icon) {
@@ -173,6 +186,7 @@
             const validHours = day.hours.filter(h => new Date(day.datetime + 'T' + h.datetime).getTime() >= currentHourTs);
             if (validHours.length === 0) return;
 
+            // DAY HEADER
             const dateObj = new Date(day.datetime + 'T00:00:00');
             const isToday = day.datetime === now.toLocaleDateString('en-CA');
             const dayLabel = isToday ? "TODAY" : dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -180,23 +194,37 @@
             const headRow = document.createElement('tr');
             headRow.className = 'day-separator';
             headRow.innerHTML = `
-                <td colspan="13">
+                <td colspan="14">
                     📅 ${dayLabel.toUpperCase()} ${getMoonIcon(day.moonphase)}
                     <div class="day-summary">
                         HI: <span class="summary-val">${Math.round(day.tempmax)}°</span> 
                         LO: <span class="summary-val">${Math.round(day.tempmin)}°</span> 
-                        PRECIP: <span class="summary-val">${(day.precip || 0).toFixed(2)}"</span>
+                        RAIN: <span class="summary-val">${(day.precip || 0).toFixed(2)}"</span>
                     </div>
                 </td>`;
             body.appendChild(headRow);
+
+            // Sunrise / Sunset Hour Check
+            const sunRiseH = parseInt(day.sunrise.split(':')[0]);
+            const sunSetH = parseInt(day.sunset.split(':')[0]);
 
             validHours.forEach((hour) => {
                 if (renderedCount >= 360) return;
                 const hr = parseInt(hour.datetime.split(':')[0]);
                 const hTs = new Date(day.datetime + 'T' + hour.datetime).getTime();
                 
-                if (hour.datetime.slice(0,5) === day.sunrise.slice(0,5)) body.insertAdjacentHTML('beforeend', `<tr class="solar-event"><td colspan="13">☀️ SUNRISE AT ${day.sunrise.slice(0,5)} AM</td></tr>`);
-                if (hour.datetime.slice(0,5) === day.sunset.slice(0,5)) body.insertAdjacentHTML('beforeend', `<tr class="solar-event"><td colspan="13">🌙 SUNSET AT ${day.sunset.slice(0,5)} PM</td></tr>`);
+                // INJECT SUNRISE ROW
+                if (hr === sunRiseH) {
+                    const r = document.createElement('tr'); r.className = 'sunrise-row';
+                    r.innerHTML = `<td colspan="14">☀️ SUNRISE AT ${day.sunrise.slice(0,5)} AM</td>`;
+                    body.appendChild(r);
+                }
+                // INJECT SUNSET ROW
+                if (hr === sunSetH) {
+                    const r = document.createElement('tr'); r.className = 'sunset-row';
+                    r.innerHTML = `<td colspan="14">🌙 SUNSET AT ${day.sunset.slice(0,5)} PM</td>`;
+                    body.appendChild(r);
+                }
 
                 const tr = document.createElement('tr');
                 if (hTs === currentHourTs) tr.className = 'is-now';
@@ -204,20 +232,30 @@
                 else if (hour.precip > 0) tr.className = 'has-rain';
                 else if (hr < 6 || hr >= 20) tr.className = 'is-night';
 
+                // High Vis Cloud Logic
+                const cond = hour.conditions.toLowerCase();
+                const diff = hour.temp - hour.dew;
+                const theoryBase = (diff / 4.4) * 1000;
+                let baseDisplay = (hour.cloudbase && hour.cloudbase > 0) ? Math.round(hour.cloudbase).toLocaleString() + ' ft' : (hour.cloudcover > 25 || cond.includes('rain') ? Math.round(theoryBase).toLocaleString() + ' ft' : "Clear Sky");
+                
+                let vis = hour.visibility || 10;
+                const visColor = vis < 3 ? 'color:#dc2626; font-weight:900' : 'color:#111827';
+
                 tr.innerHTML = `
-                    <td style="font-weight:700; color:#1e3a8a">${hr % 12 || 12}:00 ${hr >= 12 ? 'PM' : 'AM'}</td>
-                    <td style="font-size:1.5em">${getWeatherIcon(hour.icon)}</td>
-                    <td style="text-align:left; padding-left:15px; font-size:11px; font-weight:600">${hour.conditions}</td>
-                    <td><span class="temp-cell">${Math.round(hour.temp)}°</span><br><span style="font-size:10px; opacity:0.7">Feels ${Math.round(hour.feelslike)}°</span></td>
-                    <td style="color:#0891b2; font-weight:600">${Math.round(hour.dew)}°</td>
-                    <td><span class="precip-prob">${Math.round(hour.precipprob)}%</span><br><span style="font-size:10px; font-weight:bold">${(hour.precip || 0).toFixed(2)}"</span></td>
-                    <td style="font-size:11px">${Math.round(hour.windspeed)} <span style="color:#dc2626; font-weight:800">G${Math.round(hour.windgust)}</span></td>
-                    <td><span style="font-weight:800; color:#1e3a8a">${getWindDir(hour.winddir)}</span></td>
-                    <td class="pressure-cell hide-mobile">${(hour.pressure * 0.02953).toFixed(2)}</td>
-                    <td style="color:#f59e0b; font-weight:600" class="hide-mobile">${Math.round(hour.solarradiation || 0)}</td>
+                    <td class="time-cell">${hr % 12 || 12}:00 ${hr >= 12 ? 'PM' : 'AM'}</td>
+                    <td style="font-size:2.2em">${getWeatherIcon(hour.icon)}</td>
+                    <td style="text-align:left; padding-left:25px; font-weight:800">${hour.conditions}</td>
+                    <td><span class="temp-cell">${Math.round(hour.temp)}°</span><span class="feels-label">Feels ${Math.round(hour.feelslike)}°</span></td>
+                    <td style="color:#0891b2; font-weight:900; font-size:1.1em">${Math.round(hour.dew)}°</td>
+                    <td><span class="precip-prob">${Math.round(hour.precipprob)}%</span><span class="precip-amt">${(hour.precip || 0).toFixed(2)}"</span></td>
+                    <td class="et-cell">${(hour.et || 0).toFixed(3)}"</td>
+                    <td style="font-weight:800">${Math.round(hour.windspeed)} <span style="color:#dc2626; font-weight:900; font-size:16px">G${Math.round(hour.windgust)}</span></td>
+                    <td><span style="font-weight:900; color:#1e3a8a; font-size:1.1em">${getWindDir(hour.winddir)}</span></td>
+                    <td class="pressure-cell hide-tablet">${(hour.pressure * 0.02953).toFixed(2)}</td>
+                    <td class="hide-tablet" style="font-weight:800">${(hour.solarenergy || 0).toFixed(1)}<br><span style="color:#ca8a04; font-size:14px">MJ/m²</span></td>
+                    <td class="cloud-cell"><b>${baseDisplay}</b><br><span style="${visColor}">Vis: ${vis} mi</span></td>
                     <td><span class="badge ${hour.cape > 0 ? 'cape-active' : 'cape-none'}">${Math.round(hour.cape) || 'Stable'}</span></td>
-                    <td><span class="${hour.uvindex > 7 ? 'badge uv-badge' : ''}">${Math.round(hour.uvindex)}</span></td>
-                    <td><b style="color:${hour.severerisk > 30 ? '#ef4444' : '#64748b'}">${hour.severerisk || 0}</b></td>
+                    <td><b style="color:${hour.severerisk > 30 ? '#ef4444' : '#111827'}; font-size:1.2em">${hour.severerisk || 0}</b></td>
                 `;
                 body.appendChild(tr);
                 renderedCount++;
@@ -226,6 +264,12 @@
         document.getElementById('status').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
     }
+
+    window.onscroll = function() { document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none"; };
+    fetchHourly();
+</script>
+</body>
+</html>
 
     window.onscroll = function() { document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none"; };
     fetchHourly();
