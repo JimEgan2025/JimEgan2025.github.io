@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Pro Weather | High-Visibility Suite</title>
+    <title>Vizcaya Pro Weather | Warning & Energy Suite</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         
@@ -58,44 +58,44 @@
             text-align: center; background: white; font-weight: 600;
         }
 
-        /* SOLAR EVENTS (Sunrise/Sunset) */
-        .sunrise-row td { background: #fef3c7 !important; color: #92400e !important; font-size: 20px !important; font-weight: 900; border: none; padding: 12px; }
-        .sunset-row td { background: #e0e7ff !important; color: #1e3a8a !important; font-size: 20px !important; font-weight: 900; border: none; padding: 12px; }
-
-        /* ROW HIGHLIGHTS */
-        .is-now td { background-color: #fefce8 !important; border-top: 3px solid #f59e0b; border-bottom: 3px solid #f59e0b; }
-        .is-night td { background-color: #f8fafc !important; color: #64748b; }
-        .has-storm td { background-color: #fff1f2 !important; }
-        .has-rain td { background-color: #eff6ff !important; }
-
-        /* COLUMN SPECIFICS */
-        .time-cell { font-weight: 800; color: #1e3a8a; font-size: 1.1em; }
-        .temp-cell { font-weight: 900; color: #b91c1c; font-size: 1.45em; display: block; }
-        .feels-label { font-size: 15px; color: #4b5563; font-weight: 600; display: block; margin-top: 4px; }
+        /* WARNING ENGINE COLOR CODING */
+        /* Heat & Feels Like */
+        .warn-heat-extreme { background: #7e22ce !important; color: white !important; } /* 105+ Purple */
+        .warn-heat-high { background: #ea580c !important; color: white !important; }    /* 90+ Orange */
+        .warn-cold-freeze { background: #60a5fa !important; color: white !important; }  /* <32 Light Blue */
+        .warn-cold-hard { background: #1e3a8a !important; color: white !important; }    /* <15 Deep Blue */
         
-        .precip-prob { color: #1d4ed8; font-weight: 900; font-size: 1.25em; display: block; }
+        /* Wind Gusts */
+        .warn-wind-high { background: #fef08a !important; color: #92400e !important; }   /* 30+ Yellow */
+        .warn-wind-severe { background: #dc2626 !important; color: white !important; }  /* 50+ Red */
+
+        /* Dew Point */
+        .dew-muggy { color: #0d9488 !important; font-weight: 900 !important; text-decoration: underline; } /* 70+ Sticky */
+
+        /* SOLAR EVENTS */
+        .sunrise-row td { background: #fef3c7 !important; color: #92400e !important; font-size: 20px !important; font-weight: 900; }
+        .sunset-row td { background: #e0e7ff !important; color: #1e3a8a !important; font-size: 20px !important; font-weight: 900; }
+
+        /* HIGHLIGHTS */
+        .is-now td { border-top: 4px solid #f59e0b; border-bottom: 4px solid #f59e0b; }
+        .is-night td { background-color: #f8fafc; color: #64748b; }
+
+        /* CELL SPECIFICS */
+        .temp-cell { font-weight: 900; font-size: 1.45em; display: block; }
         .precip-amt { color: #1e40af; font-size: 16px; font-weight: 800; margin-top: 5px; display: block; }
-        
-        .et-cell { color: #15803d; font-weight: 900; font-size: 18px; }
-        .pressure-cell { font-family: 'Courier New', monospace; color: #111827; font-size: 17px; font-weight: 800; }
-        
-        .cloud-cell { font-size: 17px; font-weight: 700; line-height: 1.3; }
-        .theory-label { font-size: 14px; color: #4b5563; display: block; margin-top: 5px; font-weight: 700; text-transform: uppercase; }
+        .et-active { color: #15803d !important; background: #f0fdf4 !important; font-weight: 900; }
+        .pressure-cell { font-family: 'Courier New', monospace; font-weight: 800; }
 
-        /* BADGES */
         .badge { padding: 5px 10px; border-radius: 8px; font-size: 15px; font-weight: 900; color: white; display: inline-block; }
         .cape-active { background: #ea580c; }
         .cape-none { background: #e5e7eb; color: #6b7280; font-weight: 600; }
-        .uv-badge { background: #dc2626; border: 2px solid #7f1d1d; }
 
         #topBtn {
             position: fixed; bottom: 30px; right: 30px; z-index: 5000;
             background: #1e3a8a; color: white; border: none; width: 70px; height: 70px;
             border-radius: 50%; cursor: pointer; display: none; box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-            font-size: 35px; font-weight: bold;
+            font-size: 35px;
         }
-
-        #status { text-align:center; padding:150px; font-size: 28px; font-weight: bold; color: #1e3a8a; }
 
         @media (max-width: 1300px) { .hide-tablet { display: none; } }
     </style>
@@ -106,11 +106,11 @@
 
 <div class="header">
     <h1>Vizcaya Pro Weather Suite</h1>
-    <p id="updateTime">Syncing Meteorological High-Visibility Data...</p>
+    <p id="updateTime">Syncing Meteorological Warning Engine...</p>
 </div>
 
 <div class="container">
-    <div id="status">📡 Establishing High-Res Connection...</div>
+    <div id="status" style="text-align:center; padding:150px; font-size: 28px; font-weight: bold; color: #1e3a8a;">📡 Establish High-Res Connection...</div>
     
     <div id="mainContent" class="table-container" style="display:none;">
         <table>
@@ -149,13 +149,19 @@
         if (phase === 0.75) return '🌗'; return '🌘';
     };
 
-    function getWeatherIcon(icon) {
-        const mapping = {
-            "clear-day": "☀️", "clear-night": "🌙", "partly-cloudy-day": "⛅",
-            "partly-cloudy-night": "☁️", "cloudy": "☁️", "rain": "🌧️",
-            "showers-day": "🌦️", "thunder-rain": "⛈️", "snow": "❄️", "fog": "🌫️", "sleet": "🌨️", "wind": "💨"
-        };
-        return mapping[icon] || "☁️";
+    // WARNING ENGINE HELPERS
+    function getFeelsClass(temp) {
+        if (temp >= 105) return 'warn-heat-extreme';
+        if (temp >= 90) return 'warn-heat-high';
+        if (temp <= 15) return 'warn-cold-hard';
+        if (temp <= 32) return 'warn-cold-freeze';
+        return '';
+    }
+
+    function getGustClass(gust) {
+        if (gust >= 50) return 'warn-wind-severe';
+        if (gust >= 30) return 'warn-wind-high';
+        return '';
     }
 
     async function fetchHourly() {
@@ -186,25 +192,21 @@
             const validHours = day.hours.filter(h => new Date(day.datetime + 'T' + h.datetime).getTime() >= currentHourTs);
             if (validHours.length === 0) return;
 
-            // DAY HEADER
             const dateObj = new Date(day.datetime + 'T00:00:00');
-            const isToday = day.datetime === now.toLocaleDateString('en-CA');
-            const dayLabel = isToday ? "TODAY" : dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+            const dayLabel = day.datetime === now.toLocaleDateString('en-CA') ? "TODAY" : dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
             
-            const headRow = document.createElement('tr');
-            headRow.className = 'day-separator';
-            headRow.innerHTML = `
-                <td colspan="14">
-                    📅 ${dayLabel.toUpperCase()} ${getMoonIcon(day.moonphase)}
-                    <div class="day-summary">
-                        HI: <span class="summary-val">${Math.round(day.tempmax)}°</span> 
-                        LO: <span class="summary-val">${Math.round(day.tempmin)}°</span> 
-                        RAIN: <span class="summary-val">${(day.precip || 0).toFixed(2)}"</span>
-                    </div>
-                </td>`;
-            body.appendChild(headRow);
+            body.insertAdjacentHTML('beforeend', `
+                <tr class="day-separator">
+                    <td colspan="14">
+                        📅 ${dayLabel.toUpperCase()} ${getMoonIcon(day.moonphase)}
+                        <div class="day-summary">
+                            HI: <span class="summary-val">${Math.round(day.tempmax)}°</span> 
+                            LO: <span class="summary-val">${Math.round(day.tempmin)}°</span> 
+                            RAIN: <span class="summary-val">${(day.precip || 0).toFixed(2)}"</span>
+                        </div>
+                    </td>
+                </tr>`);
 
-            // Sunrise / Sunset Hour Check
             const sunRiseH = parseInt(day.sunrise.split(':')[0]);
             const sunSetH = parseInt(day.sunset.split(':')[0]);
 
@@ -213,47 +215,40 @@
                 const hr = parseInt(hour.datetime.split(':')[0]);
                 const hTs = new Date(day.datetime + 'T' + hour.datetime).getTime();
                 
-                // INJECT SUNRISE ROW
-                if (hr === sunRiseH) {
-                    const r = document.createElement('tr'); r.className = 'sunrise-row';
-                    r.innerHTML = `<td colspan="14">☀️ SUNRISE AT ${day.sunrise.slice(0,5)} AM</td>`;
-                    body.appendChild(r);
-                }
-                // INJECT SUNSET ROW
-                if (hr === sunSetH) {
-                    const r = document.createElement('tr'); r.className = 'sunset-row';
-                    r.innerHTML = `<td colspan="14">🌙 SUNSET AT ${day.sunset.slice(0,5)} PM</td>`;
-                    body.appendChild(r);
-                }
+                if (hr === sunRiseH) body.insertAdjacentHTML('beforeend', `<tr class="sunrise-row"><td colspan="14">☀️ SUNRISE AT ${day.sunrise.slice(0,5)} AM</td></tr>`);
+                if (hr === sunSetH) body.insertAdjacentHTML('beforeend', `<tr class="sunset-row"><td colspan="14">🌙 SUNSET AT ${day.sunset.slice(0,5)} PM</td></tr>`);
+
+                const feelsCls = getFeelsClass(hour.feelslike);
+                const gustCls = getGustClass(hour.windgust);
+                const dewCls = hour.dew >= 70 ? 'dew-muggy' : '';
+                const etCls = (hour.et || 0) > 0 ? 'et-active' : '';
 
                 const tr = document.createElement('tr');
                 if (hTs === currentHourTs) tr.className = 'is-now';
-                else if (hour.severerisk >= 40 || hour.cape > 1500) tr.className = 'has-storm';
-                else if (hour.precip > 0) tr.className = 'has-rain';
                 else if (hr < 6 || hr >= 20) tr.className = 'is-night';
-
-                // High Vis Cloud Logic
-                const cond = hour.conditions.toLowerCase();
-                const diff = hour.temp - hour.dew;
-                const theoryBase = (diff / 4.4) * 1000;
-                let baseDisplay = (hour.cloudbase && hour.cloudbase > 0) ? Math.round(hour.cloudbase).toLocaleString() + ' ft' : (hour.cloudcover > 25 || cond.includes('rain') ? Math.round(theoryBase).toLocaleString() + ' ft' : "Clear Sky");
-                
-                let vis = hour.visibility || 10;
-                const visColor = vis < 3 ? 'color:#dc2626; font-weight:900' : 'color:#111827';
 
                 tr.innerHTML = `
                     <td class="time-cell">${hr % 12 || 12}:00 ${hr >= 12 ? 'PM' : 'AM'}</td>
-                    <td style="font-size:2.2em">${getWeatherIcon(hour.icon)}</td>
+                    <td style="font-size:2.2em">${['☀️','🌙','⛅','☁️','🌧️','🌦️','⛈️','❄️','🌫️','🌨️','💨'][['clear-day','clear-night','partly-cloudy-day','cloudy','rain','showers-day','thunder-rain','snow','fog','sleet','wind'].indexOf(hour.icon)] || '☁️'}</td>
                     <td style="text-align:left; padding-left:25px; font-weight:800">${hour.conditions}</td>
-                    <td><span class="temp-cell">${Math.round(hour.temp)}°</span><span class="feels-label">Feels ${Math.round(hour.feelslike)}°</span></td>
-                    <td style="color:#0891b2; font-weight:900; font-size:1.1em">${Math.round(hour.dew)}°</td>
-                    <td><span class="precip-prob">${Math.round(hour.precipprob)}%</span><span class="precip-amt">${(hour.precip || 0).toFixed(2)}"</span></td>
-                    <td class="et-cell">${(hour.et || 0).toFixed(3)}"</td>
-                    <td style="font-weight:800">${Math.round(hour.windspeed)} <span style="color:#dc2626; font-weight:900; font-size:16px">G${Math.round(hour.windgust)}</span></td>
-                    <td><span style="font-weight:900; color:#1e3a8a; font-size:1.1em">${getWindDir(hour.winddir)}</span></td>
+                    <td class="${feelsCls}">
+                        <span class="temp-cell" style="color:inherit">${Math.round(hour.temp)}°</span>
+                        <span style="font-size:15px; opacity:0.8; display:block">Feels ${Math.round(hour.feelslike)}°</span>
+                    </td>
+                    <td class="${dewCls}">${Math.round(hour.dew)}°</td>
+                    <td style="${hour.precip > 0 ? 'background:#eff6ff' : ''}">
+                        <span class="precip-prob">${Math.round(hour.precipprob)}%</span>
+                        <span class="precip-amt">${(hour.precip || 0).toFixed(2)}"</span>
+                    </td>
+                    <td class="${etCls}">${(hour.et || 0).toFixed(3)}"</td>
+                    <td class="${gustCls}">
+                        ${Math.round(hour.windspeed)} 
+                        <span style="font-weight:900; font-size:16px; display:block">G${Math.round(hour.windgust)}</span>
+                    </td>
+                    <td><span style="font-weight:900; color:#1e3a8a">${getWindDir(hour.winddir)}</span></td>
                     <td class="pressure-cell hide-tablet">${(hour.pressure * 0.02953).toFixed(2)}</td>
                     <td class="hide-tablet" style="font-weight:800">${(hour.solarenergy || 0).toFixed(1)}<br><span style="color:#ca8a04; font-size:14px">MJ/m²</span></td>
-                    <td class="cloud-cell"><b>${baseDisplay}</b><br><span style="${visColor}">Vis: ${vis} mi</span></td>
+                    <td class="cloud-cell"><b>${hour.cloudbase ? Math.round(hour.cloudbase).toLocaleString() + ' ft' : (hour.cloudcover > 25 ? Math.round(((hour.temp-hour.dew)/4.4)*1000).toLocaleString() + ' ft' : "Clear Sky")}</b><br><span style="font-size:15px">Vis: ${hour.visibility || 10} mi</span></td>
                     <td><span class="badge ${hour.cape > 0 ? 'cape-active' : 'cape-none'}">${Math.round(hour.cape) || 'Stable'}</span></td>
                     <td><b style="color:${hour.severerisk > 30 ? '#ef4444' : '#111827'}; font-size:1.2em">${hour.severerisk || 0}</b></td>
                 `;
@@ -263,13 +258,8 @@
         });
         document.getElementById('status').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('updateTime').innerText = `360-Hour Meteorological Suite Active | ${new Date().toLocaleTimeString()}`;
     }
-
-    window.onscroll = function() { document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none"; };
-    fetchHourly();
-</script>
-</body>
-</html>
 
     window.onscroll = function() { document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none"; };
     fetchHourly();
