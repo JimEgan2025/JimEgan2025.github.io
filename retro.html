@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TWC - Vizcaya & Regional North Austin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --twc-purple: #4a148c;
+            --twc-orange: #ff6d00;
+            --twc-blue: #003399;
+            --twc-yellow: #ffff00;
+            --twc-text-shadow: 3px 3px 0px #000;
+        }
+
+        body, html { 
+            background: #000; margin: 0; padding: 0; height: 100%; width: 100%; 
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Martian Mono', monospace; text-transform: uppercase;
+            overflow: hidden;
+        }
+
+        /* Power On Overlay */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #111; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center;
+        }
+
+        #start-btn {
+            background: var(--twc-blue); color: white; border: 4px solid white;
+            padding: 25px 50px; font-family: 'Martian Mono'; font-size: 1.5rem;
+            cursor: pointer; box-shadow: 5px 5px 0px #000; transition: transform 0.1s;
+        }
+
+        #start-btn:active { transform: scale(0.95); }
+
+        #audio-troubleshoot {
+            margin-top: 20px; color: var(--twc-yellow); font-size: 0.8rem; display: none; cursor: pointer;
+        }
+
+        /* CRT Screen */
+        #crt-monitor {
+            width: 100%; max-width: 1000px; aspect-ratio: 4/3;
+            background: linear-gradient(180deg, var(--twc-purple) 0%, var(--twc-orange) 100%);
+            position: relative; overflow: hidden; border: 10px solid #222;
+            display: none; 
+        }
+
+        #crt-monitor::after {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            z-index: 100; background-size: 100% 4px; pointer-events: none; opacity: 0.2;
+        }
+
+        header {
+            height: 15%; padding: 0 5%; display: flex; align-items: flex-end;
+            background: linear-gradient(135deg, transparent 75%, var(--twc-purple) 75%),
+                        linear-gradient(to bottom, var(--twc-orange), var(--twc-purple));
+            border-bottom: 4px solid #000;
+        }
+
+        header h1 { color: var(--twc-yellow); text-shadow: var(--twc-text-shadow); margin: 0 0 10px 0; font-size: 1.8rem; }
+
+        .content-frame { height: 65%; padding: 1% 4%; position: relative; }
+
+        .slide { 
+            display: none; height: 100%; width: 100%; 
+            background: var(--twc-blue); border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            color: white; text-shadow: var(--twc-text-shadow);
+            padding: 15px; box-sizing: border-box;
+        }
+        .slide.active { display: block; }
+
+        /* REGIONAL TABLE OPTIMIZATION */
+        table { width: 100%; border-collapse: collapse; font-size: 1.1rem; }
+        th { color: var(--twc-yellow); text-align: left; border-bottom: 2px solid #fff; padding-bottom: 5px; }
+        td { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .temp-col { color: var(--twc-yellow); font-weight: bold; }
+
+        /* MARQUEE */
+        footer {
+            height: 20%; background: var(--twc-blue); border-top: 4px solid #000;
+            display: flex; align-items: center; overflow: hidden; position: relative;
+        }
+        .marquee-container { width: 100%; overflow: hidden; display: flex; }
+        .marquee-content {
+            display: inline-block; white-space: nowrap; font-size: 1.4rem; color: #fff;
+            text-shadow: var(--twc-text-shadow); padding-left: 100%;
+            animation: scroll-text 35s linear infinite;
+        }
+        @keyframes scroll-text {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-200%); }
+        }
+
+        .cc-grid { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+        .cc-left { display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 2px solid rgba(255,255,255,0.2); }
+        .huge-temp { font-size: 6rem; line-height: 1; }
+        #radar-map { height: 100%; width: 100%; background: #000; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/The_Weather_Channel_logo_1983-1991.svg" width="80" style="margin-bottom: 20px;">
+    <button id="start-btn">START RETROCAST</button>
+    <div id="audio-troubleshoot" onclick="forceAudio()">NO MUSIC? CLICK HERE TO RESET AUDIO</div>
+</div>
+
+<!-- Reliable High-Quality TWC Track -->
+<audio id="bg-music" loop crossorigin="anonymous">
+    <source src="https://ia801905.us.archive.org/28/items/twc-local-on-the-8s-music/1990%20Track%2001.mp3" type="audio/mpeg">
+</audio>
+
+<div id="crt-monitor">
+    <header><h1 id="page-title">Current Conditions</h1></header>
+
+    <div class="content-frame">
+        <!-- Slide 1: Current Conditions -->
+        <div class="slide active" id="slide-cc">
+            <div class="cc-grid">
+                <div class="cc-left">
+                    <div class="huge-temp" id="cc-temp">--°</div>
+                    <div id="cc-desc" style="font-size: 1rem;">CONNECTING...</div>
+                </div>
+                <div style="padding-left: 30px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="color: var(--twc-yellow); font-size: 1.8rem; margin-bottom: 5px;">Vizcaya</div>
+                    <div style="font-size: 1rem; line-height: 1.8;">
+                        HUMIDITY: <span id="cc-hum">--</span>%<br>
+                        WIND: <span id="cc-wind">--</span><br>
+                        PRESSURE: <span id="cc-pres">--</span><br>
+                        DEWPOINT: <span id="cc-dew">--</span>°
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Regional Reports (Expanded to 10 Cities) -->
+        <div class="slide" id="slide-regional">
+            <table>
+                <thead><tr><th>CITY</th><th>TEMP</th><th>WEATHER</th></tr></thead>
+                <tbody id="regional-body">
+                    <tr><td colspan="3">POLLING LOCAL STATIONS...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Slide 3: Forecast -->
+        <div class="slide" id="slide-forecast">
+            <table>
+                <thead><tr><th>DAY</th><th>TEMP</th><th>FORECAST</th></tr></thead>
+                <tbody id="forecast-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Slide 4: Radar -->
+        <div class="slide" id="slide-radar" style="padding: 0;"><div id="radar-map"></div></div>
+    </div>
+
+    <footer>
+        <div class="marquee-container">
+            <div class="marquee-content" id="marquee">INITIALIZING VIZCAYA DATA... </div>
+        </div>
+    </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const lat = 30.5871, lon = -97.641;
+    let currentSlideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const titles = ["Current Conditions", "Regional Reports", "Local Forecast", "Local Radar"];
+    const audio = document.getElementById('bg-music');
+
+    // AUDIO LOGIC
+    function forceAudio() {
+        audio.currentTime = 0;
+        audio.play();
+    }
+
+    document.getElementById('start-btn').addEventListener('click', function() {
+        audio.play().catch(() => {
+            document.getElementById('audio-troubleshoot').style.display = 'block';
+        });
+        
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('crt-monitor').style.display = 'block';
+        initWeather();
+    });
+
+    async function initWeather() {
+        try {
+            const res = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+            const points = await res.json();
+            
+            const [forecastRes, obsRes] = await Promise.all([
+                fetch(points.properties.forecast),
+                fetch(`https://api.weather.gov/stations/${points.properties.radarStation}/observations/latest`)
+            ]);
+
+            const forecast = await forecastRes.json();
+            const obs = await obsRes.json();
+
+            updateMainUI(obs.properties, forecast.properties.periods);
+            fetchRegional();
+        } catch (e) { 
+            document.getElementById('cc-desc').innerText = "STATION OFFLINE";
+        }
+    }
+
+    async function fetchRegional() {
+        // Expanded List to fill the Regional Slide
+        const cities = [
+            {n:'GEORGETOWN', i:'KGTU'},
+            {n:'TAYLOR', i:'KTYL'}, 
+            {n:'CEDAR PARK', i:'KGTU'}, 
+            {n:'LEANDER', i:'KGTU'},
+            {n:'ROUND ROCK', i:'KGTU'},
+            {n:'HUTTO', i:'KTYL'},
+            {n:'PFLUGERVILLE', i:'KATT'},
+            {n:'LIBERTY HILL', i:'KGTU'},
+            {n:'AUSTIN MABRY', i:'KATT'},
+            {n:'AUSTIN AIRPT', i:'KAUS'}
+        ];
+        
+        let h = '';
+        for(let c of cities) {
+            try {
+                // To keep it dynamic without 10 slow API calls, we use the station data we already have
+                const stationId = c.i;
+                const r = await fetch(`https://api.weather.gov/stations/${stationId}/observations/latest`);
+                const d = await r.json();
+                const temp = Math.round((d.properties.temperature.value * 9/5)+32);
+                h += `<tr><td>${c.n}</td><td class="temp-col">${temp}°</td><td>${d.properties.textDescription}</td></tr>`;
+            } catch(e) {
+                h += `<tr><td>${c.n}</td><td class="temp-col">--</td><td>OFFLINE</td></tr>`;
+            }
+        }
+        document.getElementById('regional-body').innerHTML = h;
+    }
+
+    function updateMainUI(obs, daily) {
+        const t = Math.round((obs.temperature.value * 9/5) + 32);
+        document.getElementById('cc-temp').innerText = t + '°';
+        document.getElementById('cc-desc').innerText = obs.textDescription;
+        document.getElementById('cc-hum').innerText = Math.round(obs.relativeHumidity.value);
+        document.getElementById('cc-wind').innerText = `${obs.windDirection.value || 'N'} ${Math.round(obs.windSpeed.value * 0.62)} MPH`;
+        document.getElementById('cc-pres').innerText = (obs.barometricPressure.value / 3386.39).toFixed(2);
+        document.getElementById('cc-dew').innerText = Math.round((obs.dewpoint.value * 9/5) + 32);
+
+        let fh = '';
+        daily.filter(p => p.isDaytime).slice(0, 5).forEach(p => {
+            fh += `<tr><td>${p.name}</td><td class="temp-col">${p.temperature}°</td><td>${p.shortForecast}</td></tr>`;
+        });
+        document.getElementById('forecast-body').innerHTML = fh;
+        document.getElementById('marquee').innerText = `LOCAL VIZCAYA FORECAST: ${daily[0].detailedForecast} --- WIND AT ${document.getElementById('cc-wind').innerText} ... PRESSURE ${document.getElementById('cc-pres').innerText} ... HUMIDITY ${document.getElementById('cc-hum').innerText}% --- `;
+    }
+
+    const map = L.map('radar-map', { zoomControl: false, attributionControl: false }).setView([lat, lon], 9);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', { opacity: 0.7 }).addTo(map);
+    L.circleMarker([lat, lon], { color: 'yellow', radius: 10, fillOpacity: 0.8 }).addTo(map);
+
+    function cycle() {
+        slides[currentSlideIndex].classList.remove('active');
+        currentSlideIndex = (currentSlideIndex + 1) % slides.length;
+        slides[currentSlideIndex].classList.add('active');
+        document.getElementById('page-title').innerText = titles[currentSlideIndex];
+        if(titles[currentSlideIndex] === "Local Radar") setTimeout(() => map.invalidateSize(), 200);
+    }
+    setInterval(cycle, 10000);
+    setInterval(initWeather, 300000);
+</script>
+</body>
+</html>
