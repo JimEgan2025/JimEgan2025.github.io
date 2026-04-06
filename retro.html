@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Weather Channel - Station EW6452</title>
+    <title>Vizcaya Weather Channel</title>
     <link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -10,32 +10,28 @@
             --twc-yellow: #ffff00;
             --twc-blue: #003399;
             --twc-orange: #ff6d00;
-            --twc-text-shadow: 3px 3px 0px #000;
+            --twc-alert-red: #cc0000;
+            --twc-text-shadow: 3px 3px 6px rgba(0,0,0,0.9), 0 0 5px rgba(255,255,0,0.4);
         }
         body, html { 
             background: #000; margin: 0; padding: 0; height: 100%; width: 100%;
             font-family: 'Martian Mono', monospace; text-transform: uppercase;
-            overflow: hidden; color: white; 
+            overflow: hidden; color: white; cursor: pointer;
         }
-
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 1000; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; cursor: pointer;
-        }
-        .btn { background: var(--twc-blue); border: 4px solid white; padding: 20px 40px; color: white; font-size: 1.5rem; margin-top: 30px; box-shadow: 5px 5px 0 #333; }
 
         #crt-monitor {
             width: 100%; max-width: 1000px; aspect-ratio: 4/3;
             background: var(--twc-blue); position: relative; overflow: hidden; 
-            border: 15px solid #222; border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0,0,0,1); margin: auto;
+            border: 15px solid #222; border-radius: 25px;
+            box-shadow: 0 0 50px rgba(0,0,0,1), inset 0 0 100px rgba(0,0,0,0.4); 
+            margin: auto;
         }
 
         #crt-monitor::after {
             content: " "; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            z-index: 20; background-size: 100% 4px; pointer-events: none; opacity: 0.3;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.3) 100%);
+            z-index: 20; background-size: 100% 4px, 100% 100%; pointer-events: none; opacity: 0.3;
         }
 
         header {
@@ -43,237 +39,177 @@
             background: linear-gradient(to right, #003399, #ff6d00); border-bottom: 5px solid #000;
         }
         .vizcaya-logo { 
-            background: #0066ff; color: white; padding: 4px 10px; font-weight: bold;
+            background: #0066ff; color: white; padding: 5px 12px; font-weight: bold;
             border: 3px solid white; box-shadow: 3px 3px 0 #000; font-size: 0.95rem;
         }
-        header h1 { color: var(--twc-yellow); text-shadow: var(--twc-text-shadow); font-size: 1.4rem; margin: 0; flex-grow: 1; text-align: center; }
-        #current-time { text-align: right; color: var(--twc-yellow); font-size: 0.9rem; min-width: 120px; }
+        header h1 { color: var(--twc-yellow); text-shadow: var(--twc-text-shadow); font-size: 1.5rem; margin: 0; flex-grow: 1; text-align: center; }
+        #current-time { text-align: right; color: var(--twc-yellow); font-size: 1rem; min-width: 150px; line-height: 1.2; }
 
-        .content-frame { height: 66%; padding: 2% 4%; box-sizing: border-box; position: relative; }
-        .slide { display: none; height: 100%; width: 100%; text-shadow: var(--twc-text-shadow); }
+        .content-frame { height: 66%; padding: 0; box-sizing: border-box; position: relative; overflow: hidden; }
+        .slide { display: none; height: 100%; width: 100%; text-shadow: var(--twc-text-shadow); background: #000; }
         .slide.active { display: block; }
 
-        .cc-grid { display: flex; height: 100%; gap: 30px; align-items: center; }
-        .huge-temp { font-size: 8.5rem; color: var(--twc-yellow); line-height: 1; }
-        .as-of { font-size: 0.8rem; color: white; margin-top: 10px; letter-spacing: 1px; }
+        #weatherlink-frame { width: 100%; height: 112%; border: none; filter: brightness(0.9) contrast(1.1) saturate(1.2); margin-top: -6%; pointer-events: none; }
+        .slide-padding { padding: 2% 5%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; background: var(--twc-blue); }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
-        th { color: var(--twc-yellow); text-align: left; border-bottom: 2px solid #fff; padding-bottom: 4px; font-size: 0.85rem; }
-        td { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { color: var(--twc-yellow); text-align: left; border-bottom: 4px solid #fff; padding-bottom: 10px; font-size: 1.4rem; }
+        td { border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 1.3rem; padding: 10px 0; }
         .temp-col { color: var(--twc-yellow); font-weight: bold; }
 
-        .almanac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 100%; align-content: center; }
-        .almanac-item div { font-size: 0.9rem; margin-bottom: 2px; }
-        .almanac-item span { font-size: 2.2rem; color: var(--twc-yellow); }
-        
-        .averages-box { grid-column: 1 / -1; background: rgba(0,0,0,0.3); border: 2px solid white; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .avg-unit { text-align: center; font-size: 0.8rem; }
-        .avg-unit strong { display: block; font-size: 1.5rem; color: var(--twc-yellow); }
+        #slide-forecast td { font-size: 1.05rem; padding: 5px 0; }
+        #slide-forecast th { font-size: 1.2rem; }
+
+        .almanac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 100%; align-content: center; }
+        .almanac-item span { font-size: 2.4rem; color: var(--twc-yellow); line-height: 1.1; }
+        .averages-box { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 3px solid white; padding: 15px; background: rgba(0,0,0,0.4); margin-top: 10px; }
+        .avg-unit strong { display: block; font-size: 2.1rem; color: var(--twc-yellow); }
+
+        /* NOAA Chart Sizing */
+        .chart-img { width: 100%; height: 100%; object-fit: contain; background: #000; }
 
         footer { 
             height: 20%; background: #003399; border-top: 5px solid #000; 
-            display: flex; align-items: center; overflow: hidden; 
+            display: flex; align-items: center; overflow: hidden; transition: background 0.5s;
         }
-        .marquee-content {
-            display: inline-block; white-space: nowrap; font-size: 1.5rem;
-            animation: scroll-text 50s linear infinite;
-        }
-        @keyframes scroll-text { 0% { transform: translateX(100%); } 100% { transform: translateX(-250%); } }
+        footer.alert-active { background: var(--twc-alert-red); }
+        .marquee-content { display: inline-block; white-space: nowrap; font-size: 1.8rem; animation: scroll-text 48s linear infinite; color: #fff; }
+        @keyframes scroll-text { 0% { transform: translateX(100%); } 100% { transform: translateX(-280%); } }
 
         #radar-map, #satellite-map { height: 100%; width: 100%; background: #000; }
+        @keyframes pulse { 0% { r: 8; opacity: 0.9; } 50% { r: 15; opacity: 0.4; } 100% { r: 8; opacity: 0.9; } }
+        .vizcaya-marker { animation: pulse 2s infinite; }
     </style>
 </head>
-<body>
-
-<div id="start-overlay" onclick="startBroadcast()">
-    <div class="vizcaya-logo" style="font-size: 2rem;">VIZCAYA WEATHER CHANNEL</div>
-    <div class="btn">START BROADCAST</div>
-</div>
+<body onclick="startAudio()">
 
 <div id="crt-monitor">
     <header>
         <div class="vizcaya-logo">VIZCAYA WEATHER CHANNEL</div>
-        <h1 id="page-title">Current Conditions</h1>
+        <h1 id="page-title">Live Conditions</h1>
         <div id="current-time">--:-- --<br>DATE</div>
     </header>
 
     <div class="content-frame">
-        <div class="slide active" id="slide-cc">
-            <div class="cc-grid">
-                <div style="text-align:center; min-width:280px;">
-                    <div class="huge-temp" id="cc-temp">--°</div>
-                    <div id="cc-desc" style="font-size:1.5rem;">LOADING...</div>
-                    <div class="as-of" id="cc-asof">AS OF --:-- --</div>
-                </div>
-                <div class="right-panel" style="font-size:1.25rem; line-height:2.1;">
-                    <strong>STATION EW6452 • VIZCAYA</strong><br>
-                    HUMIDITY: <span id="cc-hum">--</span>% <br>
-                    DEWPOINT: <span id="cc-dew">--</span>° <br>
-                    WIND: <span id="cc-wind">--</span><br>
-                    PRESSURE: <span id="cc-pres">--</span> IN<br>
-                    VISIBILITY: 10 MI
-                </div>
-            </div>
-        </div>
+        <!-- 1. Live Weather Station -->
+        <div class="slide active" id="slide-cc"><iframe id="weatherlink-frame" scrolling="no" src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"></iframe></div>
+        
+        <!-- 2. Regional Reports -->
+        <div class="slide" id="slide-regional"><div class="slide-padding"><table><thead><tr><th>CENTRAL TX CITY</th><th>TEMP</th><th>WEATHER</th><th>WIND</th></tr></thead><tbody id="regional-body"></tbody></table></div></div>
+        
+        <!-- 3. State Reports -->
+        <div class="slide" id="slide-state"><div class="slide-padding"><table><thead><tr><th>TEXAS CITY</th><th>TEMP</th><th>WEATHER</th><th>WIND</th></tr></thead><tbody id="state-body"></tbody></table></div></div>
+        
+        <!-- 4. Local Forecast -->
+        <div class="slide" id="slide-forecast"><div class="slide-padding"><table><thead><tr><th>PERIOD</th><th>TEMP</th><th>FORECAST</th><th>RAIN</th></tr></thead><tbody id="forecast-body"></tbody></table></div></div>
+        
+        <!-- 5. Severe Outlook (NEW) -->
+        <div class="slide" id="slide-spc"><img id="spc-map" class="chart-img" src="https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png" alt="Severe Outlook"></div>
 
-        <div class="slide" id="slide-regional">
-            <table>
-                <thead><tr><th>CITY (CENTRAL TX)</th><th>TEMP</th><th>WEATHER</th><th>WIND</th></tr></thead>
-                <tbody id="regional-body"></tbody>
-            </table>
-        </div>
+        <!-- 6. National Forecast Map (NEW) -->
+        <div class="slide" id="slide-wpc"><img id="wpc-map" class="chart-img" src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png" alt="National Forecast"></div>
 
-        <div class="slide" id="slide-forecast">
-            <table>
-                <thead><tr><th>PERIOD</th><th>TEMP</th><th>FORECAST</th><th>RAIN</th></tr></thead>
-                <tbody id="forecast-body"></tbody>
-            </table>
-        </div>
-
-        <div class="slide" id="slide-almanac">
-            <div class="almanac-grid">
-                <div class="almanac-item"><div>SUNRISE</div><span id="sunrise">--:-- AM</span></div>
-                <div class="almanac-item"><div>SUNSET</div><span id="sunset">--:-- PM</span></div>
-                <div class="averages-box">
-                    <div class="avg-unit">NORMAL HIGH<strong id="avg-hi">--°</strong></div>
-                    <div class="avg-unit">RECORD HIGH<strong id="rec-hi">--°</strong><small id="rec-hi-yr"></small></div>
-                    <div class="avg-unit">NORMAL LOW<strong id="avg-lo">--°</strong></div>
-                    <div class="avg-unit">RECORD LOW<strong id="rec-lo">--°</strong><small id="rec-lo-yr"></small></div>
-                </div>
-                <div style="grid-column: 1 / -1; text-align: center; margin-top: 5px;">
-                    <div style="font-size: 0.8rem;">MOON PHASE</div>
-                    <span id="moon-phase" style="font-size: 1.5rem; color: var(--twc-yellow);">...</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="slide" id="slide-satellite" style="padding:0;"><div id="satellite-map"></div></div>
-        <div class="slide" id="slide-radar" style="padding:0;"><div id="radar-map"></div></div>
+        <!-- 7. Almanac -->
+        <div class="slide" id="slide-almanac"><div class="slide-padding"><div class="almanac-grid"><div class="almanac-item"><div>SUNRISE</div><span id="sunrise">--:-- AM</span></div><div class="almanac-item"><div>SUNSET</div><span id="sunset">--:-- PM</span></div><div class="averages-box"><div class="avg-unit">NORMAL HIGH<strong id="avg-hi">--°</strong></div><div class="avg-unit">RECORD HIGH<strong id="rec-hi">--°</strong></div><div class="avg-unit">NORMAL LOW<strong id="avg-lo">--°</strong></div><div class="avg-unit">RECORD LOW<strong id="rec-lo">--°</strong></div></div><div style="grid-column:1/-1; text-align:center; margin-top:5px;"><span id="moon-phase" style="font-size:1.3rem; color:var(--twc-yellow);">MOON PHASE: ...</span><br><small id="almanac-status" style="font-size:0.7rem; color:#fff; opacity:0.6;">SYNCING VIZCAYA HISTORY...</small></div></div></div></div>
+        
+        <!-- 8. Satellite/Radar -->
+        <div class="slide" id="slide-satellite"><div id="satellite-map"></div></div>
+        <div class="slide" id="slide-radar"><div id="radar-map"></div></div>
     </div>
 
-    <footer>
-        <div class="marquee-content" id="marquee">VIZCAYA WEATHER CHANNEL • STATION EW6452 • LOADING DATA...</div>
+    <footer id="main-footer">
+        <div class="marquee-content" id="marquee">VIZCAYA WEATHER CHANNEL • STATION EW6452 • CONNECTING...</div>
     </footer>
 </div>
 
-<audio id="bgm" loop>
-    <source src="https://ia801309.us.archive.org/28/items/the-weather-channel-presents-smooth-jazz-selection/01.%20Trammell%20Starks%20-%20Horizon.mp3" type="audio/mpeg">
-</audio>
+<audio id="bgm" loop><source src="https://ia801309.us.archive.org/28/items/the-weather-channel-presents-smooth-jazz-selection/01.%20Trammell%20Starks%20-%20Horizon.mp3" type="audio/mpeg"></audio>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- LOCAL ALMANAC DATABASE (Central Texas Climatology) ---
-    // Mapping format: [AvgHi, AvgLo, RecHi, RecHiYear, RecLo, RecLoYear]
-    // These are sampled for October as an example. 
-    const ALMANAC_DB = {
-        "10-23": [79, 56, 94, 1954, 34, 1917],
-        "10-24": [78, 55, 95, 2010, 36, 1920],
-        "10-25": [78, 55, 92, 1934, 32, 1970],
-        "10-26": [77, 54, 91, 1950, 31, 1924],
-        "10-27": [77, 54, 93, 1927, 30, 1924],
-        "10-28": [76, 53, 90, 2014, 29, 1925]
-        // You can add more dates following this pattern. 
-        // If date missing, it defaults to seasonal averages.
-    };
-
-    const APRS_KEY = '226872.Owck00l8TOjqjr8J';
-    const STID = 'EW6452';
     const LAT = 30.5871, LON = -97.641;
+    const ALERT_ZONE = 'TXZ173';
+    const ALMANAC_JSON_URL = 'https://jimegan2025.github.io/almanac.json';
     
     let currentSlideIndex = 0;
     const slides = document.querySelectorAll('.slide');
-    const titles = ["Current Conditions", "Regional Reports", "Local Forecast", "Almanac", "Satellite", "Local Radar"];
+    const titles = ["Live Conditions", "Regional Reports", "State Reports", "Local Forecast", "Severe Weather Outlook", "National Forecast Chart", "Almanac", "Satellite", "Local Radar"];
 
-    function startBroadcast() {
-        document.getElementById('start-overlay').style.display = 'none';
-        document.getElementById('bgm').play();
-        updateClock();
-        fetchWeather();
-        setInterval(cycle, 15000); 
-        setInterval(fetchWeather, 300000); 
-    }
+    function startAudio() { document.getElementById('bgm').play(); }
 
     function updateClock() {
         const el = document.getElementById('current-time');
         const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
         setInterval(() => {
             const d = new Date();
-            el.innerHTML = `${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br><span style="font-size:0.8rem;">${months[d.getMonth()]} ${d.getDate()}</span>`;
+            el.innerHTML = `${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}<br><span style="font-size:1.45rem;">${months[d.getMonth()]} ${d.getDate()}</span>`;
         }, 1000);
     }
 
-    async function fetchWeather() {
+    async function fetchAlmanacJSON() {
         try {
-            const aprsUrl = `https://api.aprs.fi/api/get?name=${STID}&what=wx&apikey=${APRS_KEY}&format=json`;
-            const aprsRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(aprsUrl)}`);
-            const aprsJson = await aprsRes.json();
-            const wx = JSON.parse(aprsJson.contents).entries[0];
+            const today = new Date();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const res = await fetch(`${ALMANAC_JSON_URL}?t=${Date.now()}`);
+            const data = await res.json();
+            if (data[`${mm}-${dd}`]) {
+                const d = data[`${mm}-${dd}`];
+                document.getElementById('avg-hi').innerText = d.avgH + '°';
+                document.getElementById('avg-lo').innerText = d.avgL + '°';
+                document.getElementById('rec-hi').innerText = `${d.recH}° (${d.recHY})`;
+                document.getElementById('rec-lo').innerText = `${d.recL}° (${d.recLY})`;
+                document.getElementById('almanac-status').innerText = "SOURCE: VIZCAYA 130-YEAR HISTORY (SYNCED)";
+            }
+        } catch (e) { }
+    }
 
-            const [nwsPoints, sunRes] = await Promise.all([
-                fetch(`https://api.weather.gov/points/${LAT},${LON}`).then(r => r.json()),
-                fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`).then(r => r.json())
+    async function fetchData() {
+        try {
+            const nwsPoints = await fetch(`https://api.weather.gov/points/${LAT},${LON}`).then(r => r.json());
+            const [forecast, sunRes, alertRes] = await Promise.all([
+                fetch(nwsPoints.properties.forecast).then(r => r.json()),
+                fetch(`https://api.sunrise-sunset.org/json?lat=${LAT}&lng=${LON}&formatted=0`).then(r => r.json()),
+                fetch(`https://api.weather.gov/alerts/active/zone/${ALERT_ZONE}`).then(r => r.json())
             ]);
-            const forecast = await fetch(nwsPoints.properties.forecast).then(r => r.json());
 
-            updateUI(wx, forecast.properties.periods, sunRes.results);
+            const p = forecast.properties.periods;
+            document.getElementById('forecast-body').innerHTML = p.slice(0, 12).map(period => `
+                <tr><td>${period.name.toUpperCase()}</td><td class="temp-col">${period.temperature}°</td><td>${period.shortForecast.toUpperCase()}</td><td>${period.probabilityOfPrecipitation.value || 0}%</td></tr>
+            `).join('');
+
+            document.getElementById('sunrise').innerText = new Date(sunRes.results.sunrise).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('sunset').innerText = new Date(sunRes.results.sunset).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('moon-phase').innerText = "MOON PHASE: " + getMoonPhase();
+
+            const marquee = document.getElementById('marquee');
+            const footer = document.getElementById('main-footer');
+            let marqueeText = `VIZCAYA WEATHER CHANNEL • STATION EW6452 • CURRENTLY: ${p[0].shortForecast.toUpperCase()} • FORECAST: ${p[0].detailedForecast.toUpperCase()} • `;
+            
+            if (alertRes.features && alertRes.features.length > 0) {
+                marqueeText = `*** ALERT: ${alertRes.features[0].properties.headline.toUpperCase()} *** • ` + marqueeText;
+                footer.classList.add('alert-active');
+            } else { footer.classList.remove('alert-active'); }
+            marquee.innerText = marqueeText;
+            
             fetchRegional();
+            fetchState();
         } catch (e) { console.error(e); }
     }
 
-    function updateUI(wx, periods, sun) {
-        const tempF = Math.round((wx.temp * 9/5) + 32);
-        document.getElementById('cc-temp').innerText = tempF + '°';
-        document.getElementById('cc-hum').innerText = wx.humidity;
-        document.getElementById('cc-dew').innerText = Math.round(tempF - ((100 - wx.humidity) / 5) * 1.8);
-        document.getElementById('cc-pres').innerText = (wx.pressure * 0.02953).toFixed(2);
-        document.getElementById('cc-wind').innerText = wx.wind_speed > 0 ? `SW ${Math.round(wx.wind_speed)} MPH` : "CALM";
-        document.getElementById('cc-desc').innerText = periods[0].shortForecast.toUpperCase();
-        
-        const obsTime = new Date(wx.time * 1000);
-        document.getElementById('cc-asof').innerText = `AS OF ${obsTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-
-        document.getElementById('forecast-body').innerHTML = periods.slice(0, 14).map(p => `
-            <tr><td>${p.name.toUpperCase()}</td><td class="temp-col">${p.temperature}°</td><td>${p.shortForecast.toUpperCase()}</td><td>${p.probabilityOfPrecipitation.value || 0}%</td></tr>
-        `).join('');
-
-        // Update Almanac from Sun API + Local DB
-        const options = { hour: '2-digit', minute: '2-digit', hour12: true };
-        document.getElementById('sunrise').innerText = new Date(sun.sunrise).toLocaleTimeString([], options);
-        document.getElementById('sunset').innerText = new Date(sun.sunset).toLocaleTimeString([], options);
-        
-        const d = new Date();
-        const key = `${d.getMonth()+1}-${d.getDate()}`;
-        const climate = ALMANAC_DB[key] || [78, 55, 95, "---", 32, "---"]; // Fallback to generic Oct averages
-        
-        document.getElementById('avg-hi').innerText = climate[0] + '°';
-        document.getElementById('avg-lo').innerText = climate[1] + '°';
-        document.getElementById('rec-hi').innerText = climate[2] + '°';
-        document.getElementById('rec-hi-yr').innerText = `IN ${climate[3]}`;
-        document.getElementById('rec-lo').innerText = climate[4] + '°';
-        document.getElementById('rec-lo-yr').innerText = `IN ${climate[5]}`;
-        document.getElementById('moon-phase').innerText = getMoonPhase();
-
-        document.getElementById('marquee').innerText = `VIZCAYA WEATHER CHANNEL • STATION EW6452 • CURRENTLY: ${periods[0].shortForecast} • FORECAST: ${periods[0].detailedForecast} • `;
-    }
-
-    async function fetchRegional() {
-        const cities = [
-            {n:'AUSTIN', i:'KAUS'}, {n:'GEORGETOWN', i:'KGTU'}, {n:'ROUND ROCK', i:'KGTU'},
-            {n:'PFLUGERVILLE', i:'KEDC'}, {n:'CEDAR PARK', i:'KGTU'}, {n:'KILLEEN', i:'KGRK'},
-            {n:'WACO', i:'KACT'}, {n:'TEMPLE', i:'KTPL'}, {n:'SAN MARCOS', i:'KHYI'},
-            {n:'BASTROP', i:'KBAZ'}, {n:'BURNET', i:'KBMQ'}, {n:'MARBLE FALLS', i:'KBMQ'},
-            {n:'TAYLOR', i:'KGTU'}, {n:'LAGO VISTA', i:'KRYW'}, {n:'BELTON', i:'KTPL'}, {n:'HUTTO', i:'KGTU'}
-        ];
-        
+    async function updateTable(elementId, cities) {
         const results = await Promise.all(cities.map(async c => {
             try {
                 const r = await fetch(`https://api.weather.gov/stations/${c.i}/observations/latest`).then(res => res.json());
                 const obs = r.properties;
-                return `<tr><td>${c.n}</td><td class="temp-col">${Math.round((obs.temperature.value * 9/5) + 32)}°</td><td>${obs.textDescription || 'CLEAR'}</td><td>${Math.round(obs.windSpeed.value * 0.62) || 0} MPH</td></tr>`;
+                const temp = obs.temperature.value ? Math.round((obs.temperature.value * 9/5) + 32) : '--';
+                return `<tr><td>${c.n}</td><td class="temp-col">${temp}°</td><td>${obs.textDescription || 'CLEAR'}</td><td>${Math.round(obs.windSpeed.value * 0.62) || 0}</td></tr>`;
             } catch { return `<tr><td>${c.n}</td><td colspan="3">--</td></tr>`; }
         }));
-        document.getElementById('regional-body').innerHTML = results.join('');
+        document.getElementById(elementId).innerHTML = results.join('');
     }
+
+    async function fetchRegional() { updateTable('regional-body', [{n:'AUSTIN', i:'KAUS'}, {n:'GEORGETOWN', i:'KGTU'}, {n:'ROUND ROCK', i:'KGTU'}, {n:'PFLUGERVILLE', i:'KEDC'}, {n:'KILLEEN', i:'KGRK'}, {n:'WACO', i:'KACT'}, {n:'TAYLOR', i:'KGTU'}, {n:'SAN MARCOS', i:'KHYI'}, {n:'BASTROP', i:'KBAZ'}]); }
+    async function fetchState() { updateTable('state-body', [{n:'DALLAS', i:'KDFW'}, {n:'HOUSTON', i:'KIAH'}, {n:'SAN ANTONIO', i:'KSAT'}, {n:'AMARILLO', i:'KAMA'}, {n:'EL PASO', i:'KELP'}, {n:'BROWNSVILLE', i:'KBRO'}, {n:'LUBBOCK', i:'KLBB'}, {n:'CORPUS CHRISTI', i:'KCRP'}, {n:'MIDLAND', i:'KMAF'}]); }
 
     function getMoonPhase() {
         const phases = ["NEW MOON", "WAXING CRESCENT", "FIRST QUARTER", "WAXING GIBBOUS", "FULL MOON", "WANING GIBBOUS", "LAST QUARTER", "WANING CRESCENT"];
@@ -286,21 +222,35 @@
     const radarMap = L.map('radar-map', {zoomControl:false, attributionControl:false}).setView([LAT, LON], 9);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(radarMap);
     L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', {opacity:0.7}).addTo(radarMap);
-    L.circleMarker([LAT, LON], {color: '#ffff00', radius: 10, weight: 3}).addTo(radarMap);
+    L.circleMarker([LAT, LON], {className: 'vizcaya-marker', color: '#ffff00', radius: 10, weight: 3, fillOpacity: 0.8}).addTo(radarMap);
 
     const satMap = L.map('satellite-map', {zoomControl:false, attributionControl:false}).setView([LAT, LON], 7);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(satMap);
     L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-vis-1km/{z}/{x}/{y}.png', {opacity:0.6}).addTo(satMap);
-    L.circleMarker([LAT, LON], {color: '#ffff00', radius: 10, weight: 3}).addTo(satMap);
+    L.circleMarker([LAT, LON], {className: 'vizcaya-marker', color: '#ffff00', radius: 10, weight: 3, fillOpacity: 0.8}).addTo(satMap);
 
     function cycle() {
         slides[currentSlideIndex].classList.remove('active');
         currentSlideIndex = (currentSlideIndex + 1) % slides.length;
         slides[currentSlideIndex].classList.add('active');
         document.getElementById('page-title').innerText = titles[currentSlideIndex];
+        
         if (titles[currentSlideIndex].includes("Radar")) radarMap.invalidateSize();
         if (titles[currentSlideIndex].includes("Satellite")) satMap.invalidateSize();
+        
+        // Refresh WeatherLink
+        if (currentSlideIndex === 0) document.getElementById('weatherlink-frame').src = document.getElementById('weatherlink-frame').src;
+        
+        // Refresh NOAA Charts (Cache Buster)
+        if (titles[currentSlideIndex] === "Severe Weather Outlook") {
+            document.getElementById('spc-map').src = "https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png?t=" + Date.now();
+        }
+        if (titles[currentSlideIndex] === "National Forecast Chart") {
+            document.getElementById('wpc-map').src = "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png?t=" + Date.now();
+        }
     }
+
+    updateClock(); fetchData(); fetchAlmanacJSON(); setInterval(cycle, 15000); setInterval(fetchData, 300000);
 </script>
 </body>
 </html>
