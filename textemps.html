@@ -2,406 +2,271 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Texas Weather – Cities Table</title>
+  <title>Texas Weather Dashboard - Master List</title>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 1rem;
-      background: #f5f5f5;
+      background: #f0f2f5;
+      color: #333;
     }
-    h1 {
-      margin-bottom: 0.25rem;
+    h1 { margin-bottom: 0.5rem; color: #003366; }
+    
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
-    #summary {
-      margin: 0.5rem 0 1rem 0;
-      font-weight: 600;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .summary-card {
+      padding: 1rem;
       background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    thead {
-      background: #004b8d;
-      color: white;
+    .central-card { border-left: 8px solid #004b8d; }
+    .state-card { border-left: 8px solid #6c757d; background: #fafafa; }
+    
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      display: block;
+      color: #004b8d;
     }
+    .stat-line { margin: 0.25rem 0; font-size: 0.95rem; }
+    .label { font-weight: 600; }
+    
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #004b8d; color: white; }
     th, td {
-      padding: 0.35rem 0.5rem;
-      border: 1px solid #ccc;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #eee;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
-    th {
-      cursor: pointer;
-      user-select: none;
-      white-space: nowrap;
-    }
-    th:hover {
-      background: #0062ba;
-    }
-    tr:nth-child(even) td {
-      background: #f0f4f8;
-    }
-    .small {
-      font-size: 0.8rem;
-      color: #555;
-      margin-bottom: 0.75rem;
+    th { cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { background: #0062ba; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    .small { font-size: 0.8rem; color: #555; margin-bottom: 1rem; }
+    
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <h1>Texas Weather</h1>
-  <div id="summary">Loading weather data…</div>
-  <div class="small">
-Click headers to sort; initial sort is Current °F (hot to cool).
+
+  <h1>Texas Weather Dashboard</h1>
+
+  <div class="dashboard">
+    <div id="centralSummary" class="summary-card central-card">
+      <span class="card-title">📍 Central Texas & Hill Country Records</span>
+      <div id="centralStats">Loading regional data...</div>
+    </div>
+
+    <div id="stateSummary" class="summary-card state-card">
+      <span class="card-title">Texas Statewide Records</span>
+      <div id="stateStats">Loading state data...</div>
+    </div>
   </div>
 
-  <table id="weatherTable" data-sort-dir="desc">
-    <thead>
-      <tr>
-        <th onclick="sortTable(0)">City</th>
-        <th onclick="sortTable(1)">Region</th>
-        <th onclick="sortTable(2)">Current °F</th>
-        <th onclick="sortTable(3)">High °F (today)</th>
-        <th onclick="sortTable(4)">Low °F (today)</th>
-        <th onclick="sortTable(5)">Precip in (today)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="small">
+    Data represents records <b>since midnight</b>. Sorting by Current °F (hot to cool).
+  </div>
 
-  <script>
-  const stations = [
-  {city:"Nacogdoches – A L Mangham Jr. Regional", lat:31.5753, lon:-94.7095,  region:"East Texas"},
-  {city:"Abilene – Regional",                     lat:32.4113, lon:-99.6819,  region:"West Texas"},
-  {city:"Dallas – Addison Airport",              lat:32.9686, lon:-96.8364,  region:"North TX Metro"},
-  {city:"Plano – Air Park-Dallas",               lat:33.0136, lon:-96.594,   region:"North TX Metro"},
-  {city:"Terrell – Airpark East",                lat:32.7374, lon:-96.217,   region:"North TX Plains"},
-  {city:"Sinton – Alfred C Bubba Thomas",        lat:28.0397, lon:-97.5428,  region:"Middle Gulf Coast"},
-  {city:"Alice – Alice International",           lat:27.7409, lon:-98.0269,  region:"South Texas Brush Country"},
-  {city:"Alpine – Alpine-Casparis",              lat:30.3842, lon:-103.683,  region:"Big Bend"},
-  {city:"Alvin – Alvin Airpark",                 lat:29.4211, lon:-95.245,   region:"SE Texas"},
-  {city:"Andrews – Andrews County",              lat:32.3311, lon:-102.529,  region:"West Texas"},
-  {city:"Lufkin – Angelina County",              lat:31.234,  lon:-94.7541,  region:"East Texas"},
-  {city:"Arlington – Arlington Municipal",       lat:32.6639, lon:-97.0943,  region:"North TX Metro"},
-  {city:"Athens – Athens Municipal",             lat:32.1638, lon:-95.8281,  region:"NE Texas"},
+  <div class="table-container">
+    <table id="weatherTable" data-sort-dir="desc">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">City</th>
+          <th onclick="sortTable(1)">Region</th>
+          <th onclick="sortTable(2)">Current °F</th>
+          <th onclick="sortTable(3)">Today's High °F</th>
+          <th onclick="sortTable(4)">Today's Low °F</th>
+          <th onclick="sortTable(5)">Rain (in)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  // Austin area
-  {city:"Austin – Austin Executive",             lat:30.3975, lon:-97.5664,  region:"Central / I-35"},
-  {city:"Austin – Bergstrom Intl",               lat:30.1945, lon:-97.6699,  region:"Central / I-35"},
-  {city:"Austin – Camp Mabry",                   lat:30.3167, lon:-97.7667,  region:"Central / I-35"},
+<script>
+const stations = [
+  // --- ORIGINAL CENTRAL TEXAS & HILL COUNTRY LIST ---
+  {city:"Austin – Executive", lat:30.3975, lon:-97.5664, region:"Central / I-35"},
+  {city:"Austin – Bergstrom", lat:30.1945, lon:-97.6699, region:"Central / I-35"},
+  {city:"Austin – Camp Mabry", lat:30.3167, lon:-97.7667, region:"Central / I-35"},
+  {city:"Temple – Draughon-Miller", lat:31.1525, lon:-97.4078, region:"Central / I-35"},
+  {city:"Killeen – Fort Hood Reg", lat:31.0649, lon:-97.8278, region:"Central / I-35"},
+  {city:"Waco – McGregor", lat:31.4886, lon:-97.316, region:"Central / I-35"},
+  {city:"Waco – TSTC", lat:31.6378, lon:-97.0741, region:"Central / I-35"},
+  {city:"Waco – Regional", lat:31.6113, lon:-97.2305, region:"Central / I-35"},
+  {city:"New Braunfels – National", lat:29.7045, lon:-98.0422, region:"Central / I-35"},
+  {city:"San Marcos – Regional", lat:29.8927, lon:-97.8647, region:"Central / I-35"},
+  {city:"Round Rock – Center", lat:30.5083, lon:-97.6789, region:"Central / I-35"},
+  {city:"Georgetown – Center", lat:30.6327, lon:-97.6772, region:"Central / I-35"},
+  {city:"Cameron – Center", lat:30.8788, lon:-96.9716, region:"Central / I-35"},
+  {city:"Taylor – Center", lat:30.5713, lon:-97.4437, region:"Central / I-35"},
+  {city:"Vizcaya – Neighborhood", lat:30.5871, lon:-97.641, region:"Central / I-35"},
+  {city:"Granger – Center", lat:30.71, lon:-97.45, region:"Central / I-35"},
+  {city:"Salado – Center", lat:30.9477, lon:-97.5384, region:"Central / I-35"},
+  {city:"Jarrell – Center", lat:30.824, lon:-97.6056, region:"Central / I-35"},
+  {city:"Buda – Center", lat:30.083, lon:-97.8403, region:"Central / I-35"},
+  {city:"Kyle – Center", lat:29.989, lon:-97.8772, region:"Central / I-35"},
+  {city:"Bastrop – Center", lat:30.1117, lon:-97.3178, region:"Central / I-35"},
+  {city:"Smithville – Center", lat:30.0044, lon:-97.1489, region:"Central / I-35"},
+  {city:"Leander – Center", lat:30.5736, lon:-97.8567, region:"Central / I-35"},
+  {city:"Manor – Center", lat:30.3431, lon:-97.5567, region:"Central / I-35"},
+  {city:"Liberty Hill – Center", lat:30.6640, lon:-97.9200, region:"Central / I-35"},
+  {city:"Junction – Airport", lat:30.5113, lon:-99.7635, region:"Hill Country"},
+  {city:"Boerne – Boerne Stage", lat:29.7253, lon:-98.6912, region:"Hill Country"},
+  {city:"Brownwood – Regional", lat:31.7936, lon:-98.9565, region:"Hill Country"},
+  {city:"Burnet – Municipal", lat:30.7389, lon:-98.2386, region:"Hill Country"},
+  {city:"Coleman – Municipal", lat:31.842, lon:-99.4036, region:"Hill Country"},
+  {city:"Comanche – County-City", lat:31.9205, lon:-98.6007, region:"Hill Country"},
+  {city:"Kerrville – Municipal", lat:29.9767, lon:-99.0857, region:"Hill Country"},
+  {city:"Lampasas – Municipal", lat:31.106, lon:-98.195, region:"Hill Country"},
+  {city:"Llano – Municipal", lat:30.7836, lon:-98.6617, region:"Hill Country"},
+  {city:"San Saba – County", lat:31.2333, lon:-98.7167, region:"Hill Country"},
+  {city:"Stephenville – Regional", lat:32.2153, lon:-98.1777, region:"Hill Country"},
+  {city:"Lake Buchanan", lat:30.8183, lon:-98.4227, region:"Hill Country"},
+  {city:"Luckenbach", lat:30.1787, lon:-98.7572, region:"Hill Country"},
+  {city:"Fredericksburg", lat:30.2752, lon:-98.8720, region:"Hill Country"},
+  {city:"Blanco – Center", lat:30.0980, lon:-98.4214, region:"Hill Country"},
+  {city:"Johnson City – Center", lat:30.2744, lon:-98.4114, region:"Hill Country"},
+  {city:"Marble Falls – Center", lat:30.5784, lon:-98.2751, region:"Hill Country"},
+  {city:"Horseshoe Bay", lat:30.5400, lon:-98.3530, region:"Hill Country"},
+  {city:"Comfort – Center", lat:29.9677, lon:-98.9050, region:"Hill Country"},
+  {city:"Mason – Center", lat:30.7420, lon:-99.2258, region:"Hill Country"},
+  {city:"Canyon Lake", lat:29.8750, lon:-98.2620, region:"Hill Country"},
+  {city:"Florence – Center", lat:30.841, lon:-97.793, region:"Hill Country"},
 
-  {city:"Sweetwater – Avenger Field",            lat:32.4675, lon:-100.467,  region:"West Texas"},
-  {city:"Bay City – Bay City Regional",          lat:28.9733, lon:-95.8633,  region:"Middle Gulf Coast"},
-  {city:"Baytown – Baytown Airport",             lat:29.7864, lon:-94.9527,  region:"SE Texas"},
-  {city:"Beaumont – Beaumont Municipal",         lat:30.0707, lon:-94.2159,  region:"SE Texas"},
-  {city:"Beeville – Beeville Municipal",         lat:28.3623, lon:-97.7911,  region:"South Texas Brush Country"},
-  {city:"Big Spring – McMahon-Wrinkle",          lat:32.2126, lon:-101.521,  region:"West Texas"},
-  {city:"El Paso – Biggs Army Airfield",         lat:31.849,  lon:-106.38,   region:"Far West Texas"},
-  {city:"Boerne – Boerne Stage",                 lat:29.7253, lon:-98.6912,  region:"Hill Country"},
-  {city:"Bowie – Bowie Municipal",               lat:33.5869, lon:-97.777,   region:"North TX Plains"},
-  {city:"Brenham – Brenham Municipal",           lat:30.219,  lon:-96.3743,  region:"Brazos Valley"},
-  {city:"Bridgeport – Bridgeport Municipal",     lat:33.1753, lon:-97.8289,  region:"North TX Plains"},
-  {city:"Falfurrias – Brooks County",            lat:27.2069, lon:-98.1214,  region:"South Texas Brush Country"},
-  {city:"Brownsville – Brownsville/S. Padre Intl",lat:25.9068,lon:-97.4259,  region:"Lower Gulf Coast"},
-  {city:"Brownwood – Brownwood Regional",        lat:31.7936, lon:-98.9565,  region:"Hill Country"},
-  {city:"Burnet – Burnet Municipal",             lat:30.7389, lon:-98.2386,  region:"Hill Country"},
-  {city:"Caddo Mills – Caddo Mills Airport",     lat:33.0365, lon:-96.2371,  region:"North TX Plains"},
-  {city:"Caldwell – Caldwell Municipal",         lat:30.515,  lon:-96.7049,  region:"Brazos Valley"},
-  {city:"Cameron – Cameron Municipal",           lat:30.8788, lon:-96.9716,  region:"Brazos Valley"},
-  {city:"Austin – Camp Mabry",                   lat:30.3167, lon:-97.7667,  region:"Central / I-35"},
-  {city:"Canton – Canton Hackney",               lat:32.5584, lon:-95.8628,  region:"NE Texas"},
-  {city:"Castroville – Castroville Municipal",   lat:29.3412, lon:-98.8507,  region:"South Texas Brush Country"},
-  {city:"Center – Center Municipal",             lat:31.8425, lon:-94.1569,  region:"NE Texas"},
-  {city:"Winnie – Chambers Co-Winnie",           lat:29.8202, lon:-94.3886,  region:"Upper Gulf Coast"},
-  {city:"Jacksonville – Cherokee County",        lat:31.8693, lon:-95.2174,  region:"NE Texas"},
-  {city:"Childress – Childress Municipal",       lat:34.4336, lon:-100.283,  region:"Panhandle"},
-  {city:"Cisco – Cisco Municipal",               lat:32.3768, lon:-98.8125,  region:"West Texas"},
-  {city:"Clarksville – Clarksville Municipal",   lat:33.5939, lon:-95.0631,  region:"NE Texas"},
-  {city:"Clarksville – Clarksville/Red River Co",lat:33.5939, lon:-95.0631,  region:"NE Texas"},
-  {city:"Cleburne – Cleburne Regional",          lat:32.3538, lon:-97.4339,  region:"North TX Plains"},
-  {city:"Cleveland – Cleveland Municipal",       lat:30.3565, lon:-95.0087,  region:"SE Texas"},
-  {city:"Coleman – Coleman Municipal",           lat:31.842,  lon:-99.4036,  region:"Hill Country"},
-  {city:"Colorado City – Colorado City Airport", lat:32.213,  lon:-100.279,  region:"West Texas"},
-  {city:"Comanche – Comanche County-City",       lat:31.9205, lon:-98.6007,  region:"Hill Country"},
-  {city:"Conroe – Conroe-North Houston",         lat:30.3518, lon:-95.4145,  region:"SE Texas"},
-
-  // Corpus Christi
-  {city:"Corpus Christi – International",        lat:27.7704, lon:-97.5012,  region:"Middle Gulf Coast"},
-  {city:"Corpus Christi – NAS",                  lat:27.6927, lon:-97.2911,  region:"Middle Gulf Coast"},
-
-  {city:"Corsicana – Corsicana Municipal",       lat:32.0289, lon:-96.4009,  region:"Central / I-35"},
-  {city:"Cotulla – Cotulla-La Salle",            lat:28.4567, lon:-99.2203,  region:"South Texas Brush Country"},
-  {city:"Bryan – Coulter Field",                 lat:30.7157, lon:-96.3314,  region:"Brazos Valley"},
-  {city:"Paris – Cox Field",                     lat:33.6366, lon:-95.4508,  region:"NE Texas"},
-  {city:"Crane – Crane County",                  lat:31.4024, lon:-102.361,  region:"West Texas"},
-  {city:"Cuero – Cuero Municipal",               lat:29.0836, lon:-97.2803,  region:"South Texas Brush Country"},
-  {city:"Van Horn – Culberson County",           lat:31.057,  lon:-104.784,  region:"Far West Texas"},
-  {city:"Brady – Curtis Field",                  lat:31.1793, lon:-99.3233,  region:"Hill Country"},
-  {city:"Dalhart – Dalhart Municipal",           lat:36.0226, lon:-102.548,  region:"Panhandle"},
-
-  // Dallas area
-  {city:"Dallas – Executive",                    lat:32.6809, lon:-96.8682,  region:"North TX Metro"},
-  {city:"Dallas – Love Field",                   lat:32.8471, lon:-96.8518,  region:"North TX Metro"},
-  {city:"DFW – Dallas-Fort Worth Intl",          lat:32.8968, lon:-97.038,   region:"North TX Metro"},
-
-  {city:"Tomball – David Wayne Hooks",           lat:30.0618, lon:-95.5528,  region:"SE Texas"},
-  {city:"Decatur – Decatur Municipal",           lat:33.2542, lon:-97.5806,  region:"North TX Plains"},
-  {city:"Del Rio – Del Rio International",       lat:29.3742, lon:-100.927,  region:"South Texas Brush Country"},
-  {city:"Houston – George Bush Intercontinental",lat:29.9805, lon:-95.3397,  region:"SE Texas"},
-  {city:"Dell City – Dell City Municipal",       lat:31.9383, lon:-105.193,  region:"Far West Texas"},
-  {city:"Denton – Denton Enterprise",            lat:33.2007, lon:-97.198,   region:"North TX Metro"},
-  {city:"Denver City – Denver City Airport",     lat:32.701,  lon:-102.636,  region:"West Texas"},
-  {city:"Carrizo Springs – Dimmit County",       lat:28.5222, lon:-99.8236,  region:"South Texas Brush Country"},
-  {city:"Dimmitt – Dimmitt Municipal",           lat:34.5489, lon:-102.31,   region:"Panhandle"},
-  {city:"Temple – Draughon-Miller",              lat:31.1525, lon:-97.4078,  region:"Central / I-35"},
-  {city:"Dublin – Dublin Municipal",             lat:32.0798, lon:-98.3428,  region:"Hill Country"},
-  {city:"Abilene – Dyess AFB",                   lat:32.4208, lon:-99.8546,  region:"West Texas"},
-  {city:"Longview – East Texas Regional",        lat:32.383,  lon:-94.7115,  region:"NE Texas"},
-  {city:"College Station – Easterwood Field",    lat:30.5886, lon:-96.3638,  region:"Brazos Valley"},
-  {city:"Eastland – Eastland Municipal",         lat:32.4145, lon:-98.8098,  region:"West Texas"},
-  {city:"Edinburg – Edinburg International",     lat:26.4414, lon:-98.1222,  region:"The Valley"},
-  {city:"Rocksprings – Edwards County",          lat:30.0425, lon:-100.166,  region:"West Texas"},
-  {city:"El Paso – El Paso International",       lat:31.8072, lon:-106.378,  region:"Far West Texas"},
-
-  // Houston area airports
-  {city:"Houston – Ellington Airport",           lat:29.6073, lon:-95.1588,  region:"SE Texas"},
-
-  {city:"Ennis – Ennis Municipal",               lat:32.3293, lon:-96.6631,  region:"North TX Plains"},
-  {city:"Faith Ranch – Faith Ranch",             lat:28.2097, lon:-100.003,  region:"South Texas Brush Country"},
-
-  // Fort Worth cluster
-  {city:"Fort Worth – Alliance",                 lat:32.9876, lon:-97.3188,  region:"North TX Metro"},
-  {city:"Fort Worth – Meacham",                  lat:32.8198, lon:-97.3624,  region:"North TX Metro"},
-  {city:"Fort Worth – NAS JRB",                  lat:32.7692, lon:-97.4415,  region:"North TX Metro"},
-  {city:"Fort Worth – Spinks",                   lat:32.5652, lon:-97.3092,  region:"North TX Metro"},
-
-  {city:"Gilmer – Fox Stephens Field",           lat:32.6986, lon:-94.9494,  region:"NE Texas"},
-  {city:"Mt Vernon – Franklin County",           lat:33.0859, lon:-95.5992,  region:"NE Texas"},
-  {city:"Seminole – Gaines County",              lat:32.6753, lon:-102.655,  region:"West Texas"},
-  {city:"Gainesville – Gainesville Municipal",   lat:33.6514, lon:-97.197,   region:"North TX Plains"},
-
-  {city:"Kenedy – Kenedy Regional",              lat:28.274,  lon:-97.7913,  region:"South Texas Brush Country"},
-  {city:"Kerrville – Kerrville Municipal",       lat:29.9767, lon:-99.0857,  region:"Hill Country"},
-  {city:"Killeen – Killeen-Fort Hood Regional",  lat:31.0649, lon:-97.8278,  region:"Central / I-35"},
-  {city:"Junction – Kimble County",              lat:30.5113, lon:-99.7635,  region:"South Texas Brush Country"},
-  {city:"Kingsville – Kingsville NAS",           lat:27.5072, lon:-97.8097,  region:"South Texas Brush Country"},
-  {city:"La Porte – La Porte Municipal",         lat:29.6683, lon:-95.0644,  region:"Upper Gulf Coast"},
-  {city:"Lajitas – Lajitas International",       lat:29.2239, lon:-103.678,  region:"Big Bend"},
-  {city:"Lakeway – Lakeway Airpark",             lat:30.3694, lon:-97.9911,  region:"Central / I-35"},
-  {city:"Lamesa – Lamesa Municipal",             lat:32.6998, lon:-101.919,  region:"West Texas"},
-  {city:"Lampasas – Lampasas Municipal",         lat:31.106,  lon:-98.195,   region:"Hill Country"},
-
-  // Laredo pair
-  {city:"Laredo – Lanai Airport",                lat:27.5437, lon:-99.4616,  region:"South Texas Brush Country"},
-  {city:"Laredo – Laredo International",         lat:27.5449, lon:-99.4616,  region:"South Texas Brush Country"},
-
-  {city:"Lancaster – Lancaster Regional",        lat:32.579,  lon:-96.7197,  region:"North TX Metro"},
-  {city:"Laughlin AFB – Laughlin AFB",           lat:29.3564, lon:-100.778,  region:"West Texas"},
-  {city:"Levelland – Levelland Municipal",       lat:33.5443, lon:-102.371,  region:"West Texas"},
-  {city:"Liberty – Liberty Municipal",           lat:30.0718, lon:-94.698,   region:"SE Texas"},
-  {city:"George West – Live Oak County",         lat:28.3329, lon:-98.1195,  region:"South Texas Brush Country"},
-  {city:"Llano – Llano Municipal",               lat:30.7836, lon:-98.6617,  region:"Hill Country"},
-
-  // Lubbock / Midland cluster
-  {city:"Lubbock – Preston Smith",               lat:33.6636, lon:-101.823,  region:"West Texas"},
-
-  {city:"Spearman – Major Samuel Cornelius",     lat:36.219,  lon:-101.194,  region:"Panhandle"},
-  {city:"Greenville – Majors Airport",           lat:33.0678, lon:-96.0653,  region:"NE Texas"},
-  {city:"San Angelo – Mathis Field",             lat:31.3577, lon:-100.496,  region:"West Texas"},
-  {city:"Waco – McGregor Executive",             lat:31.4886, lon:-97.316,   region:"Central / I-35"},
-  {city:"McKinney – McKinney National",          lat:33.1779, lon:-96.5905,  region:"North TX Metro"},
-  {city:"Canadian – Mesa Vista Ranch",           lat:35.8999, lon:-100.38,   region:"Panhandle"},
-  {city:"Mesquite – Mesquite Metro",             lat:32.7478, lon:-96.5304,  region:"North TX Metro"},
-  {city:"Weslaco – Mid Valley",                  lat:26.1794, lon:-97.974,   region:"The Valley"},
-
-  // Midland pair
-  {city:"Midland – Midland Airpark",             lat:32.0365, lon:-102.101,  region:"West Texas"},
-  {city:"Midland – Midland International",       lat:31.9425, lon:-102.202,  region:"West Texas"},
-
-  {city:"Midlothian – Mid-Way Regional",         lat:32.455,  lon:-96.9124,  region:"North TX Plains"},
-  {city:"McAllen – Miller International",        lat:26.1758, lon:-98.2375,  region:"The Valley"},
-  {city:"Mineral Wells – Mineral Wells Airport", lat:32.7816, lon:-98.0602,  region:"North TX Plains"},
-  {city:"Dumas – Moore County",                  lat:35.8579, lon:-102.013,  region:"Panhandle"},
-  {city:"Mt Pleasant – Mt Pleasant Regional",     lat:33.0959, lon:-94.9614,  region:"NE Texas"},
-  {city:"Port Aransas – Mustang Beach",          lat:27.8117, lon:-97.0897,  region:"Middle Gulf Coast"},
-  {city:"Navasota – Navasota Municipal",         lat:30.3873, lon:-96.0883,  region:"Brazos Valley"},
-  {city:"New Braunfels – New Braunfels National",lat:29.7045, lon:-98.0422,  region:"Central / I-35"},
-  {city:"Sherman/Denison – North Texas Regional",lat:33.714,  lon:-96.6737,  region:"North TX Metro"},
-  {city:"Robstown – Nueces County",              lat:27.7781, lon:-97.6906,  region:"Middle Gulf Coast"},
-  {city:"Orange – Orange County",                lat:30.0696, lon:-93.8037,  region:"Upper Gulf Coast"},
-  {city:"Ozona – Ozona Municipal",               lat:30.735,  lon:-101.203,  region:"West Texas"},
-  {city:"Palestine – Palestine Municipal",       lat:31.7792, lon:-95.7063,  region:"SE Texas"},
-  {city:"Hudson Oaks – Parker County",           lat:32.746,  lon:-97.6827,  region:"North TX Plains"},
-  {city:"Pearland – Pearland Regional",          lat:29.5216, lon:-95.2422,  region:"SE Texas"},
-  {city:"Fort Stockton – Pecos County",          lat:30.9157, lon:-102.912,  region:"Big Bend"},
-  {city:"Perryton – Perryton Ochiltree Co",      lat:36.4134, lon:-100.752,  region:"Panhandle"},
-  {city:"Pleasanton – Pleasanton Municipal",     lat:28.9548, lon:-98.5193,  region:"South Texas Brush Country"},
-  {city:"Port Isabel – Cameron County",          lat:26.1662, lon:-97.3459,  region:"Lower Gulf Coast"},
-  {city:"Presidio – Presidio Lely Intl",         lat:29.6343, lon:-104.358,  region:"Big Bend"},
-  {city:"Universal City – Randolph AFB",         lat:29.5297, lon:-98.2789,  region:"South Texas Urban"},
-  {city:"Ranger – Ranger Municipal",             lat:32.4695, lon:-98.6827,  region:"West Texas"},
-  {city:"Big Lake – Reagan County",              lat:31.1959, lon:-101.474,  region:"West Texas"},
-  {city:"Amarillo – Rick Husband Intl",          lat:35.2194, lon:-101.706,  region:"Panhandle"},
-  {city:"Gonzales – Roger M. Dreyer",            lat:29.5093, lon:-97.4431,  region:"South Texas Brush Country"},
-  {city:"Henderson – Rusk County",               lat:32.1417, lon:-94.8519,  region:"NE Texas"},
-  {city:"Lago Vista – Rusty Allen",              lat:30.4986, lon:-97.9697,  region:"Central / I-35"},
-
-  // San Antonio area
-  {city:"San Antonio – San Antonio Intl",        lat:29.5337, lon:-98.4698,  region:"South Texas Urban"},
-  {city:"San Marcos – San Marcos Regional",      lat:29.8927, lon:-97.8647,  region:"Central / I-35"},
-
-  {city:"San Saba – San Saba County",            lat:31.2333, lon:-98.7167,  region:"Hill Country"},
-  {city:"Odessa – Schlemeyer Field",             lat:31.9209, lon:-102.387,  region:"West Texas"},
-  {city:"Galveston – Scholes International",     lat:29.2653, lon:-94.8604,  region:"Upper Gulf Coast"},
-  {city:"Seguin – Seguin Auxiliary",             lat:29.5685, lon:-97.9086,  region:"Central / I-35"},
-  {city:"Sonora – Sonora Municipal",             lat:30.5857, lon:-100.649,  region:"West Texas"},
-  {city:"Breckenridge – Stephens County",        lat:32.719,  lon:-98.891,   region:"North TX Plains"},
-  {city:"Stephenville – Stephenville Regional",  lat:32.2153, lon:-98.1777,  region:"Hill Country"},
-  {city:"San Antonio – Stinson Municipal",       lat:29.336,  lon:-98.4711,  region:"South Texas Urban"},
-  {city:"Sugar Land – Sugar Land Regional",      lat:29.6223, lon:-95.6565,  region:"SE Texas"},
-  {city:"Sulphur Springs – Municipal",           lat:33.1598, lon:-95.6211,  region:"NE Texas"},
-  {city:"Taylor – Taylor Municipal",             lat:30.5713, lon:-97.4437,  region:"Central / I-35"},
-  {city:"Dryden – Terrell County",               lat:30.0444, lon:-102.214,  region:"Big Bend"},
-  {city:"Terrell – Terrell Municipal",           lat:32.708,  lon:-96.2674,  region:"North TX Plains"},
-  {city:"Brownfield – Terry County",             lat:33.1744, lon:-102.193,  region:"Panhandle"},
-  {city:"Texarkana – Texarkana Regional",        lat:33.4537, lon:-93.9906,  region:"NE Texas"},
-  {city:"Angleton/Lake Jackson – TX Gulf Coast Regional", lat:29.1086, lon:-95.461, region:"Upper Gulf Coast"},
-  {city:"Waco – TSTC Waco",                      lat:31.6378, lon:-97.0741,  region:"Central / I-35"},
-  {city:"Tyler – Tyler Pounds Regional",         lat:32.3541, lon:-95.4024,  region:"NE Texas"},
-
-  // Valley / Coast
-  {city:"Harlingen – Valley International",      lat:26.2285, lon:-97.6544,  region:"Lower Gulf Coast"},
-  {city:"Victoria – Victoria Regional",          lat:28.8526, lon:-96.9185,  region:"SE Texas"},
-  {city:"Waco – Waco Regional",                  lat:31.6113, lon:-97.2305,  region:"Central / I-35"},
-
-  // Houston cluster continued
-  {city:"Houston – West Houston",                lat:29.8182, lon:-95.6726,  region:"SE Texas"},
-  {city:"Wharton – Wharton Regional",            lat:29.2543, lon:-96.1543,  region:"SE Texas"},
-
-  {city:"Wichita Falls – Wichita Falls Municipal",lat:33.9888,lon:-98.4919,  region:"North TX Plains"},
-  {city:"Houston – William P. Hobby",            lat:29.6454, lon:-95.2789,  region:"SE Texas"},
-  {city:"Winnsboro – Winnsboro Municipal",       lat:32.9571, lon:-95.2892,  region:"NE Texas"},
-  {city:"Snyder – Winston Field",                lat:32.6928, lon:-100.95,   region:"West Texas"},
-  {city:"Mineola/Quitman – Wood County",         lat:32.742,  lon:-95.4969,  region:"NE Texas"},
-
-  // City centers & special points
-  {city:"Round Rock – City Center",              lat:30.5083, lon:-97.6789,  region:"Central / I-35"},
-  {city:"Greenville – City Center",              lat:33.1384, lon:-96.1108,  region:"NE Texas"},
-  {city:"Grainger – City Center",                lat:30.71,   lon:-97.45,    region:"Central / I-35"},
-  {city:"Salado – City Center",                  lat:30.9477, lon:-97.5384,  region:"Central / I-35"},
-  {city:"Jarrell – City Center",                 lat:30.824,  lon:-97.6056,  region:"Central / I-35"},
-  {city:"Buda – City Center",                    lat:30.083,  lon:-97.8403,  region:"Central / I-35"},
-  {city:"Kyle – City Center",                    lat:29.989,  lon:-97.8772,  region:"Central / I-35"},
-  {city:"Lake Buchanan",                         lat:30.8183, lon:-98.4227,  region:"Hill Country"},
-  {city:"Salado – City Center (dup)",            lat:30.9477, lon:-97.5384,  region:"Central / I-35"},
-  {city:"Luckenbach",                            lat:30.1787, lon:-98.7572,  region:"Hill Country"},
-  {city:"Fredericksburg – City Center",          lat:30.2752, lon:-98.8720,  region:"Hill Country"},
-  {city:"Blanco – City Center",                  lat:30.0980, lon:-98.4214,  region:"Hill Country"},
-  {city:"Johnson City – City Center",            lat:30.2744, lon:-98.4114,  region:"Hill Country"}
+  // --- ADDITIONAL STATEWIDE AIRPORTS ---
+  {city:"Nacogdoches – A L Mangham Jr.", lat:31.5753, lon:-94.7095, region:"East Texas"},
+  {city:"Abilene – Regional", lat:32.4113, lon:-99.6819, region:"West Texas"},
+  {city:"Dallas – Addison", lat:32.9686, lon:-96.8364, region:"North TX Metro"},
+  {city:"Plano – Air Park-Dallas", lat:33.0136, lon:-96.594, region:"North TX Metro"},
+  {city:"Terrell – Airpark East", lat:32.7374, lon:-96.217, region:"North TX Plains"},
+  {city:"Sinton – Bubba Thomas", lat:28.0397, lon:-97.5428, region:"Middle Gulf Coast"},
+  {city:"Alice – International", lat:27.7409, lon:-98.0269, region:"South Texas"},
+  {city:"Alpine – Casparis", lat:30.3842, lon:-103.683, region:"Big Bend"},
+  {city:"Alvin – Airpark", lat:29.4211, lon:-95.245, region:"SE Texas"},
+  {city:"Andrews – Andrews County", lat:32.3311, lon:-102.529, region:"West Texas"},
+  {city:"Lufkin – Angelina County", lat:31.234, lon:-94.7541, region:"East Texas"},
+  {city:"Arlington – Municipal", lat:32.6639, lon:-97.0943, region:"North TX Metro"},
+  {city:"Athens – Municipal", lat:32.1638, lon:-95.8281, region:"NE Texas"},
+  {city:"Sweetwater – Avenger Field", lat:32.4675, lon:-100.467, region:"West Texas"},
+  {city:"Bay City – Regional", lat:28.9733, lon:-95.8633, region:"Middle Gulf Coast"},
+  {city:"Beaumont – Municipal", lat:30.0707, lon:-94.2159, region:"SE Texas"},
+  {city:"Beeville – Municipal", lat:28.3623, lon:-97.7911, region:"South Texas"},
+  {city:"Big Spring – McMahon", lat:32.2126, lon:-101.521, region:"West Texas"},
+  {city:"El Paso – Biggs Army", lat:31.849, lon:-106.38, region:"Far West Texas"},
+  {city:"Bowie – Municipal", lat:33.5869, lon:-97.777, region:"North TX Plains"},
+  {city:"Brenham – Municipal", lat:30.219, lon:-96.3743, region:"Brazos Valley"},
+  {city:"Falfurrias – Brooks Co", lat:27.2069, lon:-98.1214, region:"South Texas"},
+  {city:"Brownsville – Intl", lat:25.9068, lon:-97.4259, region:"Lower Gulf Coast"},
+  {city:"Caddo Mills – Airport", lat:33.0365, lon:-96.2371, region:"North TX Plains"},
+  {city:"Caldwell – Municipal", lat:30.515, lon:-96.7049, region:"Brazos Valley"},
+  {city:"Childress – Municipal", lat:34.4336, lon:-100.283, region:"Panhandle"},
+  {city:"Cleburne – Regional", lat:32.3538, lon:-97.4339, region:"North TX Plains"},
+  {city:"Corpus Christi – Intl", lat:27.7704, lon:-97.5012, region:"Middle Gulf Coast"},
+  {city:"Corsicana – Municipal", lat:32.0289, lon:-96.4009, region:"Central / I-35"},
+  {city:"Bryan – Coulter Field", lat:30.7157, lon:-96.3314, region:"Brazos Valley"},
+  {city:"Paris – Cox Field", lat:33.6366, lon:-95.4508, region:"NE Texas"},
+  {city:"Dalhart – Municipal", lat:36.0226, lon:-102.548, region:"Panhandle"},
+  {city:"Dallas – Love Field", lat:32.8471, lon:-96.8518, region:"North TX Metro"},
+  {city:"DFW – Intl", lat:32.8968, lon:-97.038, region:"North TX Metro"},
+  {city:"Houston – Bush Intercont.", lat:29.9805, lon:-95.3397, region:"SE Texas"},
+  {city:"Denton – Enterprise", lat:33.2007, lon:-97.198, region:"North TX Metro"},
+  {city:"Edinburg – Intl", lat:26.4414, lon:-98.1222, region:"The Valley"},
+  {city:"El Paso – Intl", lat:31.8072, lon:-106.378, region:"Far West Texas"},
+  {city:"Fort Worth – Meacham", lat:32.8198, lon:-97.3624, region:"North TX Metro"},
+  {city:"Laredo – Intl", lat:27.5449, lon:-99.4616, region:"South Texas"},
+  {city:"Lubbock – Preston Smith", lat:33.6636, lon:-101.823, region:"West Texas"},
+  {city:"McAllen – Miller Intl", lat:26.1758, lon:-98.2375, region:"The Valley"},
+  {city:"Amarillo – Rick Husband", lat:35.2194, lon:-101.706, region:"Panhandle"},
+  {city:"San Antonio – Intl", lat:29.5337, lon:-98.4698, region:"South Texas"},
+  {city:"Galveston – Scholes", lat:29.2653, lon:-94.8604, region:"Upper Gulf Coast"},
+  {city:"Tyler – Pounds Regional", lat:32.3541, lon:-95.4024, region:"NE Texas"},
+  {city:"Victoria – Regional", lat:28.8526, lon:-96.9185, region:"SE Texas"},
+  {city:"Houston – Hobby", lat:29.6454, lon:-95.2789, region:"SE Texas"},
+  {city:"Wichita Falls – Municipal", lat:33.9888, lon:-98.4919, region:"North TX Plains"}
 ];
-
-  function cToF(c) {
-    return (c * 9/5) + 32;
-  }
 
   async function fetchWeather() {
     const tbody = document.querySelector("#weatherTable tbody");
-    tbody.innerHTML = ""; // Clear table
+    const results = [];
 
-    let maxCurrent = -999, minCurrent = 999;
-    let hottestNow = "", coldestNow = "";
-    let maxHigh = -999, minLow = 999, maxRain = 0;
-    let hottestCity = "", coldestCity = "", wettestCity = "";
-
-    // Create an array of promises – fetches happen in parallel!
     const promises = stations.map(async (station) => {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}` +
-                  `&longitude=${station.lon}` +
-                  `&current_weather=true&hourly=temperature_2m,precipitation` +
-                  `&timezone=America/Chicago`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${station.lat}&longitude=${station.lon}` +
+                  `&current_weather=true&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+                  `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America/Chicago`;
 
       try {
         const res = await fetch(url);
-        if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
-
-        const nowTempC = data.current_weather.temperature;
-        const nowTempF = cToF(nowTempC);
-
-        const now = new Date();
-        const today = now.toISOString().split("T")[0];
-        const times = data.hourly.time;
-        const temps = data.hourly.temperature_2m;
-        const prec = data.hourly.precipitation;
-
-        let highC = -999, lowC = 999, totalPrec = 0;
-        for (let i = 0; i < times.length; i++) {
-          if (times[i].startsWith(today)) {
-            if (temps[i] > highC) highC = temps[i];
-            if (temps[i] < lowC) lowC = temps[i];
-            totalPrec += prec[i];
-          }
-        }
-
-        // Build table row
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${station.city}</td>
-          <td>${station.region}</td>
-          <td>${nowTempF.toFixed(1)}</td>
-          <td>${cToF(highC).toFixed(1)}</td>
-          <td>${cToF(lowC).toFixed(1)}</td>
-          <td>${totalPrec.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-
-        // Update running extremes
-        if (nowTempC > maxCurrent) {
-          maxCurrent = nowTempC;
-          hottestNow = station.city;
-        }
-        if (nowTempC < minCurrent) {
-          minCurrent = nowTempC;
-          coldestNow = station.city;
-        }
-        if (highC > maxHigh) {
-          maxHigh = highC;
-          hottestCity = station.city;
-        }
-        if (lowC < minLow) {
-          minLow = lowC;
-          coldestCity = station.city;
-        }
-        if (totalPrec > maxRain) {
-          maxRain = totalPrec;
-          wettestCity = station.city;
-        }
-
-        return true; // Success
-      } catch (e) {
-        console.log("Error fetching:", station.city, e);
-        return false;
-      }
+        results.push({
+          city: station.city,
+          region: station.region,
+          cur: data.current_weather.temperature,
+          hi: data.daily.temperature_2m_max[0],
+          lo: data.daily.temperature_2m_min[0],
+          rain: data.daily.precipitation_sum[0] || 0
+        });
+      } catch (e) { console.error(e); }
     });
 
-    // Wait for ALL fetches to complete (parallel!)
     await Promise.all(promises);
 
-    // Now update the summary – only once everything is done
-    document.getElementById("summary").innerText = 
-      `Current Hottest: ${hottestNow} ${cToF(maxCurrent).toFixed(1)}°F | ` +
-      `Current Coolest: ${coldestNow} ${cToF(minCurrent).toFixed(1)}°F | ` +
-      `Daily Hottest: ${hottestCity} ${cToF(maxHigh).toFixed(1)}°F | ` +
-      `Daily Coldest: ${coldestCity} ${cToF(minLow).toFixed(1)}°F | ` +
-      `Wettest: ${wettestCity} ${maxRain.toFixed(2)} in`;
+    // Filter list for Central Texas & Hill Country Dashboard
+    const centralList = results.filter(r => r.region === "Central / I-35" || r.region === "Hill Country");
 
-    // Re-sort table to initial hot-to-cool order
+    if (centralList.length > 0) {
+      const centralHi = centralList.reduce((prev, curr) => (prev.hi > curr.hi) ? prev : curr);
+      const centralLo = centralList.reduce((prev, curr) => (prev.lo < curr.lo) ? prev : curr);
+      const centralWet = centralList.reduce((prev, curr) => (prev.rain > curr.rain) ? prev : curr);
+
+      document.getElementById("centralStats").innerHTML = `
+        <div class="stat-line"><span class="label">Daily High:</span> ${centralHi.hi.toFixed(1)}°F (${centralHi.city})</div>
+        <div class="stat-line"><span class="label">Daily Low:</span> ${centralLo.lo.toFixed(1)}°F (${centralLo.city})</div>
+        <div class="stat-line"><span class="label">Max Rain:</span> ${centralWet.rain.toFixed(2)} in (${centralWet.rain > 0 ? centralWet.city : 'None'})</div>
+      `;
+    }
+
+    // Calculate Statewide
+    const stateHi = results.reduce((prev, curr) => (prev.hi > curr.hi) ? prev : curr);
+    const stateLo = results.reduce((prev, curr) => (prev.lo < curr.lo) ? prev : curr);
+    const stateWet = results.reduce((prev, curr) => (prev.rain > curr.rain) ? prev : curr);
+
+    document.getElementById("stateStats").innerHTML = `
+      <div class="stat-line"><span class="label">Hottest:</span> ${stateHi.hi.toFixed(1)}°F (${stateHi.city})</div>
+      <div class="stat-line"><span class="label">Coldest:</span> ${stateLo.lo.toFixed(1)}°F (${stateLo.city})</div>
+      <div class="stat-line"><span class="label">Wettest:</span> ${stateWet.rain > 0 ? `${stateWet.rain.toFixed(2)} in (${stateWet.city})` : 'No rain reported'}</div>
+    `;
+
+    // Render Table
+    tbody.innerHTML = results.map(r => `
+      <tr>
+        <td>${r.city}</td>
+        <td>${r.region}</td>
+        <td><b>${r.cur.toFixed(1)}</b></td>
+        <td>${r.hi.toFixed(1)}</td>
+        <td>${r.lo.toFixed(1)}</td>
+        <td style="color:${r.rain > 0 ? '#004b8d' : '#999'}">${r.rain.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
     sortTable(2, "desc");
   }
 
   function sortTable(colIndex, direction) {
-    // Your existing sortTable function – unchanged
     const table = document.getElementById("weatherTable");
     const tbody = table.tBodies[0];
     const rows = Array.from(tbody.querySelectorAll("tr"));
@@ -413,21 +278,17 @@ Click headers to sort; initial sort is Current °F (hot to cool).
     rows.sort((a, b) => {
       let x = a.cells[colIndex].innerText.trim();
       let y = b.cells[colIndex].innerText.trim();
-      const isNumeric = !isNaN(parseFloat(x)) && !isNaN(parseFloat(y));
-      if (isNumeric) {
-        x = parseFloat(x);
-        y = parseFloat(y);
-      } else {
-        x = x.toLowerCase();
-        y = y.toLowerCase();
-      }
-      if (dir === "asc") return x > y ? 1 : x < y ? -1 : 0;
-      return x < y ? 1 : x > y ? -1 : 0;
+      const valX = parseFloat(x), valY = parseFloat(y);
+      if (!isNaN(valX) && !isNaN(valY)) return dir === "asc" ? valX - valY : valY - valX;
+      return dir === "asc" ? x.localeCompare(y) : y.localeCompare(x);
     });
     rows.forEach(r => tbody.appendChild(r));
   }
 
-  // Start fetching when page loads
+  document.addEventListener("DOMContentLoaded", fetchWeather);
+</script>
+</body>
+</html>
   document.addEventListener("DOMContentLoaded", fetchWeather);
 </script>
 </body>
