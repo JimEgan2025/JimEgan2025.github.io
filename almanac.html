@@ -55,7 +55,6 @@
 </div>
 
 <script>
-    // USE THE FULL URL
     const JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
     let almanacData = null;
 
@@ -79,7 +78,6 @@
             statusDiv.innerText = "Data Loaded Successfully";
             statusDiv.className = "ok-msg";
 
-            // Set default date to today
             const today = new Date();
             document.getElementById('monthSelect').value = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('daySelect').value = String(today.getDate()).padStart(2, '0');
@@ -133,11 +131,6 @@
     }
 
     loadData();
-</script>
-</body>
-</html>
-  loadNext14DaysTable();   // ← new call
-};
 </script>
 </body>
 </html>
