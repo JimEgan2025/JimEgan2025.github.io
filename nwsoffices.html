@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya 360 Tactical | Final Intelligence Suite</title>
+    <style>
+        :root {
+            --tactical-blue: #1e3a8a;
+            --alert-red: #dc2626;
+            --warning-orange: #ea580c;
+            --cold-cyan: #0891b2;
+            --tropical-green: #059669;
+            --jarrell-purple: #6b21a8;
+            --panel-bg: #ffffff;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; margin: 0; padding: 15px; color: #1e293b; }
+        
+        /* Dashboard Header */
+        .dashboard-header { background: var(--tactical-blue); color: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .dashboard-title h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
+
+        /* Delta Display */
+        .delta-box { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        .delta-value { font-size: 1.6rem; font-weight: 800; display: block; }
+        .delta-label { font-size: 0.6rem; text-transform: uppercase; }
+
+        /* Strategic Cheat Sheet */
+        .cheat-sheet { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+        .cheat-item { font-size: 0.8rem; border-left: 3px solid #64748b; padding-left: 10px; }
+        .cheat-item b { display: block; color: var(--tactical-blue); font-size: 0.85rem; margin-bottom: 2px; }
+        .cheat-item.danger { border-left-color: var(--jarrell-purple); }
+        .cheat-item.cold { border-left-color: var(--cold-cyan); }
+
+        /* Intel Briefing */
+        .intel-briefing { background: #fffbeb; border: 2px solid #f59e0b; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .intel-header { font-weight: bold; color: #92400e; margin-bottom: 10px; font-size: 1rem; text-transform: uppercase; }
+        .intel-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+        .intel-item { background: white; padding: 12px; border-radius: 8px; border-left: 6px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.9rem; }
+        .intel-item.high { border-left-color: var(--alert-red); }
+        .intel-item.jarrell { border-left-color: var(--jarrell-purple); background: #fdf4ff; }
+        .intel-item.cold { border-left-color: var(--cold-cyan); }
+        .intel-item.tropical { border-left-color: var(--tropical-green); background: #f0fdf4; }
+
+        /* Main Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 12px; }
+        .card { background: var(--panel-bg); border-radius: 10px; padding: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+        .name { font-weight: 800; color: var(--tactical-blue); font-size: 1rem; }
+        
+        .lead-badge { font-size: 0.6rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+        .lead-backdoor { background: #ede9fe; color: #5b21b6; }
+        .lead-tripwire { background: #fee2e2; color: #991b1b; }
+        .lead-scout { background: #e0f2fe; color: #0369a1; }
+        .lead-tropical { background: #d1fae5; color: #065f46; }
+
+        .messages { font-size: 0.85rem; line-height: 1.4; white-space: pre-wrap; color: #334155; max-height: 150px; overflow-y: auto; background: #f8fafc; padding: 8px; border-radius: 6px; flex-grow: 1; }
+        .tag { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-right: 4px; margin-top: 4px; color: white; background: #64748b; }
+        
+        .refresh-btn { background: var(--tactical-blue); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            <h1>VIZCAYA 360° TACTICAL SHIELD</h1>
+            <p>Predictive Regional Intelligence & Pattern Recognition</p>
+        </div>
+        <div class="delta-box" id="delta-display">
+            <span class="delta-value" id="delta-num">--°</span>
+            <span class="delta-label">AMA ➔ AUS Delta</span>
+        </div>
+        <button class="refresh-btn" onclick="refreshAll()">🔄 SYNC INTEL</button>
+    </div>
+
+    <!-- STRATEGIC CHEAT SHEET SECTION -->
+    <div class="cheat-sheet">
+        <div class="cheat-item cold">
+            <b>❄️ BLUE NORTHER (Cold)</b>
+            Delta > 30°? Wind gusts imminent. Watch AMA/LUB lead times (8-12h).
+        </div>
+        <div class="cheat-item danger">
+            <b>⚠️ JARRELL PATTERN (Danger)</b>
+            Look for NE Wind in SHV/FWD vs SE Wind in Local. Boundary collision risk.
+        </div>
+        <div class="cheat-item">
+            <b>⚡ STORM TRIPWIRE (Timer)</b>
+            Watch San Angelo (SJT). Once "FROPA" or "Initiation" occurs, arrival is 3-5h.
+        </div>
+        <div class="cheat-item" style="border-left-color: var(--tropical-green);">
+            <b>🌀 TROPICAL SURGE (Flood)</b>
+            Watch BRO/CRP for "Deep Moisture" or "PWS > 2.0". Sudden heavy rain threat.
+        </div>
+    </div>
+
+    <div class="intel-briefing">
+        <div class="intel-header">🛰️ AUTOMATED INTELLIGENCE BRIEF</div>
+        <div class="intel-content" id="intel-brief">
+            <div class="intel-item">Establishing multi-axis links...</div>
+        </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <script>
+        const offices = [
+            { id: "AMA", name: "Amarillo", lead: "Scout", time: "10-12h" },
+            { id: "LUB", name: "Lubbock", lead: "Scout", time: "8-10h" },
+            { id: "MAF", name: "Midland", lead: "Vanguard", time: "6-8h" },
+            { id: "SJT", name: "San Angelo", lead: "Tripwire", time: "3-5h" },
+            { id: "FWD", name: "Dallas/FW", lead: "Vanguard", time: "3-5h" },
+            { id: "SHV", name: "Shreveport", lead: "Backdoor", time: "12-15h" },
+            { id: "BRO", name: "Brownsville", lead: "Tropical", time: "18-24h" },
+            { id: "CRP", name: "Corpus Christi", lead: "Tropical", time: "12-18h" },
+            { id: "HGX", name: "Houston", lead: "Maritime", time: "8-12h" },
+            { id: "LCH", name: "Lake Charles", lead: "Maritime", time: "15-18h" },
+            { id: "EWX", name: "Austin/San Antonio", lead: "Local", time: "Now" }
+        ];
+
+        function createCard(office) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            const badgeClass = `lead-${office.lead.toLowerCase()}`;
+            card.innerHTML = `
+                <div class="card-header">
+                    <div><span class="name">${office.name}</span><br><small>${office.id}</small></div>
+                    <span class="lead-badge ${badgeClass}">${office.lead}: ${office.time}</span>
+                </div>
+                <div class="messages" id="msg-${office.id}">📡 Initializing...</div>
+                <div id="tags-${office.id}"></div>
+            `;
+            document.getElementById('grid').appendChild(card);
+        }
+
+        async function updateVizcayaDelta() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=35.2,30.5&longitude=-101.8,-97.6&current_weather=true&temperature_unit=fahrenheit`);
+                const data = await res.json();
+                const delta = Math.abs(Math.round(data[1].current_weather.temperature) - Math.round(data[0].current_weather.temperature));
+                document.getElementById('delta-num').innerText = `${delta}°F`;
+                document.getElementById('delta-display').style.background = delta > 30 ? 'var(--alert-red)' : 'rgba(255,255,255,0.1)';
+            } catch (e) { }
+        }
+
+        async function loadAFD(wfo) {
+            const msgDiv = document.getElementById(`msg-${wfo}`);
+            const tagDiv = document.getElementById(`tags-${wfo}`);
+            try {
+                const res = await fetch(`https://api.weather.gov/products/types/AFD/locations/${wfo}`);
+                const list = await res.json();
+                const prodRes = await fetch(list['@graph'][0]['@id']);
+                const prodData = await prodRes.json();
+                const text = prodData.productText;
+
+                msgDiv.innerText = text.includes("KEY MESSAGES") ? text.split("&&")[0].split("KEY MESSAGES")[1].trim() : text.substring(0, 450).trim() + "...";
+                
+                const lower = text.toLowerCase();
+                tagDiv.innerHTML = "";
+                if (lower.includes("backdoor") || lower.includes("wedge")) tagDiv.innerHTML += `<span class="tag" style="background:var(--jarrell-purple)">BACKDOOR ENTRY</span>`;
+                if (lower.includes("tropical") || lower.includes("surge") || lower.includes("pws")) tagDiv.innerHTML += `<span class="tag" style="background:var(--tropical-green)">TROPICAL SURGE</span>`;
+                if (lower.includes("severe") || lower.includes("tornado")) tagDiv.innerHTML += `<span class="tag" style="background:var(--alert-red)">SEVERE RISK</span>`;
+                
+                processIntel();
+            } catch (err) { msgDiv.innerText = "Sync Error."; }
+        }
+
+        function processIntel() {
+            const brief = document.getElementById('intel-brief');
+            const getTxt = (id) => document.getElementById(`msg-${id}`).innerText.toLowerCase();
+            
+            let insights = [];
+            const west = getTxt('AMA') + getTxt('LUB') + getTxt('MAF') + getTxt('SJT');
+            const ne = getTxt('SHV') + getTxt('FWD');
+            const south = getTxt('BRO') + getTxt('CRP') + getTxt('HGX') + getTxt('LCH');
+            const local = getTxt('EWX');
+
+            if (south.includes("tropical") || south.includes("surge") || south.includes("moisture")) {
+                insights.push(`<div class="intel-item tropical"><b>🌀 TROPICAL ALERT:</b> Moisture surge from Gulf gates (BRO/CRP/LCH). Rising dew points and localized tropical heavy rain likely for Vizcaya.</div>`);
+            }
+
+            if ((ne.includes("backdoor") || ne.includes("northeast") || ne.includes("wedge")) && (local.includes("instability") || local.includes("cape"))) {
+                insights.push(`<div class="intel-item jarrell"><b>⚠️ JARRELL BOUNDARY ALERT:</b> Backdoor boundary from SHV/FWD corridor moving SW toward local moist air. Monitor for Northeast-to-Southwest storm motion.</div>`);
+            }
+
+            if (west.includes("arctic") || west.includes("polar")) {
+                insights.push(`<div class="intel-item cold"><b>❄️ ARCTIC INTRUSION:</b> Rapid cooling and wind shift detected in Northern gates. Confirm Norther arrival 8-12h.</div>`);
+            }
+
+            if (west.includes("dryline") || west.includes("squall") || west.includes("initiation")) {
+                insights.push(`<div class="intel-item high"><b>⚡ CONVECTIVE SETUP:</b> Western dryline active. Complexes likely to move toward the I-35 corridor. Check SJT for 3-hour timing.</div>`);
+            }
+
+            brief.innerHTML = insights.length > 0 ? insights.join('') : `<div class="intel-item">✅ Multi-directional gateway offices reporting stable regional flow.</div>`;
+        }
+
+        function refreshAll() {
+            updateVizcayaDelta();
+            offices.forEach(o => loadAFD(o.id));
+        }
+
+        offices.forEach(createCard);
+        refreshAll();
+        setInterval(refreshAll, 15 * 60 * 1000);
+    </script>
+</body>
+</html>
