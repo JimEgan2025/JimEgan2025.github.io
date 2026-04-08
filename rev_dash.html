@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Weather Dashboard | 14-Day Forecast</title>
+    <title>Vizcaya Weather Dashboard | Visual Crossing</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:15px; color:#1f2937; }
@@ -42,7 +42,9 @@
         <h1>Vizcaya Weather Dashboard</h1>
         <p id="updateTime">Generating Tomorrow's Outlook...</p>
     </div>
-    <div id="status">📡 Connecting to Visual Crossing Timeline API...</div>
+    <!-- Updated connection message -->
+    <div id="status">📡 Syncing JimEgan2025 Almanac & Visual Crossing Models...</div>
+    
     <div id="mainContent" style="display:none;">
         <div class="table-wrapper">
             <div class="table-title">7-Day Local Forecast</div>
@@ -58,7 +60,7 @@
         </div>
     </div>
     <div class="info-footer">
-        <span>Location: Round Rock, TX | Data Source: <b>Visual Crossing</b></span>
+        <span>Location: Round Rock, TX | Source: <b>Visual Crossing Timeline API</b></span>
         <span id="lastUpdate"></span>
     </div>
 </div>
@@ -67,7 +69,9 @@
     const LAT = 30.5871;
     const LON = -97.641;
     const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
-    const ALMANAC_SOURCE_URL = 'https://raw.githubusercontent.com/JimEgan2025/JimEgan2025.github.io/refs/heads/main/almanac.html';
+    
+    // Updated to point directly to your JSON file
+    const ALMANAC_JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
 
     let almanacData = {};
 
@@ -85,28 +89,21 @@
 
     function getSeverity(severerisk) {
         const risk = parseFloat(severerisk) || 0;
-        if (risk >= 70) return {text:'SEVERE', cls:'sev-high', note:'High severe potential — cap break could lead to strong storms'};
-        if (risk >= 40) return {text:'MODERATE', cls:'sev-mod', note:'Moderate risk — watch for cap weakening this afternoon'};
-        if (risk >= 20) return {text:'LOW', cls:'sev-low', note:'Low but non-zero risk — isolated storms possible if cap breaks'};
+        if (risk >= 70) return {text:'SEVERE', cls:'sev-high', note:'High severe potential — local storms possible'};
+        if (risk >= 40) return {text:'MODERATE', cls:'sev-mod', note:'Moderate risk — watch for convective activity'};
+        if (risk >= 20) return {text:'LOW', cls:'sev-low', note:'Low risk — isolated storms possible'};
         return {text:'LOW / NONE', cls:'sev-none', note:'Minimal severe risk expected'};
     }
 
+    // Simplified Almanac loading using standard JSON fetch
     async function sourceAlmanac() {
         try {
-            const response = await fetch(ALMANAC_SOURCE_URL);
-            if (!response.ok) throw new Error("Almanac source unreachable.");
-            const htmlText = await response.text();
-            const startMarker = "almanacData";
-            const startIndex = htmlText.indexOf(startMarker);
-            const openingBraceIndex = htmlText.indexOf("{", startIndex);
-            const scriptTagEnd = "</" + "script>";
-            const scriptEndIndex = htmlText.indexOf(scriptTagEnd, openingBraceIndex);
-            const closingBraceIndex = htmlText.lastIndexOf("}", scriptEndIndex);
-            const objectString = htmlText.substring(openingBraceIndex, closingBraceIndex + 1);
-            almanacData = new Function("return " + objectString)();
+            const response = await fetch(ALMANAC_JSON_URL);
+            if (!response.ok) throw new Error("Could not find almanac.json on GitHub.");
+            almanacData = await response.json();
             return true;
         } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Almanac Error:</b><br>${err.message}</div>`;
+            document.getElementById('status').innerHTML = `<div class="error-box"><b>Almanac Sync Error:</b><br>${err.message}</div>`;
             return false;
         }
     }
@@ -117,10 +114,10 @@
                 const ui = getWeatherUI(days[i].icon || '');
                 return `<span style="font-size:1.5em">${ui.icon}</span><br><b>${ui.desc}</b>`;
             }},
-            {name:'Severe Risk', label:'Visual Crossing (0-100)', getData:i => {
+            {name:'Severe Risk', label:'VC Severity (0-100)', getData:i => {
                 const sev = getSeverity(days[i].severerisk);
                 return `<div class="${sev.cls}">${sev.text}</div>
-                        <div style="font-size:11px; margin-top:4px;">${days[i].severerisk || '—'}</div>
+                        <div style="font-size:11px; margin-top:4px;">Risk Index: ${days[i].severerisk || '—'}</div>
                         <div class="alert-note">${sev.note}</div>`;
             }},
             {name:'Temperatures', label:'High / Low (°F)', getData:i => 
@@ -138,10 +135,8 @@
                 const gustCls = gust > 25 ? 'gust-high' : '';
                 return `${speed} / <span class="${gustCls}">G${gust}</span>`;
             }},
-            {name:'Humidity', label:'Average (%)', getData:i => 
-                `<span class="humidity-val">${Math.round(days[i].humidity || 0)}%</span>`
-            },
             {name:'Historical Records', label:'Record High / Low (Year)', getData:i => {
+                // days[i].datetime is "YYYY-MM-DD", slice(5) gets "MM-DD"
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 if (!h) return '--';
@@ -151,7 +146,10 @@
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 return h ? `${h.avgH}° / ${h.avgL}°` : '--';
-            }}
+            }},
+            {name:'Humidity', label:'Average (%)', getData:i => 
+                `<span class="humidity-val">${Math.round(days[i].humidity || 0)}%</span>`
+            }
         ];
 
         rowConfigs.forEach(row => {
@@ -178,12 +176,10 @@
             const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}/${startDate}/${endDate}?unitGroup=us&include=days&key=${VC_API_KEY}&contentType=json`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error(`API error ${res.status}`);
+            if (!res.ok) throw new Error(`Visual Crossing error ${res.status}`);
 
             const data = await res.json();
             const days = data.days || [];
-
-            if (days.length < 15) throw new Error("Not enough forecast days returned");
 
             const renderHeader = (rowId, startIdx, count) => {
                 const row = document.getElementById(rowId);
@@ -196,20 +192,21 @@
                 }
             };
 
+            // Table 1: Days 1-7 (Starting tomorrow relative to Visual Crossing's response)
             renderHeader('head1', 1, 7);
-            renderHeader('head2', 8, 7);
-
             createRows(document.getElementById('body1'), days, 1, 7);
+
+            // Table 2: Days 8-14
+            renderHeader('head2', 8, 7);
             createRows(document.getElementById('body2'), days, 8, 7);
 
             document.getElementById('status').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('updateTime').innerText = "14-Day Forecast Outlook (Starting Tomorrow)";
-            document.getElementById('lastUpdate').innerText = `Last Updated: ${new Date().toLocaleString()}`;
+            document.getElementById('updateTime').innerText = "14-Day Forecast Outlook (Visual Crossing GFS)";
+            document.getElementById('lastUpdate').innerText = `Sync: ${new Date().toLocaleString()}`;
 
         } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Visual Crossing Error:</b><br>${err.message}</div>`;
-            console.error(err);
+            document.getElementById('status').innerHTML = `<div class="error-box"><b>Sync Error:</b><br>${err.message}</div>`;
         }
     }
 
