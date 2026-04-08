@@ -3,218 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NWS AFD Key Messages - Texas Offices</title>
+    <title>NWS AFD Key Messages - Texas Regional Intelligence</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f8f9fa;
-            color: #1e2937;
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; color: #1e2937; }
+        h1 { text-align: center; color: #1e40af; margin-bottom: 5px; }
+        .center { text-align: center; margin-bottom: 20px; }
+        
+        /* Summary Box Styling */
+        .summary-container {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        h1 { text-align: center; color: #1e40af; }
-        p.center { text-align: center; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 18px;
-        }
-        .card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
+        .summary-header { font-size: 1.4em; font-weight: bold; color: #92400e; margin-bottom: 10px; display: flex; align-items: center; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .summary-section { background: rgba(255,255,255,0.5); padding: 10px; border-radius: 8px; }
+        .summary-section h3 { margin-top: 0; font-size: 1em; color: #1e40af; text-transform: uppercase; }
+        .threat-pill { background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-right: 5px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px; }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
         .office { font-weight: bold; font-size: 1.15em; color: #1e40af; }
         .wfo { font-size: 0.9em; color: #64748b; }
-        .time { font-size: 0.85em; color: #475569; margin-bottom: 12px; }
-        button {
-            padding: 7px 14px;
-            background: #1e40af;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        button:hover { background: #1e3a8a; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-
-        .messages {
-            font-size: 0.96em;
-            line-height: 1.65;
-            background: #f8fafc;
-            padding: 16px;
-            border-left: 5px solid #3b82f6;
-            border-radius: 6px;
-            max-height: 480px;
-            overflow-y: auto;
-        }
-        .messages ul {
-            margin: 0 0 0 22px;
-            padding: 0;
-            list-style-type: disc;
-        }
-        .messages li {
-            margin-bottom: 14px;
-        }
+        button { padding: 7px 14px; background: #1e40af; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .messages { font-size: 0.96em; line-height: 1.6; background: #f8fafc; padding: 12px; border-left: 5px solid #3b82f6; border-radius: 6px; }
+        ul { margin: 0; padding-left: 20px; }
         .loading { color: #64748b; font-style: italic; }
-        .error { color: #ef4444; }
-        footer { text-align: center; margin-top: 30px; font-size: 0.85em; color: #64748b; }
     </style>
 </head>
 <body>
-    <h1>NWS Area Forecast Discussion - Key Messages (Texas Offices)</h1>
-    <p class="center">
-        <button onclick="refreshAll()">🔄 Refresh All Texas Offices</button>
-    </p>
+
+    <h1>Texas Weather Intelligence</h1>
+    <p class="center">Combined Area Forecast Discussions (AFD)</p>
+
+    <!-- Regional Intelligence Summary -->
+    <div class="summary-container" id="intel-summary">
+        <div class="summary-header">🛰️ Upstream Intelligence Summary (Heading East)</div>
+        <div class="summary-grid">
+            <div class="summary-section">
+                <h3>Western/Upstream Threats</h3>
+                <div id="west-threats">Analyzing western offices...</div>
+            </div>
+            <div class="summary-section">
+                <h3>Central/Local Status (EWX)</h3>
+                <div id="local-status">Waiting for Austin/San Antonio data...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="center">
+        <button onclick="refreshAll()">🔄 Refresh All Offices</button>
+    </div>
+
     <div class="grid" id="grid"></div>
-    <footer>
-        Data from official NWS public text products • Auto-refreshes every 30 minutes
-    </footer>
 
     <script>
         const offices = [
-            { id: "AMA", name: "Amarillo" },
-            { id: "BRO", name: "Brownsville" },
-            { id: "CRP", name: "Corpus Christi" },
-            { id: "EPZ", name: "El Paso" },
-            { id: "EWX", name: "Austin / San Antonio" },
-            { id: "FWD", name: "Dallas / Fort Worth" },
-            { id: "HGX", name: "Houston / Galveston" },
-            { id: "LCH", name: "Lake Charles (Beaumont)" },
-            { id: "LUB", name: "Lubbock" },
-            { id: "MAF", name: "Midland / Odessa" },
-            { id: "SHV", name: "Shreveport (Texarkana)" },
-            { id: "SJT", name: "San Angelo" }
+            { id: "AMA", name: "Amarillo", region: "west" },
+            { id: "LUB", name: "Lubbock", region: "west" },
+            { id: "MAF", name: "Midland", region: "west" },
+            { id: "SJT", name: "San Angelo", region: "west" },
+            { id: "EPZ", name: "El Paso", region: "west" },
+            { id: "EWX", name: "Austin/San Antonio", region: "local" },
+            { id: "FWD", name: "Dallas/Fort Worth", region: "north" },
+            { id: "HGX", name: "Houston", region: "east" },
+            { id: "CRP", name: "Corpus Christi", region: "south" },
+            { id: "BRO", name: "Brownsville", region: "south" }
         ];
-
-        const grid = document.getElementById('grid');
 
         function createCard(office) {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
                 <div class="header">
-                    <div>
-                        <span class="office">${office.name}</span>
-                        <span class="wfo">(${office.id})</span>
-                    </div>
-                    <button onclick="loadAFD('${office.id}', this)">Refresh</button>
+                    <div><span class="office">${office.name}</span> <span class="wfo">(${office.id})</span></div>
+                    <button onclick="loadAFD('${office.id}')">Refresh</button>
                 </div>
-                <div class="time" id="time-${office.id}">Loading issuance time...</div>
-                <div class="messages" id="msg-${office.id}">
-                    <span class="loading">Fetching latest AFD Key Messages for ${office.id}...</span>
-                </div>
+                <div class="messages" id="msg-${office.id}"><span class="loading">Fetching...</span></div>
             `;
-            grid.appendChild(card);
+            document.getElementById('grid').appendChild(card);
         }
 
-        function cleanKeyMessages(text) {
-            if (!text || text.length < 10) return '<p>No messages available.</p>';
+        async function loadAFD(wfo) {
+            const msgDiv = document.getElementById(`msg-${wfo}`);
+            try {
+                // Using a CORS proxy or direct fetch depending on environment
+                const url = `https://api.weather.gov/products/types/AFD/locations/${wfo}`;
+                const listRes = await fetch(url);
+                const listData = await listRes.json();
+                const productUrl = listData['@graph'][0]['@id'];
+                
+                const prodRes = await fetch(productUrl);
+                const prodData = await prodRes.json();
+                const text = prodData.productText;
 
-            const lines = text.split('\n');
-            let bullets = [];
-            let current = '';
-
-            lines.forEach(rawLine => {
-                const trimmed = rawLine.trim();
-
-                if (trimmed.length < 3) return;
-
-                // Remove header and "Issued at..." line
-                if (/KEY MESSAGES/i.test(trimmed) || /^Issued at/i.test(trimmed)) {
-                    return;
+                // Simple Extraction of Key Messages or First 1000 chars
+                let cleanText = "";
+                if (text.includes("KEY MESSAGES")) {
+                    cleanText = text.split("&&")[0].split("KEY MESSAGES")[1];
+                } else {
+                    cleanText = text.substring(0, 800) + "...";
                 }
 
-                // New bullet starts with "- "
-                const bulletMatch = rawLine.match(/^\s*-\s*(.+)/);
-                if (bulletMatch) {
-                    if (current) bullets.push(current.trim());
-                    current = bulletMatch[1].trim();
-                } 
-                // Continuation line (indented text with no leading "-")
-                else if (current && rawLine.trim().length > 0) {
-                    current += ' ' + rawLine.trim();
-                } 
-                // Fallback for first bullet
-                else if (!current) {
-                    current = trimmed;
+                msgDiv.innerText = cleanText.trim();
+                updateSummary(); // Trigger summary update after each load
+            } catch (err) {
+                msgDiv.innerText = "Error loading data.";
+            }
+        }
+
+        function updateSummary() {
+            let westText = "";
+            let localText = "";
+            
+            offices.forEach(off => {
+                const text = document.getElementById(`msg-${off.id}`).innerText;
+                if (off.region === "west") westText += text;
+                if (off.region === "local") localText = text;
+            });
+
+            // Scan for threats in the West
+            const threats = [];
+            const keywords = [
+                { term: "Front", label: "COLD FRONT" },
+                { term: "Severe", label: "SEVERE RISK" },
+                { term: "Freeze", label: "FREEZE" },
+                { term: "Wind", label: "HIGH WIND" },
+                { term: "Rain", label: "PRECIP" },
+                { term: "Fire", label: "FIRE RISK" }
+            ];
+
+            keywords.forEach(k => {
+                if (westText.toLowerCase().includes(k.term.toLowerCase())) {
+                    threats.push(`<span class="threat-pill">${k.label}</span>`);
                 }
             });
 
-            if (current) bullets.push(current.trim());
+            document.getElementById('west-threats').innerHTML = threats.length > 0 ? 
+                `Signals detected to the West: <br><br>${threats.join(' ')}<br><br><small>These systems typically move toward Vizcaya within 12-24 hours.</small>` : 
+                "No major weather systems moving in from the West.";
 
-            if (bullets.length === 0) {
-                return `<p>${text.replace(/\n/g, '<br>')}</p>`;
-            }
-
-            const listItems = bullets.map(b => `<li>${b}</li>`).join('');
-            return `<ul>${listItems}</ul>`;
-        }
-
-        async function loadAFD(wfo, button = null) {
-            const msgDiv = document.getElementById(`msg-${wfo}`);
-            const timeDiv = document.getElementById(`time-${wfo}`);
-            if (button) button.disabled = true;
-
-            msgDiv.innerHTML = `<span class="loading">Loading AFD for ${wfo}...</span>`;
-
-            try {
-                const url = `https://forecast.weather.gov/product.php?site=${wfo}&issuedby=${wfo}&product=AFD&format=txt&version=1`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const fullText = await response.text();
-
-                // Extract issuance time
-                const timeMatch = fullText.match(/(\d{1,4} [A-Z]{3} \w+ \w+ \d{4})/i);
-                const issued = timeMatch ? timeMatch[0] : 'Unknown time';
-
-                // Extract .KEY MESSAGES section
-                let messages = '';
-                const keyIndex = fullText.search(/\.?\s*KEY MESSAGES/i);
-                if (keyIndex !== -1) {
-                    let endIndex = fullText.indexOf('&&', keyIndex);
-                    if (endIndex === -1) endIndex = fullText.indexOf('.SYNOPSIS', keyIndex);
-                    if (endIndex === -1) endIndex = fullText.length;
-                    messages = fullText.substring(keyIndex, endIndex).trim();
-                } else {
-                    messages = fullText.substring(0, 1200).trim() + 
-                        '\n\n[No ".KEY MESSAGES" section found — showing start of discussion]';
-                }
-
-                timeDiv.textContent = `Issued: ${issued}`;
-                msgDiv.innerHTML = cleanKeyMessages(messages);
-
-            } catch (err) {
-                console.error(err);
-                msgDiv.innerHTML = `<span class="error">Failed to load ${wfo}. Try Refresh.</span>`;
-                timeDiv.textContent = 'Error loading time';
-            }
-
-            if (button) button.disabled = false;
+            document.getElementById('local-status').innerHTML = localText.substring(0, 200) + "...";
         }
 
         function refreshAll() {
-            offices.forEach(office => loadAFD(office.id));
+            offices.forEach(o => loadAFD(o.id));
         }
 
-        // Initialize
-        offices.forEach(office => {
-            createCard(office);
-            loadAFD(office.id);
-        });
-
-        // Auto-refresh every 30 minutes
-        setInterval(refreshAll, 30 * 60 * 1000);
+        // Init
+        offices.forEach(createCard);
+        refreshAll();
     </script>
 </body>
 </html>
