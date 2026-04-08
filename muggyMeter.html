@@ -3,245 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muggy Meter - 10 Day Dew Point Forecast</title>
+    <title>Muggy Meter - Visual Dew Point Forecast</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0f172a;
             padding: 20px;
-            color: #1f2937;
+            color: #f8fafc;
             min-height: 100vh;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px 25px;
+            text-align: center;
+            padding: 30px 0;
+        }
+        .header h1 { font-size: 2.5em; color: #38bdf8; margin-bottom: 5px; }
+        .header p { color: #94a3b8; }
+
+        /* Graph Container */
+        .graph-card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 40px 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        /* Threshold Lines */
+        .threshold-lines {
+            position: absolute;
+            left: 60px;
+            right: 20px;
+            top: 40px;
+            bottom: 80px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .line {
+            width: 100%;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            position: relative;
+        }
+        .line span {
+            position: absolute;
+            left: -50px;
+            top: -10px;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: bold;
+        }
+        .line.muggy { border-top: 1px solid rgba(239, 68, 68, 0.3); }
+        .line.comfort { border-top: 1px solid rgba(16, 185, 129, 0.3); }
+
+        /* The Bars */
+        .chart-area {
+            height: 350px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding-left: 50px;
+            position: relative;
+            z-index: 2;
+        }
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            transition: all 0.3s ease;
+        }
+        .bar {
+            width: 70%;
+            max-width: 60px;
+            border-radius: 8px 8px 4px 4px;
+            position: relative;
+            transition: height 1s ease-out, background 0.5s;
+            cursor: pointer;
+            min-height: 20px;
+        }
+        .bar:hover { filter: brightness(1.2); transform: scaleX(1.05); }
+        
+        /* Value on top of bar */
+        .bar-val {
+            position: absolute;
+            top: -25px;
+            width: 100%;
+            text-align: center;
+            font-weight: 800;
+            font-size: 14px;
+        }
+
+        /* Labels at bottom */
+        .bar-label {
+            margin-top: 15px;
             text-align: center;
         }
-        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
-        .header p { font-size: 1.1em; opacity: 0.95; }
-        .content { padding: 30px 25px; }
-        .scale-info {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #1e40af;
-        }
+        .day-name { font-weight: bold; font-size: 13px; color: #f1f5f9; }
+        .date-str { font-size: 10px; color: #64748b; text-transform: uppercase; }
+
+        /* Legend */
         .legend {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            background: #0f172a;
             padding: 20px;
-            background: #f8fafc;
             border-radius: 12px;
+            margin-top: 20px;
         }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        thead {
-            background: #f1f5f9;
-            border-bottom: 2px solid #cbd5e1;
-        }
-        th {
-            padding: 12px 8px;
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+
+        .footer {
             text-align: center;
-            font-weight: 700;
+            margin-top: 30px;
             font-size: 12px;
-            color: #1e3a8a;
-            border: 1px solid #e2e8f0;
-        }
-        td {
-            padding: 12px 8px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            font-size: 13px;
-        }
-        .day-cell {
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-        .date-cell {
-            font-size: 11px;
-            color: #64748b;
-        }
-        .dew-point-cell {
-            font-size: 16px;
-            font-weight: 800;
-        }
-        .color-bar {
-            display: inline-block;
-            width: 30px;
-            height: 20px;
-            border-radius: 4px;
-            vertical-align: middle;
-        }
-        .mugginess-label {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: white;
-        }
-        tbody tr:hover { background: #f8fafc; }
-        .info-footer {
-            padding: 20px 25px;
-            background: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-            font-size: 12px;
-            color: #64748b;
-            text-align: center;
+            color: #475569;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
         <div class="header">
             <h1>🌡️ Muggy Meter</h1>
-            <p>10-Day Dew Point & Humidity Forecast</p>
-            <p id="updateTime" style="font-size: 0.95em; margin-top: 10px;"></p>
+            <p>10-Day Visual Dew Point Trend for Round Rock, TX</p>
         </div>
 
-        <div class="content">
-            <div class="scale-info">
-                <strong>Dew Point Scale:</strong> Lower dew points = drier, more comfortable air. Higher dew points = more moisture, muggier feeling.
-                Comfort threshold: Below 55°F is comfortable, 60°F+ becomes noticeably muggy, 65°F+ is quite muggy.
+        <div class="graph-card">
+            <!-- Background Scale Lines -->
+            <div class="threshold-lines">
+                <div class="line" style="height:0"><span>80°</span></div>
+                <div class="line muggy"><span>70°</span></div>
+                <div class="line"><span>60°</span></div>
+                <div class="line comfort"><span>50°</span></div>
+                <div class="line"><span>40°</span></div>
+                <div class="line" style="border:none"><span>30°</span></div>
             </div>
 
-            <div class="legend">
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #06b6d4;"></div>
-                    <span>Very Dry (<40°F)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #10b981;"></div>
-                    <span>Dry (40-50°F)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #84cc16;"></div>
-                    <span>Comfortable (50-60°F)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #f59e0b;"></div>
-                    <span>Slightly Muggy (60-65°F)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #ef4444;"></div>
-                    <span>Muggy (65-70°F)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #991b1b;"></div>
-                    <span>Very Muggy (>70°F)</span>
-                </div>
-            </div>
-
-            <table id="forecastTable">
-                <thead>
-                    <tr id="headerRow"></tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <!-- The Bars will be injected here -->
+            <div class="chart-area" id="chartArea"></div>
         </div>
 
-        <div class="info-footer">
-            <span>Location: Vizcaya, Round Rock, TX | Data Source: Open-Meteo GFS | Last update: <span id="lastUpdate"></span></span>
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background: #06b6d4;"></div> Very Dry (&lt;40°)</div>
+            <div class="legend-item"><div class="dot" style="background: #10b981;"></div> Dry (40-50°)</div>
+            <div class="legend-item"><div class="dot" style="background: #84cc16;"></div> Comfort (50-60°)</div>
+            <div class="legend-item"><div class="dot" style="background: #f59e0b;"></div> Noticeable (60-65°)</div>
+            <div class="legend-item"><div class="dot" style="background: #ef4444;"></div> Muggy (65-70°)</div>
+            <div class="legend-item"><div class="dot" style="background: #991b1b;"></div> Tropical (&gt;70°)</div>
+        </div>
+
+        <div class="footer">
+            Source: Open-Meteo GFS Model | Syncing Live | <span id="syncTime"></span>
         </div>
     </div>
 
     <script>
         const LAT = 30.509747, LON = -97.692116;
 
-        function getMugginessLevel(dewpoint) {
-            if (dewpoint < 40) return { level: 'Very Dry', color: '#06b6d4', label: 'VERY DRY' };
-            if (dewpoint < 50) return { level: 'Dry', color: '#10b981', label: 'DRY' };
-            if (dewpoint < 60) return { level: 'Comfortable', color: '#84cc16', label: 'COMFORTABLE' };
-            if (dewpoint < 65) return { level: 'Slightly Muggy', color: '#f59e0b', label: 'SLIGHTLY MUGGY' };
-            if (dewpoint < 70) return { level: 'Muggy', color: '#ef4444', label: 'MUGGY' };
-            return { level: 'Very Muggy', color: '#991b1b', label: 'VERY MUGGY' };
+        function getColor(dp) {
+            if (dp < 40) return '#06b6d4';
+            if (dp < 50) return '#10b981';
+            if (dp < 60) return '#84cc16';
+            if (dp < 65) return '#f59e0b';
+            if (dp < 70) return '#ef4444';
+            return '#991b1b';
         }
 
-        async function loadForecastData() {
+        async function fetchWeather() {
             try {
-                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=dew_point_2m_max,dew_point_2m_min,dew_point_2m_mean,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
-
+                // Fetching 10 days of daily mean dew point
+                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=dew_point_2m_mean&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('API error: ' + res.status);
-
                 const data = await res.json();
-                displayForecast(data);
-                document.getElementById('updateTime').textContent = new Date().toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                renderChart(data.daily);
+                document.getElementById('syncTime').textContent = "Last Update: " + new Date().toLocaleTimeString();
             } catch (err) {
-                console.error(err);
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="5" style="color:red;">Error loading forecast: ${err.message}</td></tr>`;
+                console.error("Fetch failed", err);
             }
         }
 
-        function displayForecast(data) {
-            const { daily } = data;
-            const headerRow = document.getElementById('headerRow');
-            const tableBody = document.getElementById('tableBody');
-            headerRow.innerHTML = '';
-            tableBody.innerHTML = '';
+        function renderChart(daily) {
+            const chartArea = document.getElementById('chartArea');
+            chartArea.innerHTML = '';
 
-            // Create header
-            headerRow.innerHTML = '<th>Day/Date</th><th>Avg Dew<br/>Point</th><th>Range</th><th>Max<br/>Humidity</th><th>Mugginess</th>';
+            daily.time.forEach((dateStr, i) => {
+                const dp = daily.dew_point_2m_mean[i];
+                const date = new Date(dateStr + 'T00:00:00');
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'bar-wrapper';
 
-            // Create body rows
-            for (let i = 0; i < daily.time.length && i < 10; i++) {
-                const date = new Date(daily.time[i] + 'T00:00:00');
-                const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                // Map dew point (30 to 80 range) to percentage height (0 to 100)
+                // We set 30 as the floor for the graph
+                const minGraph = 30;
+                const maxGraph = 80;
+                let heightPct = ((dp - minGraph) / (maxGraph - minGraph)) * 100;
+                if (heightPct < 5) heightPct = 5; // Minimum bar visibility
 
-                const dewpointMean = daily.dew_point_2m_mean[i];
-                const dewpointMax = daily.dew_point_2m_max[i];
-                const dewpointMin = daily.dew_point_2m_min[i];
-                const humidity = daily.relative_humidity_2m_max[i];
-
-                const mugginess = getMugginessLevel(dewpointMean);
-
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>
-                        <div class="day-cell">${dayName}</div>
-                        <div class="date-cell">${dateStr}</div>
-                    </td>
-                    <td class="dew-point-cell" style="color: ${mugginess.color};">${Math.round(dewpointMean)}°F</td>
-                    <td>${Math.round(dewpointMin)}° - ${Math.round(dewpointMax)}°F</td>
-                    <td>${humidity}%</td>
-                    <td>
-                        <div class="color-bar" style="background: ${mugginess.color};"></div><br/>
-                        <div class="mugginess-label" style="background: ${mugginess.color};">${mugginess.label}</div>
-                    </td>
+                wrapper.innerHTML = `
+                    <div class="bar" style="height: ${heightPct}%; background: ${getColor(dp)}">
+                        <div class="bar-val" style="color: ${getColor(dp)}">${Math.round(dp)}°</div>
+                    </div>
+                    <div class="bar-label">
+                        <div class="day-name">${date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</div>
+                        <div class="date-str">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                    </div>
                 `;
-                tableBody.appendChild(row);
-            }
+                chartArea.appendChild(wrapper);
+            });
         }
 
-        loadForecastData();
-        setInterval(loadForecastData, 3600000); // Refresh every hour
+        fetchWeather();
+        // Refresh every 30 minutes
+        setInterval(fetchWeather, 1800000);
     </script>
 </body>
 </html>
