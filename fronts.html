@@ -2,25 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Strategic | Whiplash Interceptor</title>
+    <title>Vizcaya Strategic | Whiplash & Rain Interceptor</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --primary: #00ffcc; --bg: #020617; --card: #0f172a; --text: #e2e8f0; --dryline: #fb923c; --cold: #3b82f6; --warm: #ef4444; }
+        :root { 
+            --primary: #00ffcc; --bg: #020617; --card: #0f172a; 
+            --text: #e2e8f0; --dryline: #fb923c; --cold: #3b82f6; 
+            --warm: #ef4444; --rain: #0ea5e9; 
+        }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; overflow: hidden; }
         .app-container { display: grid; grid-template-columns: 420px 1fr; height: 100vh; }
         .sidebar { background: #010409; border-right: 1px solid #1e293b; padding: 15px; display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
         .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #1e293b; }
-        h3 { margin: 0 0 8px 0; color: var(--primary); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
-        .stat-main { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1; }
-        .ai-briefing { border: 2px solid var(--primary); padding: 12px; border-radius: 8px; font-size: 0.85rem; line-height: 1.5; min-height: 60px; }
-        #city-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; padding-right: 5px; flex-grow: 1; }
-        .station-card { background: #111827; padding: 10px; border-radius: 8px; border-left: 4px solid #334155; font-size: 0.72rem; }
+        h3 { margin: 0; color: var(--primary); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        .stat-main { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1; margin-top: 5px; }
+        #city-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; flex-grow: 1; padding-right: 5px; }
+        .station-card { background: #111827; padding: 10px; border-radius: 8px; border-left: 4px solid #334155; font-size: 0.72rem; position: relative; }
         #map { height: 100%; width: 100%; background: #0b1120; }
         .timeline { position: absolute; bottom: 25px; left: 20px; right: 20px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 15px 25px; border-radius: 12px; z-index: 1000; display: flex; align-items: center; gap: 20px; border: 1px solid #334155; }
         input[type=range] { flex: 1; accent-color: var(--primary); }
         .wind-arrow { font-size: 1.3rem; font-weight: 900; display: inline-block; transition: transform 0.5s ease; }
         #city-grid::-webkit-scrollbar { width: 4px; }
         #city-grid::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .ai-briefing { border: 1px solid var(--primary); padding: 10px; border-radius: 8px; font-size: 0.8rem; background: rgba(0, 255, 204, 0.05); min-height: 50px; }
     </style>
 </head>
 <body>
@@ -28,11 +32,11 @@
 <div class="app-container">
     <div class="sidebar">
         <div class="card">
-            <h3>Vizcaya Strategic | Frontier Watch</h3>
+            <h3>Vizcaya Strategic | Rain Watch</h3>
             <div id="v-press" class="stat-main">--.--"</div>
-            <div id="v-status" style="font-size: 0.75rem; font-weight: bold; color: var(--primary); margin-top: 5px;">MONITORING RETREAT</div>
+            <div id="v-status" style="font-size: 0.75rem; font-weight: bold; color: var(--primary); margin-top: 5px;">INTERCEPTOR LIVE</div>
         </div>
-        <div class="card ai-briefing" id="ai-box"><span id="ai-content">Analyzing boundary momentum...</span></div>
+        <div class="card ai-briefing" id="ai-box"><span id="ai-content">Syncing weather Sentinels...</span></div>
         <div id="city-grid"></div>
     </div>
     <div class="main-view" style="position:relative;">
@@ -49,30 +53,21 @@
 <script>
 const stations = [
     { name: "Vizcaya", lat: 30.58, lon: -97.64, isHub: true },
-    { name: "Guymon", lat: 36.68, lon: -101.48 }, { name: "Dalhart", lat: 36.02, lon: -102.52 },
-    { name: "Clovis", lat: 34.42, lon: -103.20 }, { name: "Roswell", lat: 33.30, lon: -104.53 },
-    { name: "Spearman", lat: 36.20, lon: -101.19 }, { name: "Amarillo", lat: 35.22, lon: -101.83 },
-    { name: "Plainview", lat: 34.18, lon: -101.71 }, { name: "Childress", lat: 34.42, lon: -100.20 },
-    { name: "Dallas", lat: 32.78, lon: -96.80 }, { name: "Waco", lat: 31.56, lon: -97.13 },
-    { name: "Lubbock", lat: 33.57, lon: -101.88 }, { name: "Abilene", lat: 32.44, lon: -99.73 },
-    { name: "San Angelo", lat: 31.46, lon: -100.43 }, { name: "Big Lake", lat: 31.19, lon: -101.46 },
-    { name: "Midland", lat: 31.99, lon: -102.07 }, { name: "Carlsbad", lat: 32.42, lon: -104.22 },
-    { name: "Pecos", lat: 31.42, lon: -103.49 }, { name: "Hobbs", lat: 32.68, lon: -103.21 },
-    { name: "Ft Stockton", lat: 30.88, lon: -102.87 }, { name: "Van Horn", lat: 31.04, lon: -104.83 },
-    { name: "San Antonio", lat: 29.42, lon: -98.49 }, { name: "Del Rio", lat: 29.36, lon: -100.89 },
-    { name: "Victoria", lat: 28.80, lon: -97.00 }, { name: "Port Aransas", lat: 27.83, lon: -97.06 },
-    { name: "Galveston", lat: 29.30, lon: -94.79 }, { name: "Wichita Falls", lat: 33.91, lon: -98.49 },
-  { name: "Big Spring", lat: 32.25, lon: -101.47 },
-{ name: "Junction", lat: 30.49, lon: -99.77 },
-{ name: "Brady", lat: 31.13, lon: -99.33 },
-  { name: "Graham", lat: 33.11, lon: -98.59 },
-{ name: "Breckenridge", lat: 32.76, lon: -98.90 },
-{ name: "Mineral Wells", lat: 32.81, lon: -98.11 },
-{ name: "Jacksboro", lat: 33.22, lon: -98.16 },
-    { name: "Marfa", lat: 30.31, lon: -104.02 }
+    { name: "Graham", lat: 33.10, lon: -98.59 }, { name: "Breckenridge", lat: 32.75, lon: -98.90 },
+    { name: "Mineral Wells", lat: 32.81, lon: -98.11 }, { name: "Jacksboro", lat: 33.22, lon: -98.16 },
+    { name: "Dallas", lat: 32.78, lon: -96.80 }, { name: "Wichita Falls", lat: 33.91, lon: -98.49 },
+    { name: "Abilene", lat: 32.44, lon: -99.73 }, { name: "San Angelo", lat: 31.46, lon: -100.43 },
+    { name: "Brady", lat: 31.13, lon: -99.33 }, { name: "Junction", lat: 30.49, lon: -99.77 },
+    { name: "Waco", lat: 31.56, lon: -97.13 }, { name: "Austin", lat: 30.26, lon: -97.74 },
+    { name: "College Station", lat: 30.63, lon: -96.33 }, { name: "Lufkin", lat: 31.34, lon: -94.73 },
+    { name: "Tyler", lat: 32.35, lon: -95.30 }, { name: "Texarkana", lat: 33.44, lon: -94.04 },
+    { name: "Victoria", lat: 28.80, lon: -97.00 }, { name: "Midland", lat: 31.99, lon: -102.07 },
+    { name: "Big Spring", lat: 32.25, lon: -101.47 }, { name: "Amarillo", lat: 35.22, lon: -101.83 },
+    { name: "Dalhart", lat: 36.02, lon: -102.52 }, { name: "Marfa", lat: 30.31, lon: -104.02 },
+    { name: "Van Horn", lat: 31.04, lon: -104.83 }, { name: "Pecos", lat: 31.42, lon: -103.49 }
 ];
 
-const map = L.map('map', { zoomControl: false }).setView([32.8, -100.5], 6);
+const map = L.map('map', { zoomControl: false }).setView([32.0, -98.5], 6.5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
 const bubbleLayer = L.layerGroup().addTo(map);
@@ -84,9 +79,9 @@ let weatherCache = {};
 async function init() {
     for (let s of stations) {
         try {
-            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,dewpoint_2m,pressure_msl,wind_direction_10m&temperature_unit=fahrenheit&timezone=America/Chicago`);
+            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,dewpoint_2m,pressure_msl,wind_direction_10m,precipitation_probability&temperature_unit=fahrenheit&timezone=America/Chicago`);
             weatherCache[s.name] = await r.json();
-        } catch (e) { console.error(s.name); }
+        } catch (e) { console.error("API Error: " + s.name); }
     }
     render(0);
 }
@@ -95,7 +90,7 @@ function render(offset) {
     bubbleLayer.clearLayers(); markerLayer.clearLayers(); featureLayer.clearLayers();
     const grid = document.getElementById('city-grid'); grid.innerHTML = '';
     const now = new Date(); const targetHr = now.getHours() + parseInt(offset);
-    let minP = 10000; let lowLoc = null; let vizDew = 60;
+    let minP = 10000; let lowLoc = null; let vizDew = 60; let vizProb = 0;
 
     stations.forEach(s => {
         const d = weatherCache[s.name]?.hourly;
@@ -104,33 +99,53 @@ function render(offset) {
         const dw = Math.round(d.dewpoint_2m[targetHr]);
         const p = (d.pressure_msl[targetHr] * 0.02953).toFixed(2);
         const wd = d.wind_direction_10m[targetHr];
+        const prob = d.precipitation_probability[targetHr] || 0;
 
         if (parseFloat(p) < minP) { minP = parseFloat(p); lowLoc = [s.lat, s.lon]; }
-        if (s.isHub) { vizDew = dw; document.getElementById('v-press').innerText = p + '"'; document.getElementById('v-status').innerText = `HUB T+${offset}H: ${t}° / ${dw}°`; }
+        if (s.isHub) { vizDew = dw; vizProb = prob; document.getElementById('v-press').innerText = p + '"'; }
 
-        const color = dw > 60 ? 'var(--moisture)' : (dw < 45 ? 'var(--dryline)' : '#475569');
+        // Dynamic Rain Logic: High prob overrides moisture color
+        let color = dw > 60 ? 'var(--moisture)' : (dw < 45 ? 'var(--dryline)' : '#64748b');
+        if (prob > 40) color = 'var(--rain)';
+
         const card = document.createElement('div'); card.className = 'station-card'; card.style.borderLeftColor = color;
-        card.innerHTML = `<div style="font-weight:bold; color:var(--primary)">${s.name}</div>${t}° / ${dw}°`;
+        card.innerHTML = `<div style="font-weight:bold; color:var(--primary)">${s.name}</div>
+                          <span style="font-size:0.75rem">${t}°/${dw}°</span>
+                          <span style="float:right; color:var(--rain); font-weight:bold;">${prob}%</span>`;
         grid.appendChild(card);
 
-        L.circleMarker([s.lat, s.lon], { radius: 18, color: color, fillOpacity: 0.15, weight: 2 }).addTo(bubbleLayer);
-        const icon = L.divIcon({ className: '', html: `<div style="text-align:center;"><div class="wind-arrow" style="transform: rotate(${wd}deg); color:${color}">↑</div><div style="font-weight:900; font-size:0.75rem; color:#fff;">${t}/${dw}</div></div>` });
+        // Rain-Aware Bubbles: Grow and thicken based on probability
+        L.circleMarker([s.lat, s.lon], { 
+            radius: 18 + (prob / 12), 
+            color: color, 
+            fillOpacity: 0.25, 
+            weight: prob > 30 ? 4 : 2,
+            dashArray: prob > 30 ? '5, 5' : '0' 
+        }).addTo(bubbleLayer);
+        
+        const icon = L.divIcon({ className: '', html: `<div style="text-align:center;"><div class="wind-arrow" style="transform: rotate(${wd}deg); color:${color}">↑</div><div style="font-weight:900; font-size:0.75rem; color:#fff; text-shadow: 1px 1px #000;">${t}/${dw}</div></div>` });
         L.marker([s.lat, s.lon], {icon}).addTo(markerLayer);
     });
 
-    if (lowLoc && minP < 29.98) { L.marker(lowLoc, { icon: L.divIcon({ html: '<b style="color:#ef4444; font-size:2.5rem; text-shadow:0 0 10px #000;">L</b>', className: '' }) }).addTo(markerLayer); }
+    if (lowLoc && minP < 29.98) {
+        L.marker(lowLoc, { icon: L.divIcon({ html: `<b style="color:#ef4444; font-size:2.5rem; text-shadow:0 0 10px #000;">L</b>`, className: '' }) }).addTo(markerLayer);
+    }
 
     const drift = offset * 0.02;
-    // Cold Front (Blue)
     L.polyline([[36.8-drift, -101.5], [34.0-drift, -100.0], [31.5-drift, -97.0]], {color: 'var(--cold)', weight: 5}).addTo(featureLayer);
-    // Dryline (Orange)
     L.polyline([[36.2, -103.5+drift], [33.3, -104.5+drift], [31.0, -104.8+drift], [29.4, -101.0+drift]], {color: 'var(--dryline)', weight: 3, dashArray: '5, 10'}).addTo(featureLayer);
-    // Warm Front Surge (Red) - Appears if moisture is high
-    if (vizDew > 62) { L.polyline([[28.5, -98.0], [29.8, -97.5], [30.8, -96.5]], {color: 'var(--warm)', weight: 5, dashArray: '10, 5'}).addTo(featureLayer); }
+    
+    if (vizDew > 62) {
+        L.polyline([[28.5, -98.0], [29.8, -97.5], [31.2, -96.0], [32.5, -94.5]], {color: 'var(--warm)', weight: 5, dashArray: '10, 5'}).addTo(featureLayer);
+        document.getElementById('ai-content').innerText = vizProb > 30 ? "RAIN RISK: Deep moisture surge. McNutt Creek drainage monitoring advised." : "WHIPLASH ACTIVE: Gulf humidity returning. Solar production potential: LOW.";
+    } else {
+        document.getElementById('ai-content').innerText = "STALL ACTIVE: Watching boundaries. West Texas Low remains the driver.";
+    }
 
     document.getElementById('hrLabel').innerText = offset == 0 ? "NOW" : "+" + offset + "H";
-    document.getElementById('ai-content').innerText = vizDew > 62 ? "RETREAT PATTERN: High Gulf moisture pushing back. Fog and low-ceiling clouds likely." : "Frontal stall active. Monitoring northern momentum.";
+    document.getElementById('v-status').innerText = `HUB T+${offset}H | Rain: ${vizProb}%`;
 }
+
 document.getElementById('ts').oninput = (e) => render(e.target.value);
 init();
 </script>
