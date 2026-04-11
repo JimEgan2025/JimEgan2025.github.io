@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Round Rock Weather Dashboard</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #343a40;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #e9ecef; 
+            color: #333;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 { margin-top: 0; color: var(--dark); font-weight: 300; }
+        
+        .controls { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: center; 
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        button:hover { opacity: 0.8; }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 10px 0; 
+            font-size: 0.9rem;
+        }
+
+        th { 
+            background: var(--light); 
+            color: var(--secondary); 
+            font-weight: 600; 
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td { 
+            padding: 10px; 
+            text-align: center; 
+            border-bottom: 1px solid #eee; 
+        }
+
+        .multi-avg { background: #f0fff4; font-weight: bold; border-left: 1px solid #d4edda; }
+        .vc-ref { background: #f8f9ff; color: #5a67d8; font-style: italic; }
+        .today { background: #fff9db !important; border: 2px solid var(--warning); }
+        
+        .temp-pill {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .info-text { font-size: 0.85rem; color: #666; text-align: center; margin-bottom: 20px; }
+        
+        #status { text-align: center; font-weight: bold; margin: 10px; }
+
+        .rain-bar-container { width: 100%; background: #eee; height: 4px; border-radius: 2px; margin-top: 4px; }
+        .rain-bar { background: var(--primary); height: 100%; border-radius: 2px; }
+
+        @media (max-width: 768px) {
+            .horizontal-scroll { overflow-x: auto; }
+            td, th { min-width: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card" style="text-align: center;">
+        <h1>Round Rock, TX (30.58, -97.64)</h1>
+        <p>Data Refresh: <span id="lastUpdate">Never</span></p>
+        
+        <div class="controls">
+            <button class="btn-primary" onclick="loadWeather()">Update Forecast</button>
+            <button class="btn-success" onclick="exportCSV()">Download CSV</button>
+        </div>
+        
+        <div id="modelsUsed" class="info-text"></div>
+        <div id="status">Press Update to fetch data...</div>
+    </div>
+
+    <div class="card horizontal-scroll">
+        <h2>Temperature Forecast (°F)</h2>
+        <table id="tempTable">
+            <thead><tr id="tempHeader"></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div class="card horizontal-scroll">
+        <h2>Precipitation Forecast (Inches)</h2>
+        <table id="rainTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Avg Prob%</th>
+                    <th>Avg Amount</th>
+                    <th class="vc-ref">VC Prob</th>
+                    <th class="vc-ref">VC Amount</th>
+                    <th>Model Spread (Max-Min)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const LAT = 30.5871;
+    const LON = -97.641;
+    const DAYS = 16;
+    const VC_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
+    let reportData = { dates: [], omResults: [], vcDays: [] };
+
+    function getTempColor(f) {
+        if (f <= 32) return '#a5f3fc'; 
+        if (f <= 50) return '#bae6fd'; 
+        if (f <= 70) return '#fde68a'; 
+        if (f <= 85) return '#fbbf24'; 
+        if (f <= 95) return '#f87171'; 
+        return '#ef4444'; 
+    }
+
+    function filterOutliers(values) {
+        if (values.length < 3) return values;
+        const mean = values.reduce((a,b)=>a+b,0) / values.length;
+        const std = Math.sqrt(values.reduce((a,b)=>a + Math.pow(b-mean,2),0) / values.length);
+        return values.filter(v => Math.abs(v - mean) <= (std || 1));
+    }
+
+    async function fetchOpenMeteo() {
+        const models = ["ecmwf_ifs025", "gfs_seamless", "best_match"];
+        const names = ["ECMWF", "GFS", "Blend"];
+        let results = [];
+        
+        for (let i = 0; i < models.length; i++) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+                        `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max` +
+                        `&timezone=auto&models=${models[i]}&forecast_days=${DAYS}&temperature_unit=fahrenheit&precipitation_unit=inch`;
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    results.push({name: names[i], daily: data.daily});
+                }
+            } catch(e) { console.error(e); }
+        }
+        return results;
+    }
+
+    async function fetchVisualCrossing() {
+        const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&key=${VC_KEY}&include=days&forecastDays=${DAYS}&elements=datetime,tempmax,tempmin,precipprob,precip`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.days || [];
+        } catch (e) { return null; }
+    }
+
+    async function loadWeather() {
+        const statusEl = document.getElementById("status");
+        statusEl.textContent = "Updating global models...";
+        
+        try {
+            const [omResults, vcDays] = await Promise.all([fetchOpenMeteo(), fetchVisualCrossing()]);
+            
+            const dates = omResults[0].daily.time.map((t, i) => ({
+                raw: t,
+                dateStr: new Date(t + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}),
+                dayName: new Date(t + 'T00:00:00').toLocaleDateString('en-US', {weekday:'short'}),
+                isToday: i === 0
+            }));
+
+            reportData = {dates, omResults, vcDays};
+            
+            buildTempTable();
+            buildRainTable();
+            
+            document.getElementById("lastUpdate").textContent = new Date().toLocaleTimeString();
+            document.getElementById("modelsUsed").textContent = "Source: ECMWF, GFS, Open-Meteo Ensemble, and Visual Crossing Reference";
+            statusEl.textContent = "Forecast Synchronized";
+        } catch (err) {
+            statusEl.textContent = "Error loading data. Check console.";
+        }
+    }
+
+    function buildTempTable() {
+        const {dates, omResults, vcDays} = reportData;
+        const header = document.getElementById("tempHeader");
+        header.innerHTML = `<th>Date</th><th>Day</th>`;
+        omResults.forEach(r => header.innerHTML += `<th>${r.name}</th>`);
+        header.innerHTML += `<th class="multi-avg">Avg High</th><th class="multi-avg">Avg Low</th><th class="vc-ref">VC High</th><th class="vc-ref">VC Low</th>`;
+
+        const tbody = document.querySelector("#tempTable tbody");
+        tbody.innerHTML = "";
+
+        dates.forEach((date, i) => {
+            let highs = [], lows = [];
+            let modelCells = "";
+
+            omResults.forEach(({daily}) => {
+                const h = daily.temperature_2m_max[i];
+                const l = daily.temperature_2m_min[i];
+                highs.push(h); lows.push(l);
+                modelCells += `<td>${Math.round(h)}° / ${Math.round(l)}°</td>`;
+            });
+
+            const avgHigh = Math.round(filterOutliers(highs).reduce((a,b)=>a+b,0)/filterOutliers(highs).length);
+            const avgLow = Math.round(filterOutliers(lows).reduce((a,b)=>a+b,0)/filterOutliers(lows).length);
+            
+            // Fixed: Added VC Low logic
+            const vcHigh = vcDays[i] ? Math.round(vcDays[i].tempmax) : "—";
+            const vcLow = vcDays[i] ? Math.round(vcDays[i].tempmin) : "—";
+
+            const row = document.createElement("tr");
+            if (date.isToday) row.className = "today";
+            row.innerHTML = `
+                <td>${date.dateStr}</td>
+                <td>${date.dayName}</td>
+                ${modelCells}
+                <td class="multi-avg"><span class="temp-pill" style="background:${getTempColor(avgHigh)}">${avgHigh}°</span></td>
+                <td class="multi-avg">${avgLow}°</td>
+                <td class="vc-ref">${vcHigh}°</td>
+                <td class="vc-ref">${vcLow}°</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function buildRainTable() {
+        const {dates, omResults, vcDays} = reportData;
+        const tbody = document.querySelector("#rainTable tbody");
+        tbody.innerHTML = "";
+
+        dates.forEach((date, i) => {
+            let probs = [], amounts = [];
+            omResults.forEach(({daily}) => {
+                probs.push(daily.precipitation_probability_max[i] || 0);
+                amounts.push(daily.precipitation_sum[i] || 0);
+            });
+
+            const avgProb = Math.round(probs.reduce((a,b)=>a+b,0)/probs.length);
+            const avgAmt = (amounts.reduce((a,b)=>a+b,0)/amounts.length).toFixed(2);
+            const spread = (Math.max(...amounts) - Math.min(...amounts)).toFixed(2);
+
+            const vcProb = vcDays[i] ? Math.round(vcDays[i].precipprob) : 0;
+            const vcAmt = vcDays[i] ? (vcDays[i].precip || 0).toFixed(2) : "0.00";
+
+            const row = document.createElement("tr");
+            if (date.isToday) row.className = "today";
+            row.innerHTML = `
+                <td>${date.dateStr}</td>
+                <td>${date.dayName}</td>
+                <td>${avgProb}% <div class="rain-bar-container"><div class="rain-bar" style="width:${avgProb}%"></div></div></td>
+                <td>${avgAmt}"</td>
+                <td class="vc-ref">${vcProb}%</td>
+                <td class="vc-ref">${vcAmt}"</td>
+                <td>${spread}"</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function exportCSV() {
+        if (!reportData.dates.length) return alert("No data to export");
+        
+        // Fixed: Added VC Low to CSV header
+        let csv = "Date,Day,AvgHigh_F,AvgLow_F,AvgRainProb_Pct,AvgRainAmount_In,VCHigh_F,VCLow_F,VCRain_In\n";
+        
+        reportData.dates.forEach((date, i) => {
+            let highs = [], lows = [], amounts = [], probs = [];
+            reportData.omResults.forEach(({daily}) => {
+                highs.push(daily.temperature_2m_max[i]);
+                lows.push(daily.temperature_2m_min[i]);
+                amounts.push(daily.precipitation_sum[i]);
+                probs.push(daily.precipitation_probability_max[i]);
+            });
+
+            const avgH = (highs.reduce((a,b)=>a+b,0)/highs.length).toFixed(1);
+            const avgL = (lows.reduce((a,b)=>a+b,0)/lows.length).toFixed(1);
+            const avgP = (probs.reduce((a,b)=>a+b,0)/probs.length).toFixed(0);
+            const avgA = (amounts.reduce((a,b)=>a+b,0)/amounts.length).toFixed(2);
+            
+            // Fixed: Included VC Low in row data
+            const vch = reportData.vcDays[i]?.tempmax || "";
+            const vcl = reportData.vcDays[i]?.tempmin || "";
+            const vcr = reportData.vcDays[i]?.precip || "";
+
+            csv += `${date.raw},${date.dayName},${avgH},${avgL},${avgP},${avgA},${vch},${vcl},${vcr}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `weather_export_${new Date().toISOString().split('T')[0]}.csv`);
+        a.click();
+    }
+
+    window.onload = loadWeather;
+</script>
+
+</body>
+</html>
