@@ -3,51 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Weather Dashboard | Visual Crossing</title>
+    <title>Vizcaya Strategic Outlook | VC Authority</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:15px; color:#1f2937; }
-        .container { max-width:1700px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
+        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:0; color:#1f2937; }
+        
+        /* DATA SOURCE BANNER */
+        .source-banner {
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .source-banner span { color: #f8fafc; }
+
+        .container { max-width:1700px; margin:20px auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
         .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
         .header h1 { font-size:2.2em; margin-bottom:5px; }
+        
         .table-wrapper { overflow-x:auto; padding:15px; }
         .table-title { background:#334155; color:white; padding:12px 20px; font-weight:700; font-size:1.1em; border-radius:8px 8px 0 0; margin-top:20px; }
+        
         table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px; min-width:1000px; table-layout:fixed; }
         th { background:#1e3a8a; color:white; padding:12px 5px; font-weight:600; text-align:center; border:1px solid #162e70; }
         td { padding:10px 5px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; line-height:1.4; }
+        
         .param-name { text-align:left; font-weight:700; background:#f8fafc; width:200px; padding-left:15px; color:#1e3a8a; border-left:5px solid #1e3a8a; }
         .param-label { font-size:10px; color:#64748b; font-weight:400; display:block; text-transform:uppercase; margin-top:2px; }
+        
         .day-col { font-weight:800; color:white; font-size:14px; }
         .date-col { font-size:11px; color:rgba(255,255,255,0.8); }
         .high-temp { color:#b91c1c; font-weight:800; font-size:15px; }
         .low-temp { color:#1d4ed8; font-weight:800; font-size:15px; }
+        
         .rec-h { color:#991b1b; font-weight:600; font-size:12px; }
         .rec-l { color:#1e40af; font-weight:600; font-size:12px; }
         .rec-yr { font-size:10px; color:#64748b; }
+        
         .gust-high { color:#dc2626; font-weight:800; }
-        .humidity-val { color: #0891b2; font-weight: 600; }
-        .sev-none { color:#10b981; font-weight:700; }
-        .sev-low { color:#f59e0b; font-weight:700; }
-        .sev-mod { color:#ef4444; font-weight:800; }
-        .sev-high { color:#b91c1c; font-weight:900; background:#fee2e2; border-radius:4px; padding: 4px 8px; }
-        .alert-note { font-size:11px; color:#b91c1c; font-weight:600; margin-top:4px; }
+        .wind-dir { color:#1e3a8a; font-weight:800; font-size: 14px; }
+        
         .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
-        #status { text-align:center; padding:50px; font-weight:bold; color:#1e3a8a; line-height:1.6; }
-        .error-box { border:2px solid red; background:#fff5f5; color:red; padding:20px; border-radius:8px; display:inline-block; text-align:left; }
+        #status { text-align:center; padding:100px; font-weight:bold; color:#1e3a8a; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
+
+<div class="source-banner">
+    Forecast Engine: <span>Visual Crossing GFS</span> &nbsp;&nbsp;|&nbsp;&nbsp; Archive Authority: <span>Jim's 130-Year VC Records</span>
+</div>
+
 <div class="container">
     <div class="header">
-        <h1>Vizcaya Weather Dashboard</h1>
-        <p id="updateTime">Generating Tomorrow's Outlook...</p>
+        <h1>Vizcaya Command Strategic Outlook</h1>
+        <p id="updateTime">Syncing with Jim's Local Archive...</p>
     </div>
-    <!-- Updated connection message -->
-    <div id="status">📡 Syncing JimEgan2025 Almanac & Visual Crossing Models...</div>
+
+    <div id="status">📡 STANDBY: INTERROGATING VISUAL CROSSING SERVERS...</div>
     
     <div id="mainContent" style="display:none;">
         <div class="table-wrapper">
-            <div class="table-title">7-Day Local Forecast</div>
+            <div class="table-title">7-Day Local Forecast (VC Authority)</div>
             <table id="table1">
                 <thead><tr id="head1"></tr></thead>
                 <tbody id="body1"></tbody>
@@ -60,7 +82,7 @@
         </div>
     </div>
     <div class="info-footer">
-        <span>Location: Round Rock, TX | Source: <b>Visual Crossing Timeline API</b></span>
+        <span>Location: Round Rock, TX | Source: Visual Crossing Timeline API</span>
         <span id="lastUpdate"></span>
     </div>
 </div>
@@ -69,43 +91,24 @@
     const LAT = 30.5871;
     const LON = -97.641;
     const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
-    
-    // Updated to point directly to your JSON file
     const ALMANAC_JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
 
     let almanacData = {};
 
+    // Helper to convert Degrees to Cardinal Direction
+    const getWindDir = deg => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(deg / 22.5) % 16];
+
     function getWeatherUI(icon) {
-        const mapping = {
-            "clear-day": {icon:'☀️', desc:'Clear'},
-            "partly-cloudy-day": {icon:'⛅', desc:'Partly Cloudy'},
-            "cloudy": {icon:'☁️', desc:'Overcast'},
-            "rain": {icon:'🌧️', desc:'Rain'},
-            "showers-day": {icon:'🌦️', desc:'Showers'},
-            "thunder-rain": {icon:'⛈️', desc:'Thunderstorms'}
-        };
+        const mapping = {"clear-day":{icon:'☀️',desc:'Clear'},"partly-cloudy-day":{icon:'⛅',desc:'Partly Cloudy'},"cloudy":{icon:'☁️',desc:'Overcast'},"rain":{icon:'🌧️',desc:'Rain'},"showers-day":{icon:'🌦️',desc:'Showers'},"thunder-rain":{icon:'⛈️',desc:'Thunderstorms'}};
         return mapping[icon] || {icon:'☁️', desc: icon || 'Cloudy'};
     }
 
-    function getSeverity(severerisk) {
-        const risk = parseFloat(severerisk) || 0;
-        if (risk >= 70) return {text:'SEVERE', cls:'sev-high', note:'High severe potential — local storms possible'};
-        if (risk >= 40) return {text:'MODERATE', cls:'sev-mod', note:'Moderate risk — watch for convective activity'};
-        if (risk >= 20) return {text:'LOW', cls:'sev-low', note:'Low risk — isolated storms possible'};
-        return {text:'LOW / NONE', cls:'sev-none', note:'Minimal severe risk expected'};
-    }
-
-    // Simplified Almanac loading using standard JSON fetch
     async function sourceAlmanac() {
         try {
             const response = await fetch(ALMANAC_JSON_URL);
-            if (!response.ok) throw new Error("Could not find almanac.json on GitHub.");
             almanacData = await response.json();
             return true;
-        } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Almanac Sync Error:</b><br>${err.message}</div>`;
-            return false;
-        }
+        } catch (err) { return false; }
     }
 
     function createRows(container, days, start, count) {
@@ -114,38 +117,31 @@
                 const ui = getWeatherUI(days[i].icon || '');
                 return `<span style="font-size:1.5em">${ui.icon}</span><br><b>${ui.desc}</b>`;
             }},
-            {name:'Severe Risk', label:'VC Severity (0-100)', getData:i => {
-                const sev = getSeverity(days[i].severerisk);
-                return `<div class="${sev.cls}">${sev.text}</div>
-                        <div style="font-size:11px; margin-top:4px;">Risk Index: ${days[i].severerisk || '—'}</div>
-                        <div class="alert-note">${sev.note}</div>`;
-            }},
             {name:'Temperatures', label:'High / Low (°F)', getData:i => 
                 `<span class="high-temp">${Math.round(days[i].tempmax)}°</span> / <span class="low-temp">${Math.round(days[i].tempmin)}°</span>`
             },
             {name:'Feels Like', label:'Apparent High / Low', getData:i => 
-                `${Math.round(days[i].feelslikemax || days[i].tempmax)}° / ${Math.round(days[i].feelslikemin || days[i].tempmin)}°`
+                `${Math.round(days[i].feelslikemax)}° / ${Math.round(days[i].feelslikemin)}°`
             },
-            {name:'Precipitation', label:'Prob / Amount (Inches)', getData:i => 
-                `<b>${Math.round(days[i].precipprob || 0)}%</b><br>${(days[i].precip || 0).toFixed(2)}"`
-            },
-            {name:'Winds', label:'Speed / Gust (MPH)', getData:i => {
-                const speed = Math.round(days[i].windspeed || 0);
-                const gust = Math.round(days[i].windgust || 0);
-                const gustCls = gust > 25 ? 'gust-high' : '';
-                return `${speed} / <span class="${gustCls}">G${gust}</span>`;
-            }},
-            {name:'Historical Records', label:'Record High / Low (Year)', getData:i => {
-                // days[i].datetime is "YYYY-MM-DD", slice(5) gets "MM-DD"
+            {name:'Historical Records', label:'Jim\'s 130-Yr Records', getData:i => {
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 if (!h) return '--';
                 return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;
             }},
-            {name:'Historical Averages', label:'Avg High / Low', getData:i => {
+            {name:'Historical Averages', label:'Jim\'s 130-Yr Averages', getData:i => {
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 return h ? `${h.avgH}° / ${h.avgL}°` : '--';
+            }},
+            {name:'Precipitation', label:'Prob / Amount (Inches)', getData:i => 
+                `<b>${Math.round(days[i].precipprob || 0)}%</b><br>${(days[i].precip || 0).toFixed(2)}"`
+            },
+            {name:'Winds', label:'Dir | Speed | Gust', getData:i => {
+                const speed = Math.round(days[i].windspeed || 0);
+                const gust = Math.round(days[i].windgust || 0);
+                const dir = getWindDir(days[i].winddir || 0);
+                return `<span class="wind-dir">${dir}</span><br>${speed} / <span class="${gust > 25 ? 'gust-high' : ''}">G${gust}</span>`;
             }},
             {name:'Humidity', label:'Average (%)', getData:i => 
                 `<span class="humidity-val">${Math.round(days[i].humidity || 0)}%</span>`
@@ -165,19 +161,10 @@
     }
 
     async function init() {
-        const almanacReady = await sourceAlmanac();
-        if (!almanacReady) return;
-
+        await sourceAlmanac();
         try {
-            const today = new Date();
-            const startDate = today.toISOString().split('T')[0];
-            const endDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}/${startDate}/${endDate}?unitGroup=us&include=days&key=${VC_API_KEY}&contentType=json`;
-
+            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&include=days&key=${VC_API_KEY}&contentType=json`;
             const res = await fetch(url);
-            if (!res.ok) throw new Error(`Visual Crossing error ${res.status}`);
-
             const data = await res.json();
             const days = data.days || [];
 
@@ -192,25 +179,22 @@
                 }
             };
 
-            // Table 1: Days 1-7 (Starting tomorrow relative to Visual Crossing's response)
             renderHeader('head1', 1, 7);
             createRows(document.getElementById('body1'), days, 1, 7);
-
-            // Table 2: Days 8-14
             renderHeader('head2', 8, 7);
             createRows(document.getElementById('body2'), days, 8, 7);
 
             document.getElementById('status').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('updateTime').innerText = "14-Day Forecast Outlook (Visual Crossing GFS)";
-            document.getElementById('lastUpdate').innerText = `Sync: ${new Date().toLocaleString()}`;
-
+            document.getElementById('updateTime').innerText = "Strategic Command Summary (Visual Crossing Engine)";
+            document.getElementById('lastUpdate').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
         } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Sync Error:</b><br>${err.message}</div>`;
+            document.getElementById('status').innerText = "Sync Error: " + err.message;
         }
     }
-
     init();
 </script>
+</body>
+</html>
 </body>
 </html>
