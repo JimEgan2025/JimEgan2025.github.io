@@ -6,20 +6,47 @@
     <title>Vizcaya Pro Weather | Unlimited Edition</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; color:#111827; line-height:1.5; padding-top: 100px; }
-        .header { background:#1e3a8a; color:white; padding:15px; text-align:center; position: fixed; top: 0; width: 100%; height: 100px; z-index: 4000; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+        
+        /* NEW SOURCE BANNER */
+        .source-banner {
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 10px;
+            text-align: center;
+            padding: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 5000;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .source-banner span { color: #f8fafc; }
+
+        /* Adjusted padding-top to account for banner (35px) + header (100px) */
+        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; color:#111827; line-height:1.5; padding-top: 135px; }
+        
+        .header { background:#1e3a8a; color:white; padding:15px; text-align:center; position: fixed; top: 35px; width: 100%; height: 100px; z-index: 4000; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
         .header h1 { font-size: 2.5em; letter-spacing: 1px; font-weight: 800; }
+        
         .container { max-width: 2000px; margin: 0 auto; padding: 0 15px; }
-        .day-separator td { background: #1e293b !important; color: #ffffff; padding: 25px; position: sticky; top: 100px; z-index: 3000; border-bottom: 6px solid #facc15; text-align: left; }
+        
+        /* Adjusted Sticky positions for new offset */
+        .day-separator td { background: #1e293b !important; color: #ffffff; padding: 25px; position: sticky; top: 135px; z-index: 3000; border-bottom: 6px solid #facc15; text-align: left; }
+        thead th { background: #334155; color: white; padding: 15px 5px; font-size: 16px; text-transform: uppercase; position: sticky; top: 135px; z-index: 3500; text-align: center; border-right: 1px solid #4b5563;}
+        
         .day-label { font-size: 28px; font-weight: 900; display: block; color: #facc15; margin-bottom: 10px; }
         .day-summary-grid { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .forecast-box { flex: 1.5; font-size: 22px; }
         .almanac-box { flex: 1.5; text-align: right; border-left: 3px solid #4b5563; padding-left: 30px; font-size: 19px; color: #e2e8f0; line-height: 1.4; }
         .summary-val { color: #ffffff; font-weight: 900; font-size: 1.2em; margin-right: 20px; }
         .almanac-val { color: #fbbf24; font-weight: 800; }
+        
         tr { border-bottom: 2px solid #cbd5e1; }
         td { padding: 20px 5px; font-size: 22px; vertical-align: middle; border-right: 1px solid #e2e8f0; text-align: center; background: white; font-weight: 700; }
-        thead th { background: #334155; color: white; padding: 15px 5px; font-size: 16px; text-transform: uppercase; position: sticky; top: 100px; z-index: 3500; text-align: center; border-right: 1px solid #4b5563;}
+        
         .warn-heat { background: #ea580c !important; color: white !important; }    
         .warn-freeze { background: #3b82f6 !important; color: white !important; }  
         .is-now td { border-top: 8px solid #f59e0b; border-bottom: 8px solid #f59e0b; background: #fffbeb !important; }
@@ -30,6 +57,11 @@
     </style>
 </head>
 <body>
+
+<!-- DATA SOURCE BANNER -->
+<div class="source-banner">
+    Meteorological Feed: <span>Open-Meteo GFS Core</span> &nbsp;&nbsp;|&nbsp;&nbsp; Climatology Feed: <span>Jim's 130-Year Local Records</span>
+</div>
 
 <button id="topBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">▲</button>
 
