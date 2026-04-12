@@ -6,16 +6,30 @@
     <title>GTU Command Center v20.7</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         :root { 
             --bg: #121212; --card: #1e1e24; --text: #e0e0e0; --accent: #00d2d3;
             --danger: #ff5252; --warning: #ff9f43; --safe: #2ecc71;
         }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
-        header { text-align: center; margin-bottom: 10px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow-x: hidden; }
+        
+        /* DATA SOURCE BANNER */
+        .source-banner {
+            background: #0f172a;
+            color: #64748b;
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--accent);
+        }
+        .source-banner span { color: #f8fafc; }
+
+        header { text-align: center; margin: 20px 0 10px 0; }
+        header h1 { margin: 0; letter-spacing: 4px; font-weight: 900; }
         
         #alert-banner { background:#1e1e24; color:#aaa; text-align:center; padding:12px; font-weight:bold; margin: 5px auto; max-width:1200px; border-radius:5px; border: 1px solid #333; display:none; }
 
@@ -28,14 +42,13 @@
         .tab-btn { background: #2d3436; border: 1px solid #444; color: #aaa; padding: 8px 14px; cursor: pointer; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 0.75rem; }
         .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; padding: 0 15px; }
 
         .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         .card { background: var(--card); border-radius: 10px; padding: 15px; border: 1px solid #333; height: 380px; display: flex; flex-direction: column; }
         .full-width { grid-column: 1 / -1; height: auto; min-height: 400px; margin-bottom: 15px; }
         .card-header { border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; font-size: 1rem; font-weight: bold; color: #fff; }
         
-        /* Fixed Chart Bug: Pointer-events must be auto for tooltips to work */
         .chart-wrapper { flex-grow: 1; position: relative; min-height: 0; width: 100%; pointer-events: auto; }
         canvas { width: 100% !important; height: 100% !important; }
 
@@ -44,61 +57,60 @@
         .wall-header { padding: 10px; font-size: 0.8rem; font-weight: bold; background: #2d3436; display: flex; justify-content: space-between; cursor: pointer; }
         
         iframe { width: 100%; height: 100%; border: none; }
-        #map { height: 75vh; width: 100%; background: #111; border-radius: 8px; border: 1px solid #333; }
         .sat-img { width: 100%; height: 100%; object-fit: contain; background: #000; cursor: zoom-in; }
         
-        /* Fullscreen Support */
         .wall-panel:fullscreen, .sat-img:fullscreen { background: #000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
+
+<div class="source-banner">
+    Data Streams: <span>Open-Meteo GFS/HRRR</span> &bull; Satellite: <span>NOAA GOES-19</span> &bull; Observations: <span>NWS KGTU</span>
+</div>
 
 <header><h1>GTU COMMAND CENTER</h1></header>
 <div id="alert-banner"></div>
 
 <div class="status-bar">
     <div class="stat-item"><span class="stat-val" id="live-temp">--°</span><span class="stat-label">Temp</span></div>
-    <div class="stat-item"><span class="stat-val" id="live-dew">--°</span><span class="stat-label">Dew</span></div>
+    <div class="stat-item"><span class="stat-val" id="live-dew">--°</span><span class="stat-label">Dewpoint</span></div>
     <div class="stat-item"><span class="stat-val" id="live-pressure">-- mb</span><span class="stat-label">Baro</span></div>
-    <div class="stat-item"><span class="stat-val" id="live-wind">--</span><span class="stat-label">Wind</span></div>
+    <div class="stat-item"><span class="stat-val" id="live-wind">--</span><span class="stat-label">KGTU Wind</span></div>
 </div>
 
 <nav>
-    <button class="tab-btn active" onclick="switchTab('tab-short', this)">Short Range</button>
-    <button class="tab-btn" onclick="switchTab('tab-long', this)">Long Range</button>
-    <button class="tab-btn" onclick="switchTab('tab-localradar', this)">Local Radar</button>
+    <button class="tab-btn active" onclick="switchTab('tab-short', this)">Short Range (48H)</button>
+    <button class="tab-btn" onclick="switchTab('tab-long', this)">Long Range (16D)</button>
     <button class="tab-btn" onclick="switchTab('tab-radarwall', this)">TX Radar Wall</button>
     <button class="tab-btn" onclick="switchTab('tab-sat', this)">Sat Analysis</button>
 </nav>
 
 <div id="tab-short" class="tab-content active">
     <div class="container">
-        <div class="card"><div class="card-header">Wind & Gusts</div><div class="chart-wrapper"><canvas id="windChart"></canvas></div></div>
-        <div class="card"><div class="card-header">Temp & Dewpoint</div><div class="chart-wrapper"><canvas id="tempChart"></canvas></div></div>
-        <div class="card"><div class="card-header">Rain Probability</div><div class="chart-wrapper"><canvas id="precipChart"></canvas></div></div>
-        <div class="card"><div class="card-header">CAPE (Instability)</div><div class="chart-wrapper"><canvas id="capeChart"></canvas></div></div>
+        <div class="card"><div class="card-header">Wind & Gusts (MPH)</div><div class="chart-wrapper"><canvas id="windChart"></canvas></div></div>
+        <div class="card"><div class="card-header">Temp & Dewpoint (°F)</div><div class="chart-wrapper"><canvas id="tempChart"></canvas></div></div>
+        <div class="card"><div class="card-header">Precipitation Probability (%)</div><div class="chart-wrapper"><canvas id="precipChart"></canvas></div></div>
+        <div class="card"><div class="card-header">CAPE (Convective Instability)</div><div class="chart-wrapper"><canvas id="capeChart"></canvas></div></div>
     </div>
 </div>
 
 <div id="tab-long" class="tab-content">
     <div class="container">
-        <div class="card full-width"><div class="card-header">16-Day Temp Trend</div><div class="chart-wrapper"><canvas id="gfsTempChart"></canvas></div></div>
-        <div class="card full-width"><div class="card-header">16-Day Rain (Accumulated)</div><div class="chart-wrapper"><canvas id="gfsRainChart"></canvas></div></div>
+        <div class="card full-width"><div class="card-header">16-Day Temperature Trend (GFS)</div><div class="chart-wrapper"><canvas id="gfsTempChart"></canvas></div></div>
+        <div class="card full-width"><div class="card-header">16-Day Rain Accumulation (Inches)</div><div class="chart-wrapper"><canvas id="gfsRainChart"></canvas></div></div>
     </div>
 </div>
 
-<div id="tab-localradar" class="tab-content">
-    <div class="full-width"><div id="map"></div></div>
+<div id="tab-radarwall" class="tab-content">
+    <div class="wall-grid" id="radar-wall-container"></div>
 </div>
-
-<div id="tab-radarwall" class="tab-content"><div class="wall-grid" id="radar-wall-container"></div></div>
 
 <div id="tab-sat" class="tab-content">
     <div class="wall-grid">
-        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Visible</div><img id="sat-vis" class="sat-img" onclick="toggleExpand(this)"></div>
-        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">IR</div><img id="sat-ir" class="sat-img" onclick="toggleExpand(this)"></div>
-        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Vapor</div><img id="sat-wv" class="sat-img" onclick="toggleExpand(this)"></div>
-        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Lightning</div><img id="sat-lgt" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Visible (Geocolor)</div><img id="sat-vis" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Infrared (Clean IR)</div><img id="sat-ir" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Water Vapor</div><img id="sat-wv" class="sat-img" onclick="toggleExpand(this)"></div>
+        <div class="wall-panel"><div class="wall-header" onclick="toggleExpand(this.nextElementSibling)">Lightning Density</div><img id="sat-lgt" class="sat-img" onclick="toggleExpand(this)"></div>
     </div>
 </div>
 
@@ -108,12 +120,11 @@
         {id:'kgrk', n:'Central TX'}, {id:'kewx', n:'Austin/SA'}, {id:'kfws', n:'Dallas/FW'},
         {id:'khgx', n:'Houston'}, {id:'kcrp', n:'Corpus Christi'}, {id:'kbro', n:'Brownsville'},
         {id:'ksjt', n:'San Angelo'}, {id:'kdyx', n:'Abilene'}, {id:'kmaf', n:'Midland'},
-        {id:'klub', n:'Lubbock'}, {id:'kama', n:'Amarillo'}, {id:'kepz', n:'El Paso'}, {id:'kshv', n:'Shreveport'}
+        {id:'klub', n:'Lubbock'}, {id:'kama', n:'Amarillo'}, {id:'kepz', n:'El Paso'}
     ];
 
-    let charts = {}, radarMap;
+    let charts = {};
 
-    // GLOBAL CHART SETTINGS FOR TOOLTIPS
     Chart.defaults.interaction.mode = 'index';
     Chart.defaults.interaction.intersect = false;
     Chart.defaults.plugins.tooltip.enabled = true;
@@ -127,6 +138,7 @@
         fetchAlerts();
         setInterval(fetchAlerts, 300000);
         setInterval(refreshSat, 600000);
+        setInterval(fetchLiveConditions, 600000);
     }
 
     function mkChart(id, type, labels, datasets) {
@@ -161,7 +173,7 @@
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16&models=gfs_seamless`);
         const data = await res.json();
         const d = data.daily;
-        mkChart('gfsTempChart', 'line', d.time, [{label:'Max', data:d.temperature_2m_max, borderColor:'#ff6b6b'}, {label:'Min', data:d.temperature_2m_min, borderColor:'#4ecdc4'}]);
+        mkChart('gfsTempChart', 'line', d.time, [{label:'Max Temp', data:d.temperature_2m_max, borderColor:'#ff6b6b'}, {label:'Min Temp', data:d.temperature_2m_min, borderColor:'#4ecdc4'}]);
         mkChart('gfsRainChart', 'bar', d.time, [{label:'Rain Total (in)', data:d.precipitation_sum, backgroundColor:'#3498db'}]);
     }
 
@@ -176,25 +188,6 @@
         });
     }
 
-    function initLocalRadar() {
-        if(radarMap) return;
-        radarMap = L.map('map').setView([LAT, LON], 9);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(radarMap);
-        
-        // RainViewer API for Live Tile Overlay
-        fetch("https://api.rainviewer.com/public/weather-maps.json")
-            .then(res => res.json())
-            .then(data => {
-                const ts = data.radar.past[data.radar.past.length - 1].time;
-                L.tileLayer(`https://tilecache.rainviewer.com/v2/radar/${ts}/256/{z}/{x}/{y}/2/1_1.png`, {
-                    opacity: 0.6,
-                    zIndex: 100
-                }).addTo(radarMap);
-            });
-        
-        L.circle([LAT, LON], {color: 'var(--accent)', radius: 2000}).addTo(radarMap).bindPopup("GTU");
-    }
-
     function toggleExpand(el) {
         if (!document.fullscreenElement) el.requestFullscreen();
         else document.exitFullscreen();
@@ -205,9 +198,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         btn.classList.add('active');
-        if(id === 'tab-localradar') {
-            setTimeout(initLocalRadar, 100); // Small delay ensures DOM is ready
-        }
     }
 
     async function fetchAlerts() {
@@ -242,12 +232,10 @@
             document.getElementById('live-dew').innerText = Math.round(p.dewpoint.value * 1.8 + 32) + "°";
             document.getElementById('live-wind').innerText = `${Math.round(p.windSpeed.value * 0.62)} mph`;
             document.getElementById('live-pressure').innerText = Math.round(p.barometricPressure.value / 100) + " mb";
-        } catch(e) {}
+        } catch(e) { console.error("KGTU Feed Error"); }
     }
 
     init();
 </script>
-</body>
-</html>
 </body>
 </html>
