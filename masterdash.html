@@ -19,12 +19,27 @@
     color: var(--text);
     overflow: hidden;
   }
-  /* Top Banner - Simplified, no live stats */
+
+  /* REFINED SOURCE BANNER - The "Rule of Logic" */
+  .source-banner {
+    background: #000;
+    color: #64748b;
+    font-size: 10px;
+    text-align: center;
+    padding: 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 800;
+    border-bottom: 1px solid #1e293b;
+  }
+  .source-banner span.authority { color: #facc15; font-weight: 900; } /* Yellow for Authority */
+  .source-banner span.engine { color: #94a3b8; }
+
   .live-banner {
     background: #000;
     padding: 12px 25px;
     display: flex;
-    justify-content: center; /* Center the label */
+    justify-content: center; 
     align-items: center;
     border-bottom: 2px solid var(--primary);
   }
@@ -34,20 +49,20 @@
     font-weight: 800;
     letter-spacing: 2px;
   }
-  /* Layout */
+
   .main-layout {
     display: flex;
-    height: calc(100vh - 54px);
+    height: calc(100vh - 88px);
   }
-  /* Navigation Sidebar */
+
   nav {
-    width: 250px;
+    width: 270px;
     background: #111827;
     padding: 20px 12px;
     border-right: 1px solid #1e293b;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     overflow-y: auto;
   }
   .nav-group-label {
@@ -72,78 +87,89 @@
     align-items: center;
     gap: 10px;
     font-size: 0.85rem;
+    text-decoration: none;
   }
-  .nav-btn:hover {
-    background: rgba(255,255,255,0.05);
-    color: white;
-  }
+  .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
   .nav-btn.active {
     background: var(--primary);
     color: white;
     box-shadow: 0 4px 15px rgba(0,0,0,0.4);
   }
-  /* Content Viewer */
-  .viewer {
-    flex: 1;
-    background: #000;
-    position: relative;
-  }
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: none;
-    background: white;
-  }
-  iframe.active {
-    display: block;
-  }
+
+  .viewer { flex: 1; background: #000; position: relative; }
+  iframe { width: 100%; height: 100%; border: none; display: none; background: white; }
+  iframe.active { display: block; }
 </style>
 </head>
 <body>
 
-<!-- TOP BANNER - Just label, no stats or sync -->
+<div class="source-banner">
+  PRIMARY CLIMATOLOGY AUTHORITY: <span class="authority">JIM'S 130-YEAR VIZCAYA RECORDS</span> &nbsp;&nbsp;|&nbsp;&nbsp; FORECAST ENGINE: <span class="engine">OPEN-METEO GFS 0.25°</span>
+</div>
+
 <div class="live-banner">
   <div class="station-label">📍 VIZCAYA WX INTELLIGENCE CENTER</div>
 </div>
 
 <div class="main-layout">
   <nav>
-    <div class="nav-group-label">Resident Planning</div>
-    <button class="nav-btn active" onclick="switchView('forecast', this)"><span>📅</span> 14-Day Dashboard</button>
-    <button class="nav-btn" onclick="switchView('risk', this)"><span>🌩</span> Risk Engine</button>
+    <div class="nav-group-label">Jim's Primary Command</div>
+    <!-- VC ARCHIVE RULED DASHBOARD -->
+    <button class="nav-btn active" onclick="switchView('rev', this)"><span>📅</span> VC Strategic Outlook</button>
+    <button class="nav-btn" onclick="switchView('viz', this)"><span>📊</span> Climate Command</button>
     <button class="nav-btn" onclick="switchView('safety', this)"><span>📋</span> Safety Sequence</button>
     
     <div class="nav-group-label">Meteorological Analysis</div>
-    <button class="nav-btn" onclick="switchView('monitor', this)"><span>📡</span> Master Radar</button>
-    <button class="nav-btn" onclick="switchView('command', this)"><span>🛰️</span> GIS Command Map</button>
+    <button class="nav-btn" onclick="switchView('wxc', this)"><span>🎮</span> WX Command Hub</button>
+    <button class="nav-btn" onclick="switchView('aqi', this)"><span>🍃</span> Station Air Quality</button>
+    <button class="nav-btn" onclick="switchView('monitor', this)"><span>📡</span> Master Radar Map</button>
+    <button class="nav-btn" onclick="switchView('txradar', this)"><span>🧱</span> TX Radar Wall</button>
     <button class="nav-btn" onclick="switchView('front', this)"><span>🧭</span> Pilot Hub (Fronts)</button>
     
-    <div class="nav-group-label">Regional & Marine</div>
-    <button class="nav-btn" onclick="switchView('tropical', this)"><span>🌊</span> Gulf/ Tropical TSI Monitor</button>
+    <div class="nav-group-label">Historical Archives</div>
+    <button class="nav-btn" onclick="switchView('almanac', this)"><span>📖</span> Jim's Archive Deep-Dive</button>
     <button class="nav-btn" onclick="switchView('texas', this)"><span>🌵</span> Texas Summary</button>
     
-    <div class="nav-group-label">Hardware</div>
+    <div class="nav-group-label">Alternative Dashboards</div>
+    <!-- GENERIC METEOROLOGICAL VIEW -->
+    <button class="nav-btn" onclick="switchView('forecast', this)"><span>📉</span> Generic GFS Dashboard</button>
+    <button class="nav-btn" onclick="switchView('risk', this)"><span>🌩</span> Risk Engine</button>
+
+    <div class="nav-group-label">Infrastructure Uplinks</div>
+    <a href="https://www.ercot.com/gridmktinfo/dashboards" target="_blank" class="nav-btn"><span>⚡</span> ERCOT Grid Status ↗</a>
+    
+    <div class="nav-group-label">System</div>
     <button class="nav-btn" onclick="switchView('davis', this)"><span>💻</span> Davis Console</button>
     
     <div style="margin-top: auto; padding: 10px; border-top: 1px solid #1e293b; font-size: 0.7rem; color: #475569; line-height: 1.4;">
       <strong>Vizcaya Weather Bureau</strong><br>
-      Strategic Operations v12.0<br>
+      Strategic Operations v17.0<br>
       Round Rock, TX
     </div>
   </nav>
 
   <main class="viewer">
-    <!-- 14-DAY DASHBOARD SET TO ACTIVE BY DEFAULT -->
-    <iframe id="view-forecast" src="https://jimegan2025.github.io/forecast7day.html" class="active"></iframe>
-    <!-- OTHER VIEWS -->
-    <iframe id="view-risk" src="https://jimegan2025.github.io/risk.html"></iframe>
+    <!-- AUTHORITY DASHBOARDS -->
+    <iframe id="view-rev" src="https://jimegan2025.github.io/rev_dash.html" class="active"></iframe>
+    <iframe id="view-viz" src="https://jimegan2025.github.io/vizcayawx.html"></iframe>
     <iframe id="view-safety" src="https://jimegan2025.github.io/safety.html"></iframe>
+    <iframe id="view-wxc" src="https://jimegan2025.github.io/wxcommand.html"></iframe>
+    
+    <!-- ANALYSIS -->
+    <iframe id="view-aqi" src="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary"></iframe>
     <iframe id="view-monitor" src="https://jimegan2025.github.io/masterrad.html"></iframe>
-    <iframe id="view-command" src="https://jimegan2025.github.io/command.html"></iframe>
-    <iframe id="view-front" src="https://jimegan2025.github.io/frontpos.html"></iframe>
-    <iframe id="view-tropical" src="https://jimegan2025.github.io/tropical.html"></iframe>
+    <iframe id="view-txradar" src="https://jimegan2025.github.io/txradar.html"></iframe>
+    <iframe id="view-front" src="https://jimegan2025.github.io/fronts.html"></iframe>
+    
+    <!-- ARCHIVES & REGIONAL -->
+    <iframe id="view-almanac" src="https://jimegan2025.github.io/almanac.html"></iframe>
     <iframe id="view-texas" src="https://jimegan2025.github.io/texasdash.html"></iframe>
+    
+    <!-- GENERIC VIEW -->
+    <iframe id="view-forecast" src="https://jimegan2025.github.io/forecast7day.html"></iframe>
+    <iframe id="view-risk" src="https://jimegan2025.github.io/risk.html"></iframe>
+    
+    <!-- HARDWARE -->
     <iframe id="view-davis" src="https://jimegan2025.github.io/index.html"></iframe>
   </main>
 </div>
@@ -151,11 +177,18 @@
 <script>
   function switchView(id, btn) {
     document.querySelectorAll('iframe').forEach(f => f.classList.remove('active'));
-    document.getElementById('view-' + id).classList.add('active');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    
+    const target = document.getElementById('view-' + id);
+    if(target) {
+        target.classList.add('active');
+        btn.classList.add('active');
+    }
   }
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
