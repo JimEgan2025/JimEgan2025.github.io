@@ -6,8 +6,23 @@
     <title>Vizcaya Weather Dashboard | 14-Day Forecast</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:15px; color:#1f2937; }
-        .container { max-width:1700px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
+        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:0; color:#1f2937; }
+        
+        /* DATA SOURCE BANNER */
+        .source-banner {
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .source-banner span { color: #f8fafc; }
+
+        .container { max-width:1700px; margin:20px auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
         .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
         .header h1 { font-size:2.2em; margin-bottom:5px; }
         .table-wrapper { overflow-x:auto; padding:15px; }
@@ -38,6 +53,11 @@
     </style>
 </head>
 <body>
+
+<div class="source-banner">
+    Meteorological Forecast: <span>Open-Meteo GFS Core</span> &nbsp;&nbsp;|&nbsp;&nbsp; Climatology: <span>Jim's 130-Year Archive</span>
+</div>
+
 <div class="container">
     <div class="header">
         <h1>Vizcaya Weather Dashboard</h1>
@@ -71,11 +91,11 @@
 
 <script>
     const LAT = 30.509747, LON = -97.692116;
-    
-    // NEW CLEAN JSON URL
     const ALMANAC_JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
-    
     let almanacData = {};
+
+    // Helper to convert Degrees to Cardinal
+    const getWindDir = deg => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(deg / 22.5) % 16];
 
     function getWeatherUI(code) {
         const mapping = {0: {icon:'☀️',desc:'Clear'},1:{icon:'🌤️',desc:'Mostly Clear'},2:{icon:'⛅',desc:'Partly Cloudy'},3:{icon:'☁️',desc:'Overcast'},45:{icon:'🌫️',desc:'Fog'},51:{icon:'🌦️',desc:'Drizzle'},61:{icon:'🌧️',desc:'Rain'},80:{icon:'🌦️',desc:'Showers'},95:{icon:'⛈️',desc:'Thunderstorms'}};
@@ -90,7 +110,6 @@
         return {text:'NONE',cls:'sev-none'};
     }
 
-    // SIMPLIFIED SOURCE FUNCTION
     async function sourceAlmanac() {
         try {
             const response = await fetch(ALMANAC_JSON_URL);
@@ -115,7 +134,13 @@
             {name:'Historical Averages',label:'Avg High / Low',getData:i=>{const mmdd=daily.time[i].slice(5);const h=almanacData[mmdd];return h?`${h.avgH}° / ${h.avgL}°`:'--';}},
             {name:'Feels Like',label:'Apparent High / Low',getData:i=>`${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`},
             {name:'Precipitation',label:'Prob / Amount (Inches)',getData:i=>`<b>${daily.precipitation_probability_max[i]}%</b><br>${daily.precipitation_sum[i].toFixed(2)}"`},
-            {name:'Winds',label:'Max / Gust (MPH)',getData:i=>{const speed=Math.round(daily.wind_speed_10m_max[i]);const gust=Math.round(daily.wind_gusts_10m_max[i]);const gustCls=gust>25?'gust-high':'';return `${speed} / <span class="${gustCls}">G${gust}</span>`;}}
+            {name:'Winds',label:'Dir | Max | Gust (MPH)',getData:i=>{
+                const speed=Math.round(daily.wind_speed_10m_max[i]);
+                const gust=Math.round(daily.wind_gusts_10m_max[i]);
+                const dir=getWindDir(daily.wind_direction_10m_dominant[i]);
+                const gustCls=gust>25?'gust-high':'';
+                return `<b>${dir}</b><br>${speed} / <span class="${gustCls}">G${gust}</span>`;
+            }}
         ];
 
         rowConfigs.forEach(row=>{
@@ -133,7 +158,8 @@
         if(!almanacReady) return;
 
         try {
-            const url=`https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,weather_code&hourly=cape,lifted_index,dew_point_2m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
+            // URL UPDATED to include wind_direction_10m_dominant
+            const url=`https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weather_code&hourly=cape,lifted_index,dew_point_2m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
             const res = await fetch(url);
             const data = await res.json();
 
