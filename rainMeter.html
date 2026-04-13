@@ -3,237 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rain Meter - 10 Day Precipitation Forecast</title>
+    <title>Vizcaya Rain Probability - Strategic View</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --bg: #0f172a;
+            --header-dark: #000000;
+            --likely: #064e3b;
+            --widespread: #065f46;
+            --scattered: #047857;
+            --widely: #059669;
+            --isolated: #10b981;
+            --accent: #38bdf8;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #0f172a;
-            padding: 20px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
             color: #f8fafc;
             min-height: 100vh;
+            padding: 0;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header { text-align: center; padding: 30px 0; }
-        .header h1 { font-size: 2.5em; color: #38bdf8; margin-bottom: 5px; }
-        .header p { color: #94a3b8; }
 
-        .chart-card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
+        .source-banner {
+            background: var(--header-dark);
+            color: #64748b;
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--accent);
         }
-        .chart-container { height: 400px; position: relative; }
+        .source-banner span { color: #f8fafc; }
 
-        .data-summary {
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+
+        .chart-header {
+            text-align: center;
+            background: #1e3a8a;
+            padding: 15px;
+            margin-bottom: 2px;
+            border-radius: 8px 8px 0 0;
+        }
+        .chart-header h1 {
+            font-size: 2.2rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 900;
+            color: white;
+        }
+
+        .graph-wrapper {
+            background: #111;
+            padding: 10px;
+            border: 2px solid #334155;
+            border-radius: 0 0 8px 8px;
+            height: 500px;
+            position: relative;
+        }
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
             margin-top: 20px;
         }
-        .summary-item {
-            background: #334155;
+        .stat-card {
+            background: #1e293b;
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            border-bottom: 4px solid #38bdf8;
+            border-left: 5px solid var(--isolated);
         }
-        .summary-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 8px; }
-        .summary-value { font-size: 28px; font-weight: 800; color: #f1f5f9; }
-        .summary-note { font-size: 12px; margin-top: 5px; font-weight: bold; }
+        .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 800; }
+        .stat-val { font-size: 28px; font-weight: 900; color: white; margin-top: 5px; }
 
-        .footer { text-align: center; font-size: 12px; color: #475569; margin-top: 20px; }
-        .loading { text-align: center; padding: 100px; font-weight: bold; color: #38bdf8; }
+        #loader { text-align: center; padding: 100px; font-weight: 900; letter-spacing: 2px; color: var(--accent); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🌧️ Rain Meter</h1>
-            <p>10-Day Rainfall Forecast & Historical Norms</p>
-        </div>
 
-        <div id="loader" class="loading">📡 Syncing with Almanac & GFS Models...</div>
+    <div class="source-banner">
+        Meteorological Core: <span>Open-Meteo GFS 0.25°</span> &nbsp;&bull;&nbsp; Historical Rule: <span>Jim's 130-Year Local Archive</span>
+    </div>
+
+    <div class="container">
+        <div id="loader">📡 INTERROGATING ATMOSPHERIC MODELS...</div>
 
         <div id="mainContent" style="display:none;">
-            <div class="chart-card">
-                <div class="chart-container">
-                    <canvas id="precipChart"></canvas>
-                </div>
+            <div class="chart-header">
+                <h1>Chance of Rain</h1>
+            </div>
+            <div class="graph-wrapper">
+                <canvas id="rainChart"></canvas>
             </div>
 
-            <div class="data-summary">
-                <div class="summary-item">
-                    <div class="summary-label">Total Forecasted</div>
-                    <div class="summary-value" id="totalRain">0.00"</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">10-Day Total Precip</div>
+                    <div class="stat-val" id="totalRain">--</div>
                 </div>
-                <div class="summary-item">
-                    <div class="summary-label">Historical Norm</div>
-                    <div class="summary-value" id="normRain">0.00"</div>
-                    <div class="summary-note" id="normDiff">--</div>
+                <div class="stat-card" style="border-left-color: var(--accent);">
+                    <div class="stat-label">Historical Norm</div>
+                    <div class="stat-val" id="normRain">--</div>
                 </div>
-                <div class="summary-item">
-                    <div class="summary-label">Max Daily Event</div>
-                    <div class="summary-value" id="maxRain">0.00"</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-label">Rainy Days</div>
-                    <div class="summary-value" id="rainyDays">0</div>
+                <div class="stat-card" style="border-left-color: #f59e0b;">
+                    <div class="stat-label">Climate Variance</div>
+                    <div class="stat-val" id="variance">--</div>
                 </div>
             </div>
-        </div>
-
-        <div class="footer">
-            Location: Round Rock, TX | Source: Open-Meteo GFS (Inches) | Almanac: JimEgan2025
         </div>
     </div>
 
-    <script>
-        const LAT = 30.509747, LON = -97.692116;
-        const ALMANAC_URL = 'https://jimegan2025.github.io/almanac.json';
-        let chart = null;
+<script>
+    const LAT = 30.509747, LON = -97.692116;
 
-        async function init() {
-            try {
-                // 1. Fetch Almanac Data
-                const almRes = await fetch(ALMANAC_URL);
-                const almanac = await almRes.json();
+    async function init() {
+        try {
+            const almRes = await fetch('https://jimegan2025.github.io/almanac.json');
+            const almanac = await almRes.json();
 
-                // 2. Fetch GFS Forecast (Added precipitation_unit=inch to fix mm bug)
-                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=precipitation_sum,precipitation_probability_max&precipitation_unit=inch&timezone=America/Chicago&forecast_days=10`;
-                const res = await fetch(url);
-                const weather = await res.json();
+            // Fetch hourly for Day/Night precision
+            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=precipitation_probability&daily=precipitation_sum&precipitation_unit=inch&timezone=America/Chicago&forecast_days=8`;
+            const res = await fetch(url);
+            const data = await res.json();
 
-                processAndDisplay(weather.daily, almanac);
-            } catch (err) {
-                document.getElementById('loader').innerHTML = `<span style="color:red">Error syncing data: ${err.message}</span>`;
+            processAndRender(data, almanac);
+        } catch (e) {
+            document.getElementById('loader').innerText = "⚠️ UPLINK FAILED";
+        }
+    }
+
+    function processAndRender(data, almanac) {
+        const labels = [];
+        const values = [];
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+        // Split data into Day (6am-6pm) and Night (6pm-6am)
+        for (let i = 0; i < 7; i++) {
+            const dayStart = i * 24 + 6;
+            const nightStart = i * 24 + 18;
+
+            const dayProb = Math.max(...data.hourly.precipitation_probability.slice(dayStart, dayStart + 12));
+            const nightProb = Math.max(...data.hourly.precipitation_probability.slice(nightStart, nightStart + 12));
+
+            const dateObj = new Date(data.daily.time[i] + 'T00:00:00');
+            const dayName = days[dateObj.getDay()];
+
+            labels.push([dayName, 'DAY'], [dayName, 'NIGHT']);
+            values.push(dayProb, nightProb);
+        }
+
+        // Summary Stats logic
+        const total = data.daily.precipitation_sum.reduce((a, b) => a + b, 0);
+        const startNorm = Number(almanac[data.daily.time[0].slice(5)]?.accP || 0);
+        const endNorm = Number(almanac[data.daily.time[7].slice(5)]?.accP || 0);
+        const norm = Math.abs(endNorm - startNorm);
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('totalRain').innerText = total.toFixed(2) + '"';
+        document.getElementById('normRain').innerText = norm.toFixed(2) + '"';
+        document.getElementById('variance').innerText = (total - norm).toFixed(2) + '"';
+
+        renderChart(labels, values);
+    }
+
+    function renderChart(labels, values) {
+        const ctx = document.getElementById('rainChart').getContext('2d');
+        
+        // Plugin to draw the background bands
+        const backgroundZonalPlugin = {
+            id: 'backgroundZonalPlugin',
+            beforeDraw: (chart) => {
+                const {ctx, chartArea, scales: {y}} = chart;
+                const zones = [
+                    { min: 80, max: 100, color: '#064e3b' }, // Likely
+                    { min: 60, max: 80, color: '#065f46' },  // Widespread
+                    { min: 40, max: 60, color: '#047857' },  // Scattered
+                    { min: 20, max: 40, color: '#059669' },  // Widely Scattered
+                    { min: 0, max: 20, color: '#10b981' },   // Isolated
+                ];
+
+                zones.forEach(zone => {
+                    ctx.fillStyle = zone.color;
+                    const top = y.getPixelForValue(zone.max);
+                    const bottom = y.getPixelForValue(zone.min);
+                    ctx.fillRect(chartArea.left, top, chartArea.width, bottom - top);
+                });
             }
-        }
+        };
 
-        function processAndDisplay(daily, almanac) {
-            const labels = [];
-            const amounts = [];
-            const probs = [];
-            
-            let totalForecast = 0;
-            let maxRain = 0;
-            let rainyDays = 0;
-
-            // Calculate Historical Norm for this 10-day window
-            const firstKey = daily.time[0].slice(5);
-            const lastKey = daily.time[9].slice(5);
-            const startNorm = Number(almanac[firstKey]?.accP || 0);
-            const endNorm = Number(almanac[lastKey]?.accP || 0);
-            const tenDayNorm = Math.abs(endNorm - startNorm);
-
-            daily.time.forEach((t, i) => {
-                const date = new Date(t + 'T00:00:00');
-                labels.push(date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }));
-                
-                const amt = daily.precipitation_sum[i] || 0;
-                const prob = daily.precipitation_probability_max[i] || 0;
-
-                amounts.push(amt);
-                probs.push(prob);
-
-                totalForecast += amt;
-                if (amt > maxRain) maxRain = amt;
-                if (amt > 0.01) rainyDays++;
-            });
-
-            // Update UI
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            
-            document.getElementById('totalRain').innerText = totalForecast.toFixed(2) + '"';
-            document.getElementById('maxRain').innerText = maxRain.toFixed(2) + '"';
-            document.getElementById('rainyDays').innerText = rainyDays;
-            document.getElementById('normRain').innerText = tenDayNorm.toFixed(2) + '"';
-            
-            const diff = totalForecast - tenDayNorm;
-            const diffEl = document.getElementById('normDiff');
-            diffEl.innerText = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}" vs Norm`;
-            diffEl.style.color = diff >= 0 ? '#38bdf8' : '#94a3b8';
-
-            renderChart(labels, amounts, probs);
-        }
-
-        function renderChart(labels, amounts, probs) {
-            const ctx = document.getElementById('precipChart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Amount (Inches)',
-                            data: amounts,
-                            backgroundColor: '#38bdf8',
-                            borderRadius: 5,
-                            yAxisID: 'yAmt',
-                            order: 2
-                        },
-                        {
-                            label: 'Probability (%)',
-                            data: probs,
-                            type: 'line',
-                            borderColor: '#f59e0b',
-                            borderDash: [5, 5],
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            yAxisID: 'yProb',
-                            order: 1
-                        }
-                    ]
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: '#cffafe', // Light cyan bars
+                    borderColor: 'white',
+                    borderWidth: 1,
+                    barPercentage: 0.8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yAmt: {
-                            position: 'left',
-                            title: { display: true, text: 'Inches', color: '#94a3b8' },
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#94a3b8' },
-                            suggestedMax: 0.5
-                        },
-                        yProb: {
-                            position: 'right',
-                            title: { display: true, text: 'Probability %', color: '#f59e0b' },
-                            grid: { display: false },
-                            ticks: { color: '#f59e0b' },
-                            min: 0,
-                            max: 100
-                        },
-                        x: {
-                            ticks: { color: '#f1f5f9' },
-                            grid: { display: false }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#f1f5f9', font: { weight: 'bold' } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    if (context.dataset.label.includes('Amount')) {
-                                        return `Amount: ${context.parsed.y.toFixed(2)}"`;
-                                    }
-                                    return `Probability: ${context.parsed.y}%`;
-                                }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'left',
+                        ticks: {
+                            color: 'white',
+                            font: { weight: 'bold', size: 14 },
+                            callback: (val) => {
+                                const labels = {100:'LIKELY', 80:'WIDESPREAD', 60:'SCATTERED', 40:'WIDELY SCATTERED', 20:'ISOLATED', 0:''};
+                                return labels[val] || '';
                             }
-                        }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
+                    },
+                    yRight: {
+                        beginAtZero: true,
+                        max: 100,
+                        position: 'right',
+                        ticks: {
+                            color: '#4ade80',
+                            font: { weight: 'bold' },
+                            callback: (val) => val + '%'
+                        },
+                        grid: { display: false }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'white',
+                            font: { size: 11, weight: 'bold' }
+                        },
+                        grid: { display: false }
                     }
                 }
-            });
-        }
+            },
+            plugins: [backgroundZonalPlugin]
+        });
+    }
 
-        init();
-    </script>
+    init();
+</script>
 </body>
 </html>
