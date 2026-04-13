@@ -3,71 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central TX Weather Dash</title>
+    <title>Central TX Situation Room</title>
     <style>
-        :root { --danger: #d73a49; --bg: #f6f8fa; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #24292e; line-height: 1.5; }
+        :root { 
+            --danger: #d73a49; 
+            --bg: #f0f2f5; 
+            --card: #ffffff;
+            --accent: #1e3a8a;
+        }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; color: #1f2937; line-height: 1.5; }
         
-        .grid, .map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; align-items: start; }
+        /* DATA SOURCE BANNER */
+        .source-banner {
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 10px;
+            text-align: center;
+            padding: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            border-bottom: 2px solid #3b82f6;
+        }
+        .source-banner span { color: #f8fafc; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
-        .panel { background: white; border: 1px solid #d1d5da; border-radius: 8px; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .panel h2 { margin: 0 0 10px 0; font-size: 0.85rem; border-bottom: 1px solid #eee; padding-bottom: 6px; text-transform: uppercase; color: #586069; font-weight: 600; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.5rem; letter-spacing: -1px; color: var(--accent); }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         
-        .map-container { width: 100%; height: auto; display: block; overflow: hidden; border-radius: 4px; border: 1px solid #f0f0f0; }
-        .outlook-img { width: 100%; height: auto; display: block; }
+        .panel { background: var(--card); border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .panel h2 { margin: 0 0 12px 0; font-size: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 1px; }
         
-        .risk-card { padding: 8px; margin-top: 5px; border-radius: 4px; font-weight: bold; text-align: center; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.1); }
+        .map-container { width: 100%; aspect-ratio: 16/10; overflow: hidden; border-radius: 8px; background: #000; display: flex; align-items: center; justify-content: center; border: 1px solid #ddd; }
+        .outlook-img { width: 100%; height: 100%; object-fit: contain; }
         
-        /* FULL SPC/WPC COLOR SCALE */
-        .risk-NONE { background: #f0f0f0; color: #999; border-style: dashed; }
-        .risk-TSTM { background: #cce5ff; color: #004085; }      /* Light Blue */
-        .risk-MRGL { background: #c2e0c6; color: #1e4620; }      /* Dark Green */
-        .risk-SLGT { background: #fef2c0; color: #735c0f; }      /* Yellow */
-        .risk-ENH  { background: #fba; color: #7a3a00; }         /* Orange */
-        .risk-MDT  { background: #f99; color: #700; }            /* Red */
-        .risk-HIGH { background: #f9f; color: #707; }            /* Magenta */
+        .risk-card { padding: 10px; margin-top: 8px; border-radius: 6px; font-weight: 900; text-align: center; font-size: 0.85rem; border: 1px solid rgba(0,0,0,0.1); text-transform: uppercase; }
         
-        .active-alert { border-left: 4px solid var(--danger); padding: 8px; margin-bottom: 6px; background: #fff5f5; font-size: 0.8rem; font-weight: bold; }
-        .radar-panel { height: 600px; grid-column: span 3; }
+        /* SPC/WPC SCALE COLORS */
+        .risk-NONE { background: #f8fafc; color: #94a3b8; border-style: dashed; }
+        .risk-TSTM { background: #cce5ff; color: #004085; }
+        .risk-MRGL { background: #d1fae5; color: #065f46; }
+        .risk-SLGT { background: #fef3c7; color: #92400e; }
+        .risk-ENH  { background: #ffedd5; color: #9a3412; }
+        .risk-MDT  { background: #fee2e2; color: #991b1b; }
+        .risk-HIGH { background: #fdf2f8; color: #9d174d; }
+        
+        .active-alert { border-left: 4px solid var(--danger); padding: 10px; margin-bottom: 8px; background: #fff1f2; font-size: 0.85rem; font-weight: 800; color: #991b1b; }
+        .no-hazards { color: #10b981; font-weight: 700; text-align: center; padding: 20px; font-size: 0.9rem; }
+
+        .radar-panel { height: 550px; grid-column: span 3; }
         iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
 
-        @media (max-width: 1100px) { .grid, .map-grid { grid-template-columns: 1fr; } .radar-panel { grid-column: span 1; } }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .radar-panel { grid-column: span 1; } }
     </style>
 </head>
 <body>
 
-    <h2 style="margin:0 0 20px 0; font-size: 1.3rem;">Central Texas Situation Room | <span id="timestamp" style="color:var(--danger)">Syncing...</span></h2>
+    <div class="source-banner">
+        Intelligence Feed: <span>NOAA SPC / WPC Regional GIFs</span> &nbsp;&bull;&nbsp; Alerts: <span>NWS EWX Austin/San Antonio</span>
+    </div>
 
-    <div class="grid">
-        <div class="panel"><h2>⚠️ Active Alerts</h2><div id="nws-box">Checking...</div></div>
-        <div class="panel">
-            <h2>🌪️ SPC Severe Risk</h2>
-            <div id="spc-1" class="risk-card">Day 1: ...</div>
-            <div id="spc-2" class="risk-card">Day 2: ...</div>
-            <div id="spc-3" class="risk-card">Day 3: ...</div>
+    <div class="container">
+        <div class="header-flex">
+            <h1>Central Texas Situation Room</h1>
+            <div id="timestamp" style="font-size: 0.8rem; font-weight: 700; color: #64748b;">INITIALIZING...</div>
         </div>
-        <div class="panel">
-            <h2>🌧️ WPC Flood Risk</h2>
-            <div id="wpc-1" class="risk-card">Day 1: ...</div>
-            <div id="wpc-2" class="risk-card">Day 2: ...</div>
-            <div id="wpc-3" class="risk-card">Day 3: ...</div>
+
+        <div class="grid">
+            <div class="panel">
+                <h2>⚠️ NWS Watch/Warning</h2>
+                <div id="nws-box"><div class="no-hazards">Checking Uplink...</div></div>
+            </div>
+            <div class="panel">
+                <h2>🌪️ Convective Risk (SPC)</h2>
+                <div id="spc-1" class="risk-card">D1: ...</div>
+                <div id="spc-2" class="risk-card">D2: ...</div>
+                <div id="spc-3" class="risk-card">D3: ...</div>
+            </div>
+            <div class="panel">
+                <h2>🌧️ Flash Flood Risk (WPC)</h2>
+                <div id="wpc-1" class="risk-card">D1: ...</div>
+                <div id="wpc-2" class="risk-card">D2: ...</div>
+                <div id="wpc-3" class="risk-card">D3: ...</div>
+            </div>
         </div>
-    </div>
 
-    <div class="map-grid">
-        <div class="panel"><h2>SPC Day 1 (EWX)</h2><div class="map-container"><img id="img-spc1" class="outlook-img" src=""></div></div>
-        <div class="panel"><h2>SPC Day 2 (EWX)</h2><div class="map-container"><img id="img-spc2" class="outlook-img" src=""></div></div>
-        <div class="panel"><h2>SPC Day 3 (EWX)</h2><div class="map-container"><img id="img-spc3" class="outlook-img" src=""></div></div>
-    </div>
+        <div class="grid">
+            <div class="panel"><h2>Severe Day 1 (SPC EWX)</h2><div class="map-container"><img id="img-spc1" class="outlook-img" src=""></div></div>
+            <div class="panel"><h2>Severe Day 2 (SPC EWX)</h2><div class="map-container"><img id="img-spc2" class="outlook-img" src=""></div></div>
+            <div class="panel"><h2>Severe Day 3 (SPC EWX)</h2><div class="map-container"><img id="img-spc3" class="outlook-img" src=""></div></div>
+        </div>
 
-    <div class="map-grid">
-        <div class="panel"><h2>WPC Day 1 Flood</h2><div class="map-container"><img id="img-wpc1" class="outlook-img" src=""></div></div>
-        <div class="panel"><h2>WPC Day 2 Flood</h2><div class="map-container"><img id="img-wpc2" class="outlook-img" src=""></div></div>
-        <div class="panel"><h2>WPC Day 3 Flood</h2><div class="map-container"><img id="img-wpc3" class="outlook-img" src=""></div></div>
-    </div>
+        <div class="grid">
+            <div class="panel"><h2>Flood Day 1 (WPC EWX)</h2><div class="map-container"><img id="img-wpc1" class="outlook-img" src=""></div></div>
+            <div class="panel"><h2>Flood Day 2 (WPC EWX)</h2><div class="map-container"><img id="img-wpc2" class="outlook-img" src=""></div></div>
+            <div class="panel"><h2>Flood Day 3 (WPC EWX)</h2><div class="map-container"><img id="img-wpc3" class="outlook-img" src=""></div></div>
+        </div>
 
-    <div class="panel radar-panel">
-        <iframe src="https://embed.windy.com/embed2.html?lat=30.508&lon=-97.679&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
+        <div class="panel radar-panel">
+            <iframe src="https://embed.windy.com/embed2.html?lat=30.508&lon=-97.679&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
+        </div>
     </div>
 
     <script>
@@ -75,29 +113,36 @@
 
         async function update() {
             const now = new Date();
-            document.getElementById('timestamp').innerText = now.toLocaleTimeString();
-            const cacheBuster = `?t=${now.getTime()}`;
+            document.getElementById('timestamp').innerText = `LAST DATA SYNC: ${now.toLocaleTimeString()}`;
+            const buster = `?t=${now.getTime()}`;
 
-            // Refresh Images
-            document.getElementById('img-spc1').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png${cacheBuster}`;
-            document.getElementById('img-spc2').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png${cacheBuster}`;
-            document.getElementById('img-spc3').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody3.png${cacheBuster}`;
+            // IMAGE UPDATES
+            // SPC Regional Zooms (EWX)
+            document.getElementById('img-spc1').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody1.png${buster}`;
+            document.getElementById('img-spc2').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody2.png${buster}`;
+            document.getElementById('img-spc3').src = `https://www.spc.noaa.gov/partners/outlooks/cwa/images/EWX_swody3.png${buster}`;
             
-            document.getElementById('img-wpc1').src = `https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif${cacheBuster}`;
-            document.getElementById('img-wpc2').src = `https://www.wpc.ncep.noaa.gov/qpf/98ewbg.gif${cacheBuster}`;
-            document.getElementById('img-wpc3').src = `https://www.wpc.ncep.noaa.gov/qpf/99ewbg.gif${cacheBuster}`;
+            // WPC Regional GIFs (Your specific links)
+            document.getElementById('img-wpc1').src = `https://www.wpc.ncep.noaa.gov/qpf/94ewbg.gif${buster}`;
+            document.getElementById('img-wpc2').src = `https://www.wpc.ncep.noaa.gov/qpf/98ewbg.gif${buster}`;
+            document.getElementById('img-wpc3').src = `https://www.wpc.ncep.noaa.gov/qpf/99ewbg.gif${buster}`;
 
-            // NWS Alerts
+            // NWS Active Alerts
             try {
                 const nRes = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`);
                 const nData = await nRes.json();
-                document.getElementById('nws-box').innerHTML = nData.features?.length 
-                    ? nData.features.map(f => `<div class="active-alert">${f.properties.event}</div>`).join('') 
-                    : "<div style='color:#888; text-align:center; padding:15px;'>No Active Hazards</div>";
-            } catch (e) { console.error("NWS Fetch Error", e); }
+                const box = document.getElementById('nws-box');
+                if (nData.features && nData.features.length > 0) {
+                    box.innerHTML = nData.features.map(f => `<div class="active-alert">${f.properties.event}</div>`).join('');
+                } else {
+                    box.innerHTML = `<div class="no-hazards">✅ NO ACTIVE HAZARDS</div>`;
+                }
+            } catch (e) { 
+                document.getElementById('nws-box').innerHTML = `<div class="no-hazards" style="color:red">⚠️ ALERT LINK OFFLINE</div>`;
+            }
 
-            // Fetch Risk Levels from NOAA Vector Services
-            const paths = [
+            // Vector Risk (The Cards)
+            const risks = [
                 ["outlooks/SPC_wx_outlks/MapServer/1", "spc-1"],
                 ["outlooks/SPC_wx_outlks/MapServer/9", "spc-2"],
                 ["outlooks/SPC_wx_outlks/MapServer/17", "spc-3"],
@@ -105,40 +150,39 @@
                 ["hazards/wpc_precip_hazards/MapServer/1", "wpc-2"],
                 ["hazards/wpc_precip_hazards/MapServer/2", "wpc-3"]
             ];
-            paths.forEach(p => fetchRisk(p[0], p[1]));
+            risks.forEach(r => fetchVectorRisk(r[0], r[1]));
         }
 
-        async function fetchRisk(path, elId) {
+        async function fetchVectorRisk(path, id) {
             const url = `https://mapservices.weather.noaa.gov/vector/rest/services/${path}/query?geometry=${lon},${lat}&geometryType=esriGeometryPoint&inSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&f=pjson`;
             try {
-                const r = await fetch(url);
-                const d = await r.json();
-                let risk = "NONE";
-                if (d.features?.length > 0) {
-                    const a = d.features[0].attributes;
-                    // NOAA uses varying field names for labels across layers
-                    risk = a.LABEL || a.LABEL2 || a.VALUE || "NONE";
+                const res = await fetch(url);
+                const data = await res.json();
+                let label = "NONE";
+                if (data.features && data.features.length > 0) {
+                    const attr = data.features[0].attributes;
+                    label = attr.LABEL || attr.LABEL2 || attr.VALUE || "GEN TSTM";
                 }
-                const clean = parseRisk(risk);
-                const el = document.getElementById(elId);
-                el.innerText = `Day ${elId.split('-')[1]}: ${risk}`;
-                el.className = `risk-card risk-${clean}`;
-            } catch (e) { console.error(`Error fetching ${elId}`, e); }
+                const el = document.getElementById(id);
+                const type = id.startsWith('spc') ? 'Severe' : 'Flood';
+                el.innerText = `D${id.split('-')[1]} ${type}: ${label}`;
+                el.className = `risk-card risk-${parseClass(label)}`;
+            } catch (e) { console.error("Vector Error", e); }
         }
 
-        function parseRisk(t) {
+        function parseClass(t) {
             t = String(t).toUpperCase();
             if (t.includes("HIGH")) return "HIGH";
             if (t.includes("MDT") || t.includes("MOD")) return "MDT";
             if (t.includes("ENH")) return "ENH";
             if (t.includes("SLGT") || t.includes("SLIGHT")) return "SLGT";
             if (t.includes("MRGL") || t.includes("MARGINAL")) return "MRGL";
-            if (t.includes("TSTM") || t.includes("GEN") || t.includes("ANY")) return "TSTM";
+            if (t.includes("TSTM") || t.includes("GEN")) return "TSTM";
             return "NONE";
         }
 
         update();
-        setInterval(update, 600000); // Update every 10 mins
+        setInterval(update, 600000); // 10 min refresh
     </script>
 </body>
 </html>
