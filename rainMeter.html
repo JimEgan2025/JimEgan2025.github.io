@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Rain Probability - Strategic View</title>
+    <title>Vizcaya WX 2026 | Strategic Rain Probability</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -24,8 +24,10 @@
             color: #f8fafc;
             min-height: 100vh;
             padding: 0;
+            overflow-x: hidden;
         }
 
+        /* DATA SOURCE BANNER */
         .source-banner {
             background: var(--header-dark);
             color: #64748b;
@@ -41,78 +43,146 @@
 
         .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
 
+        /* LOGO MISSION BADGE STYLING */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .mission-badge {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 30px;
+            border-radius: 60px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .v-emblem {
+            width: 45px;
+            height: 45px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+        }
+        .logo-text-wrap {
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(255,255,255,0.2);
+            padding-left: 15px;
+        }
+        .logo-main {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #fff;
+            line-height: 1;
+        }
+        .logo-sub {
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        /* CHART HEADER */
         .chart-header {
             text-align: center;
             background: #1e3a8a;
-            padding: 15px;
+            padding: 18px;
             margin-bottom: 2px;
-            border-radius: 8px 8px 0 0;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .chart-header h1 {
             font-size: 2.2rem;
-            letter-spacing: 4px;
+            letter-spacing: 6px;
             text-transform: uppercase;
             font-weight: 900;
             color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
         .graph-wrapper {
-            background: #111;
-            padding: 10px;
+            background: #000;
+            padding: 15px;
             border: 2px solid #334155;
-            border-radius: 0 0 8px 8px;
-            height: 500px;
+            border-radius: 0 0 12px 12px;
+            height: 550px;
             position: relative;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
         }
         .stat-card {
             background: #1e293b;
-            padding: 20px;
+            padding: 25px;
             border-radius: 12px;
             text-align: center;
-            border-left: 5px solid var(--isolated);
+            border-bottom: 5px solid var(--isolated);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
         }
-        .stat-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 800; }
-        .stat-val { font-size: 28px; font-weight: 900; color: white; margin-top: 5px; }
+        .stat-label { font-size: 12px; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; }
+        .stat-val { font-size: 36px; font-weight: 900; color: white; margin-top: 10px; }
 
-        #loader { text-align: center; padding: 100px; font-weight: 900; letter-spacing: 2px; color: var(--accent); }
+        #loader { text-align: center; padding: 150px; font-weight: 900; letter-spacing: 3px; color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div class="source-banner">
-        Meteorological Core: <span>Open-Meteo GFS 0.25°</span> &nbsp;&bull;&nbsp; Historical Rule: <span>Jim's 130-Year Local Archive</span>
+        Meteorological Engine: <span>Open-Meteo GFS 0.25°</span> &nbsp;&bull;&nbsp; Climatology Engine: <span>Jim's 130-Year local Records</span>
     </div>
 
     <div class="container">
-        <div id="loader">📡 INTERROGATING ATMOSPHERIC MODELS...</div>
+        <div id="loader">📡 UPLINKING TO VIZCAYA COMMAND...</div>
 
         <div id="mainContent" style="display:none;">
+            
+            <!-- NEW 2026 LOGO BADGE -->
+            <div class="logo-container">
+                <div class="mission-badge">
+                    <svg class="v-emblem" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" stroke="var(--accent)" stroke-dasharray="2 2" />
+                        <path d="M30 35 L50 75 L70 35" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="logo-text-wrap">
+                        <div class="logo-main">VIZCAYA WX</div>
+                        <div class="logo-sub">STRATEGIC OPERATIONS · 2026</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="chart-header">
                 <h1>Chance of Rain</h1>
             </div>
+            
             <div class="graph-wrapper">
                 <canvas id="rainChart"></canvas>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-label">10-Day Total Precip</div>
+                    <div class="stat-label">10-Day Total Forecast</div>
                     <div class="stat-val" id="totalRain">--</div>
+                    <div style="font-size: 11px; color:#10b981; margin-top:5px; font-weight:bold;">PRECIPITATION ENGINE</div>
                 </div>
-                <div class="stat-card" style="border-left-color: var(--accent);">
-                    <div class="stat-label">Historical Norm</div>
+                <div class="stat-card" style="border-bottom-color: var(--accent);">
+                    <div class="stat-label">130-Year Local Norm</div>
                     <div class="stat-val" id="normRain">--</div>
+                    <div style="font-size: 11px; color:#38bdf8; margin-top:5px; font-weight:bold;">CLIMATOLOGY AUTHORITY</div>
                 </div>
-                <div class="stat-card" style="border-left-color: #f59e0b;">
+                <div class="stat-card" style="border-bottom-color: #f59e0b;">
                     <div class="stat-label">Climate Variance</div>
                     <div class="stat-val" id="variance">--</div>
+                    <div style="font-size: 11px; margin-top:5px; font-weight:bold;">VS. HISTORICAL AVERAGE</div>
                 </div>
             </div>
         </div>
@@ -120,20 +190,19 @@
 
 <script>
     const LAT = 30.509747, LON = -97.692116;
+    let rainChart = null;
 
     async function init() {
         try {
-            const almRes = await fetch('https://jimegan2025.github.io/almanac.json');
+            const [almRes, weatherRes] = await Promise.all([
+                fetch('https://jimegan2025.github.io/almanac.json'),
+                fetch(`https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=precipitation_probability&daily=precipitation_sum&precipitation_unit=inch&timezone=America/Chicago&forecast_days=8`)
+            ]);
             const almanac = await almRes.json();
-
-            // Fetch hourly for Day/Night precision
-            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=precipitation_probability&daily=precipitation_sum&precipitation_unit=inch&timezone=America/Chicago&forecast_days=8`;
-            const res = await fetch(url);
-            const data = await res.json();
-
+            const data = await weatherRes.json();
             processAndRender(data, almanac);
         } catch (e) {
-            document.getElementById('loader').innerText = "⚠️ UPLINK FAILED";
+            document.getElementById('loader').innerText = "⚠️ UPLINK TIMEOUT";
         }
     }
 
@@ -142,52 +211,46 @@
         const values = [];
         const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-        // Split data into Day (6am-6pm) and Night (6pm-6am)
         for (let i = 0; i < 7; i++) {
             const dayStart = i * 24 + 6;
             const nightStart = i * 24 + 18;
-
             const dayProb = Math.max(...data.hourly.precipitation_probability.slice(dayStart, dayStart + 12));
             const nightProb = Math.max(...data.hourly.precipitation_probability.slice(nightStart, nightStart + 12));
-
             const dateObj = new Date(data.daily.time[i] + 'T00:00:00');
             const dayName = days[dateObj.getDay()];
-
             labels.push([dayName, 'DAY'], [dayName, 'NIGHT']);
             values.push(dayProb, nightProb);
         }
 
-        // Summary Stats logic
-        const total = data.daily.precipitation_sum.reduce((a, b) => a + b, 0);
+        const total = data.daily.precipitation_sum.slice(0, 7).reduce((a, b) => a + b, 0);
         const startNorm = Number(almanac[data.daily.time[0].slice(5)]?.accP || 0);
-        const endNorm = Number(almanac[data.daily.time[7].slice(5)]?.accP || 0);
+        const endNorm = Number(almanac[data.daily.time[6].slice(5)]?.accP || 0);
         const norm = Math.abs(endNorm - startNorm);
+        const variance = total - norm;
 
         document.getElementById('loader').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
         document.getElementById('totalRain').innerText = total.toFixed(2) + '"';
         document.getElementById('normRain').innerText = norm.toFixed(2) + '"';
-        document.getElementById('variance').innerText = (total - norm).toFixed(2) + '"';
+        document.getElementById('variance').innerText = (variance >= 0 ? '+' : '') + variance.toFixed(2) + '"';
+        document.getElementById('variance').style.color = variance >= 0 ? '#38bdf8' : '#f87171';
 
         renderChart(labels, values);
     }
 
     function renderChart(labels, values) {
         const ctx = document.getElementById('rainChart').getContext('2d');
-        
-        // Plugin to draw the background bands
+        if (rainChart) rainChart.destroy();
+
         const backgroundZonalPlugin = {
             id: 'backgroundZonalPlugin',
             beforeDraw: (chart) => {
                 const {ctx, chartArea, scales: {y}} = chart;
                 const zones = [
-                    { min: 80, max: 100, color: '#064e3b' }, // Likely
-                    { min: 60, max: 80, color: '#065f46' },  // Widespread
-                    { min: 40, max: 60, color: '#047857' },  // Scattered
-                    { min: 20, max: 40, color: '#059669' },  // Widely Scattered
-                    { min: 0, max: 20, color: '#10b981' },   // Isolated
+                    { min: 80, max: 100, color: '#064e3b' }, { min: 60, max: 80, color: '#065f46' },  
+                    { min: 40, max: 60, color: '#047857' }, { min: 20, max: 40, color: '#059669' },  
+                    { min: 0, max: 20, color: '#10b981' },   
                 ];
-
                 zones.forEach(zone => {
                     ctx.fillStyle = zone.color;
                     const top = y.getPixelForValue(zone.max);
@@ -197,57 +260,41 @@
             }
         };
 
-        new Chart(ctx, {
+        rainChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
                     data: values,
-                    backgroundColor: '#cffafe', // Light cyan bars
+                    backgroundColor: 'rgba(207, 250, 254, 0.9)', 
                     borderColor: 'white',
-                    borderWidth: 1,
-                    barPercentage: 0.8,
+                    borderWidth: 2,
+                    barPercentage: 0.7,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        max: 100,
-                        position: 'left',
+                        beginAtZero: true, max: 100,
                         ticks: {
                             color: 'white',
-                            font: { weight: 'bold', size: 14 },
+                            font: { weight: 'bold', size: 13 },
                             callback: (val) => {
-                                const labels = {100:'LIKELY', 80:'WIDESPREAD', 60:'SCATTERED', 40:'WIDELY SCATTERED', 20:'ISOLATED', 0:''};
-                                return labels[val] || '';
+                                const l = {100:'LIKELY', 80:'WIDESPREAD', 60:'SCATTERED', 40:'WIDELY SCATTERED', 20:'ISOLATED', 0:''};
+                                return l[val] || '';
                             }
                         },
                         grid: { color: 'rgba(255,255,255,0.1)' }
                     },
                     yRight: {
-                        beginAtZero: true,
-                        max: 100,
-                        position: 'right',
-                        ticks: {
-                            color: '#4ade80',
-                            font: { weight: 'bold' },
-                            callback: (val) => val + '%'
-                        },
+                        beginAtZero: true, max: 100, position: 'right',
+                        ticks: { color: 'rgba(255,255,255,0.7)', font: { weight: 'bold', size: 12 }, callback: (val) => val + '%' },
                         grid: { display: false }
                     },
-                    x: {
-                        ticks: {
-                            color: 'white',
-                            font: { size: 11, weight: 'bold' }
-                        },
-                        grid: { display: false }
-                    }
+                    x: { ticks: { color: 'white', font: { size: 11, weight: 'bold' } }, grid: { display: false } }
                 }
             },
             plugins: [backgroundZonalPlugin]
