@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vizcaya Strategic | Tactical Intelligence Command</title>
+    <style>
+        :root {
+            --bg: #030406; --card: #0a0c10; --border: #1f2937; --text: #c9d1d9;
+            --primary: #00ffcc; --danger: #ff4444; --warning: #ffcc00;
+            --extreme: #ff00ff; --neutral: #6b7280; --stable: #4ade80;
+        }
+        body {
+            font-family: 'Inter', 'JetBrains Mono', monospace; background: var(--bg); color: var(--text);
+            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        header {
+            padding: 15px 30px; background: #000; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .main-deck {
+            flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+            padding: 20px; gap: 20px; overflow-y: auto;
+        }
+        
+        /* Indices Table */
+        .indices-table {
+            background: #000; border: 1px solid var(--border); border-radius: 4px;
+            display: flex; flex-direction: column; height: fit-content;
+        }
+        .table-header { background: #111; padding: 10px 15px; font-size: 0.8rem; font-weight: bold; color: var(--neutral); border-bottom: 1px solid var(--border); }
+        .row { display: flex; justify-content: space-between; padding: 15px 25px; border-bottom: 1px solid #111; font-size: 1.1rem; }
+        .row:last-child { border-bottom: none; }
+        .label { color: var(--neutral); font-family: monospace; }
+        .val { font-weight: bold; font-family: monospace; color: #fff; }
+        
+        /* Summary Card */
+        .summary-card {
+            background: var(--card); border: 1px solid var(--border);
+            padding: 30px; border-radius: 8px; border-left: 10px solid var(--primary);
+            height: fit-content;
+        }
+
+        /* Large Bottom Reference Manual */
+        .tactical-manual {
+            background: #000; border-top: 2px solid var(--border); 
+            padding: 25px 40px; display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 30px; font-size: 1.1rem; line-height: 1.5;
+        }
+        .ref-section { border-left: 3px solid #222; padding-left: 20px; }
+        .ref-title { color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 10px; font-size: 0.9rem; }
+
+        /* Tactical Inputs */
+        .manual-entry {
+            display: flex; gap: 15px; align-items: center; background: #111;
+            padding: 10px 20px; border-radius: 4px; border: 1px solid #333;
+        }
+        .manual-entry input {
+            background: #000; border: 1px solid var(--primary); color: var(--primary);
+            width: 70px; padding: 6px; text-align: center; font-family: inherit; font-size: 1.2rem; font-weight: bold;
+        }
+
+        .flash { animation: alert-flash 1.5s infinite; }
+        @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        
+        .timestamp { font-family: monospace; color: var(--warning); font-weight: bold; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <div style="font-weight: 900; color: var(--primary); font-size: 1.3rem; letter-spacing: 1px;">★ VIZCAYA STRATEGIC // COMMAND DECK</div>
+        <div style="margin-top: 5px;">
+            <span style="font-size: 0.65rem; color: var(--neutral); text-transform: uppercase;">Signal Status:</span>
+            <span class="timestamp" id="sync-time">AS OF: 00:00:00</span>
+        </div>
+    </div>
+    
+    <div class="manual-entry">
+        <span style="font-size: 0.7rem; font-weight: 900; color: var(--neutral);">GROUND TELEMETRY:</span>
+        <input type="number" id="m-t" value="83" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
+        <input type="number" id="m-dw" value="66" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
+    </div>
+</header>
+
+<div class="main-deck">
+    <!-- LEFT: TRIAGE TABLE -->
+    <div class="indices-table">
+        <div class="table-header">GFS 18Z THERMODYNAMIC INDICES</div>
+        <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-sbcape">--</span></div>
+        <div class="row"><span class="label">SBCIN (The Cap)</span><span class="val" id="v-sbcin">--</span></div>
+        <div class="row"><span class="label">LIFTED INDEX</span><span class="val" id="v-li">--</span></div>
+        <div class="row"><span class="label">0-6km BULK SHEAR</span><span class="val" id="v-shr">--</span></div>
+        <div class="row"><span class="label">SRH 0-1km (Helicity)</span><span class="val" id="v-srh">--</span></div>
+        <div class="row"><span class="label">PWAT (Moisture Depth)</span><span class="val" id="v-pwat">--</span></div>
+        <div class="row"><span class="label">DCAPE (Wind Energy)</span><span class="val" id="v-dcape">--</span></div>
+    </div>
+
+    <!-- RIGHT: STRATEGIC VERDICT -->
+    <div class="summary-card" id="summary-box">
+        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 0.9rem; letter-spacing: 2px;">TACTICAL VERDICT</h3>
+        <div id="ai-text" style="font-size: 1.3rem; line-height: 1.6;">Synchronizing...</div>
+    </div>
+</div>
+
+<!-- LARGE BOTTOM REFERENCE BOX -->
+<div class="tactical-manual">
+    <div class="ref-section">
+        <span class="ref-title">Bulk Shear (0-6km)</span>
+        <span style="color:var(--neutral)">&lt; 25 kt:</span> Disorganized clusters.<br>
+        <span style="color:var(--danger)">30 - 40 kt:</span> <b style="color:var(--danger)">Red:</b> Supercells Possible.<br>
+        <span style="color:var(--extreme)">&gt; 50 kt:</span> <b style="color:var(--extreme)">Magenta:</b> Long-track Supercells.
+    </div>
+
+    <div class="ref-section">
+        <span class="ref-title">Helicity / Rotation</span>
+        <span style="color:var(--neutral)">&lt; 100:</span> Pulse storms.<br>
+        <span style="color:var(--danger)">150 - 200:</span> <b style="color:var(--danger)">Red:</b> Tornado Potential.<br>
+        <span style="color:var(--extreme)">&gt; 300:</span> <b style="color:var(--extreme)">Magenta:</b> Significant Tornado Risk.
+    </div>
+
+    <div class="ref-section">
+        <span class="ref-title">Moisture & Buoyancy</span>
+        <span style="color:var(--danger)">PWAT &gt; 1.50":</span> Flash Flood Risk.<br>
+        <span style="color:var(--danger)">LI -5 to -8:</span> Strong Updrafts.<br>
+        <span style="color:var(--extreme)">LI &lt; -10:</span> Explosive Acceleration.
+    </div>
+</div>
+
+<footer style="height: 30px; background: #000; display: flex; align-items: center; padding: 0 30px; font-size: 0.6rem; color: #333; letter-spacing: 1px;">
+    VIZCAYA STRATEGIC SOUNDING // ALIGNED TO 18Z GFS BENCHMARK // DELTA RECORDER ACTIVE
+</footer>
+
+<script>
+    function updateVal(id, value, thresholds, isCin = false) {
+        const el = document.getElementById(id);
+        el.innerText = (id === 'v-pwat') ? value.toFixed(2) + " in" : 
+                      (id === 'v-shr') ? value + " kt" :
+                      (id === 'v-srh') ? value + " m²/s²" :
+                      (id === 'v-li') ? value : value + " J/kg";
+        
+        if (isCin) {
+            if (value === 0) el.style.color = "var(--extreme)";
+            else if (value > -25) el.style.color = "var(--danger)";
+            else el.style.color = "var(--stable)";
+            return;
+        }
+
+        const absVal = Math.abs(value);
+        if (absVal >= thresholds.extreme) el.style.color = "var(--extreme)";
+        else if (absVal >= thresholds.danger) el.style.color = "var(--danger)";
+        else if (absVal >= thresholds.warning) el.style.color = "var(--warning)";
+        else el.style.color = "var(--stable)";
+    }
+
+    function runInterceptor() {
+        const mt = parseFloat(document.getElementById('m-t').value);
+        const mdw = parseFloat(document.getElementById('m-dw').value);
+        
+        // GFS 18Z Baseline (Benchmark)
+        const bT = 76, bDw = 69, bCape = 2024, bCin = -1, bLi = -5.2;
+
+        const tDelta = mt - bT;
+        const dwDelta = mdw - bDw;
+
+        const finalCape = Math.round(bCape + (tDelta * 205) + (dwDelta * 255));
+        const finalCin = Math.min(0, Math.round(bCin + (tDelta * 8)));
+        const finalLi = parseFloat((bLi - (tDelta * 0.45) - (dwDelta * 0.25)).toFixed(1));
+        const finalPwat = parseFloat(1.37 + (dwDelta * 0.04));
+        const finalDc = Math.round(finalCape * 0.47);
+
+        // Fixed from 18Z model image for Vizcaya
+        const shr = 35;
+        const srh = 51;
+
+        // Triage numbers
+        updateVal('v-sbcape', finalCape, { warning: 1500, danger: 2500, extreme: 4000 });
+        updateVal('v-sbcin', finalCin, {}, true);
+        updateVal('v-li', finalLi, { warning: 5, danger: 8, extreme: 10 });
+        updateVal('v-shr', shr, { warning: 25, danger: 30, extreme: 50 });
+        updateVal('v-srh', srh, { warning: 100, danger: 150, extreme: 300 });
+        updateVal('v-pwat', finalPwat, { warning: 1.25, danger: 1.5, extreme: 1.85 });
+        updateVal('v-dcape', finalDc, { warning: 800, danger: 1100, extreme: 1400 });
+
+        // Update Outlook
+        const ai = document.getElementById('ai-text');
+        const summary = document.getElementById('summary-box');
+
+        if (finalCape > 3500) {
+            summary.style.borderLeftColor = "var(--extreme)";
+            ai.innerHTML = `<span class="flash" style="color:var(--extreme); font-weight:bold;">EXPLOSIVE CONDITION DETECTED:</span> Ground-truth temperature (${mt}°F) has <b style="color:var(--extreme)">deleted the cap</b>. SBCAPE of ${finalCape} J/kg is explosive. Convective initiation will result in high-end supercells.`;
+        } else if (finalCape > 2000) {
+            summary.style.borderLeftColor = "var(--danger)";
+            ai.innerText = "The airmass is uncapped and highly unstable. Buoyancy is sufficient for significant severe weather (Hail/Wind) if a trigger arrives.";
+        } else {
+            summary.style.borderLeftColor = "var(--stable)";
+            ai.innerText = "Nominal conditions. Thermodynamics are currently stable.";
+        }
+
+        // Update Timestamp
+        const now = new Date();
+        document.getElementById('sync-time').innerText = "AS OF: " + now.toLocaleTimeString();
+    }
+
+    runInterceptor();
+</script>
+
+</body>
+</html>
