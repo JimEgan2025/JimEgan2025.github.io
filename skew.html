@@ -18,48 +18,57 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .main-deck {
-            flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+            flex: 1; display: grid; grid-template-columns: 1fr 1fr 0.8fr;
             padding: 20px; gap: 20px; overflow-y: auto;
         }
-        /* Indices Table */
-        .indices-table {
+        .indices-table, .timeline-box, .telemetry-box {
             background: #000; border: 1px solid var(--border); border-radius: 4px;
             display: flex; flex-direction: column; height: fit-content;
         }
-        .table-header { background: #111; padding: 10px 15px; font-size: 0.8rem; font-weight: bold; color: var(--neutral); border-bottom: 1px solid var(--border); }
-        .row { display: flex; justify-content: space-between; padding: 15px 25px; border-bottom: 1px solid #111; font-size: 1.1rem; }
+        .table-header { background: #111; padding: 10px 15px; font-size: 0.75rem; font-weight: bold; color: var(--neutral); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .telemetry-row { display: flex; justify-content: space-around; padding: 15px; background: #05070a; }
+        .tel-item { text-align: center; }
+        .tel-label { font-size: 0.6rem; color: var(--neutral); text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .tel-val { font-size: 1.4rem; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; }
+
+        .row { display: flex; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #111; font-size: 1rem; }
         .row:last-child { border-bottom: none; }
         .label { color: var(--neutral); font-family: monospace; }
         .val { font-weight: bold; font-family: monospace; color: #fff; }
         
-        /* Summary Card */
         .summary-card {
             background: var(--card); border: 1px solid var(--border);
             padding: 30px; border-radius: 8px; border-left: 10px solid var(--primary);
             height: fit-content; transition: border-left 0.5s ease;
         }
-        /* Large Bottom Reference Manual */
-        .tactical-manual {
-            background: #000; border-top: 2px solid var(--border); 
-            padding: 25px 40px; display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 30px; font-size: 1.1rem; line-height: 1.5;
-        }
-        .ref-section { border-left: 3px solid #222; padding-left: 20px; }
-        .ref-title { color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 2px; display: block; margin-bottom: 10px; font-size: 0.9rem; }
 
-        /* Tactical Inputs */
+        .timeline-row { display: grid; grid-template-columns: 1.2fr 1.5fr 1.2fr; padding: 12px 15px; border-bottom: 1px solid #111; font-size: 0.85rem; align-items: center; }
+        .time-label { color: var(--warning); font-weight: bold; font-family: monospace; }
+        .trend-bar { height: 4px; background: #222; border-radius: 2px; position: relative; margin: 0 10px; }
+        .trend-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+        /* TACTICAL MANUAL FOOTER */
+        .tactical-manual {
+            background: #000; border-top: 1px solid var(--border); 
+            padding: 15px 40px; display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 30px; font-size: 0.9rem; line-height: 1.4;
+        }
+        .ref-section { border-left: 3px solid #1f2937; padding-left: 15px; }
+        .ref-title { color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; font-size: 0.75rem; }
+
         .manual-entry {
-            display: flex; gap: 15px; align-items: center; background: #111;
-            padding: 10px 20px; border-radius: 4px; border: 1px solid #333;
+            display: flex; gap: 10px; align-items: center; background: #111;
+            padding: 8px 15px; border-radius: 4px; border: 1px solid #333;
         }
         .manual-entry input {
-            background: #000; border: 1px solid var(--primary); color: var(--primary);
-            width: 70px; padding: 6px; text-align: center; font-family: inherit; font-size: 1.2rem; font-weight: bold;
+            background: #000; border: 1px solid var(--neutral); color: var(--text);
+            width: 50px; padding: 4px; text-align: center; font-family: inherit; font-size: 0.9rem;
         }
         .flash { animation: alert-flash 1s infinite; }
         @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
         .timestamp { font-family: monospace; color: var(--warning); font-weight: bold; font-size: 0.8rem; }
-        .erosion-sub { font-size: 0.75rem; color: var(--neutral); margin-left: 8px; }
+        #station-pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--warning); margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -68,164 +77,160 @@
     <div>
         <div style="font-weight: 900; color: var(--primary); font-size: 1.3rem; letter-spacing: 1px;">★ VIZCAYA STRATEGIC // COMMAND DECK</div>
         <div style="margin-top: 5px;">
-            <span style="font-size: 0.65rem; color: var(--neutral); text-transform: uppercase;">Signal Status:</span>
-            <span class="timestamp" id="sync-time">AS OF: --:--:--</span>
+            <span id="station-pulse"></span>
+            <span style="font-size: 0.65rem; color: var(--neutral); text-transform: uppercase;">STATION EW6452:</span>
+            <span class="timestamp" id="sync-time">INITIALIZING...</span>
         </div>
     </div>
     
     <div class="manual-entry">
-        <span style="font-size: 0.7rem; font-weight: 900; color: var(--neutral);">GROUND TELEMETRY:</span>
-        <input type="number" id="m-t" value="81" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
-        <input type="number" id="m-dw" value="70" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
+        <span style="font-size: 0.6rem; font-weight: 900; color: var(--neutral);">MANUAL OVERRIDE:</span>
+        <input type="number" id="m-t" value="81" oninput="runInterceptor()">
+        <input type="number" id="m-dw" value="70" oninput="runInterceptor()">
     </div>
 </header>
 
 <div class="main-deck">
-    <div class="indices-table">
-        <div class="table-header">GFS 18Z THERMODYNAMIC INDICES</div>
-        <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-sbcape">--</span></div>
-        <div class="row"><span class="label">SBCIN (The Cap)</span><span class="val" id="v-sbcin">--</span></div>
-        <div class="row"><span class="label">LIFTED INDEX</span><span class="val" id="v-li">--</span></div>
-        <div class="row"><span class="label">0-6km BULK SHEAR</span><span class="val" id="v-shr">--</span></div>
-        <div class="row"><span class="label">SRH 0-1km (Helicity)</span><span class="val" id="v-srh">--</span></div>
-        <div class="row"><span class="label">PWAT (Moisture Depth)</span><span class="val" id="v-pwat">--</span></div>
-        <div class="row"><span class="label">DCAPE (Wind Energy)</span><span class="val" id="v-dcape">--</span></div>
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="telemetry-box">
+            <div class="table-header">EW6452 Backyard Telemetry</div>
+            <div class="telemetry-row">
+                <div class="tel-item"><span class="tel-label">Temp</span><span class="tel-val" id="raw-t">--</span><span style="font-size: 0.7rem; color: var(--neutral);">°F</span></div>
+                <div class="tel-item"><span class="tel-label">Dew Point</span><span class="tel-val" id="raw-dw">--</span><span style="font-size: 0.7rem; color: var(--neutral);">°F</span></div>
+                <div class="tel-item"><span class="tel-label">Humidity</span><span class="tel-val" id="raw-rh">--</span><span style="font-size: 0.7rem; color: var(--neutral);">%</span></div>
+            </div>
+        </div>
+
+        <div class="indices-table">
+            <div class="table-header">Thermodynamic Intercept</div>
+            <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-sbcape">--</span></div>
+            <div class="row"><span class="label">SBCIN (The Cap)</span><span class="val" id="v-sbcin">--</span></div>
+            <div class="row"><span class="label">LIFTED INDEX</span><span class="val" id="v-li">--</span></div>
+            <div class="row"><span class="label">0-6km BULK SHEAR</span><span class="val" id="v-shr">--</span></div>
+            <div class="row"><span class="label">PWAT (Moisture)</span><span class="val" id="v-pwat">--</span></div>
+            <div class="row"><span class="label">DCAPE (Wind Energy)</span><span class="val" id="v-dcape">--</span></div>
+        </div>
     </div>
 
     <div class="summary-card" id="summary-box">
-        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 0.9rem; letter-spacing: 2px;">TACTICAL VERDICT</h3>
-        <div id="ai-text" style="font-size: 1.3rem; line-height: 1.6;">Synchronizing...</div>
+        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 0.8rem; letter-spacing: 2px;">TACTICAL VERDICT</h3>
+        <div id="ai-text" style="font-size: 1.2rem; line-height: 1.5;">Awaiting signal...</div>
+    </div>
+
+    <div class="timeline-box">
+        <div class="table-header">Strategic Outlook (Next 4hrs)</div>
+        <div id="timeline-content"></div>
     </div>
 </div>
 
 <div class="tactical-manual">
     <div class="ref-section">
         <span class="ref-title">Bulk Shear (0-6km)</span>
-        <span style="color:var(--neutral)">&lt; 25 kt:</span> Disorganized clusters.<br>
-        <span style="color:var(--danger)">30 - 40 kt:</span> <b style="color:var(--danger)">Red:</b> Supercells Possible.<br>
-        <span style="color:var(--extreme)">&gt; 50 kt:</span> <b style="color:var(--extreme)">Magenta:</b> Long-track Supercells.
+        <span style="color:var(--neutral)">&lt; 25 kt:</span> Pulse/Disorganized.<br>
+        <span style="color:var(--danger)">30 - 40 kt:</span> <b style="color:var(--danger)">RED:</b> Supercells Possible.
     </div>
-
     <div class="ref-section">
         <span class="ref-title">Helicity / Rotation</span>
-        <span style="color:var(--neutral)">&lt; 100:</span> Pulse storms.<br>
-        <span style="color:var(--danger)">150 - 200:</span> <b style="color:var(--danger)">Red:</b> Tornado Potential.<br>
-        <span style="color:var(--extreme)">&gt; 300:</span> <b style="color:var(--extreme)">Magenta:</b> Significant Tornado Risk.
+        <span style="color:var(--danger)">150 - 200:</span> <b style="color:var(--danger)">RED:</b> Tornado Potential.<br>
+        <span style="color:var(--extreme)">&gt; 300:</span> <b style="color:var(--extreme)">MAGENTA:</b> Significant Risk.
     </div>
-
     <div class="ref-section">
         <span class="ref-title">Moisture & Buoyancy</span>
-        <span style="color:var(--danger)">PWAT &gt; 1.50":</span> Flash Flood Risk.<br>
-        <span style="color:var(--danger)">LI -5 to -8:</span> Strong Updrafts.<br>
+        <span style="color:var(--danger)">PWAT &gt; 1.50":</span> Flash Flood Potential.<br>
         <span style="color:var(--extreme)">LI &lt; -10:</span> Explosive Acceleration.
     </div>
 </div>
 
-<footer style="height: 30px; background: #000; display: flex; align-items: center; padding: 0 30px; font-size: 0.6rem; color: #333; letter-spacing: 1px;">
-    VIZCAYA STRATEGIC SOUNDING // ALIGNED TO 18Z GFS BENCHMARK // DELTA RECORDER ACTIVE
-</footer>
-
 <script>
+    const forecastTrend = [
+        { time: "4:00 PM", cape: 2150 },
+        { time: "5:00 PM", cape: 2480 },
+        { time: "6:00 PM", cape: 2890 },
+        { time: "7:00 PM", cape: 3105 }
+    ];
+
+    async function fetchLiveTelemetry() {
+        let tempF = 81, dewF = 70, hum = 68, statusColor = "var(--warning)";
+        try {
+            const url = `https://api.weather.gov/stations/E6452/observations/latest`;
+            const response = await fetch(url, { headers: { 'User-Agent': 'VizcayaTactical/1.4' } });
+            if (response.ok) {
+                const data = await response.json();
+                const props = data.properties;
+                if (props.temperature.value !== null && props.dewpoint.value !== null) {
+                    tempF = Math.round((props.temperature.value * 9/5) + 32);
+                    dewF = Math.round((props.dewpoint.value * 9/5) + 32);
+                    hum = props.relativeHumidity.value ? Math.round(props.relativeHumidity.value) : hum;
+                    statusColor = "var(--stable)";
+                }
+            }
+        } catch (e) { statusColor = "var(--danger)"; }
+        
+        document.getElementById('raw-t').innerText = tempF;
+        document.getElementById('raw-dw').innerText = dewF;
+        document.getElementById('raw-rh').innerText = hum;
+        document.getElementById('m-t').value = tempF;
+        document.getElementById('m-dw').value = dewF;
+        document.getElementById('station-pulse').style.background = statusColor;
+        runInterceptor();
+    }
+
     function updateVal(id, value, thresholds, isCin = false) {
         const el = document.getElementById(id);
-        let formatted = value;
-        
-        if (id === 'v-pwat') formatted = value.toFixed(2) + " in";
-        else if (id === 'v-shr') formatted = value + " kt";
-        else if (id === 'v-srh') formatted = value + " m²/s²";
-        else if (id === 'v-li') formatted = value;
-        else formatted = value + " J/kg";
-
-        el.innerHTML = formatted;
-
+        if(!el) return;
+        let displayVal = isCin ? value + " J/kg" : (id === 'v-pwat' ? value.toFixed(2) + " in" : value + (id==='v-li'?'':' J/kg'));
         if (isCin) {
-            // CIN is negative/zero. 0 is most dangerous.
-            if (value === 0) el.style.color = "var(--extreme)";
-            else if (value > -25) el.style.color = "var(--danger)";
-            else el.style.color = "var(--stable)";
-            return;
+            el.style.color = value === 0 ? "var(--extreme)" : value > -25 ? "var(--danger)" : "var(--stable)";
+        } else {
+            const abs = Math.abs(value);
+            el.style.color = abs >= (thresholds.extreme || 999) ? "var(--extreme)" : abs >= (thresholds.danger || 999) ? "var(--danger)" : "var(--stable)";
         }
-
-        const absVal = Math.abs(value);
-        if (absVal >= thresholds.extreme) el.style.color = "var(--extreme)";
-        else if (absVal >= thresholds.danger) el.style.color = "var(--danger)";
-        else if (absVal >= thresholds.warning) el.style.color = "var(--warning)";
-        else el.style.color = "var(--stable)";
+        el.innerText = displayVal;
     }
 
     function runInterceptor() {
-        const mt = parseFloat(document.getElementById('m-t').value);
-        const mdw = parseFloat(document.getElementById('m-dw').value);
-        
-        // GFS 18Z Baseline (Benchmark for Vizcaya at current hour)
+        const mt = parseFloat(document.getElementById('m-t').value) || 81;
+        const mdw = parseFloat(document.getElementById('m-dw').value) || 70;
         const bT = 76, bDw = 69, bCape = 2024, bCin = -1, bLi = -5.2;
-
-        const tDelta = mt - bT;
-        const dwDelta = mdw - bDw;
-
-        // 1. Core Thermodynamics
-        const finalCape = Math.round(bCape + (tDelta * 205) + (dwDelta * 255));
-        const finalCin = Math.min(0, Math.round(bCin + (tDelta * 8)));
-        const finalLi = parseFloat((bLi - (tDelta * 0.45) - (dwDelta * 0.25)).toFixed(1));
-        const finalPwat = parseFloat((1.37 + (dwDelta * 0.04)).toFixed(2));
         
-        // 2. Advanced Intercept Math (Wind & Erosion)
-        const dcapeBase = finalCape * 0.47;
-        const finalDc = Math.round(Math.max(dcapeBase, dcapeBase + (tDelta * 35)));
-        
-        const capStrength = Math.max(0, (finalCin / -150) * 100); 
-        const erosionPercent = Math.round(100 - capStrength);
+        const finalCape = Math.round(bCape + ((mt - bT) * 205) + ((mdw - bDw) * 255));
+        const finalCin = Math.min(0, Math.round(bCin + ((mt - bT) * 8)));
+        const finalLi = parseFloat((bLi - ((mt-bT) * 0.45) - ((mdw-bDw) * 0.25)).toFixed(1));
+        const finalDc = Math.round(finalCape * 0.47 + ((mt-bT)*35));
 
-        // Fixed Kinematics from 18Z model for Round Rock
-        const shr = 35;
-        const srh = 51;
+        updateVal('v-sbcape', finalCape, { danger: 2500, extreme: 3500 });
+        updateVal('v-sbcin', finalCin, {}, true);
+        updateVal('v-li', finalLi, { danger: 8, extreme: 10 });
+        updateVal('v-pwat', parseFloat((1.37 + ((mdw-bDw)*0.04)).toFixed(2)), { danger: 1.5, extreme: 1.8 });
+        updateVal('v-dcape', finalDc, { danger: 1100, extreme: 1400 });
+        document.getElementById('v-shr').innerText = "35 kt";
+        document.getElementById('v-shr').style.color = "var(--danger)";
 
-        // 3. UI Updates
-        updateVal('v-sbcape', finalCape, { warning: 1500, danger: 2500, extreme: 3500 });
-        
-        // Custom CIN update with Erosion Logic
-        const cinEl = document.getElementById('v-sbcin');
-        const capStatus = (finalCin === 0) ? "BREACHED" : `${erosionPercent}% ERODED`;
-        cinEl.innerHTML = `${finalCin} J/kg <span class="erosion-sub">(${capStatus})</span>`;
-        cinEl.style.color = (finalCin === 0) ? "var(--extreme)" : (finalCin > -25) ? "var(--danger)" : "var(--stable)";
-
-        updateVal('v-li', finalLi, { warning: 5, danger: 8, extreme: 10 });
-        updateVal('v-shr', shr, { warning: 25, danger: 30, extreme: 50 });
-        updateVal('v-srh', srh, { warning: 100, danger: 150, extreme: 300 });
-        updateVal('v-pwat', finalPwat, { warning: 1.25, danger: 1.5, extreme: 1.85 });
-        updateVal('v-dcape', finalDc, { warning: 800, danger: 1100, extreme: 1400 });
-
-        // 4. Strategic Verdict Logic
         const ai = document.getElementById('ai-text');
-        const summary = document.getElementById('summary-box');
-        let verdict = "";
-        let color = "var(--stable)";
-
+        const box = document.getElementById('summary-box');
         if (finalCin === 0 && finalCape > 2500) {
-            color = "var(--extreme)";
-            verdict = `<span class="flash" style="color:var(--extreme); font-weight:bold;">EXPLOSIVE CONDITION:</span> The airmass is uncapped. SBCAPE of ${finalCape} J/kg is explosive. `;
-            verdict += (shr >= 30) ? `With ${shr}kt shear, <b>Discrete Supercells</b> are the primary mode.` : "Pulse storms likely.";
-        } else if (finalCin > -30 && finalCape > 1500) {
-            color = "var(--danger)";
-            verdict = "<b>TACTICAL ALERT:</b> Airmass is highly unstable and the cap is weakening. Sufficient buoyancy exists for severe hail/wind if a trigger arrives.";
-        } else if (finalCape > 1000) {
-            color = "var(--warning)";
-            verdict = "<b>CAUTION:</b> Moderate instability present. Heavy rainfall potential is high, but capping inversion is currently maintaining stability.";
+            box.style.borderLeftColor = "var(--extreme)";
+            ai.innerHTML = `<span class="flash" style="color:var(--extreme); font-weight:bold;">EXPLOSIVE:</span> Cap breached. SBCAPE is ${finalCape}. 35kt shear supports supercells.`;
+        } else if (finalCin > -25) {
+            box.style.borderLeftColor = "var(--danger)";
+            ai.innerText = "TACTICAL ALERT: The cap is critically thin. Primed for convective initiation.";
         } else {
-            color = "var(--stable)";
-            verdict = "<b>NOMINAL:</b> Surface telemetry suggests a stable profile. No immediate threat to Vizcaya.";
+            box.style.borderLeftColor = "var(--stable)";
+            ai.innerText = "STABLE: Backyard moisture insufficient to break the cap at this time.";
         }
-
-        summary.style.borderLeftColor = color;
-        ai.innerHTML = verdict;
-
-        // Update Timestamp
-        const now = new Date();
-        document.getElementById('sync-time').innerText = "AS OF: " + now.toLocaleTimeString();
+        document.getElementById('sync-time').innerText = new Date().toLocaleTimeString();
     }
 
-    // Initial Run
-    runInterceptor();
+    function renderTimeline() {
+        const container = document.getElementById('timeline-content');
+        container.innerHTML = "";
+        forecastTrend.forEach(f => {
+            const color = f.cape > 2500 ? "var(--extreme)" : f.cape > 1500 ? "var(--danger)" : "var(--warning)";
+            container.innerHTML += `<div class="timeline-row"><span class="time-label">${f.time}</span><div class="trend-bar"><div class="trend-fill" style="width:${(f.cape/3500)*100}%; background:${color}"></div></div><span style="font-size:0.75rem; color:${color}; font-family:monospace;">${f.cape}</span></div>`;
+        });
+    }
+
+    window.onload = () => { renderTimeline(); fetchLiveTelemetry(); setInterval(fetchLiveTelemetry, 300000); };
 </script>
 </body>
 </html>
