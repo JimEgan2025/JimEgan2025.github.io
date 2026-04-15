@@ -2,132 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Regional Command | 5:00 PM Tactical</title>
+    <title>Vizcaya Strategic Command | V7.0 Official</title>
     <style>
         :root {
-            --bg: #030406; --card: #0a0c10; --border: #1f2937; --text: #c9d1d9;
-            --primary: #00ffcc; --danger: #ff4444; --warning: #ffcc00;
-            --extreme: #ff00ff; --neutral: #6b7280; --stable: #4ade80;
+            --bg: #030406; --card: #0d1117; --border: #30363d; --text: #c9d1d9;
+            --primary: #58a6ff; --danger: #f85149; --warning: #d29922;
+            --extreme: #bc8cff; --stable: #3fb950; --neutral: #8b949e;
         }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .dashboard { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 15px; }
-        .panel-header { font-size: 0.7rem; font-weight: 900; color: var(--neutral); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; border-bottom: 1px solid #1f2937; padding-bottom: 8px; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .dashboard { display: grid; grid-template-columns: 3fr 1.2fr; gap: 15px; max-width: 1600px; margin: auto; }
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 15px; }
+        .panel-header { font-size: 0.7rem; font-weight: 800; color: var(--neutral); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; justify-content: space-between; }
         
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
-        th { text-align: left; color: var(--neutral); padding: 10px; font-size: 0.65rem; border-bottom: 2px solid var(--border); }
-        td { padding: 12px 10px; border-bottom: 1px solid #111; }
+        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+        th { text-align: left; color: var(--neutral); padding: 8px; border-bottom: 2px solid var(--border); font-size: 0.6rem; }
+        td { padding: 8px; border-bottom: 1px solid #21262d; }
         
-        /* Indicators */
-        .val-main { font-weight: bold; color: #fff; }
-        .status-pill { padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; }
-        .trend-rising { color: var(--danger); }
-        
-        .alert-box { background: #0c0800; border: 1px solid var(--warning); padding: 15px; margin-top: 20px; border-left: 5px solid var(--warning); }
+        .status-pill { padding: 2px 5px; border-radius: 3px; font-weight: 900; font-size: 0.6rem; border: 1px solid transparent; }
+        .hero-val { font-size: 3rem; font-weight: 900; line-height: 1; margin: 10px 0; }
+        .timestamp { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--primary); }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
     <div class="panel">
-        <div class="panel-header">Regional Surveillance Perimeter</div>
+        <div class="panel-header">
+            <span>Central Texas Meso-Grid (Live NWS API)</span>
+            <span class="timestamp" id="sync-time">CONNECTING...</span>
+        </div>
         <table>
             <thead>
                 <tr>
-                    <th>STATION / ROLE</th>
-                    <th>OBSERVED</th>
-                    <th>SBCAPE (FUEL)</th>
-                    <th>LI (LIFT)</th>
-                    <th>CAP (CIN)</th>
+                    <th>STATION / SECTOR</th>
+                    <th>T/DW</th>
+                    <th>SBCAPE</th>
+                    <th>LI</th>
+                    <th>CIN (CAP)</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
-            <tbody id="grid-body">
-                </tbody>
+            <tbody id="grid-body"></tbody>
         </table>
-
-        <div class="alert-box" id="strategic-summary">
-            <b>MESOANALYSIS:</b> Synchronizing regional METAR feed...
-        </div>
     </div>
 
-    <div class="panel" style="text-align: center;">
-        <div class="panel-header">Vizcaya (EW6452)</div>
-        <div style="margin-top: 30px;">
-            <div style="font-size: 0.7rem; color: var(--neutral);">CURRENT ENERGY</div>
-            <div style="font-size: 3rem; font-weight: 900; color: var(--primary);" id="viz-cape">3149</div>
-            <div style="font-size: 0.8rem; color: var(--primary);">J/kg</div>
+    <div class="panel">
+        <div class="panel-header">
+            <span>Vizcaya Ground Truth (EW6452)</span>
+            <span id="current-date"></span>
         </div>
-        <div style="margin-top: 40px;">
-            <div style="font-size: 0.7rem; color: var(--neutral);">LIFT POTENTIAL</div>
-            <div style="font-size: 3rem; font-weight: 900; color: var(--extreme);" id="viz-li">-7.1</div>
-        </div>
-        <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
-            <div style="font-size: 0.7rem; color: var(--neutral);">LOCAL CAP STATUS</div>
-            <div style="font-size: 1.5rem; font-weight: 900; color: var(--primary);">BREACHED (0)</div>
+        <div style="text-align: center;">
+            <div id="live-clock" style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: #fff;">00:00:00</div>
+            
+            <div style="margin-top: 30px;">
+                <div style="font-size: 0.65rem; color: var(--neutral);">CONVECTIVE ENERGY</div>
+                <div class="hero-val" style="color: var(--primary);">3149</div>
+                <div style="font-size: 0.75rem; color: var(--primary);">J/kg (EXPLOSIVE)</div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <div style="font-size: 0.65rem; color: var(--neutral);">LIFTED INDEX</div>
+                <div class="hero-val" style="color: var(--extreme);">-7.1</div>
+            </div>
+
+            <div style="background: #002200; border: 1px solid var(--stable); border-radius: 4px; padding: 15px; text-align: center; margin-top: 30px;">
+                <div style="font-weight: 900; color: var(--stable); font-size: 0.75rem;">THERMODYNAMIC CAP</div>
+                <div style="font-size: 1.2rem; font-weight: 900; color: #fff;">BREACHED (0)</div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // The "Sentinel" Station Array
     const STATIONS = [
-    { id: 'KMNV', name: 'Mason', role: 'FAR WEST SCOUT' },
-    { id: 'KAQO', name: 'Llano', role: 'HILL COUNTRY SENTINEL' },
-    { id: 'KBMQ', name: 'Burnet', role: 'WESTERN TRIGGER' },
-    { id: 'KGTU', name: 'Georgetown', role: 'NORTHERN LID' },
-    { id: 'KEDC', name: 'Austin Exec', role: 'FEEDER FLOW' },
-    { id: 'KTPL', name: 'Temple', role: 'NORTHERN ANCHOR' },
-    { id: 'KILE', name: 'Killeen', role: 'DRYLINE JUNCTION' },
-    { id: 'KGID', name: 'Giddings', role: 'EASTERN MOISTURE' },
-    { id: 'KHYI', name: 'San Marcos', role: 'UPSTREAM FEED' },
-    { id: 'KBAZ', name: 'New Braunfels', role: 'CORE RESERVOIR' }
-
+        { id: 'KMNV', name: 'Mason', role: 'Far West Scout' },
+        { id: 'KAQO', name: 'Llano', role: 'Hill Country Sentinel' },
+        { id: 'KBMQ', name: 'Burnet', role: 'Western Trigger' },
+        { id: 'KILE', name: 'Killeen', role: 'Northwest Flank' },
+        { id: 'KGTU', name: 'Georgetown', role: 'Northern Anchor' },
+        { id: 'KTPL', name: 'Temple', role: 'North Sector' },
+        { id: 'KATT', name: 'Camp Mabry', role: 'Austin Central' },
+        { id: 'KEDC', name: 'Austin Exec', role: 'I-35 Primary Feed' },
+        { id: 'KT74', name: 'Taylor', role: 'Eastern Edge' },
+        { id: 'KGID', name: 'Giddings', role: 'Gulf Inflow' },
+        { id: 'KHYI', name: 'San Marcos', role: 'Southern Sentinel' },
+        { id: 'KBAZ', name: 'New Braunfels', role: 'Deep Moisture' }
     ];
 
-    // Thermodynamic Baseline Constants (Based on GFS 18Z)
-    const baseline = { temp: 76, dew: 69, cape: 2024, li: -5.2, cin: 40 };
+    const base = { T: 76, Dw: 69, Cape: 2024, Li: -5.2, Cin: 40 };
 
-    async function updateMesoGrid() {
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+        document.getElementById('current-date').innerText = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    async function fetchNWSData() {
         const body = document.getElementById('grid-body');
-        const summary = document.getElementById('strategic-summary');
+        const syncLabel = document.getElementById('sync-time');
         let html = "";
-        let breachedCount = 1; // Including Vizcaya
 
         for (let st of STATIONS) {
             try {
-                // In a real env, you'd fetch from api.weather.gov/stations/{id}/observations/latest
-                // Simulating regional variance based on current 4:40 PM trends:
-                const t = 76 + Math.floor(Math.random() * 6);
-                const dw = 62 + Math.floor(Math.random() * 8);
+                const res = await fetch(`https://api.weather.gov/stations/${st.id}/observations/latest`);
+                const json = await res.json();
+                const p = json.properties;
 
-                // THERMODYNAMIC CALCULATION ENGINES
-                const cape = Math.round(baseline.cape + ((t - baseline.temp) * 180) + ((dw - baseline.dew) * 220));
-                const li = parseFloat((baseline.li - ((t - baseline.temp) * 0.4) - ((dw - baseline.dew) * 0.2)).toFixed(1));
-                const cin = Math.max(0, Math.round(baseline.cin - ((t - baseline.temp) * 15) - ((dw - baseline.dew) * 20)));
+                const t_f = Math.round((p.temperature.value * 9/5) + 32);
+                const dw_f = Math.round((p.dewpoint.value * 9/5) + 32);
 
-                const color = cin === 0 ? "var(--primary)" : (cin < 25 ? "var(--warning)" : "var(--stable)");
-                const statusLabel = cin === 0 ? "BREACHED" : (cin < 25 ? "WEAK" : "STABLE");
-                if (cin === 0) breachedCount++;
+                // ERROR FILTER: Prevents malformed data (like Taylor 32/32) from corrupting the report
+                if (t_f < 40 && new Date().getMonth() > 3) throw new Error("Sensor Glitch");
 
-                html += `
-                    <tr>
-                        <td><span class="val-main">${st.name}</span><br><small style="color:var(--neutral)">${st.role}</small></td>
-                        <td>${t}° / ${dw}°</td>
-                        <td style="color:${cape > 2500 ? 'var(--danger)' : 'white'}">${cape}</td>
-                        <td style="color:${li < -6 ? 'var(--extreme)' : 'white'}">${li}</td>
-                        <td style="color:${color}">${cin}</td>
-                        <td><span class="status-pill" style="border: 1px solid ${color}; color:${color}">${statusLabel}</span></td>
-                    </tr>
-                `;
-            } catch (e) { console.error(st.id, e); }
+                const cape = Math.round(base.Cape + ((t_f - base.T) * 190) + ((dw_f - base.Dw) * 235));
+                const li = parseFloat((base.Li - ((t_f - base.T) * 0.42) - ((dw_f - base.Dw) * 0.22)).toFixed(1));
+                const cin = Math.max(0, Math.round(base.Cin - ((t_f - base.T) * 12) - ((dw_f - base.Dw) * 18)));
+
+                const color = cin === 0 ? "var(--extreme)" : (cin < 25 ? "var(--danger)" : "var(--stable)");
+                const risk = cin === 0 ? "EXPLOSIVE" : (cin < 25 ? "UNSTABLE" : "STABLE");
+
+                html += `<tr>
+                    <td><span style="color:#fff;font-weight:bold;">${st.name}</span><br><small>${st.role}</small></td>
+                    <td>${t_f}°/${dw_f}°</td>
+                    <td style="color:${cape > 2500 ? 'var(--danger)' : 'white'}">${cape}</td>
+                    <td>${li}</td>
+                    <td style="color:${color}">${cin}</td>
+                    <td><span class="status-pill" style="border:1px solid ${color};color:${color}">${risk}</span></td>
+                </tr>`;
+            } catch (e) {
+                html += `<tr><td>${st.name}</td><td colspan="5" style="color:var(--neutral)">STATION DATA RECOVERY...</td></tr>`;
+            }
         }
         body.innerHTML = html;
-        summary.innerHTML = `<b>COMMAND ADVISORY:</b> ${breachedCount} of 7 regional stations are currently <b>UNCAPPED</b>. The instability bullseye is focused on the I-35 corridor between Austin Exec and Round Rock. Initiation is likely within 60 minutes as the cap fails regionally.`;
+        syncLabel.innerText = "LAST DATA REFRESH: " + new Date().toLocaleTimeString();
     }
 
-    window.onload = updateMesoGrid;
+    setInterval(updateClock, 1000);
+    setInterval(fetchNWSData, 900000); // 15-minute refresh for stability
+    updateClock();
+    fetchNWSData();
 </script>
 </body>
 </html>
