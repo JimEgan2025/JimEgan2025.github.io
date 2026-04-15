@@ -21,7 +21,6 @@
             flex: 1; display: grid; grid-template-columns: 1fr 1fr;
             padding: 20px; gap: 20px; overflow-y: auto;
         }
-        
         /* Indices Table */
         .indices-table {
             background: #000; border: 1px solid var(--border); border-radius: 4px;
@@ -37,9 +36,8 @@
         .summary-card {
             background: var(--card); border: 1px solid var(--border);
             padding: 30px; border-radius: 8px; border-left: 10px solid var(--primary);
-            height: fit-content;
+            height: fit-content; transition: border-left 0.5s ease;
         }
-
         /* Large Bottom Reference Manual */
         .tactical-manual {
             background: #000; border-top: 2px solid var(--border); 
@@ -58,11 +56,10 @@
             background: #000; border: 1px solid var(--primary); color: var(--primary);
             width: 70px; padding: 6px; text-align: center; font-family: inherit; font-size: 1.2rem; font-weight: bold;
         }
-
-        .flash { animation: alert-flash 1.5s infinite; }
-        @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        
+        .flash { animation: alert-flash 1s infinite; }
+        @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
         .timestamp { font-family: monospace; color: var(--warning); font-weight: bold; font-size: 0.8rem; }
+        .erosion-sub { font-size: 0.75rem; color: var(--neutral); margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -72,19 +69,18 @@
         <div style="font-weight: 900; color: var(--primary); font-size: 1.3rem; letter-spacing: 1px;">★ VIZCAYA STRATEGIC // COMMAND DECK</div>
         <div style="margin-top: 5px;">
             <span style="font-size: 0.65rem; color: var(--neutral); text-transform: uppercase;">Signal Status:</span>
-            <span class="timestamp" id="sync-time">AS OF: 00:00:00</span>
+            <span class="timestamp" id="sync-time">AS OF: --:--:--</span>
         </div>
     </div>
     
     <div class="manual-entry">
         <span style="font-size: 0.7rem; font-weight: 900; color: var(--neutral);">GROUND TELEMETRY:</span>
-        <input type="number" id="m-t" value="83" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
-        <input type="number" id="m-dw" value="66" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
+        <input type="number" id="m-t" value="81" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
+        <input type="number" id="m-dw" value="70" oninput="runInterceptor()"> <span style="font-size:0.8rem">°F</span>
     </div>
 </header>
 
 <div class="main-deck">
-    <!-- LEFT: TRIAGE TABLE -->
     <div class="indices-table">
         <div class="table-header">GFS 18Z THERMODYNAMIC INDICES</div>
         <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-sbcape">--</span></div>
@@ -96,14 +92,12 @@
         <div class="row"><span class="label">DCAPE (Wind Energy)</span><span class="val" id="v-dcape">--</span></div>
     </div>
 
-    <!-- RIGHT: STRATEGIC VERDICT -->
     <div class="summary-card" id="summary-box">
         <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 0.9rem; letter-spacing: 2px;">TACTICAL VERDICT</h3>
         <div id="ai-text" style="font-size: 1.3rem; line-height: 1.6;">Synchronizing...</div>
     </div>
 </div>
 
-<!-- LARGE BOTTOM REFERENCE BOX -->
 <div class="tactical-manual">
     <div class="ref-section">
         <span class="ref-title">Bulk Shear (0-6km)</span>
@@ -134,12 +128,18 @@
 <script>
     function updateVal(id, value, thresholds, isCin = false) {
         const el = document.getElementById(id);
-        el.innerText = (id === 'v-pwat') ? value.toFixed(2) + " in" : 
-                      (id === 'v-shr') ? value + " kt" :
-                      (id === 'v-srh') ? value + " m²/s²" :
-                      (id === 'v-li') ? value : value + " J/kg";
+        let formatted = value;
         
+        if (id === 'v-pwat') formatted = value.toFixed(2) + " in";
+        else if (id === 'v-shr') formatted = value + " kt";
+        else if (id === 'v-srh') formatted = value + " m²/s²";
+        else if (id === 'v-li') formatted = value;
+        else formatted = value + " J/kg";
+
+        el.innerHTML = formatted;
+
         if (isCin) {
+            // CIN is negative/zero. 0 is most dangerous.
             if (value === 0) el.style.color = "var(--extreme)";
             else if (value > -25) el.style.color = "var(--danger)";
             else el.style.color = "var(--stable)";
@@ -157,53 +157,75 @@
         const mt = parseFloat(document.getElementById('m-t').value);
         const mdw = parseFloat(document.getElementById('m-dw').value);
         
-        // GFS 18Z Baseline (Benchmark)
+        // GFS 18Z Baseline (Benchmark for Vizcaya at current hour)
         const bT = 76, bDw = 69, bCape = 2024, bCin = -1, bLi = -5.2;
 
         const tDelta = mt - bT;
         const dwDelta = mdw - bDw;
 
+        // 1. Core Thermodynamics
         const finalCape = Math.round(bCape + (tDelta * 205) + (dwDelta * 255));
         const finalCin = Math.min(0, Math.round(bCin + (tDelta * 8)));
         const finalLi = parseFloat((bLi - (tDelta * 0.45) - (dwDelta * 0.25)).toFixed(1));
-        const finalPwat = parseFloat(1.37 + (dwDelta * 0.04));
-        const finalDc = Math.round(finalCape * 0.47);
+        const finalPwat = parseFloat((1.37 + (dwDelta * 0.04)).toFixed(2));
+        
+        // 2. Advanced Intercept Math (Wind & Erosion)
+        const dcapeBase = finalCape * 0.47;
+        const finalDc = Math.round(Math.max(dcapeBase, dcapeBase + (tDelta * 35)));
+        
+        const capStrength = Math.max(0, (finalCin / -150) * 100); 
+        const erosionPercent = Math.round(100 - capStrength);
 
-        // Fixed from 18Z model image for Vizcaya
+        // Fixed Kinematics from 18Z model for Round Rock
         const shr = 35;
         const srh = 51;
 
-        // Triage numbers
-        updateVal('v-sbcape', finalCape, { warning: 1500, danger: 2500, extreme: 4000 });
-        updateVal('v-sbcin', finalCin, {}, true);
+        // 3. UI Updates
+        updateVal('v-sbcape', finalCape, { warning: 1500, danger: 2500, extreme: 3500 });
+        
+        // Custom CIN update with Erosion Logic
+        const cinEl = document.getElementById('v-sbcin');
+        const capStatus = (finalCin === 0) ? "BREACHED" : `${erosionPercent}% ERODED`;
+        cinEl.innerHTML = `${finalCin} J/kg <span class="erosion-sub">(${capStatus})</span>`;
+        cinEl.style.color = (finalCin === 0) ? "var(--extreme)" : (finalCin > -25) ? "var(--danger)" : "var(--stable)";
+
         updateVal('v-li', finalLi, { warning: 5, danger: 8, extreme: 10 });
         updateVal('v-shr', shr, { warning: 25, danger: 30, extreme: 50 });
         updateVal('v-srh', srh, { warning: 100, danger: 150, extreme: 300 });
         updateVal('v-pwat', finalPwat, { warning: 1.25, danger: 1.5, extreme: 1.85 });
         updateVal('v-dcape', finalDc, { warning: 800, danger: 1100, extreme: 1400 });
 
-        // Update Outlook
+        // 4. Strategic Verdict Logic
         const ai = document.getElementById('ai-text');
         const summary = document.getElementById('summary-box');
+        let verdict = "";
+        let color = "var(--stable)";
 
-        if (finalCape > 3500) {
-            summary.style.borderLeftColor = "var(--extreme)";
-            ai.innerHTML = `<span class="flash" style="color:var(--extreme); font-weight:bold;">EXPLOSIVE CONDITION DETECTED:</span> Ground-truth temperature (${mt}°F) has <b style="color:var(--extreme)">deleted the cap</b>. SBCAPE of ${finalCape} J/kg is explosive. Convective initiation will result in high-end supercells.`;
-        } else if (finalCape > 2000) {
-            summary.style.borderLeftColor = "var(--danger)";
-            ai.innerText = "The airmass is uncapped and highly unstable. Buoyancy is sufficient for significant severe weather (Hail/Wind) if a trigger arrives.";
+        if (finalCin === 0 && finalCape > 2500) {
+            color = "var(--extreme)";
+            verdict = `<span class="flash" style="color:var(--extreme); font-weight:bold;">EXPLOSIVE CONDITION:</span> The airmass is uncapped. SBCAPE of ${finalCape} J/kg is explosive. `;
+            verdict += (shr >= 30) ? `With ${shr}kt shear, <b>Discrete Supercells</b> are the primary mode.` : "Pulse storms likely.";
+        } else if (finalCin > -30 && finalCape > 1500) {
+            color = "var(--danger)";
+            verdict = "<b>TACTICAL ALERT:</b> Airmass is highly unstable and the cap is weakening. Sufficient buoyancy exists for severe hail/wind if a trigger arrives.";
+        } else if (finalCape > 1000) {
+            color = "var(--warning)";
+            verdict = "<b>CAUTION:</b> Moderate instability present. Heavy rainfall potential is high, but capping inversion is currently maintaining stability.";
         } else {
-            summary.style.borderLeftColor = "var(--stable)";
-            ai.innerText = "Nominal conditions. Thermodynamics are currently stable.";
+            color = "var(--stable)";
+            verdict = "<b>NOMINAL:</b> Surface telemetry suggests a stable profile. No immediate threat to Vizcaya.";
         }
+
+        summary.style.borderLeftColor = color;
+        ai.innerHTML = verdict;
 
         // Update Timestamp
         const now = new Date();
         document.getElementById('sync-time').innerText = "AS OF: " + now.toLocaleTimeString();
     }
 
+    // Initial Run
     runInterceptor();
 </script>
-
 </body>
 </html>
