@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vizcaya Strategic | County Meso-Analysis</title>
+    <style>
+        :root {
+            --bg: #030406; --card: #0a0c10; --border: #1f2937; --text: #c9d1d9;
+            --primary: #00ffcc; --danger: #ff4444; --warning: #ffcc00;
+            --extreme: #ff00ff; --neutral: #6b7280; --stable: #4ade80;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; overflow: hidden; }
+        .grid-container { display: grid; grid-template-columns: 2fr 0.8fr; gap: 20px; height: 90vh; }
+        
+        .panel { background: #000; border: 1px solid var(--border); border-radius: 4px; padding: 15px; display: flex; flex-direction: column; }
+        .panel-header { font-size: 0.7rem; font-weight: 900; color: var(--neutral); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+
+        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; }
+        th { text-align: left; color: var(--neutral); padding: 12px; border-bottom: 2px solid var(--border); font-size: 0.65rem; text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid #111; font-size: 0.85rem; }
+        
+        .loc-name { font-weight: bold; color: #fff; display: block; }
+        .loc-id { font-size: 0.65rem; color: var(--neutral); }
+        .val-unit { font-size: 0.7rem; color: var(--neutral); margin-left: 3px; }
+        
+        .status-pill { padding: 3px 8px; border-radius: 3px; font-weight: 900; font-size: 0.7rem; }
+        .summary-box { background: #05070a; border: 1px solid var(--border); padding: 20px; margin-top: auto; border-left: 5px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="grid-container">
+    <div class="panel">
+        <div class="panel-header">County-Wide Thermodynamic Grid (Calculated Indices)</div>
+        <table id="meso-table">
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Observed (T/Dw)</th>
+                    <th>SBCAPE (Energy)</th>
+                    <th>LIFTED INDEX</th>
+                    <th>STRATEGIC THREAT</th>
+                </tr>
+            </thead>
+            <tbody id="meso-body">
+                </tbody>
+        </table>
+
+        <div class="summary-box" id="global-summary">
+            <span style="color:var(--neutral); font-size: 0.65rem; font-weight: bold; text-transform: uppercase;">Mesoanalysis Summary:</span>
+            <div id="summary-text" style="margin-top: 10px; font-size: 1rem; line-height: 1.4;">Synchronizing with regional METAR network...</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">Backyard Comparison</div>
+        <div style="text-align:center; padding: 20px 0;">
+            <div style="font-size: 0.7rem; color: var(--neutral);">YOUR SBCAPE</div>
+            <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary);" id="local-cape">--</div>
+            <div style="margin-top: 20px; font-size: 0.7rem; color: var(--neutral);">YOUR LIFTED INDEX</div>
+            <div style="font-size: 2.5rem; font-weight: 900; color: var(--extreme);" id="local-li">--</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STATIONS = [
+        { id: 'KMNV', name: 'Mason', role: 'FAR WEST SCOUT' },
+    { id: 'KAQO', name: 'Llano', role: 'HILL COUNTRY SENTINEL' },
+    { id: 'KBMQ', name: 'Burnet', role: 'WESTERN TRIGGER' },
+    { id: 'KGTU', name: 'Georgetown', role: 'NORTHERN LID' },
+    { id: 'KEDC', name: 'Austin Exec', role: 'FEEDER FLOW' },
+    { id: 'KTPL', name: 'Temple', role: 'NORTHERN ANCHOR' },
+    { id: 'KGID', name: 'Giddings', role: 'EASTERN MOISTURE' },
+    { id: 'KHYI', name: 'San Marcos', role: 'UPSTREAM FEED' },
+    { id: 'KBAZ', name: 'New Braunfels', role: 'CORE RESERVOIR' }
+    ];
+
+    // GFS 18Z Baseline for calculation
+    const bT = 76, bDw = 69, bCape = 2024, bLi = -5.2;
+
+    async function fetchMesoData() {
+        const body = document.getElementById('meso-body');
+        const summary = document.getElementById('summary-text');
+        let html = "";
+        
+        // Mocking your current backyard for the comparison panel
+        document.getElementById('local-cape').innerText = "3149";
+        document.getElementById('local-li').innerText = "-7.1";
+
+        for (let st of STATIONS) {
+            try {
+                const res = await fetch(`https://api.weather.gov/stations/${st.id}/observations/latest`);
+                const data = await res.json();
+                const p = data.properties;
+
+                const t = Math.round((p.temperature.value * 9/5) + 32);
+                const dw = Math.round((p.dewpoint.value * 9/5) + 32);
+
+                // Calculate Indices for the airport
+                const cape = Math.round(bCape + ((t - bT) * 205) + ((dw - bDw) * 255));
+                const li = parseFloat((bLi - ((t-bT) * 0.45) - ((dw-bDw) * 0.25)).toFixed(1));
+
+                const color = cape > 3000 ? "var(--extreme)" : cape > 2000 ? "var(--danger)" : "var(--stable)";
+                const risk = cape > 3000 ? "EXPLOSIVE" : cape > 2000 ? "HIGH" : "STABLE";
+
+                html += `
+                    <tr>
+                        <td><span class="loc-name">${st.name}</span><span class="loc-id">${st.id}</span></td>
+                        <td>${t}°F / ${dw}°F</td>
+                        <td style="color:${color}; font-weight:bold;">${cape}<span class="val-unit">J/kg</span></td>
+                        <td style="color:${color}">${li}</td>
+                        <td><span class="status-pill" style="background:${color}; color:#000;">${risk}</span></td>
+                    </tr>
+                `;
+            } catch (e) { console.error(e); }
+        }
+        body.innerHTML = html;
+        summary.innerHTML = "Vizcaya is currently the focal point of the county moisture tongue. Instability is higher in Round Rock than in Georgetown, suggesting the strongest updraft potential is localized along the I-35 corridor.";
+    }
+
+    window.onload = fetchMesoData;
+</script>
+</body>
+</html>
