@@ -2,43 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Strategic Command | V7.0 Official</title>
+    <title>Vizcaya Strategic Command | V7.9 Intelligence</title>
     <style>
         :root {
             --bg: #030406; --card: #0d1117; --border: #30363d; --text: #c9d1d9;
             --primary: #58a6ff; --danger: #f85149; --warning: #d29922;
             --extreme: #bc8cff; --stable: #3fb950; --neutral: #8b949e;
         }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .dashboard { display: grid; grid-template-columns: 3fr 1.2fr; gap: 15px; max-width: 1600px; margin: auto; }
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 15px; }
-        .panel-header { font-size: 0.7rem; font-weight: 800; color: var(--neutral); text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; justify-content: space-between; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 25px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 380px; gap: 20px; max-width: 1800px; margin: auto; }
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+        .panel-header { font-size: 0.85rem; font-weight: 800; color: var(--neutral); text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         
-        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
-        th { text-align: left; color: var(--neutral); padding: 8px; border-bottom: 2px solid var(--border); font-size: 0.6rem; }
-        td { padding: 8px; border-bottom: 1px solid #21262d; }
+        table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 1rem; }
+        th { text-align: left; color: var(--neutral); padding: 12px; border-bottom: 2px solid var(--border); font-size: 0.8rem; }
+        td { padding: 18px 12px; border-bottom: 1px solid #21262d; }
         
-        .status-pill { padding: 2px 5px; border-radius: 3px; font-weight: 900; font-size: 0.6rem; border: 1px solid transparent; }
-        .hero-val { font-size: 3rem; font-weight: 900; line-height: 1; margin: 10px 0; }
-        .timestamp { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--primary); }
+        .status-pill { padding: 5px 10px; border-radius: 4px; font-weight: 900; font-size: 0.8rem; border: 1px solid transparent; text-transform: uppercase; }
+        .vizcaya-row { background: rgba(88, 166, 255, 0.12); border-left: 6px solid var(--primary); }
+        
+        /* Tactical Box Styles */
+        .intel-box { background: #000; border: 2px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 20px; }
+        .intel-title { font-size: 0.75rem; font-weight: 900; margin-bottom: 10px; color: var(--primary); }
+        .intel-content { font-size: 0.95rem; line-height: 1.5; color: #fff; }
+        .threat-extreme { border-color: var(--extreme); color: var(--extreme); }
+        .threat-high { border-color: var(--danger); color: var(--danger); }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
     <div class="panel">
-        <div class="panel-header">
-            <span>Central Texas Meso-Grid (Live NWS API)</span>
-            <span class="timestamp" id="sync-time">CONNECTING...</span>
-        </div>
+        <div class="panel-header">Meso-Surveillance | Dynamic Proximity Grid</div>
         <table>
             <thead>
                 <tr>
-                    <th>STATION / SECTOR</th>
-                    <th>T/DW</th>
+                    <th>STATION / TACTICAL ROLE</th>
+                    <th>TEMP/DWPT</th>
                     <th>SBCAPE</th>
                     <th>LI</th>
-                    <th>CIN (CAP)</th>
+                    <th>CIN</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
@@ -47,100 +50,121 @@
     </div>
 
     <div class="panel">
-        <div class="panel-header">
-            <span>Vizcaya Ground Truth (EW6452)</span>
-            <span id="current-date"></span>
+        <div class="panel-header">Strategic Analysis</div>
+        
+        <div id="threat-indicator" class="intel-box" style="text-align: center;">
+            <div class="intel-title">LOCAL THREAT LEVEL</div>
+            <div id="threat-level" style="font-size: 1.8rem; font-weight: 900;">SCANNING...</div>
         </div>
-        <div style="text-align: center;">
-            <div id="live-clock" style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; color: #fff;">00:00:00</div>
-            
-            <div style="margin-top: 30px;">
-                <div style="font-size: 0.65rem; color: var(--neutral);">CONVECTIVE ENERGY</div>
-                <div class="hero-val" style="color: var(--primary);">3149</div>
-                <div style="font-size: 0.75rem; color: var(--primary);">J/kg (EXPLOSIVE)</div>
-            </div>
 
-            <div style="margin-top: 30px;">
-                <div style="font-size: 0.65rem; color: var(--neutral);">LIFTED INDEX</div>
-                <div class="hero-val" style="color: var(--extreme);">-7.1</div>
-            </div>
+        <div class="intel-box">
+            <div class="intel-title">CURRENT INTERPRETATION</div>
+            <div id="intel-summary" class="intel-content">Initializing data interpretation...</div>
+        </div>
 
-            <div style="background: #002200; border: 1px solid var(--stable); border-radius: 4px; padding: 15px; text-align: center; margin-top: 30px;">
-                <div style="font-weight: 900; color: var(--stable); font-size: 0.75rem;">THERMODYNAMIC CAP</div>
-                <div style="font-size: 1.2rem; font-weight: 900; color: #fff;">BREACHED (0)</div>
+        <div class="intel-box">
+            <div class="intel-title">CRITICAL "WATCH" TRIGGERS</div>
+            <div id="intel-triggers" class="intel-content" style="font-size: 0.85rem;">
+                * Monitor Austin Exec Dew Points<br>
+                * Watch for Western CIN erosion<br>
+                * Track VIZCAYA temp vs 78°F threshold
             </div>
+        </div>
+
+        <div style="font-size: 0.7rem; color: var(--neutral); padding: 10px;">
+            <b>Legend:</b><br>
+            CAPE > 2500: Explosive<br>
+            CIN = 0: Uncapped / Breached<br>
+            LI < -5: Severe Updraft Potential
         </div>
     </div>
 </div>
 
 <script>
+    const SENSOR = { temp: 75.7, dewPoint: 68.4 };
+    const base = { T: 75.7, Dw: 68.4, Cape: 3149, Li: -7.1, Cin: 0 };
+
     const STATIONS = [
-        { id: 'KMNV', name: 'Mason', role: 'Far West Scout' },
-        { id: 'KAQO', name: 'Llano', role: 'Hill Country Sentinel' },
-        { id: 'KBMQ', name: 'Burnet', role: 'Western Trigger' },
-        { id: 'KILE', name: 'Killeen', role: 'Northwest Flank' },
-        { id: 'KGTU', name: 'Georgetown', role: 'Northern Anchor' },
-        { id: 'KTPL', name: 'Temple', role: 'North Sector' },
-        { id: 'KATT', name: 'Camp Mabry', role: 'Austin Central' },
-        { id: 'KEDC', name: 'Austin Exec', role: 'I-35 Primary Feed' },
-        { id: 'KT74', name: 'Taylor', role: 'Eastern Edge' },
-        { id: 'KGID', name: 'Giddings', role: 'Gulf Inflow' },
-        { id: 'KHYI', name: 'San Marcos', role: 'Southern Sentinel' },
-        { id: 'KBAZ', name: 'New Braunfels', role: 'Deep Moisture' }
+        { id: 'VIZCAYA', name: 'Vizcaya', role: 'TARGET ZONE (0 mi)' },
+        { id: 'KGTU', name: 'Georgetown', role: 'Inner North (10 mi)' },
+        { id: 'KEDC', name: 'Austin Exec', role: 'Inner South (15 mi)' },
+        { id: 'KT74', name: 'Taylor', role: 'East Flank (18 mi)' },
+        { id: 'KATT', name: 'Camp Mabry', role: 'Central Flank (22 mi)' },
+        { id: 'KBMQ', name: 'Burnet / Lk Buchanan', role: 'West Scout (45-60 mi)' },
+        { id: 'KDZB', name: 'Marble Falls / Horseshoe', role: 'West Scout (50 mi)' },
+        { id: 'KILE', name: 'Killeen', role: 'NW Early Warning (50 mi)' },
+        { id: 'KTPL', name: 'Temple', role: 'North Early Warning (50 mi)' },
+        { id: 'KHYI', name: 'San Marcos', role: 'South Regional (55 mi)' },
+        { id: 'KBAZ', name: 'New Braunfels', role: 'Deep South (70 mi)' }
     ];
 
-    const base = { T: 76, Dw: 69, Cape: 2024, Li: -5.2, Cin: 40 };
-
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('live-clock').innerText = now.toLocaleTimeString();
-        document.getElementById('current-date').innerText = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-
-    async function fetchNWSData() {
+    async function updateMesoGrid() {
         const body = document.getElementById('grid-body');
-        const syncLabel = document.getElementById('sync-time');
         let html = "";
+        let vizData = { cape: 0, cin: 0 };
 
         for (let st of STATIONS) {
-            try {
-                const res = await fetch(`https://api.weather.gov/stations/${st.id}/observations/latest`);
-                const json = await res.json();
-                const p = json.properties;
-
-                const t_f = Math.round((p.temperature.value * 9/5) + 32);
-                const dw_f = Math.round((p.dewpoint.value * 9/5) + 32);
-
-                // ERROR FILTER: Prevents malformed data (like Taylor 32/32) from corrupting the report
-                if (t_f < 40 && new Date().getMonth() > 3) throw new Error("Sensor Glitch");
-
-                const cape = Math.round(base.Cape + ((t_f - base.T) * 190) + ((dw_f - base.Dw) * 235));
-                const li = parseFloat((base.Li - ((t_f - base.T) * 0.42) - ((dw_f - base.Dw) * 0.22)).toFixed(1));
-                const cin = Math.max(0, Math.round(base.Cin - ((t_f - base.T) * 12) - ((dw_f - base.Dw) * 18)));
-
-                const color = cin === 0 ? "var(--extreme)" : (cin < 25 ? "var(--danger)" : "var(--stable)");
-                const risk = cin === 0 ? "EXPLOSIVE" : (cin < 25 ? "UNSTABLE" : "STABLE");
-
-                html += `<tr>
-                    <td><span style="color:#fff;font-weight:bold;">${st.name}</span><br><small>${st.role}</small></td>
-                    <td>${t_f}°/${dw_f}°</td>
-                    <td style="color:${cape > 2500 ? 'var(--danger)' : 'white'}">${cape}</td>
-                    <td>${li}</td>
-                    <td style="color:${color}">${cin}</td>
-                    <td><span class="status-pill" style="border:1px solid ${color};color:${color}">${risk}</span></td>
-                </tr>`;
-            } catch (e) {
-                html += `<tr><td>${st.name}</td><td colspan="5" style="color:var(--neutral)">STATION DATA RECOVERY...</td></tr>`;
+            let t, dw;
+            if (st.id === 'VIZCAYA') { t = SENSOR.temp; dw = SENSOR.dewPoint; }
+            else {
+                try {
+                    const res = await fetch(`https://api.weather.gov/stations/${st.id}/observations/latest`);
+                    const json = await res.json();
+                    t = Math.round((json.properties.temperature.value * 9/5) + 32);
+                    dw = Math.round((json.properties.dewpoint.value * 9/5) + 32);
+                    if (t < 35 && new Date().getMonth() > 3) throw new Error("Glitch");
+                } catch (e) {
+                    html += `<tr><td>${st.name}</td><td colspan="5" style="color:var(--neutral)">OFFLINE</td></tr>`;
+                    continue;
+                }
             }
+
+            const cape = Math.round(base.Cape + ((t - base.T) * 190) + ((dw - base.Dw) * 235));
+            const li = parseFloat((base.Li - ((t - base.T) * 0.42) - ((dw - base.Dw) * 0.22)).toFixed(1));
+            const cin = Math.max(0, Math.round(base.Cin - ((t - base.T) * 12) - ((dw - base.Dw) * 18)));
+            const status = cin === 0 ? "BREACHED" : (cin < 20 ? "CRITICAL" : "STABLE");
+            const color = cin === 0 ? "var(--extreme)" : (cin < 20 ? "var(--danger)" : "var(--stable)");
+
+            if (st.id === 'VIZCAYA') vizData = { cape, cin };
+
+            html += `<tr class="${st.id === 'VIZCAYA' ? 'vizcaya-row' : ''}">
+                <td><span style="color:#fff;font-weight:bold;">${st.name}</span><br><small style="color:var(--neutral)">${st.role}</small></td>
+                <td>${t}°/${dw}°</td>
+                <td style="font-weight:bold; color:${cape > 2500 ? 'var(--danger)' : '#fff'}">${cape}</td>
+                <td style="color:${li < -5 ? 'var(--danger)' : '#fff'}">${li}</td>
+                <td style="color:${color}">${cin}</td>
+                <td><span class="status-pill" style="border:1px solid ${color};color:${color}">${status}</span></td>
+            </tr>`;
         }
         body.innerHTML = html;
-        syncLabel.innerText = "LAST DATA REFRESH: " + new Date().toLocaleTimeString();
+        runInterpretation(vizData);
     }
 
-    setInterval(updateClock, 1000);
-    setInterval(fetchNWSData, 900000); // 15-minute refresh for stability
-    updateClock();
-    fetchNWSData();
+    function runInterpretation(viz) {
+        const lvl = document.getElementById('threat-level');
+        const summary = document.getElementById('intel-summary');
+        const box = document.getElementById('threat-indicator');
+
+        if (viz.cin === 0 && viz.cape > 3000) {
+            lvl.innerText = "UNCORKED";
+            box.style.borderColor = "var(--extreme)";
+            lvl.style.color = "var(--extreme)";
+            summary.innerText = "The atmosphere is officially 'unzipped.' High-end SBCAPE (>3000) is coupled with zero inhibition. Rapid convective development is possible at any moment.";
+        } else if (viz.cin < 20) {
+            lvl.innerText = "CRITICAL";
+            box.style.borderColor = "var(--danger)";
+            lvl.style.color = "var(--danger)";
+            summary.innerText = "The cap is paper-thin. While not yet breached, the high energy (SBCAPE) will release explosively once surface temperatures rise 1-2 degrees.";
+        } else {
+            lvl.innerText = "STABLE";
+            box.style.borderColor = "var(--stable)";
+            lvl.style.color = "var(--stable)";
+            summary.innerText = "Localized capping is currently holding the air mass in place. The 'gun is loaded,' but the safety is still on.";
+        }
+    }
+
+    updateMesoGrid();
+    setInterval(updateMesoGrid, 300000);
 </script>
 </body>
 </html>
