@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Strategic Command | V8.4 Stable</title>
+    <title>Vizcaya Strategic Command | V8.5 Complete</title>
     <style>
         :root {
             --bg: #030406; --card: #0d1117; --border: #30363d; --text: #c9d1d9;
@@ -10,7 +10,7 @@
             --extreme: #bc8cff; --stable: #3fb950; --neutral: #8b949e;
         }
         body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .dashboard { display: grid; grid-template-columns: 1fr 460px; gap: 20px; max-width: 1980px; margin: auto; }
+        .dashboard { display: grid; grid-template-columns: 1fr 480px; gap: 20px; max-width: 1980px; margin: auto; }
         .panel { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
         
         .main-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
@@ -23,9 +23,9 @@
         .vizcaya-row { background: rgba(88, 166, 255, 0.12); border-left: 6px solid var(--primary); }
         .status-pill { padding: 4px 8px; border-radius: 4px; font-weight: 900; font-size: 0.75rem; border: 1px solid transparent; text-transform: uppercase; }
 
-        .legend-section { margin-bottom: 20px; }
+        .legend-section { margin-bottom: 18px; }
         .legend-header { font-size: 0.75rem; font-weight: 900; color: var(--primary); text-transform: uppercase; margin-bottom: 8px; border-left: 3px solid var(--primary); padding-left: 10px; }
-        .legend-item { font-size: 0.82rem; margin-bottom: 6px; line-height: 1.4; }
+        .legend-item { font-size: 0.8rem; margin-bottom: 5px; line-height: 1.4; }
         .risk-tag { font-weight: 800; padding: 2px 5px; border-radius: 3px; font-size: 0.65rem; margin-right: 5px; }
     </style>
 </head>
@@ -34,7 +34,7 @@
 <div class="main-header">
     <div class="title-group">
         <h1>Vizcaya Strategic Command</h1>
-        <div style="color: var(--neutral); font-size: 0.85rem; margin-top: 4px;">V8.4 Stable | Calibration: 75.7°F / 68.4°F</div>
+        <div style="color: var(--neutral); font-size: 0.85rem; margin-top: 4px;">Unified Analysis Suite | Calibration: 75.7°F / 68.4°F</div>
     </div>
     <div style="text-align: right; font-family: 'JetBrains Mono';">
         <div id="current-date" style="font-size: 1.1rem; font-weight: 700; color: var(--primary);">---</div>
@@ -63,21 +63,33 @@
 
     <div class="panel">
         <div class="legend-section">
-            <div class="legend-header">Bulk Shear (Organization)</div>
-            <div class="legend-item"><span class="risk-tag" style="background: var(--danger); color: #fff;">HIGH</span> <b>> 40 kts:</b> Supercell potential.</div>
-        </div>
-        <div class="legend-section">
-            <div class="legend-header">PWAT (Water Weight)</div>
-            <div class="legend-item"><span class="risk-tag" style="background: var(--extreme); color: #fff;">WET</span> <b>> 1.5":</b> Flooding / High Rain Efficiency.</div>
-        </div>
-        <div class="legend-section">
-            <div class="legend-header">CIN (The Cap)</div>
-            <div class="legend-item"><span class="risk-tag" style="background: var(--extreme); color: #fff;">OPEN</span> <b>0:</b> BREACHED. Uncorked air mass.</div>
+            <div class="legend-header">SBCAPE (Energy)</div>
+            <div class="legend-item"><span class="risk-tag" style="background: var(--danger); color: #fff;">HIGH</span> <b>> 2500:</b> Explosive potential for severe updrafts.</div>
         </div>
 
-        <div style="background: #000; padding: 18px; border-radius: 6px; border: 2px solid var(--border); margin-top: 20px;">
+        <div class="legend-section">
+            <div class="legend-header">LI (Updraft Speed)</div>
+            <div class="legend-item"><span class="risk-tag" style="background: var(--danger); color: #fff;">SEV</span> <b>< -5:</b> Violent vertical growth and hail risk.</div>
+        </div>
+
+        <div class="legend-section">
+            <div class="legend-header">PWAT (Moisture Weight)</div>
+            <div class="legend-item"><span class="risk-tag" style="background: var(--extreme); color: #fff;">WET</span> <b>> 1.5":</b> High flood risk / extreme rain efficiency.</div>
+        </div>
+
+        <div class="legend-section">
+            <div class="legend-header">Bulk Shear (Organization)</div>
+            <div class="legend-item"><span class="risk-tag" style="background: var(--extreme); color: #fff;">SUPR</span> <b>> 40 kts:</b> Supercell potential / sustained rotation.</div>
+        </div>
+
+        <div class="legend-section">
+            <div class="legend-header">CIN (The Cap)</div>
+            <div class="legend-item"><span class="risk-tag" style="background: var(--extreme); color: #fff;">OPEN</span> <b>0:</b> BREACHED. No resistance to storm formation.</div>
+        </div>
+
+        <div style="background: #000; padding: 18px; border-radius: 6px; border: 2px solid var(--border); margin-top: 15px;">
             <div style="font-size: 0.75rem; font-weight: 900; color: var(--primary); margin-bottom: 8px;">STRATEGIC ANALYSIS</div>
-            <div id="intel-summary" style="font-size: 0.9rem; line-height: 1.5;">Initializing grid...</div>
+            <div id="intel-summary" style="font-size: 0.9rem; line-height: 1.5;">Syncing regional stations...</div>
         </div>
     </div>
 </div>
@@ -148,7 +160,7 @@
         
         let report = (viz.cin === 0) ? "<b>STATUS: BREACHED.</b> " : "<b>STATUS: STABLE.</b> ";
         report += "Environment shows " + viz.cape + " J/kg of energy with a heavy PWAT of " + viz.pwat + " inches. ";
-        report += "Shear at " + viz.ws + " kts confirms supercell organization is likely if initiation occurs.";
+        report += "Shear at " + viz.ws + " kts suggests supercell organization is highly probable.";
         document.getElementById('intel-summary').innerHTML = report;
     }
 
