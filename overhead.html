@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIZCAYA PRO COMMAND v7.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;900&family=JetBrains+Mono:wght@500;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f8fafc; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .panel { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 1rem; }
+        .status-breach { background: #991b1b; color: #fee2e2; animation: pulse-red 2s infinite; }
+        .status-weak { background: #92400e; color: #fef3c7; }
+        .status-capped { background: #065f46; color: #d1fae5; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter italic text-white uppercase tracking-tight">Vizcaya<span class="text-blue-500 underline decoration-red-600">Pro</span>_v7.1</h1>
+                <p class="text-[10px] font-bold text-slate-500 tracking-[0.4em] uppercase">Davis Station E6452 // 30.5871°N, 97.6410°W</p>
+            </div>
+            <div id="sysTime" class="text-xl font-black mono text-slate-700 uppercase italic">--:--</div>
+        </div>
+
+        <!-- CONSOLE INPUT -->
+        <div class="panel p-6 mb-6 border-l-4 border-l-blue-600">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-black/40 p-4 rounded-lg border border-slate-700">
+                    <label class="block text-[9px] font-black text-slate-500 uppercase mb-2">Davis Console Temp</label>
+                    <input type="number" id="localTemp" step="0.1" value="82.0" class="w-full bg-transparent text-4xl font-black text-white outline-none">
+                </div>
+                <div class="bg-black/40 p-4 rounded-lg border border-slate-700">
+                    <label class="block text-[9px] font-black text-blue-500 uppercase mb-2">Davis Console Dew</label>
+                    <input type="number" id="localDew" step="0.1" value="72.0" class="w-full bg-transparent text-4xl font-black text-blue-400 outline-none">
+                </div>
+                <button onclick="calculate()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black rounded-lg uppercase tracking-widest text-xs transition-all shadow-xl shadow-blue-900/30">
+                    Recalculate Vizcaya Nowcast
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD GAUGES -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="panel p-5 text-center">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">CAPE (Energy)</p>
+                <p id="capeVal" class="text-3xl font-black italic">--</p>
+                <div class="h-1 bg-slate-800 mt-2 rounded-full overflow-hidden"><div id="capeFill" class="h-full bg-blue-500 transition-all duration-1000" style="width:0%"></div></div>
+            </div>
+            <div id="capPanel" class="panel p-5 text-center">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Cap Strength</p>
+                <p id="cinVal" class="text-3xl font-black italic">--</p>
+                <p id="cinTag" class="text-[9px] font-black mt-1 uppercase text-slate-500 italic">Standby</p>
+            </div>
+            <div class="panel p-5 text-center">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Lifted Index</p>
+                <p id="liVal" class="text-3xl font-black italic">--</p>
+                <p id="liTag" class="text-[9px] font-black mt-1 uppercase text-slate-500">Stability</p>
+            </div>
+            <div class="panel p-5 text-center">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1">Moisture (PWAT)</p>
+                <p id="pwatVal" class="text-3xl font-black italic">--</p>
+                <p id="pwatTag" class="text-[9px] font-black mt-1 uppercase text-slate-500">Total Column</p>
+            </div>
+        </div>
+
+        <!-- DATA TABLE -->
+        <div class="panel overflow-hidden">
+            <div class="p-3 px-5 bg-slate-800/50 flex justify-between border-b border-slate-700">
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Site-Specific Projection (Round Rock NE)</span>
+                <span class="text-[10px] font-black uppercase text-blue-400" id="rhStatus">--% RH</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="text-[9px] font-black uppercase text-slate-500 bg-slate-900/50">
+                        <tr>
+                            <th class="p-4">Hour</th>
+                            <th class="p-4">Model T/D</th>
+                            <th class="p-4 text-center">Adj CAPE</th>
+                            <th class="p-4 text-center">Adj CIN</th>
+                            <th class="p-4 text-center">LI</th>
+                            <th class="p-4 text-center text-blue-500">K-Index</th>
+                            <th class="p-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="forecastBody" class="mono text-xs divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated Vizcaya Precise Coordinates
+        const LAT = 30.5871;
+        const LON = -97.6410;
+
+        async function calculate() {
+            const lTemp = parseFloat(document.getElementById('localTemp').value);
+            const lDew = parseFloat(document.getElementById('localDew').value);
+            const tbody = document.getElementById('forecastBody');
+            
+            tbody.innerHTML = '<tr><td colspan="7" class="p-16 text-center font-black animate-pulse text-slate-600">SOUNDING ATMOSPHERE...</td></tr>';
+
+            try {
+                // Fetch best match model data
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index,k_index,relative_humidity_2m&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1&models=best_match`;
+                const res = await fetch(url);
+                const data = await res.json();
+                const hourly = data.hourly;
+                
+                tbody.innerHTML = '';
+                const now = new Date();
+                document.getElementById('sysTime').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+                for (let i = 0; i < hourly.time.length; i++) {
+                    const fTime = new Date(hourly.time[i]);
+                    const diff = (fTime - now) / (1000 * 60 * 60);
+
+                    if (diff < -1.1 || diff > 13) continue;
+
+                    const mTemp = hourly.temperature_2m[i];
+                    const mDew = hourly.dew_point_2m[i];
+                    const mRh = hourly.relative_humidity_2m[i];
+                    const pwat = (hourly.total_column_integrated_water_vapour[i] / 25.4).toFixed(2);
+                    
+                    let kIdx = hourly.k_index[i] || 0;
+                    let adjCape = hourly.cape[i] || 0;
+                    let adjCin = Math.abs(hourly.convective_inhibition[i] || 0);
+                    let adjLi = hourly.lifted_index[i] || 0;
+
+                    // DAVIS CONSOLE PHYSICS ADJUSTMENT
+                    if (diff >= -1.1 && diff <= 5) {
+                        const dDelta = lDew - mDew;
+                        const tDelta = lTemp - mTemp;
+
+                        adjCape = adjCape * Math.pow(1.18, dDelta);
+                        adjCin = adjCin - (tDelta * 15) - (dDelta * 12);
+                        adjCin = Math.max(0, adjCin);
+                        adjLi = adjLi - (dDelta * 0.4);
+
+                        // Fallback K-Index logic if model returns 0 in high-moisture setups
+                        if (kIdx === 0 && dDelta > 0 && mRh > 50) {
+                            kIdx = 18 + (dDelta * 2);
+                        }
+                    }
+
+                    const isNow = Math.abs(diff) < 0.7;
+                    if (isNow) updateGauges(adjCape, adjCin, pwat, adjLi, mRh);
+
+                    const row = document.createElement('tr');
+                    if (isNow) row.className = 'bg-blue-600/10 border-y border-blue-500/20';
+
+                    let status = "STABLE";
+                    let statusClass = "text-slate-600";
+                    
+                    if (adjCape > 500) {
+                        if (adjCin < 15) { status = "BREACH"; statusClass = "status-breach px-2 rounded"; }
+                        else if (adjCin < 55) { status = "WEAKENING"; statusClass = "status-weak px-2 rounded"; }
+                        else { status = "CAPPED"; statusClass = "status-capped px-2 rounded"; }
+                    }
+
+                    row.innerHTML = `
+                        <td class="p-4 font-bold text-slate-400">${fTime.getHours()}:00</td>
+                        <td class="p-4 text-slate-500">${Math.round(mTemp)}°/${Math.round(mDew)}°</td>
+                        <td class="p-4 text-center font-black ${adjCape > 2000 ? 'text-red-500' : 'text-slate-200'}">${Math.round(adjCape)}</td>
+                        <td class="p-4 text-center font-black ${adjCin < 20 && adjCape > 500 ? 'text-orange-500' : 'text-slate-500'}">${Math.round(adjCin)}</td>
+                        <td class="p-4 text-center font-black ${adjLi < -4 ? 'text-red-400' : 'text-slate-500'}">${adjLi.toFixed(1)}</td>
+                        <td class="p-4 text-center font-black ${kIdx > 28 ? 'text-blue-400' : 'text-slate-600'}">${Math.round(kIdx)}</td>
+                        <td class="p-4"><span class="text-[8px] font-black tracking-[0.2em] ${statusClass}">${status}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function updateGauges(cape, cin, pwat, li, rh) {
+            document.getElementById('capeVal').innerText = Math.round(cape);
+            document.getElementById('cinVal').innerText = Math.round(cin);
+            document.getElementById('pwatVal').innerText = pwat + '"';
+            document.getElementById('liVal').innerText = li.toFixed(1);
+            document.getElementById('rhStatus').innerText = rh + "% RH";
+            
+            const capePct = Math.min((cape / 4000) * 100, 100);
+            document.getElementById('capeFill').style.width = capePct + "%";
+            document.getElementById('capeFill').className = (cape > 2500) ? "h-full bg-red-600" : (cape > 1000) ? "h-full bg-orange-500" : "h-full bg-blue-500";
+
+            const cp = document.getElementById('capPanel');
+            const ct = document.getElementById('cinTag');
+            if (cin < 15 && cape > 500) {
+                cp.className = "panel p-5 text-center status-breach"; ct.innerText = "CAP BREACHED";
+            } else if (cin < 55 && cape > 500) {
+                cp.className = "panel p-5 text-center border-b-2 border-orange-500"; ct.innerText = "WEAKENING"; ct.className = "text-[9px] font-black mt-1 uppercase text-orange-500";
+            } else {
+                cp.className = "panel p-5 text-center border-b-2 border-green-700"; ct.innerText = "HARD LID"; ct.className = "text-[9px] font-black mt-1 uppercase text-green-700";
+            }
+        }
+
+        window.onload = calculate;
+    </script>
+</body>
+</html>
