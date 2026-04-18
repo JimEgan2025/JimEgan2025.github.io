@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Vizcaya Daily Briefing Engine v7</title>
+<title>Vizcaya Auto Forecast v8</title>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
@@ -17,11 +17,11 @@ pre { white-space: pre-wrap; }
 <div class="max-w-5xl mx-auto">
 
 <h1 class="text-xl font-black text-white">
-VIZCAYA v7 — DAILY AI WEATHER BRIEFING ENGINE (FINAL)
+VIZCAYA v8 — AUTO FORECAST NARRATIVE ENGINE
 </h1>
 
 <button onclick="run()" class="bg-red-600 px-4 py-2 rounded text-white font-bold mt-3">
-GENERATE AI BRIEFING
+GENERATE FULL WEATHER BRIEF
 </button>
 
 <div class="grid grid-cols-2 gap-4 mt-4">
@@ -55,8 +55,6 @@ PWAT:
 <script>
 
 // -----------------------------
-// MODEL ATMOSPHERE (replace later with Open-Meteo)
-// -----------------------------
 function getModel() {
   return {
     tempF: 80.8,
@@ -66,15 +64,11 @@ function getModel() {
 }
 
 // -----------------------------
-// COUPLING (model vs surface mismatch)
-// -----------------------------
 function couplingIndex(m, o) {
   return Math.abs(m.tempF - o.tempF)
        + Math.abs(m.dewF - o.dewF);
 }
 
-// -----------------------------
-// PARCEL STABILITY ENGINE
 // -----------------------------
 function simulate(tempF, dewF) {
 
@@ -90,16 +84,16 @@ function simulate(tempF, dewF) {
     const env = tempF - (z * 0.0032);
     const parcel = tempF - (z * 0.0098);
 
-    let buoy = parcel - env;
+    let b = parcel - env;
 
-    if (!inFree && buoy < 0) cin += buoy;
+    if (!inFree && b < 0) cin += b;
 
-    if (!inFree && buoy > 0 && z > lcl) {
+    if (!inFree && b > 0 && z > lcl) {
       inFree = true;
       lfc = z;
     }
 
-    if (inFree && buoy > 0) cape += buoy;
+    if (inFree && b > 0) cape += b;
   }
 
   return {
@@ -111,19 +105,36 @@ function simulate(tempF, dewF) {
 }
 
 // -----------------------------
-// STORM TYPE ENGINE
-// -----------------------------
 function stormType(cape, shear, pwat) {
 
-  if (pwat < 1.0) return "DRY COLUMN / NO CONVECTION";
+  if (pwat < 1.0) return "DRY / NO CONVECTION";
   if (cape < 50) return "STABLE ATMOSPHERE";
-  if (shear < 20) return "PULSE STORMS (weak short-lived cells)";
+  if (shear < 20) return "PULSE STORMS";
   if (shear < 35) return "MULTICELL STORMS";
-  return "ORGANIZED CONVECTION / SUPERCELL POTENTIAL";
+  return "ORGANIZED / SUPERCELL POTENTIAL";
 }
 
 // -----------------------------
-// MAIN RUN
+function narrative(packet, storm) {
+
+  let intro = "";
+  let risk = "";
+
+  if (packet.derived.couplingClass === "HIGH") {
+    intro = "A significant atmospheric decoupling is present today. Model instability exists aloft, but surface conditions are not well coupled to that environment.";
+  } else {
+    intro = "The surface and modeled atmosphere are reasonably aligned, allowing convective interpretation where instability exists.";
+  }
+
+  if (packet.derived.cape === 0) {
+    risk = "No convective development is expected due to strong inhibition and a stable boundary layer.";
+  } else {
+    risk = "Convective development is conditionally possible depending on boundary layer recovery and forcing.";
+  }
+
+  return { intro, risk };
+}
+
 // -----------------------------
 function run() {
 
@@ -143,51 +154,9 @@ function run() {
     (model.dewF + obs.dewF) / 2
   );
 
-  const storm = stormType(sim.cape, model.shear, pwat);
-
-  // -----------------------------
-  // STATE CLASSIFICATION
-  // -----------------------------
-  let state = "";
-  let couplingState = "";
-
-  if (coupling > 40) {
-    state = "MODEL–SURFACE DECOUPLED ATMOSPHERE";
-    couplingState = "HIGH DECOUPLING";
-  } else if (sim.cape === 0) {
-    state = "STRONG CAP / STABLE COLUMN";
-    couplingState = "STABLE";
-  } else {
-    state = "CONVECTIVE POTENTIAL EXISTS";
-    couplingState = "COUPLED";
-  }
-
-  // -----------------------------
-  // OUTPUT UI
-  // -----------------------------
-  document.getElementById("status").innerHTML = `
-    <div class="text-yellow-300 font-bold">
-      ${state}
-    </div>
-    <div class="text-xs text-slate-400 mt-2">
-      Coupling State: ${couplingState}
-    </div>
-  `;
-
-  // -----------------------------
-  // AI HANDOFF PACKET
-  // -----------------------------
   const packet = {
-    timestamp: new Date().toISOString(),
-
-    model: {
-      tempF: model.tempF,
-      dewF: model.dewF,
-      shear: model.shear
-    },
-
+    model,
     observed: obs,
-
     derived: {
       couplingIndex: coupling,
       couplingClass: coupling > 40 ? "HIGH" : "LOW",
@@ -195,42 +164,61 @@ function run() {
       cin: Math.round(sim.cin),
       lcl_m: Math.round(sim.lcl),
       lfc_m: sim.lfc
-    },
-
-    interpretation: {
-      surfaceState: sim.cape === 0 ? "STABLE" : "UNSTABLE",
-      freeAtmosphere: "MODEL SUPPORTS INSTABILITY ALOFT",
-      couplingState: coupling > 40
-        ? "DECOUPLED (NO SURFACE ACCESS)"
-        : "COUPLED (SURFACE REPRESENTATIVE)",
-      convectiveMeaning:
-        sim.cape === 0
-          ? "NO CONVECTION EXPECTED"
-          : "CONVECTION POSSIBLE IF TRIGGERED"
-    },
-
-    stormAssessment: storm
+    }
   };
+
+  const storm = stormType(sim.cape, model.shear, pwat);
+
+  const nar = narrative(packet, storm);
+
+  // ---------------- UI ----------------
+
+  document.getElementById("status").innerHTML = `
+    <div class="text-yellow-300 font-bold">
+      DAILY FORECAST GENERATED
+    </div>
+    <div class="text-xs text-slate-400 mt-2">
+      ${storm}
+    </div>
+  `;
 
   document.getElementById("out").innerHTML = `
 
+<!-- HUMAN FORECAST -->
 <div class="card p-4">
 
-<h2 class="text-white font-bold">OPERATIONAL AI HANDOFF PACKET</h2>
+<h2 class="text-white font-bold">METEOROLOGICAL BRIEFING</h2>
 
-<pre>${JSON.stringify(packet, null, 2)}</pre>
+<p class="mt-2">${nar.intro}</p>
+
+<p class="mt-3">${nar.risk}</p>
+
+<hr class="my-4 border-slate-600">
+
+<h3 class="text-green-400 font-bold">Storm Assessment</h3>
+${storm}
 
 </div>
 
+<!-- KEY METRICS -->
 <div class="card p-4 mt-4">
 
-<h2 class="text-green-400 font-bold">HUMAN SUMMARY</h2>
+<h2 class="text-blue-400 font-bold">KEY PARAMETERS</h2>
 
-Storm Type: ${storm}<br>
+Coupling Index: ${coupling.toFixed(1)}<br>
 CAPE: ${Math.round(sim.cape)}<br>
 CIN: ${Math.round(sim.cin)}<br>
-Coupling: ${coupling.toFixed(1)}<br>
-LCL: ${Math.round(sim.lcl)} m
+LCL: ${Math.round(sim.lcl)} m<br>
+PWAT: ${pwat}
+
+</div>
+
+<!-- AI PACKET -->
+<div class="card p-4 mt-4">
+
+<h2 class="text-purple-300 font-bold">AI STRUCTURED PACKET</h2>
+
+<pre>${JSON.stringify(packet, null, 2)}</pre>
 
 </div>
 
