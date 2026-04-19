@@ -3,230 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muggy Meter - Visual Dew Point Forecast</title>
+    <title>Viccaya WX - Muggy Meter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #020617;
+            --card-bg: #0f172a;
+            --border: #1e293b;
+            --viccaya-blue: #38bdf8;
+            --text-muted: #64748b;
+            /* Comfort Colors */
+            --dry: #0ea5e9;
+            --pleasant: #10b981;
+            --comfortable: #84cc16;
+            --sticky: #f59e0b;
+            --muggy: #ef4444;
+            --oppressive: #7f1d1d;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #0f172a;
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
             color: #f8fafc;
+            padding: 20px;
             min-height: 100vh;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            padding: 30px 0;
-        }
-        .header h1 { font-size: 2.5em; color: #38bdf8; margin-bottom: 5px; }
-        .header p { color: #94a3b8; }
-
-        /* Graph Container */
-        .graph-card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 40px 20px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            position: relative;
-            margin-bottom: 30px;
-        }
-
-        /* Threshold Lines */
-        .threshold-lines {
-            position: absolute;
-            left: 60px;
-            right: 20px;
-            top: 40px;
-            bottom: 80px;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .line {
-            width: 100%;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-            position: relative;
-        }
-        .line span {
-            position: absolute;
-            left: -50px;
-            top: -10px;
-            font-size: 11px;
-            color: #64748b;
-            font-weight: bold;
-        }
-        .line.muggy { border-top: 1px solid rgba(239, 68, 68, 0.3); }
-        .line.comfort { border-top: 1px solid rgba(16, 185, 129, 0.3); }
-
-        /* The Bars */
-        .chart-area {
-            height: 350px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            padding-left: 50px;
-            position: relative;
-            z-index: 2;
-        }
-        .bar-wrapper {
-            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100%;
+        }
+
+        .container { width: 100%; max-width: 1000px; }
+
+        /* BRAND HEADER */
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            padding: 0 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+        .brand-left h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .brand-left h1 span { color: var(--viccaya-blue); }
+        .brand-left p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .brand-right { text-align: right; }
+        .station-id {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--viccaya-blue);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .live-status {
+            font-size: 0.7rem;
+            color: #10b981;
+            display: flex;
+            align-items: center;
             justify-content: flex-end;
-            transition: all 0.3s ease;
+            gap: 6px;
         }
-        .bar {
-            width: 70%;
-            max-width: 60px;
-            border-radius: 8px 8px 4px 4px;
+        .dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Summary Badge */
+        #summary-text {
+            display: block;
+            margin: 20px 0;
+            padding: 12px 20px;
+            background: #1e293b;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--viccaya-blue);
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
             position: relative;
-            transition: height 1s ease-out, background 0.5s;
-            cursor: pointer;
-            min-height: 20px;
+            padding: 20px 20px 0 20px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
-        .bar:hover { filter: brightness(1.2); transform: scaleX(1.05); }
-        
-        /* Value on top of bar */
+
+        .chart-viewport {
+            height: 400px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Background Zones */
+        .zones {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column-reverse;
+            z-index: 1;
+        }
+        .zone {
+            width: 100%;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.15);
+        }
+
+        /* Foreground Bars */
+        .bars-stage {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            margin-left: 80px;
+        }
+
+        .bar-col {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .bar-col:hover { background: rgba(255,255,255,0.03); }
+
+        .bar {
+            width: 50%;
+            max-width: 40px;
+            border-radius: 6px 6px 2px 2px;
+            position: relative;
+            transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+        }
+
         .bar-val {
             position: absolute;
-            top: -25px;
+            top: -28px;
             width: 100%;
             text-align: center;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
         }
 
-        /* Labels at bottom */
-        .bar-label {
-            margin-top: 15px;
-            text-align: center;
+        .x-axis {
+            height: 70px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-left: 80px;
+            border-top: 1px solid var(--border);
+            z-index: 2;
         }
-        .day-name { font-weight: bold; font-size: 13px; color: #f1f5f9; }
-        .date-str { font-size: 10px; color: #64748b; text-transform: uppercase; }
-
-        /* Legend */
-        .legend {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            background: #0f172a;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .date-item { text-align: center; }
+        .date-item .day { display: block; font-weight: 600; font-size: 13px; color: #f1f5f9; }
+        .date-item .date { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
 
         .footer {
+            margin-top: 25px;
+            font-size: 10px;
+            color: var(--text-muted);
             text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #475569;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Band Overlays */
+        .z-oppressive { background: rgba(127, 29, 29, 0.15); }
+        .z-muggy { background: rgba(239, 68, 68, 0.1); }
+        .z-sticky { background: rgba(245, 158, 11, 0.08); }
+        .z-pleasant { background: rgba(16, 185, 129, 0.04); }
+
+        @media (max-width: 700px) {
+            .brand-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .brand-right { text-align: left; }
+            .live-status { justify-content: flex-start; }
+            .zone { font-size: 7px; padding-left: 2px; }
+            .bars-stage, .x-axis { margin-left: 60px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <h1>🌡️ Muggy Meter</h1>
-            <p>10-Day Visual Dew Point Trend for Round Rock, TX</p>
+<div class="container">
+    <div class="brand-header">
+        <div class="brand-left">
+            <h1>VICCAYA <span>WX</span></h1>
+            <p>Atmospheric Intelligence Division</p>
         </div>
-
-        <div class="graph-card">
-            <!-- Background Scale Lines -->
-            <div class="threshold-lines">
-                <div class="line" style="height:0"><span>80°</span></div>
-                <div class="line muggy"><span>70°</span></div>
-                <div class="line"><span>60°</span></div>
-                <div class="line comfort"><span>50°</span></div>
-                <div class="line"><span>40°</span></div>
-                <div class="line" style="border:none"><span>30°</span></div>
+        <div class="brand-right">
+            <div class="station-id">STATION: ROUND_ROCK_TX</div>
+            <div class="live-status">
+                <div class="dot"></div>
+                LIVE SATELLITE FEED
             </div>
-
-            <!-- The Bars will be injected here -->
-            <div class="chart-area" id="chartArea"></div>
-        </div>
-
-        <div class="legend">
-            <div class="legend-item"><div class="dot" style="background: #06b6d4;"></div> Very Dry (&lt;40°)</div>
-            <div class="legend-item"><div class="dot" style="background: #10b981;"></div> Dry (40-50°)</div>
-            <div class="legend-item"><div class="dot" style="background: #84cc16;"></div> Comfort (50-60°)</div>
-            <div class="legend-item"><div class="dot" style="background: #f59e0b;"></div> Noticeable (60-65°)</div>
-            <div class="legend-item"><div class="dot" style="background: #ef4444;"></div> Muggy (65-70°)</div>
-            <div class="legend-item"><div class="dot" style="background: #991b1b;"></div> Tropical (&gt;70°)</div>
-        </div>
-
-        <div class="footer">
-            Source: Open-Meteo GFS Model | Syncing Live | <span id="syncTime"></span>
         </div>
     </div>
 
-    <script>
-        const LAT = 30.509747, LON = -97.692116;
+    <div id="summary-text">Initialising data stream...</div>
 
-        function getColor(dp) {
-            if (dp < 40) return '#06b6d4';
-            if (dp < 50) return '#10b981';
-            if (dp < 60) return '#84cc16';
-            if (dp < 65) return '#f59e0b';
-            if (dp < 70) return '#ef4444';
-            return '#991b1b';
+    <div class="chart-card">
+        <div class="chart-viewport">
+            <!-- Labels & Color Bands -->
+            <div class="zones">
+                <div class="zone" style="height: 20%;">30-40° DRY</div>
+                <div class="zone z-pleasant" style="height: 20%;">40-50° PLEASANT</div>
+                <div class="zone z-pleasant" style="height: 20%;">50-60° COMFORTABLE</div>
+                <div class="zone z-sticky" style="height: 10%;">60-65° STICKY</div>
+                <div class="zone z-muggy" style="height: 10%;">65-70° MUGGY</div>
+                <div class="zone z-oppressive" style="height: 10%; color: #ef4444;">70-75° UNCOMFORTABLE</div>
+                <div class="zone z-oppressive" style="height: 10%; border-top: 1px solid #7f1d1d; color: #f87171;">75°+ OPPRESSIVE</div>
+            </div>
+
+            <!-- Foreground Bars -->
+            <div class="bars-stage" id="barsStage"></div>
+        </div>
+
+        <div class="x-axis" id="xAxis"></div>
+    </div>
+
+    <div class="footer">
+        VICCAYA GLOBAL METEOROLOGICAL SERVICES • DATA REFRESH: <span id="update-time">--:--</span> • GFS_MODEL_V2
+    </div>
+</div>
+
+<script>
+    const CONFIG = {
+        lat: 30.5097,
+        lon: -97.6921,
+        min: 30,
+        max: 80
+    };
+
+    function getComfort(dp) {
+        if (dp < 50) return { label: 'CRISP', color: 'var(--dry)' };
+        if (dp < 60) return { label: 'PLEASANT', color: 'var(--pleasant)' };
+        if (dp < 65) return { label: 'STICKY', color: 'var(--sticky)' };
+        if (dp < 70) return { label: 'MUGGY', color: 'var(--muggy)' };
+        return { label: 'OPPRESSIVE', color: 'var(--oppressive)' };
+    }
+
+    async function fetchData() {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/gfs?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&daily=dew_point_2m_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`);
+            const data = await res.json();
+            render(data.daily);
+        } catch (e) {
+            document.getElementById('summary-text').textContent = "ERROR: SENSOR DISCONNECT";
         }
+    }
 
-        async function fetchWeather() {
-            try {
-                // Fetching 10 days of daily mean dew point
-                const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=dew_point_2m_mean&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`;
-                const res = await fetch(url);
-                const data = await res.json();
-                renderChart(data.daily);
-                document.getElementById('syncTime').textContent = "Last Update: " + new Date().toLocaleTimeString();
-            } catch (err) {
-                console.error("Fetch failed", err);
+    function render(daily) {
+        const stage = document.getElementById('barsStage');
+        const x = document.getElementById('xAxis');
+        stage.innerHTML = '';
+        x.innerHTML = '';
+
+        let highestDP = 0;
+        let highestDay = "";
+
+        daily.time.forEach((time, i) => {
+            const dp = daily.dew_point_2m_max[i];
+            const comfort = getComfort(dp);
+            const date = new Date(time + 'T00:00:00');
+            const dayName = date.toLocaleDateString('en-US', {weekday: 'short'});
+
+            if (dp > highestDP) {
+                highestDP = dp;
+                highestDay = i === 0 ? "Today" : dayName;
             }
-        }
 
-        function renderChart(daily) {
-            const chartArea = document.getElementById('chartArea');
-            chartArea.innerHTML = '';
+            let pct = ((dp - CONFIG.min) / (CONFIG.max - CONFIG.min)) * 100;
+            pct = Math.max(5, Math.min(100, pct));
 
-            daily.time.forEach((dateStr, i) => {
-                const dp = daily.dew_point_2m_mean[i];
-                const date = new Date(dateStr + 'T00:00:00');
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'bar-wrapper';
+            const col = document.createElement('div');
+            col.className = 'bar-col';
+            col.innerHTML = `
+                <div class="bar" style="height: ${pct}%; background-color: ${comfort.color}; box-shadow: 0 0 20px ${comfort.color}33">
+                    <div class="bar-val" style="color: ${comfort.color}">${Math.round(dp)}°</div>
+                </div>
+            `;
+            stage.appendChild(col);
 
-                // Map dew point (30 to 80 range) to percentage height (0 to 100)
-                // We set 30 as the floor for the graph
-                const minGraph = 30;
-                const maxGraph = 80;
-                let heightPct = ((dp - minGraph) / (maxGraph - minGraph)) * 100;
-                if (heightPct < 5) heightPct = 5; // Minimum bar visibility
+            const label = document.createElement('div');
+            label.className = 'date-item';
+            label.innerHTML = `
+                <span class="day">${dayName}</span>
+                <span class="date">${date.getDate()} ${date.toLocaleDateString('en-US', {month: 'short'})}</span>
+            `;
+            x.appendChild(label);
+        });
 
-                wrapper.innerHTML = `
-                    <div class="bar" style="height: ${heightPct}%; background: ${getColor(dp)}">
-                        <div class="bar-val" style="color: ${getColor(dp)}">${Math.round(dp)}°</div>
-                    </div>
-                    <div class="bar-label">
-                        <div class="day-name">${date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</div>
-                        <div class="date-str">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                    </div>
-                `;
-                chartArea.appendChild(wrapper);
-            });
-        }
+        const summary = getComfort(highestDP);
+        document.getElementById('summary-text').innerHTML = 
+            `FORECAST SUMMARY: Peak humidity of <span style="color:${summary.color}; font-weight:800;">${summary.label}</span> levels expected around <span style="color:#fff">${highestDay}</span>.`;
+        
+        document.getElementById('update-time').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+    }
 
-        fetchWeather();
-        // Refresh every 30 minutes
-        setInterval(fetchWeather, 1800000);
-    </script>
+    fetchData();
+    setInterval(fetchData, 1800000);
+</script>
+
+</body>
+</html>
 </body>
 </html>
