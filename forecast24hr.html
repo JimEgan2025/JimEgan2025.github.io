@@ -24,15 +24,20 @@ tr:hover { background:#f1f5f9; }
 .temp-high { color:#dc2626; }
 .temp-low { color:#1d4ed8; }
 .temp-mid { color:#f59e0b; }
-.current-hour { background:#fef3c7 !important; border:2px solid #f59e0b; }
+.temp-max { color:#dc2626; font-weight:900; background:#fee2e2; }
+.temp-min { color:#1d4ed8; font-weight:900; background:#dbeafe; }
 .gust-high { color:#dc2626; font-weight:700; }
 .gust-normal { color:#374151; }
-.precip-high { color:#1e40af; font-weight:700; }
-.precip-low { color:#6b7280; }
+.precip-none { color:#6b7280; }
+.precip-light { color:#38bdf8; font-weight:600; }
+.precip-moderate { color:#2563eb; font-weight:700; }
+.precip-heavy { color:#1d4ed8; font-weight:800; }
+.precip-extreme { color:#7c3aed; font-weight:900; background:#ede9fe; }
 .sev-none { color:#10b981; font-weight:600; }
 .sev-low { color:#f59e0b; font-weight:700; }
 .sev-mod { color:#ef4444; font-weight:800; }
 .sev-high { color:#b91c1c; font-weight:900; background:#fee2e2; }
+.icon-cell { font-size:18px; margin-right:6px; vertical-align:middle; }
 .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
 </style>
 </head>
@@ -74,6 +79,33 @@ function getWeatherDesc(weatherCode, precipProb) {
   return precipProb > 30 ? `${desc} (${precipProb}%)` : desc;
 }
 
+function getWeatherIcon(weatherCode) {
+  const map = {
+    0: '☀️',
+    1: '🌤️',
+    2: '⛅',
+    3: '☁️',
+    45: '🌫️',
+    48: '🌫️',
+    51: '🌦️',
+    53: '🌧️',
+    55: '🌧️',
+    61: '🌧️',
+    63: '🌧️',
+    65: '🌧️',
+    71: '🌨️',
+    73: '🌨️',
+    75: '❄️',
+    80: '🌦️',
+    81: '🌦️',
+    82: '⛈️',
+    95: '⛈️',
+    96: '⛈️',
+    99: '⛈️'
+  };
+  return map[weatherCode] || '❔';
+}
+
 function getWindDirection(degrees) {
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(degrees / 22.5) % 16];
@@ -87,6 +119,14 @@ function getSeverity(cape, li) {
   return { text: 'NONE', cls: 'sev-none' };
 }
 
+function getPrecipClass(amountInches, prob) {
+  if (amountInches <= 0.001 && prob < 20) return 'precip-none';
+  if (amountInches < 0.05) return 'precip-light';
+  if (amountInches < 0.20) return 'precip-moderate';
+  if (amountInches < 0.50) return 'precip-heavy';
+  return 'precip-extreme';
+}
+
 async function init() {
   try {
     const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m,cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=2`;
@@ -97,8 +137,8 @@ async function init() {
     const { hourly } = data;
 
     const now = new Date();
-    const currentHourStart = new Date(now);
-    currentHourStart.setMinutes(0, 0, 0);
+    const currentHour = new Date(now);
+    currentHour.setMinutes(0, 0, 0);
 
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -107,7 +147,7 @@ async function init() {
     const hours = [];
     hourly.time.forEach((t, i) => {
       const hTime = new Date(t);
-      if (hTime >= currentHourStart && hTime <= tomorrow) {
+      if (hTime >= currentHour && hTime <= tomorrow) {
         hours.push({ index: i, time: hTime });
       }
     });
@@ -140,8 +180,14 @@ async function init() {
       },
       {
         name: 'Conditions',
-        label: 'Sky / Precipitation',
-        getData: i => getWeatherDesc(hourly.weather_code[hours[i].index], hourly.precipitation_probability[hours[i].index])
+        label: 'Icon / Sky / Precipitation',
+        getData: i => {
+          const code = hourly.weather_code[hours[i].index];
+          const prob = hourly.precipitation_probability[hours[i].index];
+          const icon = getWeatherIcon(code);
+          const desc = getWeatherDesc(code, prob);
+          return `<span class="icon-cell">${icon}</span> ${desc}`;
+        }
       },
       {
         name: 'Temperature',
@@ -149,8 +195,10 @@ async function init() {
         getData: i => {
           const t = Math.round(hourly.temperature_2m[hours[i].index]);
           let cls = 'temp-mid';
-          if (t >= midT + 3) cls = 'temp-high';
-          if (t <= midT - 3) cls = 'temp-low';
+          if (t === maxT) cls = 'temp-max';
+          else if (t === minT) cls = 'temp-min';
+          else if (t >= midT + 3) cls = 'temp-high';
+          else if (t <= midT - 3) cls = 'temp-low';
           return `<span class="temp ${cls}">${t}°</span>`;
         }
       },
@@ -164,8 +212,9 @@ async function init() {
         label: 'Prob / Inches',
         getData: i => {
           const prob = hourly.precipitation_probability[hours[i].index];
-          const inches = (hourly.precipitation[hours[i].index] / 25.4).toFixed(2);
-          return `${prob}% / ${inches}"`;
+          const inches = hourly.precipitation[hours[i].index] / 25.4;
+          const cls = getPrecipClass(inches, prob);
+          return `<span class="${cls}">${prob}% / ${inches.toFixed(2)}"</span>`;
         }
       },
       {
@@ -218,7 +267,5 @@ async function init() {
 
 init();
 </script>
-</body>
-</html>
 </body>
 </html>
