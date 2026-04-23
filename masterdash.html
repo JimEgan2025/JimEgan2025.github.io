@@ -103,18 +103,20 @@ iframe {
 <div class="container">
     <div class="sidebar">
         <div class="tab active" onclick="loadPage('alerts', this)">⚠ Alerts</div>
-        <div class="tab" onclick="loadPage('afD', this)">AFD</div>
+        <div class="tab" onclick="loadPage('afd', this)">AFD</div>
         <div class="tab" onclick="loadPage('almanac', this)">Almanac</div>
         <div class="tab" onclick="loadPage('backyard', this)">Backyard</div>
         <div class="tab" onclick="loadPage('command', this)">Command</div>
         <div class="tab" onclick="loadPage('county', this)">County</div>
         <div class="tab" onclick="loadPage('forecast', this)">Forecast</div>
         <div class="tab" onclick="loadPage('forecast7day', this)">Forecast 7day</div>
+        <div class="tab" onclick="loadPage('mobilewx', this)">MobileWX</div>
         <div class="tab" onclick="loadPage('muggy', this)">Muggy Meter</div>
         <div class="tab" onclick="loadPage('nws', this)">NWS</div>
         <div class="tab" onclick="loadPage('500mb', this)">500mb</div>
         <div class="tab" onclick="loadPage('radar', this)">Radar</div>
         <div class="tab" onclick="loadPage('rain', this)">Rain Meter</div>
+        <div class="tab" onclick="loadPage('rev_dash', this)">VC 14 Day</div>
         <div class="tab" onclick="loadPage('risk', this)">Risk</div>
         <div class="tab" onclick="loadPage('spc', this)">SPC</div>
         <div class="tab" onclick="loadPage('tropical', this)">Tropical</div>
@@ -136,11 +138,13 @@ const pages = {
     county: "https://jimegan2025.github.io/county.html",
     forecast: "https://jimegan2025.github.io/forecast24hr.html",
     forecast7day: "https://jimegan2025.github.io/forecast7day.html",
+    mobilewx: "https://jimegan2025.github.io/mobilewx.html",
     muggy: "https://jimegan2025.github.io/muggyMeter.html",
     nws: "https://jimegan2025.github.io/nwsoffices.html",
     "500mb": "https://www.spc.noaa.gov/exper/mesoanalysis/s19/500mb/500mb_sf.gif",
     radar: "https://jimegan2025.github.io/masterrad.html",
     rain: "https://jimegan2025.github.io/rainMeter.html",
+    rev_dash: "https://jimegan2025.github.io/rev_dash.html",
     risk: "https://jimegan2025.github.io/risk.html",
     spc: "https://jimegan2025.github.io/spcwpc.html",
     tropical: "https://jimegan2025.github.io/tropical.html"
@@ -155,11 +159,13 @@ const titles = {
     county: "County",
     forecast: "Forecast",
     forecast7day: "Forecast 7day",
+    mobilewx: "MobileWX",
     muggy: "Muggy Meter",
     nws: "NWS",
     "500mb": "500mb",
     radar: "Radar",
     rain: "Rain Meter",
+    rev_dash: "VC 14 Day",
     risk: "Risk",
     spc: "SPC",
     tropical: "Tropical"
