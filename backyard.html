@@ -1,230 +1,140 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Vizcaya Auto Forecast v8</title>
-<script src="https://cdn.tailwindcss.com"></script>
-
+<title>Vizcaya Weather Command v14</title>
 <style>
-body { background:#05070a; color:#cbd5e1; font-family: monospace; }
-.card { background:#0f172a; border:1px solid #334155; }
-pre { white-space: pre-wrap; }
+body { font-family: Arial; background:#111; color:#eee; }
+input, button { margin:5px; padding:5px; }
+table { border-collapse: collapse; margin-top:10px; }
+td, th { border:1px solid #444; padding:4px; text-align:center; }
+.high { background:#5a0000; }
+.elev { background:#663300; }
+.low { background:#003366; }
 </style>
 </head>
 
-<body class="p-6">
+<body>
 
-<div class="max-w-5xl mx-auto">
+<h2>Vizcaya Weather Command v14</h2>
 
-<h1 class="text-xl font-black text-white">
-VIZCAYA v8 — AUTO FORECAST NARRATIVE ENGINE
-</h1>
+Lat: <input id="lat" value="30.5871">
+Lon: <input id="lon" value="-97.641"><br>
 
-<button onclick="run()" class="bg-red-600 px-4 py-2 rounded text-white font-bold mt-3">
-GENERATE FULL WEATHER BRIEF
-</button>
+Surface Temp (F): <input id="t" value="75">
+Dew Point (F): <input id="td" value="70">
 
-<div class="grid grid-cols-2 gap-4 mt-4">
+<button onclick="run()">Run Model</button>
 
-<!-- INPUT -->
-<div class="card p-4">
-<h2 class="text-blue-400 font-bold">BACKYARD OBS</h2>
-
-Temp:
-<input id="tobs" class="w-full text-black p-1" value="58.7">
-
-Dew:
-<input id="dobs" class="w-full text-black p-1 mt-2" value="48.1">
-
-PWAT:
-<input id="pwat" class="w-full text-black p-1 mt-2" value="1.45">
-</div>
-
-<!-- STATUS -->
-<div id="status" class="card p-4">
-<h2 class="text-white font-bold">STATUS</h2>
-<div class="text-slate-400">Ready</div>
-</div>
-
-</div>
-
-<div id="out" class="mt-6"></div>
-
-</div>
+<pre id="summary"></pre>
+<div id="table"></div>
 
 <script>
+async function run(){
 
-// -----------------------------
-function getModel() {
-  return {
-    tempF: 80.8,
-    dewF: 66.2,
-    shear: 30
-  };
+let lat = document.getElementById("lat").value;
+let lon = document.getElementById("lon").value;
+let t0F = parseFloat(document.getElementById("t").value);
+let td0F = parseFloat(document.getElementById("td").value);
+
+let res = await fetch(
+`https://api.open-meteo.com/v1/gfs?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dew_point_2m,total_column_integrated_water_vapour,lifted_index,cape,convective_inhibition&timezone=auto&forecast_days=1`
+);
+
+let data = await res.json();
+
+let html = "<table><tr><th>Time</th><th>T</th><th>Td</th><th>PWAT</th><th>CAPE</th><th>CIN</th><th>LI</th><th>Status</th></tr>";
+
+let rows = [];
+
+for(let i=0;i<data.hourly.time.length;i++){
+
+let T = data.hourly.temperature_2m[i];
+let Td = data.hourly.dew_point_2m[i];
+let capeRaw = data.hourly.cape[i];
+let cinRaw = Math.abs(data.hourly.convective_inhibition[i]);
+let li = data.hourly.lifted_index[i];
+let pwat = (data.hourly.total_column_integrated_water_vapour[i]/25.4).toFixed(2);
+
+// === Excel-style CAPE adjustment ===
+let capeAdj = Math.max(200,
+capeRaw * (1 + ((t0F - (T*9/5+32)) * 0.22) + ((td0F - (Td*9/5+32)) * 0.12))
+);
+
+// CIN mild adjustment
+let cinAdj = Math.max(0, cinRaw - 10);
+
+// Status
+let status = "Low";
+let cls = "low";
+
+if(capeAdj > 2500 && cinAdj < 50){ status="HIGH"; cls="high"; }
+else if(capeAdj > 1500){ status="Elevated"; cls="elev"; }
+
+// Time
+let time = new Date(data.hourly.time[i]);
+let hr = time.getHours();
+
+rows.push({
+hr, cape:capeAdj, cin:cinAdj, li, pwat, T, Td
+});
+
+html += `<tr class="${cls}">
+<td>${hr}:00</td>
+<td>${(T*9/5+32).toFixed(1)}</td>
+<td>${(Td*9/5+32).toFixed(1)}</td>
+<td>${pwat}</td>
+<td>${capeAdj.toFixed(0)}</td>
+<td>${cinAdj.toFixed(0)}</td>
+<td>${li.toFixed(1)}</td>
+<td>${status}</td>
+</tr>`;
 }
 
-// -----------------------------
-function couplingIndex(m, o) {
-  return Math.abs(m.tempF - o.tempF)
-       + Math.abs(m.dewF - o.dewF);
+html += "</table>";
+document.getElementById("table").innerHTML = html;
+
+// === SMART SUMMARY ===
+
+// Current hour
+let now = new Date().getHours();
+let current = rows.find(r => r.hr === now) || rows[0];
+
+// Peak CAPE
+let peak = rows.reduce((a,b)=> a.cape>b.cape?a:b);
+
+// Lowest CIN
+let lowCIN = rows.reduce((a,b)=> a.cin<b.cin?a:b);
+
+// Most unstable (CAPE - CIN)
+let danger = rows.reduce((a,b)=>
+(a.cape - a.cin) > (b.cape - b.cin) ? a : b
+);
+
+document.getElementById("summary").innerText = `
+MODEL SUMMARY (v14)
+
+CURRENT CONDITIONS
+Hour: ${current.hr}:00
+CAPE: ${current.cape.toFixed(0)}
+CIN: ${current.cin.toFixed(0)}
+
+PEAK CAPE
+Hour: ${peak.hr}:00
+CAPE: ${peak.cape.toFixed(0)}
+
+LOWEST CIN
+Hour: ${lowCIN.hr}:00
+CIN: ${lowCIN.cin.toFixed(0)}
+
+MAX INSTABILITY WINDOW
+Hour: ${danger.hr}:00
+CAPE: ${danger.cape.toFixed(0)}
+CIN: ${danger.cin.toFixed(0)}
+
+INTERPRETATION:
+Focus on MAX INSTABILITY + LOW CIN overlap.
+`;
 }
-
-// -----------------------------
-function simulate(tempF, dewF) {
-
-  const lcl = (tempF - dewF) * 125;
-
-  let cape = 0;
-  let cin = 0;
-  let inFree = false;
-  let lfc = null;
-
-  for (let z = 0; z <= 12000; z += 100) {
-
-    const env = tempF - (z * 0.0032);
-    const parcel = tempF - (z * 0.0098);
-
-    let b = parcel - env;
-
-    if (!inFree && b < 0) cin += b;
-
-    if (!inFree && b > 0 && z > lcl) {
-      inFree = true;
-      lfc = z;
-    }
-
-    if (inFree && b > 0) cape += b;
-  }
-
-  return {
-    cape: cape * 100,
-    cin: cin * 100,
-    lcl,
-    lfc
-  };
-}
-
-// -----------------------------
-function stormType(cape, shear, pwat) {
-
-  if (pwat < 1.0) return "DRY / NO CONVECTION";
-  if (cape < 50) return "STABLE ATMOSPHERE";
-  if (shear < 20) return "PULSE STORMS";
-  if (shear < 35) return "MULTICELL STORMS";
-  return "ORGANIZED / SUPERCELL POTENTIAL";
-}
-
-// -----------------------------
-function narrative(packet, storm) {
-
-  let intro = "";
-  let risk = "";
-
-  if (packet.derived.couplingClass === "HIGH") {
-    intro = "A significant atmospheric decoupling is present today. Model instability exists aloft, but surface conditions are not well coupled to that environment.";
-  } else {
-    intro = "The surface and modeled atmosphere are reasonably aligned, allowing convective interpretation where instability exists.";
-  }
-
-  if (packet.derived.cape === 0) {
-    risk = "No convective development is expected due to strong inhibition and a stable boundary layer.";
-  } else {
-    risk = "Convective development is conditionally possible depending on boundary layer recovery and forcing.";
-  }
-
-  return { intro, risk };
-}
-
-// -----------------------------
-function run() {
-
-  const model = getModel();
-
-  const obs = {
-    tempF: parseFloat(document.getElementById("tobs").value),
-    dewF: parseFloat(document.getElementById("dobs").value)
-  };
-
-  const pwat = parseFloat(document.getElementById("pwat").value);
-
-  const coupling = couplingIndex(model, obs);
-
-  const sim = simulate(
-    (model.tempF + obs.tempF) / 2,
-    (model.dewF + obs.dewF) / 2
-  );
-
-  const packet = {
-    model,
-    observed: obs,
-    derived: {
-      couplingIndex: coupling,
-      couplingClass: coupling > 40 ? "HIGH" : "LOW",
-      cape: Math.round(sim.cape),
-      cin: Math.round(sim.cin),
-      lcl_m: Math.round(sim.lcl),
-      lfc_m: sim.lfc
-    }
-  };
-
-  const storm = stormType(sim.cape, model.shear, pwat);
-
-  const nar = narrative(packet, storm);
-
-  // ---------------- UI ----------------
-
-  document.getElementById("status").innerHTML = `
-    <div class="text-yellow-300 font-bold">
-      DAILY FORECAST GENERATED
-    </div>
-    <div class="text-xs text-slate-400 mt-2">
-      ${storm}
-    </div>
-  `;
-
-  document.getElementById("out").innerHTML = `
-
-<!-- HUMAN FORECAST -->
-<div class="card p-4">
-
-<h2 class="text-white font-bold">METEOROLOGICAL BRIEFING</h2>
-
-<p class="mt-2">${nar.intro}</p>
-
-<p class="mt-3">${nar.risk}</p>
-
-<hr class="my-4 border-slate-600">
-
-<h3 class="text-green-400 font-bold">Storm Assessment</h3>
-${storm}
-
-</div>
-
-<!-- KEY METRICS -->
-<div class="card p-4 mt-4">
-
-<h2 class="text-blue-400 font-bold">KEY PARAMETERS</h2>
-
-Coupling Index: ${coupling.toFixed(1)}<br>
-CAPE: ${Math.round(sim.cape)}<br>
-CIN: ${Math.round(sim.cin)}<br>
-LCL: ${Math.round(sim.lcl)} m<br>
-PWAT: ${pwat}
-
-</div>
-
-<!-- AI PACKET -->
-<div class="card p-4 mt-4">
-
-<h2 class="text-purple-300 font-bold">AI STRUCTURED PACKET</h2>
-
-<pre>${JSON.stringify(packet, null, 2)}</pre>
-
-</div>
-
-  `;
-}
-
 </script>
 
 </body>
