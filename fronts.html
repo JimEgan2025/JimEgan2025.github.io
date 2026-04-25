@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya | Tactical Grid v19</title>
+    <title>Vizcaya | Full Column v27</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --primary: #00ffcc; --bg: #020617; --dryline: #fb923c; --moist: #22d3ee; --alert: #ef4444; --insight: #a855f7; }
@@ -11,46 +11,43 @@
         #sidebar { width: 340px; background: #010409; border-right: 1px solid #1e293b; padding: 15px; z-index: 10; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
         #map { flex: 1; background: #0b1120; }
         .header h2 { color: var(--primary); font-size: 0.7rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
-        .summary-box { background: rgba(0, 255, 204, 0.05); border: 1px solid var(--primary); padding: 10px; border-radius: 8px; font-size: 0.7rem; line-height: 1.4; border-left: 4px solid var(--primary); }
-        .proximity-box { border: 1px solid var(--alert); background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; font-size: 0.7rem; color: #fecaca; }
-        .insight-box { border: 1px solid var(--insight); background: rgba(168, 85, 247, 0.1); padding: 10px; border-radius: 8px; font-size: 0.72rem; line-height: 1.5; color: #e9d5ff; }
+        .cap-box { background: rgba(168, 85, 247, 0.1); border: 1px solid var(--insight); padding: 10px; border-radius: 8px; font-size: 0.75rem; }
         .range-tool { background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 0.7rem; margin-top: auto; }
-        #dist-val { color: var(--primary); font-family: monospace; font-size: 1.2rem; display: block; margin: 4px 0; }
         #footer-grid { height: 95px; background: #010409; border-top: 1px solid #1e293b; display: flex; overflow-x: auto; align-items: center; padding: 0 15px; gap: 10px; white-space: nowrap; }
         .stat-card { min-width: 110px; background: #0f172a; padding: 8px; border-radius: 6px; font-size: 0.62rem; border-bottom: 3px solid #334155; flex-shrink: 0; }
         .is-dry { border-bottom-color: var(--dryline); }
         .is-moist { border-bottom-color: var(--moist); }
         .timeline-container { position: absolute; top: 20px; right: 20px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 30px; border: 1px solid #334155; z-index: 1000; display: flex; align-items: center; gap: 15px; width: 320px; }
-        input[type=range] { flex: 1; accent-color: var(--primary); cursor: pointer; }
-        #hrLabel { font-family: monospace; color: var(--primary); font-weight: 900; width: 55px; text-align: right; }
-        /* Tactical Popup Styling */
-        .leaflet-popup-content-wrapper { background: #0f172a; color: white; border: 1px solid var(--primary); border-radius: 4px; }
-        .leaflet-popup-tip { background: var(--primary); }
     </style>
 </head>
 <body>
 
 <div id="main-container">
     <div id="sidebar">
-        <div class="header"><h2>VIZCAYA | INTEL v19</h2></div>
-        <div class="summary-box" id="summary">Scanning 48 active nodes...</div>
-        <div class="proximity-box">
-            <strong>LEADING EDGE:</strong> <span id="v-status">ANALYZING</span><br>
-            <small id="v-detail">Mapping moisture gates...</small>
+        <div class="header"><h2>VIZCAYA | FULL COLUMN</h2></div>
+        
+        <div class="cap-box">
+            <strong>ATMOSPHERIC LAYERS (VIZCAYA)</strong><br>
+            <div style="margin-top:5px; display:flex; justify-content:space-between;">
+                <span>700mb (The Lid):</span> <b id="cap-700">--°C</b>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span>500mb (Steering):</span> <b id="cap-500">--°C</b>
+            </div>
+            <hr style="border:0; border-top:1px solid #334155; margin:8px 0;">
+            <small id="cap-status">Initializing sensors...</small>
         </div>
-        <div class="insight-box" id="v-insight">
-            <strong>AI FORECAST INSIGHT:</strong><br><small>Baseline...</small>
-        </div>
+
         <div class="range-tool">
             <b>PROXIMITY RADAR</b><br>
-            <span id="dist-val">-- MILES</span>
-            <small id="station-name" style="color:#64748b; text-transform: uppercase;">HOVER STATION</small>
+            <span id="dist-val" style="font-size:1.2rem; color:var(--primary); font-family:monospace;">-- MILES</span><br>
+            <small id="station-name" style="color:#64748b; text-transform: uppercase;">SELECT NODE</small>
         </div>
     </div>
     <div id="map"></div>
     <div class="timeline-container">
-        <input type="range" id="ts" min="0" max="24" value="0">
-        <span id="hrLabel">NOW</span>
+        <input type="range" id="ts" min="0" max="24" value="0" style="flex:1; accent-color:var(--primary);">
+        <span id="hrLabel" style="font-family:monospace; color:var(--primary); width:40px; text-align:right;">NOW</span>
     </div>
 </div>
 <div id="footer-grid"></div>
@@ -59,106 +56,69 @@
 <script>
 const V_LAT = 30.587; const V_LON = -97.641;
 const stations = [
-    { name: "Clayton", lat: 36.45, lon: -103.18, slice: 1 }, { name: "Guymon", lat: 36.68, lon: -101.48, slice: 1 },
-    { name: "Dalhart", lat: 36.02, lon: -102.52, slice: 1 }, { name: "Amarillo", lat: 35.22, lon: -101.83, slice: 1 },
-    { name: "Childress", lat: 34.42, lon: -100.20, slice: 1 }, { name: "Tucumcari", lat: 35.17, lon: -103.72, slice: 2 },
-    { name: "Clovis", lat: 34.40, lon: -103.20, slice: 2 }, { name: "Lubbock", lat: 33.57, lon: -101.85, slice: 2 },
-    { name: "Guthrie", lat: 33.62, lon: -100.32, slice: 2 }, { name: "Vernon", lat: 34.15, lon: -99.28, slice: 2 },
-    { name: "Wichita Falls", lat: 33.91, lon: -98.49, slice: 2 }, { name: "Roswell", lat: 33.39, lon: -104.52, slice: 3 },
-    { name: "Lovington", lat: 32.91, lon: -103.35, slice: 3 }, { name: "Lamesa", lat: 32.73, lon: -101.95, slice: 3 },
-    { name: "Snyder", lat: 32.71, lon: -100.91, slice: 3 }, { name: "Abilene", lat: 32.44, lon: -99.73, slice: 3 },
-    { name: "Breckenridge", lat: 32.75, lon: -98.90, slice: 3 }, { name: "Stephenville", lat: 32.22, lon: -98.20, slice: 3 },
-    { name: "Waco", lat: 31.56, lon: -97.13, slice: 3 }, { name: "Dallas", lat: 32.78, lon: -96.80, slice: 3 },
-    { name: "Midland", lat: 31.99, lon: -102.07, slice: 4 }, { name: "San Angelo", lat: 31.46, lon: -100.43, slice: 4 },
-    { name: "Brady", lat: 31.13, lon: -99.33, slice: 4 }, { name: "Brownwood", lat: 31.71, lon: -98.98, slice: 4 },
-    { name: "Comanche", lat: 31.89, lon: -98.60, slice: 4 }, { name: "Hamilton", lat: 31.70, lon: -98.12, slice: 4 },
-    { name: "Goldthwaite", lat: 31.45, lon: -98.57, slice: 4 }, { name: "Burnet", lat: 30.74, lon: -98.24, slice: 4 },
-    { name: "Vizcaya", lat: V_LAT, lon: V_LON, slice: 4 }, { name: "Artesia", lat: 32.84, lon: -104.40, slice: 5 },
-    { name: "Carlsbad", lat: 32.42, lon: -104.23, slice: 5 }, { name: "Hobbs", lat: 32.70, lon: -103.13, slice: 5 },
-    { name: "Iraan", lat: 30.91, lon: -101.90, slice: 5 }, { name: "Eldorado", lat: 30.86, lon: -100.60, slice: 5 },
-    { name: "Fort Stockton", lat: 30.89, lon: -102.87, slice: 5 }, { name: "Sonora", lat: 30.57, lon: -100.64, slice: 5 },
-    { name: "Mason", lat: 30.75, lon: -99.23, slice: 5 }, { name: "Llano", lat: 30.75, lon: -98.67, slice: 5 },
-    { name: "Junction", lat: 30.49, lon: -99.77, slice: 5 }, { name: "Menard", lat: 30.92, lon: -99.79, slice: 5 },
-    { name: "Fredericksburg", lat: 30.24, lon: -98.91, slice: 5 }, { name: "Johnson City", lat: 30.27, lon: -98.41, slice: 5 },
-    { name: "Austin", lat: 30.26, lon: -97.74, slice: 5 }, { name: "Alpine", lat: 30.36, lon: -103.66, slice: 6 },
-    { name: "Sheffield", lat: 30.69, lon: -101.83, slice: 6 }, { name: "Pecos", lat: 31.42, lon: -103.49, slice: 6 },
-    { name: "Sanderson", lat: 30.14, lon: -102.39, slice: 6 }, { name: "Ozona", lat: 30.71, lon: -101.20, slice: 6 },
-    { name: "Rocksprings", lat: 30.01, lon: -100.17, slice: 6 }, { name: "Del Rio", lat: 29.37, lon: -100.90, slice: 6 }
+    { name: "Clayton NM", lat: 36.45, lon: -103.18, s: 1 }, { name: "Amarillo", lat: 35.22, lon: -101.83, s: 1 }, { name: "Childress", lat: 34.42, lon: -100.20, s: 1 },
+    { name: "Clovis NM", lat: 34.40, lon: -103.20, s: 2 }, { name: "Lubbock", lat: 33.57, lon: -101.85, s: 2 }, { name: "Brownfield", lat: 33.18, lon: -102.27, s: 2 }, { name: "Lamesa", lat: 32.73, lon: -101.95, s: 2 }, { name: "Wichita Falls", lat: 33.91, lon: -98.49, s: 2 },
+    { name: "Snyder", lat: 32.71, lon: -100.91, s: 3 }, { name: "Abilene", lat: 32.44, lon: -99.73, s: 3 }, { name: "Breckenridge", lat: 32.75, lon: -98.90, s: 3 }, { name: "Stephenville", lat: 32.22, lon: -98.20, s: 3 }, { name: "Fort Worth", lat: 32.75, lon: -97.33, s: 3 }, { name: "Dallas", lat: 32.78, lon: -96.80, s: 3 }, { name: "Waco", lat: 31.56, lon: -97.13, s: 3 },
+    { name: "Roswell NM", lat: 33.39, lon: -104.52, s: 4 }, { name: "Kermit", lat: 31.85, lon: -103.09, s: 4 }, { name: "Midland", lat: 31.99, lon: -102.07, s: 4 }, { name: "Odessa", lat: 31.84, lon: -102.36, s: 4 }, { name: "Big Spring", lat: 32.25, lon: -101.47, s: 4 }, { name: "San Angelo", lat: 31.46, lon: -100.43, s: 4 }, { name: "Brownwood", lat: 31.71, lon: -98.98, s: 4 }, { name: "Vizcaya", lat: V_LAT, lon: V_LON, s: 4 },
+    { name: "Van Horn", lat: 31.04, lon: -104.83, s: 5 }, { name: "Fort Davis", lat: 30.58, lon: -103.89, s: 5 }, { name: "Fort Stockton", lat: 30.89, lon: -102.87, s: 5 }, { name: "Big Lake", lat: 31.19, lon: -101.46, s: 5 }, { name: "Sheffield", lat: 30.69, lon: -101.83, s: 5 }, { name: "Iraan", lat: 30.91, lon: -101.90, s: 5 }, { name: "Eldorado", lat: 30.86, lon: -100.60, s: 5 }, { name: "Sonora", lat: 30.57, lon: -100.64, s: 5 }, { name: "Menard", lat: 30.92, lon: -99.79, s: 5 }, { name: "Brady", lat: 31.13, lon: -99.33, s: 5 }, { name: "Mason", lat: 30.75, lon: -99.23, s: 5 }, { name: "Junction", lat: 30.49, lon: -99.77, s: 5 }, { name: "Rocksprings", lat: 30.01, lon: -100.17, s: 5 }, { name: "Llano", lat: 30.75, lon: -98.67, s: 5 }, { name: "Burnet", lat: 30.74, lon: -98.24, s: 5 }, { name: "Fredericksburg", lat: 30.24, lon: -98.91, s: 5 }, { name: "Austin", lat: 30.26, lon: -97.74, s: 5 },
+    { name: "El Paso", lat: 31.76, lon: -106.48, s: 6 }, { name: "Alpine", lat: 30.36, lon: -103.66, s: 6 }, { name: "Ozona", lat: 30.71, lon: -101.20, s: 6 }, { name: "Del Rio", lat: 29.37, lon: -100.90, s: 6 },
+    { name: "San Antonio", lat: 29.42, lon: -98.49, s: 7 }, { name: "Uvalde", lat: 29.21, lon: -99.79, s: 7 }, { name: "Victoria", lat: 28.85, lon: -96.92, s: 7 }, { name: "Gonzales", lat: 29.50, lon: -97.45, s: 7 }, { name: "La Grange", lat: 29.90, lon: -96.87, s: 7 }
 ];
 
-const map = L.map('map', { zoomControl: false }).setView([32.0, -100.0], 6.5);
+const map = L.map('map', { zoomControl: false }).setView([31.5, -100.5], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-L.circle([V_LAT, V_LON], { radius: 80467, color: '#334155', weight: 1, fillOpacity: 0.05, dashArray: '5, 10' }).addTo(map);
 
-let weatherCache = {};
+let weatherCache = {}; let columnCache = null;
 const lineLayer = L.layerGroup().addTo(map);
 const markerLayer = L.layerGroup().addTo(map);
 const currentHr = new Date().getHours();
 
-function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 3958.8; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-}
-
 async function init() {
     for (let s of stations) {
         try {
-            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,dewpoint_2m&temperature_unit=fahrenheit&timezone=America/Chicago`);
+            const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&hourly=temperature_2m,dewpoint_2m,winddirection_10m&temperature_unit=fahrenheit&timezone=America/Chicago`);
             weatherCache[s.name] = await r.json();
         } catch (e) { console.error(s.name); }
     }
+    const colR = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${V_LAT}&longitude=${V_LON}&hourly=temperature_700hPa,temperature_500hPa&timezone=America/Chicago`);
+    columnCache = await colR.json();
     render(0);
 }
 
 function render(offset) {
     lineLayer.clearLayers(); markerLayer.clearLayers();
-    const footer = document.getElementById('footer-grid'); footer.innerHTML = "";
     const idx = currentHr + parseInt(offset);
-    let pts = []; let minDryDist = 999; let closestDryStation = "";
-    let sliceLongs = {};
+    const footer = document.getElementById('footer-grid'); footer.innerHTML = "";
 
-    for (let i = 1; i <= 6; i++) {
-        const sliceSet = stations.filter(s => s.slice === i).sort((a, b) => a.lon - b.lon);
-        for (let j = 0; j < sliceSet.length - 1; j++) {
-            const dwA = weatherCache[sliceSet[j].name]?.hourly.dewpoint_2m[idx];
-            const dwB = weatherCache[sliceSet[j+1].name]?.hourly.dewpoint_2m[idx];
-            if (dwA <= 48 && dwB > 48) {
-                pts.push([(sliceSet[j].lat + sliceSet[j+1].lat)/2, (sliceSet[j].lon + sliceSet[j+1].lon)/2]);
-                sliceLongs[i] = (sliceSet[j].lon + sliceSet[j+1].lon)/2;
-            }
-            if (dwA <= 48) {
-                const d = getDistance(V_LAT, V_LON, sliceSet[j].lat, sliceSet[j].lon);
-                if (d < minDryDist) { minDryDist = d; closestDryStation = sliceSet[j].name; }
+    // Atmospheric Column Update
+    const t700 = columnCache?.hourly.temperature_700hPa[idx];
+    const t500 = columnCache?.hourly.temperature_500hPa[idx];
+    document.getElementById('cap-700').innerText = t700 ? t700.toFixed(1) + "°C" : "--°C";
+    document.getElementById('cap-500').innerText = t500 ? t500.toFixed(1) + "°C" : "--°C";
+    
+    if(t700 > 12) document.getElementById('cap-status').innerText = "Hard Cap: Storms unlikely.";
+    else if(t700 > 8) document.getElementById('cap-status').innerText = "Moderate Cap: Dynamic lift needed.";
+    else document.getElementById('cap-status').innerText = "Weak Cap: Convection active.";
+
+    let pts = [];
+    for (let i = 1; i <= 7; i++) {
+        const slice = stations.filter(st => st.s === i).sort((a, b) => a.lon - b.lon);
+        for (let j = 0; j < slice.length - 1; j++) {
+            const hA = weatherCache[slice[j].name]?.hourly;
+            const hB = weatherCache[slice[j+1].name]?.hourly;
+            if (hA && hB && hA.dewpoint_2m[idx] <= 48 && hB.dewpoint_2m[idx] > 48) {
+                pts.push([(slice[j].lat + slice[j+1].lat)/2, (slice[j].lon + slice[j+1].lon)/2]);
             }
         }
     }
-
-    // AI Insight
-    const vDW = weatherCache["Vizcaya"]?.hourly.dewpoint_2m[idx];
-    const insightEl = document.getElementById('v-insight');
-    let insightTxt = "<strong>AI FORECAST INSIGHT:</strong><br>";
-    if (vDW > 64 && minDryDist < 120) insightTxt += "⚠️ <b>MOISTURE POOLING:</b> Rising humidity at Vizcaya vs advancing dryline. Severe potential increasing.";
-    else if (sliceLongs[4] > sliceLongs[3] + 0.5) insightTxt += "🌀 <b>DRYLINE BULGE:</b> Rapid eastward push in your latitude. Expect wind shift.";
-    else if (minDryDist < 80) insightTxt += "⚡ <b>STORM WATCH:</b> Leading edge in Hill Country. Convective break possible.";
-    else insightTxt += "✅ Atmosphere stable. Dryline maintaining safe distance.";
-    insightEl.innerHTML = insightTxt;
-
-    // Update Sidebar
-    document.getElementById('v-status').innerText = minDryDist < 50 ? "IMMINENT" : "MONITORING";
-    document.getElementById('v-status').style.color = minDryDist < 50 ? "var(--alert)" : "var(--primary)";
-    document.getElementById('v-detail').innerText = `Leading dry air: ${Math.round(minDryDist)} mi (${closestDryStation})`;
-
     if (pts.length > 1) {
         pts.sort((a, b) => b[0] - a[0]);
         L.polyline(pts, { color: '#fb923c', weight: 4, dashArray: '10, 15', opacity: 0.8 }).addTo(lineLayer);
-        document.getElementById('summary').innerHTML = `<b>DRYLINE SUMMARY:</b> T+${offset}H<br>Gradient at <b>${Math.abs(pts[0][1]).toFixed(1)}°W</b>.`;
     }
 
-    stations.sort((a,b) => a.lon - b.lon).forEach(s => {
+    stations.forEach(s => {
         const h = weatherCache[s.name]?.hourly; if(!h) return;
-        const dw = Math.round(h.dewpoint_2m[idx]);
-        const temp = Math.round(h.temperature_2m[idx]);
+        const dw = Math.round(h.dewpoint_2m[idx]); const temp = Math.round(h.temperature_2m[idx]);
         const dry = dw <= 48;
         
         const card = document.createElement('div');
@@ -166,13 +126,18 @@ function render(offset) {
         card.innerHTML = `<span style="font-size:0.5rem; color:#94a3b8;">${s.name.toUpperCase()}</span><br><b>${temp}° / ${dw}°</b>`;
         footer.appendChild(card);
 
-        const m = L.circleMarker([s.lat, s.lon], { radius: s.name === "Vizcaya" ? 9 : 4, color: s.name === "Vizcaya" ? '#fff' : (dry ? '#fb923c' : '#22d3ee'), weight: s.name === "Vizcaya" ? 3 : 1, fillOpacity: 1 }).addTo(markerLayer);
+        const m = L.circleMarker([s.lat, s.lon], { 
+            radius: s.name === "Vizcaya" ? 8 : 4, 
+            color: s.name === "Vizcaya" ? '#fff' : (dry ? '#fb923c' : '#22d3ee'), 
+            weight: 2, 
+            fillOpacity: 1 
+        }).addTo(markerLayer);
         
-        // INTERACTIVE POPUP & HOVER
         m.bindPopup(`<b>${s.name}</b><br>Dewpoint: ${dw}°F<br>Temp: ${temp}°F`);
-        m.on('mouseover', () => {
-            const d = getDistance(V_LAT, V_LON, s.lat, s.lon);
-            document.getElementById('dist-val').innerText = Math.round(d) + " MILES";
+        
+        m.on('click', () => {
+            const d = (Math.sqrt(Math.pow(s.lat-V_LAT,2)+Math.pow(s.lon-V_LON,2)) * 69).toFixed(0);
+            document.getElementById('dist-val').innerText = d + " MILES";
             document.getElementById('station-name').innerText = "FROM " + s.name;
         });
     });
@@ -185,3 +150,4 @@ init();
 </script>
 </body>
 </html>
+
