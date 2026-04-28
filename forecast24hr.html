@@ -3,100 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>24-Hour Detailed Forecast</title>
+    <title>Pro-Cast 24-Hour GFS Core</title>
     <style>
+        :root {
+            --bg: #020617;
+            --card-bg: #0f172a;
+            --border: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #3b82f6;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            background: #0f172a; 
-            color: #f8fafc; 
-            padding: 15px;
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            color: var(--text-main); 
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .snapshot-container {
-            width: 950px; /* Perfect width for Facebook landscape screenshots */
-            margin: 0 auto 30px auto;
-            background: #1e293b;
-            border-radius: 12px;
-            border: 2px solid #3b82f6;
+        /* Container designed for 950px FB Landscape Screenshot */
+        .snapshot-wrapper {
+            width: 950px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             overflow: hidden;
+            margin-bottom: 30px;
         }
 
-        .section-header {
-            background: #3b82f6;
-            color: white;
-            padding: 12px;
-            font-size: 22px;
+        .main-header {
+            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-header h1 {
+            font-size: 24px;
             font-weight: 900;
-            text-align: center;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: -0.5px;
         }
 
-        table {
+        .location-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .forecast-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            background: white;
         }
 
-        th {
-            background: #334155;
-            color: white;
+        /* Header Row (Times) */
+        .time-row th {
+            background: #1e293b;
+            color: var(--text-main);
+            padding: 12px 0;
+            font-size: 13px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .forecast-table td {
             padding: 10px 2px;
-            font-size: 14px;
-            border: 1px solid #475569;
-        }
-
-        td {
-            padding: 12px 2px;
-            border: 1px solid #e2e8f0;
             text-align: center;
-            color: #1e293b;
-            vertical-align: middle;
+            border-bottom: 1px solid #1e293b;
+            border-right: 1px solid #1e293b;
         }
 
-        /* Large Data Styles */
-        .time-label { font-weight: 900; font-size: 16px; color: #1e3a8a; }
-        .temp-val { font-size: 24px; font-weight: 900; color: #b91c1c; }
-        .dew-val { font-size: 18px; font-weight: 700; color: #0891b2; }
-        .icon-box { font-size: 32px; margin: 4px 0; }
+        /* Metric Styling */
+        .val-temp { font-size: 22px; font-weight: 900; display: block; }
+        .val-dew { font-size: 15px; font-weight: 700; opacity: 0.9; }
+        .val-wind { font-size: 13px; font-weight: 800; }
+        .val-precip { font-size: 14px; font-weight: 800; color: #60a5fa; }
         
-        .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold; margin-top: 4px; }
-        .stat-bold { font-weight: 800; font-size: 14px; }
+        .label { 
+            font-size: 9px; 
+            text-transform: uppercase; 
+            color: var(--text-dim); 
+            font-weight: 700;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .icon-box { font-size: 28px; margin: 5px 0; }
+
+        /* Dynamic Color Scales */
+        .temp-hot { color: #f87171; }
+        .temp-warm { color: #fbbf24; }
+        .temp-mild { color: #34d399; }
+        .temp-cool { color: #60a5fa; }
 
         .cape-tag {
             display: inline-block;
-            padding: 2px 4px;
+            padding: 2px 6px;
             border-radius: 4px;
-            font-size: 11px;
-            font-weight: 800;
+            font-size: 10px;
+            font-weight: 900;
         }
-        .cape-none { background: #f1f5f9; color: #94a3b8; }
-        .cape-active { background: #fee2e2; color: #dc2626; }
+        .cape-high { background: #7e22ce; color: white; }
+        .cape-med { background: #b91c1c; color: white; }
+        .cape-low { background: #1e293b; color: #64748b; }
 
-        #loading { text-align: center; padding: 100px; font-size: 24px; font-weight: bold; }
+        #loading { padding: 50px; font-weight: bold; color: var(--accent); }
+
+        .date-divider {
+            background: #0f172a;
+            color: var(--text-dim);
+            font-size: 11px;
+            text-align: center;
+            padding: 5px;
+            font-weight: bold;
+            border-bottom: 1px solid #1e293b;
+        }
     </style>
 </head>
 <body>
 
-<div id="loading">📡 LOADING HOURLY GFS CORE...</div>
+<div id="loading">📡 INITIALIZING HIGH-RESOLUTION GFS...</div>
 
 <div id="content" style="display:none;">
-    <!-- FIRST 12 HOURS -->
-    <div class="snapshot-container">
-        <div class="section-header" id="header1">Immediate Forecast: Hours 1-12</div>
-        <table id="table1">
-            <thead><tr id="head1"></tr></thead>
+    <!-- BLOCK 1: 0-12 HOURS -->
+    <div class="snapshot-wrapper">
+        <div class="main-header">
+            <h1>Short-Range Forecast</h1>
+            <div class="location-badge">📍 Round Rock, TX</div>
+        </div>
+        <div class="date-divider" id="date1">---</div>
+        <table class="forecast-table">
+            <thead><tr id="head1" class="time-row"></tr></thead>
             <tbody id="body1"></tbody>
         </table>
     </div>
 
-    <!-- SECOND 12 HOURS -->
-    <div class="snapshot-container">
-        <div class="section-header" id="header2" style="background:#1e40af;">Extended Forecast: Hours 13-24</div>
-        <table id="table2">
-            <thead><tr id="head2"></tr></thead>
+    <!-- BLOCK 2: 13-24 HOURS -->
+    <div class="snapshot-wrapper">
+        <div class="main-header" style="background: linear-gradient(90deg, #1e293b, #475569);">
+            <h1>Extended Outlook</h1>
+            <div class="location-badge">Next 24 Hours</div>
+        </div>
+        <div class="date-divider" id="date2">---</div>
+        <table class="forecast-table">
+            <thead><tr id="head2" class="time-row"></tr></thead>
             <tbody id="body2"></tbody>
         </table>
     </div>
@@ -110,6 +169,19 @@
         return map[code] || '☁️';
     }
 
+    function getTempClass(t) {
+        if (t >= 90) return 'temp-hot';
+        if (t >= 75) return 'temp-warm';
+        if (t >= 60) return 'temp-mild';
+        return 'temp-cool';
+    }
+
+    function getCapeClass(c) {
+        if (c > 1500) return 'cape-high';
+        if (c > 500) return 'cape-med';
+        return 'cape-low';
+    }
+
     function getWindDir(deg) {
         const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
         return dirs[Math.round(deg / 22.5) % 16];
@@ -121,73 +193,64 @@
             const res = await fetch(url);
             const data = await res.json();
 
-            // Get current hour index
-            const now = new Date();
-            const currentHour = now.getHours();
-            const startIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === currentHour);
+            // Set date headers
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            document.getElementById('date1').innerText = new Date(data.hourly.time[0]).toLocaleDateString(undefined, options);
+            document.getElementById('date2').innerText = new Date(data.hourly.time[12]).toLocaleDateString(undefined, options);
 
-            const renderTable = (tableId, headId, start) => {
+            const renderTable = (bodyId, headId, start) => {
                 const head = document.getElementById(headId);
-                const body = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+                const body = document.getElementById(bodyId);
                 
-                // Create Rows for different metrics
-                const rowTime = document.createElement('tr');
-                const rowIcon = document.createElement('tr');
-                const rowTemp = document.createElement('tr');
-                const rowDew = document.createElement('tr');
-                const rowWind = document.createElement('tr');
-                const rowRain = document.createElement('tr');
-                const rowCape = document.createElement('tr');
+                let rows = {
+                    icon: '<tr>',
+                    temp: '<tr>',
+                    dew: '<tr>',
+                    wind: '<tr>',
+                    rain: '<tr>',
+                    cape: '<tr>'
+                };
 
                 for(let i = start; i < start + 12; i++) {
                     const time = new Date(data.hourly.time[i]);
                     const hourStr = time.toLocaleTimeString([], { hour: 'numeric' });
-                    
-                    // Time Header
-                    const th = document.createElement('th');
-                    th.className = 'time-label';
-                    th.innerHTML = hourStr;
-                    head.appendChild(th);
-
-                    // Icon
-                    rowIcon.innerHTML += `<td><div class="icon-box">${getWeatherIcon(data.hourly.weather_code[i])}</div></td>`;
-                    
-                    // Temp
-                    rowTemp.innerHTML += `<td><div class="stat-label">Temp</div><div class="temp-val">${Math.round(data.hourly.temperature_2m[i])}°</div></td>`;
-                    
-                    // Dew Point
-                    rowDew.innerHTML += `<td><div class="stat-label">Dew</div><div class="dew-val">${Math.round(data.hourly.dew_point_2m[i])}°</div></td>`;
-                    
-                    // Wind
-                    const wDir = getWindDir(data.hourly.wind_direction_10m[i]);
-                    const wGust = Math.round(data.hourly.wind_gusts_10m[i]);
-                    rowWind.innerHTML += `<td><div class="stat-label">Wind</div><div class="stat-bold">${wDir}</div><div style="font-size:11px">G${wGust}</div></td>`;
-                    
-                    // Rain
-                    rowRain.innerHTML += `<td><div class="stat-label">Rain</div><div class="stat-bold">${data.hourly.precipitation_probability[i]}%</div></td>`;
-                    
-                    // CAPE
+                    const t = Math.round(data.hourly.temperature_2m[i]);
+                    const d = Math.round(data.hourly.dew_point_2m[i]);
                     const cape = Math.round(data.hourly.cape[i]);
-                    const capeCls = cape > 100 ? 'cape-active' : 'cape-none';
-                    rowCape.innerHTML += `<td><div class="stat-label">Instab.</div><div class="cape-tag ${capeCls}">${cape}</div></td>`;
+                    const rain = data.hourly.precipitation_probability[i];
+
+                    head.innerHTML += `<th>${hourStr}</th>`;
+                    
+                    rows.icon += `<td><div class="icon-box">${getWeatherIcon(data.hourly.weather_code[i])}</div></td>`;
+                    
+                    rows.temp += `<td><span class="label">Temp</span><span class="val-temp ${getTempClass(t)}">${t}°</span></td>`;
+                    
+                    rows.dew += `<td><span class="label">Dew</span><span class="val-dew" style="color: #2dd4bf">${d}°</span></td>`;
+                    
+                    rows.wind += `<td><span class="label">Wind</span><div class="val-wind">${getWindDir(data.hourly.wind_direction_10m[i])} <span style="color:var(--text-dim)">${Math.round(data.hourly.wind_speed_10m[i])}</span></div><div style="font-size:9px; color:#ef4444; font-weight:bold">G${Math.round(data.hourly.wind_gusts_10m[i])}</div></td>`;
+                    
+                    rows.rain += `<td><span class="label">Rain %</span><span class="val-precip" style="opacity: ${rain > 0 ? 1 : 0.3}">${rain}%</span></td>`;
+                    
+                    rows.cape += `<td><span class="label">CAPE</span><span class="cape-tag ${getCapeClass(cape)}">${cape}</span></td>`;
                 }
                 
-                body.appendChild(rowIcon);
-                body.appendChild(rowTemp);
-                body.appendChild(rowDew);
-                body.appendChild(rowWind);
-                body.appendChild(rowRain);
-                body.appendChild(rowCape);
+                body.innerHTML = rows.icon + '</tr>' + rows.temp + '</tr>' + rows.dew + '</tr>' + rows.wind + '</tr>' + rows.rain + '</tr>' + rows.cape + '</tr>';
             };
 
-            renderTable('table1', 'head1', startIndex);
-            renderTable('table2', 'head2', startIndex + 12);
+            // Find current hour to start forecast
+            const nowHour = new Date().getHours();
+            const startIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === nowHour);
+            const useIndex = startIndex >= 0 ? startIndex : 0;
+
+            renderTable('body1', 'head1', useIndex);
+            renderTable('body2', 'head2', useIndex + 12);
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
 
         } catch (e) {
-            document.getElementById('loading').innerText = "Error Loading Forecast Data.";
+            console.error(e);
+            document.getElementById('loading').innerText = "Error pulling GFS core data.";
         }
     }
 
