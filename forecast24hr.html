@@ -1,271 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Overnight & Tomorrow - Vizcaya Weather</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#f0f2f5; padding:20px; color:#1f2937; }
-.container { max-width:1900px; margin:0 auto; background:white; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08); overflow:hidden; }
-.header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
-.header h1 { font-size:2.2em; margin-bottom:5px; }
-.table-wrapper { overflow-x:auto; padding:15px; }
-table { width:100%; border-collapse:collapse; font-size:13px; }
-th { background:#1e3a8a; color:white; padding:10px 4px; font-weight:600; text-align:center; border:1px solid #162e70; min-width:75px; }
-td { padding:10px 6px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; }
-.param-name { text-align:left; font-weight:700; background:#f8fafc; min-width:180px; padding-left:15px; color:#1e3a8a; position:sticky; left:0; z-index:10; }
-.param-label { font-size:10px; color:#64748b; font-weight:400; display:block; }
-.hour-col { font-weight:800; color:white; font-size:14px; }
-.time-label { font-size:11px; color:#e0e7ff; font-weight:400; }
-tr:nth-child(even) { background:#fdfdfd; }
-tr:hover { background:#f1f5f9; }
-.temp { font-weight:700; font-size:15px; }
-.temp-high { color:#dc2626; }
-.temp-low { color:#1d4ed8; }
-.temp-mid { color:#f59e0b; }
-.temp-max { color:#dc2626; font-weight:900; background:#fee2e2; }
-.temp-min { color:#1d4ed8; font-weight:900; background:#dbeafe; }
-.gust-high { color:#dc2626; font-weight:700; }
-.gust-normal { color:#374151; }
-.precip-none { color:#6b7280; }
-.precip-light { color:#38bdf8; font-weight:600; }
-.precip-moderate { color:#2563eb; font-weight:700; }
-.precip-heavy { color:#1d4ed8; font-weight:800; }
-.precip-extreme { color:#7c3aed; font-weight:900; background:#ede9fe; }
-.sev-none { color:#10b981; font-weight:600; }
-.sev-low { color:#f59e0b; font-weight:700; }
-.sev-mod { color:#ef4444; font-weight:800; }
-.sev-high { color:#b91c1c; font-weight:900; background:#fee2e2; }
-.icon-cell { font-size:18px; margin-right:6px; vertical-align:middle; }
-.info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24-Hour Detailed Forecast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            padding: 15px;
+        }
+
+        .snapshot-container {
+            width: 950px; /* Perfect width for Facebook landscape screenshots */
+            margin: 0 auto 30px auto;
+            background: #1e293b;
+            border-radius: 12px;
+            border: 2px solid #3b82f6;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #3b82f6;
+            color: white;
+            padding: 12px;
+            font-size: 22px;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            background: white;
+        }
+
+        th {
+            background: #334155;
+            color: white;
+            padding: 10px 2px;
+            font-size: 14px;
+            border: 1px solid #475569;
+        }
+
+        td {
+            padding: 12px 2px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+
+        /* Large Data Styles */
+        .time-label { font-weight: 900; font-size: 16px; color: #1e3a8a; }
+        .temp-val { font-size: 24px; font-weight: 900; color: #b91c1c; }
+        .dew-val { font-size: 18px; font-weight: 700; color: #0891b2; }
+        .icon-box { font-size: 32px; margin: 4px 0; }
+        
+        .stat-label { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: bold; margin-top: 4px; }
+        .stat-bold { font-weight: 800; font-size: 14px; }
+
+        .cape-tag {
+            display: inline-block;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .cape-none { background: #f1f5f9; color: #94a3b8; }
+        .cape-active { background: #fee2e2; color: #dc2626; }
+
+        #loading { text-align: center; padding: 100px; font-size: 24px; font-weight: bold; }
+    </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<h1 id="mainTitle">Overnight & Tomorrow Morning</h1>
-<p id="updateTime"></p>
-</div>
-<div class="table-wrapper">
-<table id="forecastTable">
-<thead>
-<tr id="headerRow">
-<th style="text-align:left; padding-left:15px;">Hour/Time</th>
-</tr>
-</thead>
-<tbody id="tableBody"></tbody>
-</table>
-</div>
-<div class="info-footer">
-<span>Location: Vizcaya, Round Rock, TX | Source: Open-Meteo GFS</span>
-<span id="lastUpdate"></span>
-</div>
+
+<div id="loading">📡 LOADING HOURLY GFS CORE...</div>
+
+<div id="content" style="display:none;">
+    <!-- FIRST 12 HOURS -->
+    <div class="snapshot-container">
+        <div class="section-header" id="header1">Immediate Forecast: Hours 1-12</div>
+        <table id="table1">
+            <thead><tr id="head1"></tr></thead>
+            <tbody id="body1"></tbody>
+        </table>
+    </div>
+
+    <!-- SECOND 12 HOURS -->
+    <div class="snapshot-container">
+        <div class="section-header" id="header2" style="background:#1e40af;">Extended Forecast: Hours 13-24</div>
+        <table id="table2">
+            <thead><tr id="head2"></tr></thead>
+            <tbody id="body2"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-const LAT = 30.509747, LON = -97.692116;
+    const LAT = 30.5097, LON = -97.6921;
 
-function getWeatherDesc(weatherCode, precipProb) {
-  const codes = {
-    0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Cloudy',
-    45: 'Foggy', 48: 'Foggy', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
-    61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
-    71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
-    80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy rain showers',
-    95: 'Thunderstorm', 96: 'Thunderstorm w/ hail', 99: 'Severe thunderstorm'
-  };
-  const desc = codes[weatherCode] || 'Unknown';
-  return precipProb > 30 ? `${desc} (${precipProb}%)` : desc;
-}
+    function getWeatherIcon(code) {
+        const map = { 0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️', 45:'🌫️', 51:'🌦️', 61:'🌧️', 80:'🌦️', 95:'⛈️' };
+        return map[code] || '☁️';
+    }
 
-function getWeatherIcon(weatherCode) {
-  const map = {
-    0: '☀️',
-    1: '🌤️',
-    2: '⛅',
-    3: '☁️',
-    45: '🌫️',
-    48: '🌫️',
-    51: '🌦️',
-    53: '🌧️',
-    55: '🌧️',
-    61: '🌧️',
-    63: '🌧️',
-    65: '🌧️',
-    71: '🌨️',
-    73: '🌨️',
-    75: '❄️',
-    80: '🌦️',
-    81: '🌦️',
-    82: '⛈️',
-    95: '⛈️',
-    96: '⛈️',
-    99: '⛈️'
-  };
-  return map[weatherCode] || '❔';
-}
+    function getWindDir(deg) {
+        const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+        return dirs[Math.round(deg / 22.5) % 16];
+    }
 
-function getWindDirection(degrees) {
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-  return dirs[Math.round(degrees / 22.5) % 16];
-}
+    async function init() {
+        try {
+            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cape&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=2`;
+            const res = await fetch(url);
+            const data = await res.json();
 
-function getSeverity(cape, li) {
-  if (cape >= 3000 || li <= -9) return { text: 'EXTREME', cls: 'sev-high' };
-  if (cape >= 2000 || li <= -6) return { text: 'HIGH', cls: 'sev-high' };
-  if (cape >= 1000 || li <= -4) return { text: 'MODERATE', cls: 'sev-mod' };
-  if (cape >= 300 || li <= -2) return { text: 'LOW', cls: 'sev-low' };
-  return { text: 'NONE', cls: 'sev-none' };
-}
+            // Get current hour index
+            const now = new Date();
+            const currentHour = now.getHours();
+            const startIndex = data.hourly.time.findIndex(t => new Date(t).getHours() === currentHour);
 
-function getPrecipClass(amountInches, prob) {
-  if (amountInches <= 0.001 && prob < 20) return 'precip-none';
-  if (amountInches < 0.05) return 'precip-light';
-  if (amountInches < 0.20) return 'precip-moderate';
-  if (amountInches < 0.50) return 'precip-heavy';
-  return 'precip-extreme';
-}
+            const renderTable = (tableId, headId, start) => {
+                const head = document.getElementById(headId);
+                const body = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+                
+                // Create Rows for different metrics
+                const rowTime = document.createElement('tr');
+                const rowIcon = document.createElement('tr');
+                const rowTemp = document.createElement('tr');
+                const rowDew = document.createElement('tr');
+                const rowWind = document.createElement('tr');
+                const rowRain = document.createElement('tr');
+                const rowCape = document.createElement('tr');
 
-async function init() {
-  try {
-    const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,relative_humidity_2m,cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago&forecast_days=2`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('API error: ' + res.status);
+                for(let i = start; i < start + 12; i++) {
+                    const time = new Date(data.hourly.time[i]);
+                    const hourStr = time.toLocaleTimeString([], { hour: 'numeric' });
+                    
+                    // Time Header
+                    const th = document.createElement('th');
+                    th.className = 'time-label';
+                    th.innerHTML = hourStr;
+                    head.appendChild(th);
 
-    const data = await res.json();
-    const { hourly } = data;
+                    // Icon
+                    rowIcon.innerHTML += `<td><div class="icon-box">${getWeatherIcon(data.hourly.weather_code[i])}</div></td>`;
+                    
+                    // Temp
+                    rowTemp.innerHTML += `<td><div class="stat-label">Temp</div><div class="temp-val">${Math.round(data.hourly.temperature_2m[i])}°</div></td>`;
+                    
+                    // Dew Point
+                    rowDew.innerHTML += `<td><div class="stat-label">Dew</div><div class="dew-val">${Math.round(data.hourly.dew_point_2m[i])}°</div></td>`;
+                    
+                    // Wind
+                    const wDir = getWindDir(data.hourly.wind_direction_10m[i]);
+                    const wGust = Math.round(data.hourly.wind_gusts_10m[i]);
+                    rowWind.innerHTML += `<td><div class="stat-label">Wind</div><div class="stat-bold">${wDir}</div><div style="font-size:11px">G${wGust}</div></td>`;
+                    
+                    // Rain
+                    rowRain.innerHTML += `<td><div class="stat-label">Rain</div><div class="stat-bold">${data.hourly.precipitation_probability[i]}%</div></td>`;
+                    
+                    // CAPE
+                    const cape = Math.round(data.hourly.cape[i]);
+                    const capeCls = cape > 100 ? 'cape-active' : 'cape-none';
+                    rowCape.innerHTML += `<td><div class="stat-label">Instab.</div><div class="cape-tag ${capeCls}">${cape}</div></td>`;
+                }
+                
+                body.appendChild(rowIcon);
+                body.appendChild(rowTemp);
+                body.appendChild(rowDew);
+                body.appendChild(rowWind);
+                body.appendChild(rowRain);
+                body.appendChild(rowCape);
+            };
 
-    const now = new Date();
-    const currentHour = new Date(now);
-    currentHour.setMinutes(0, 0, 0);
+            renderTable('table1', 'head1', startIndex);
+            renderTable('table2', 'head2', startIndex + 12);
 
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
 
-    const hours = [];
-    hourly.time.forEach((t, i) => {
-      const hTime = new Date(t);
-      if (hTime >= currentHour && hTime <= tomorrow) {
-        hours.push({ index: i, time: hTime });
-      }
-    });
-
-    const headerRow = document.getElementById('headerRow');
-    hours.forEach(h => {
-      const th = document.createElement('th');
-      const timeStr = h.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
-      const dayStr = h.time.toLocaleDateString('en-US', { weekday: 'short' });
-      th.innerHTML = `<div class="hour-col">${timeStr}</div><div class="time-label">${dayStr}</div>`;
-      headerRow.appendChild(th);
-    });
-
-    const allTemps = hours.map(h => Math.round(hourly.temperature_2m[h.index]));
-    const maxT = Math.max(...allTemps);
-    const minT = Math.min(...allTemps);
-    const midT = (maxT + minT) / 2;
-
-    const rows = [
-      {
-        name: 'Severe Potential',
-        label: 'CAPE / Lifted Index',
-        getData: i => {
-          const cape = Math.round(hourly.cape[hours[i].index]);
-          const liVal = hourly.lifted_index[hours[i].index];
-          const li = liVal.toFixed(1);
-          const sev = getSeverity(cape, liVal);
-          return `<div class="${sev.cls}">${sev.text}</div><span style="font-size:10px">${cape} / ${li}</span>`;
+        } catch (e) {
+            document.getElementById('loading').innerText = "Error Loading Forecast Data.";
         }
-      },
-      {
-        name: 'Conditions',
-        label: 'Icon / Sky / Precipitation',
-        getData: i => {
-          const code = hourly.weather_code[hours[i].index];
-          const prob = hourly.precipitation_probability[hours[i].index];
-          const icon = getWeatherIcon(code);
-          const desc = getWeatherDesc(code, prob);
-          return `<span class="icon-cell">${icon}</span> ${desc}`;
-        }
-      },
-      {
-        name: 'Temperature',
-        label: '°F',
-        getData: i => {
-          const t = Math.round(hourly.temperature_2m[hours[i].index]);
-          let cls = 'temp-mid';
-          if (t === maxT) cls = 'temp-max';
-          else if (t === minT) cls = 'temp-min';
-          else if (t >= midT + 3) cls = 'temp-high';
-          else if (t <= midT - 3) cls = 'temp-low';
-          return `<span class="temp ${cls}">${t}°</span>`;
-        }
-      },
-      {
-        name: 'Feels Like',
-        label: '°F',
-        getData: i => `${Math.round(hourly.apparent_temperature[hours[i].index])}°`
-      },
-      {
-        name: 'Precipitation',
-        label: 'Prob / Inches',
-        getData: i => {
-          const prob = hourly.precipitation_probability[hours[i].index];
-          const inches = hourly.precipitation[hours[i].index] / 25.4;
-          const cls = getPrecipClass(inches, prob);
-          return `<span class="${cls}">${prob}% / ${inches.toFixed(2)}"</span>`;
-        }
-      },
-      {
-        name: 'Winds',
-        label: 'Dir / Speed / Gust',
-        getData: i => {
-          const dir = getWindDirection(hourly.wind_direction_10m[hours[i].index]);
-          const speed = Math.round(hourly.wind_speed_10m[hours[i].index]);
-          const gust = Math.round(hourly.wind_gusts_10m[hours[i].index]);
-          const gustClass = gust > 25 ? 'gust-high' : 'gust-normal';
-          return `${dir} ${speed} / <span class="${gustClass}">G${gust}</span>`;
-        }
-      },
-      {
-        name: 'Humidity',
-        label: '%',
-        getData: i => `${Math.round(hourly.relative_humidity_2m[hours[i].index])}%`
-      }
-    ];
+    }
 
-    const tbody = document.getElementById('tableBody');
-    rows.forEach(row => {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.className = 'param-name';
-      td.innerHTML = `<div>${row.name}</div><span class="param-label">${row.label}</span>`;
-      tr.appendChild(td);
-
-      for (let i = 0; i < hours.length; i++) {
-        const tc = document.createElement('td');
-        tc.innerHTML = row.getData(i);
-        tr.appendChild(tc);
-      }
-      tbody.appendChild(tr);
-    });
-
-    document.getElementById('updateTime').textContent = new Date().toLocaleString([], {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    document.getElementById('lastUpdate').textContent = 'Last fetch (GFS): ' + new Date().toLocaleTimeString();
-  } catch (err) {
-    console.error(err);
-    document.getElementById('tableBody').innerHTML = `<tr><td colspan="20" style="color:red; padding:20px;">Error: ${err.message}</td></tr>`;
-  }
-}
-
-init();
+    init();
 </script>
+
 </body>
 </html>
