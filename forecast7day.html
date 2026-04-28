@@ -3,197 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Weather Dashboard | 14-Day Forecast</title>
+    <title>Vizcaya 7-Day Impact Dashboard</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; padding:0; color:#1f2937; }
-        
-        /* DATA SOURCE BANNER */
-        .source-banner {
-            background: #0f172a;
-            color: #94a3b8;
-            font-size: 10px;
-            text-align: center;
-            padding: 8px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 800;
-            border-bottom: 2px solid #3b82f6;
+        body { 
+            font-family: 'Arial Black', sans-serif; 
+            background:#111827; 
+            color:#fff;
+            padding: 20px;
         }
-        .source-banner span { color: #f8fafc; }
 
-        .container { max-width:1700px; margin:20px auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
-        .header { background:#1e3a8a; color:white; padding:25px; text-align:center; }
-        .header h1 { font-size:2.2em; margin-bottom:5px; }
-        .table-wrapper { overflow-x:auto; padding:15px; }
-        .table-title { background:#334155; color:white; padding:12px 20px; font-weight:700; font-size:1.1em; border-radius:8px 8px 0 0; margin-top:20px; }
-        table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px; min-width: 1000px; table-layout: fixed; }
-        th { background:#1e3a8a; color:white; padding:12px 5px; font-weight:600; text-align:center; border:1px solid #162e70; }
-        td { padding:10px 5px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; line-height: 1.4; }
-        .param-name { text-align:left; font-weight:700; background:#f8fafc; width:200px; padding-left:15px; color:#1e3a8a; border-left: 5px solid #1e3a8a; }
-        .param-label { font-size:10px; color:#64748b; font-weight:400; display:block; text-transform: uppercase; margin-top: 2px; }
-        .day-col { font-weight:800; color:white; font-size:14px; }
-        .date-col { font-size:11px; color:rgba(255,255,255,0.8); }
-        .high-temp { color:#b91c1c; font-weight:800; font-size:15px; }
-        .low-temp { color:#1d4ed8; font-weight:800; font-size:15px; }
-        .rec-h { color:#991b1b; font-weight:600; font-size:12px; }
-        .rec-l { color:#1e40af; font-weight:600; font-size:12px; }
-        .rec-yr { font-size:10px; color:#64748b; }
-        .sev-none { color:#10b981; font-weight:700; }
-        .sev-low { color:#f59e0b; font-weight:700; }
-        .sev-mod { color:#ef4444; font-weight:800; }
-        .sev-high { color:#b91c1c; font-weight:900; background:#fee2e2; border-radius:4px; padding: 2px; }
-        .gust-high { color:#dc2626; font-weight:800; }
-        .humidity-val { color: #0891b2; font-weight: 600; }
-        .dew-val { color: #4b5563; font-weight: 600; }
-        .info-footer { padding:15px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#64748b; }
-        #status { text-align:center; padding:50px; font-weight:bold; color:#1e3a8a; line-height: 1.6; }
-        .error-box { border: 2px solid red; background: #fff5f5; color: red; padding: 20px; border-radius: 8px; display: inline-block; text-align: left; }
-        #ai-data { display:none; }
+        .dashboard-container {
+            width: 1000px; /* Optimal width for Facebook high-res landscape */
+            margin: 0 auto 40px auto;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            background: #1e3a8a;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 6px solid #3b82f6;
+        }
+        .header h1 { font-size: 38px; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
+        .header p { font-size: 20px; color: #bfdbfe; font-weight: bold; }
+
+        /* The 7-Day Grid */
+        .grid-7-day {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #e2e8f0;
+            gap: 2px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .day-column {
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 5px;
+            text-align: center;
+        }
+
+        .day-name { color: #1e3a8a; font-size: 22px; font-weight: 900; }
+        .day-date { color: #64748b; font-size: 14px; margin-bottom: 10px; }
+
+        .weather-icon { font-size: 55px; margin: 10px 0; min-height: 70px; }
+        
+        .temp-group { margin: 10px 0; }
+        .hi-temp { color: #b91c1c; font-size: 38px; font-weight: 900; display: block; line-height: 1; }
+        .lo-temp { color: #1d4ed8; font-size: 26px; font-weight: 900; display: block; margin-top: 5px; }
+
+        .stat-box {
+            width: 90%;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 8px 2px;
+            margin-top: 10px;
+            border: 1px solid #cbd5e1;
+        }
+        .stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 900; }
+        .stat-val { font-size: 14px; color: #1e293b; font-weight: 900; }
+
+        .severity-tag {
+            width: 100%;
+            padding: 5px 0;
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+        .sev-none { color: #059669; }
+        .sev-mod { color: #d97706; background: #fff7ed; }
+        .sev-high { color: #fff; background: #dc2626; }
+
+        .almanac-box {
+            grid-column: span 7;
+            background: #f8fafc;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .almanac-cell {
+            padding: 10px 2px;
+            font-size: 11px;
+            color: #475569;
+            text-align: center;
+            border-right: 1px solid #e2e8f0;
+            line-height: 1.3;
+        }
+
+        .footer {
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        #status { color: #fff; text-align: center; padding: 100px; font-size: 24px; }
     </style>
 </head>
 <body>
 
-<div class="source-banner">
-    Meteorological Forecast: <span>Open-Meteo GFS Core</span> &nbsp;&nbsp;|&nbsp;&nbsp; Climatology: <span>Jim's 130-Year Archive</span>
+<div id="status">📡 SYNCHRONIZING GFS WEATHER MODELS...</div>
+
+<!-- WEEK 1 PANEL -->
+<div class="dashboard-container" id="week1-container" style="display:none;">
+    <div class="header">
+        <h1>WEEK 1 FORECAST</h1>
+        <p>Round Rock, Texas • Vizcaya Weather Center</p>
+    </div>
+    <div class="grid-7-day" id="grid-week1"></div>
+    <div class="almanac-box" id="almanac-week1"></div>
+    <div class="footer">Source: Open-Meteo GFS | Almanac: Jim Egan Archives</div>
 </div>
 
-<div class="container">
-    <div class="header">
-        <h1>Vizcaya Weather Dashboard</h1>
-        <p id="updateTime">Generating Tomorrow's Outlook...</p>
+<!-- WEEK 2 PANEL -->
+<div class="dashboard-container" id="week2-container" style="display:none;">
+    <div class="header" style="background:#334155;">
+        <h1>WEEK 2 EXTENDED</h1>
+        <p>Round Rock, Texas • Trend Analysis</p>
     </div>
-
-    <div id="status">📡 Connecting to JimEgan2025.github.io Almanac & GFS Models...</div>
-
-    <div id="mainContent" style="display:none;">
-        <div class="table-wrapper">
-            <div class="table-title">7-Day Local Forecast (Starting Tomorrow)</div>
-            <table id="table1">
-                <thead><tr id="head1"></tr></thead>
-                <tbody id="body1"></tbody>
-            </table>
-
-            <div class="table-title">Extended 8-14 Day Forecast</div>
-            <table id="table2">
-                <thead><tr id="head2"></tr></thead>
-                <tbody id="body2"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="info-footer">
-        <span>Location: Round Rock, TX | Source: Open-Meteo GFS | <b style="color:#1e3a8a">Tomorrow + 14 Days</b></span>
-        <span id="lastUpdate"></span>
-    </div>
-    <div id="ai-data"></div>
+    <div class="grid-7-day" id="grid-week2"></div>
+    <div class="almanac-box" id="almanac-week2"></div>
+    <div class="footer">Note: Accuracy decreases beyond Day 7</div>
 </div>
 
 <script>
     const LAT = 30.509747, LON = -97.692116;
     const ALMANAC_JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
-    let almanacData = {};
 
-    // Helper to convert Degrees to Cardinal
     const getWindDir = deg => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(deg / 22.5) % 16];
-
+    
     function getWeatherUI(code) {
-        const mapping = {0: {icon:'☀️',desc:'Clear'},1:{icon:'🌤️',desc:'Mostly Clear'},2:{icon:'⛅',desc:'Partly Cloudy'},3:{icon:'☁️',desc:'Overcast'},45:{icon:'🌫️',desc:'Fog'},51:{icon:'🌦️',desc:'Drizzle'},61:{icon:'🌧️',desc:'Rain'},80:{icon:'🌦️',desc:'Showers'},95:{icon:'⛈️',desc:'Thunderstorms'}};
+        const mapping = {
+            0: {icon:'☀️',desc:'Clear'}, 1:{icon:'🌤️',desc:'M. Clear'}, 2:{icon:'⛅',desc:'P. Cloudy'}, 
+            3:{icon:'☁️',desc:'Cloudy'}, 45:{icon:'🌫️',desc:'Fog'}, 51:{icon:'🌦️',desc:'Drizzle'}, 
+            61:{icon:'🌧️',desc:'Rain'}, 80:{icon:'🌦️',desc:'Showers'}, 95:{icon:'⛈️',desc:'T-Storms'}
+        };
         return mapping[code] || {icon:'☁️',desc:'Cloudy'};
     }
 
     function getSeverity(cape, li) {
-        if (cape >= 2500 || li <= -8) return {text:'EXTREME',cls:'sev-high'};
-        if (cape >= 1500 || li <= -5) return {text:'HIGH',cls:'sev-high'};
-        if (cape >= 1000 || li <= -3) return {text:'MODERATE',cls:'sev-mod'};
-        if (cape >= 300 || li <= -1) return {text:'LOW',cls:'sev-low'};
-        return {text:'NONE',cls:'sev-none'};
-    }
-
-    async function sourceAlmanac() {
-        try {
-            const response = await fetch(ALMANAC_JSON_URL);
-            if (!response.ok) throw new Error("Could not find almanac.json on GitHub.");
-            almanacData = await response.json();
-            return true;
-        } catch (err) {
-            document.getElementById('status').innerHTML = `<div class="error-box"><b>Almanac Sync Error:</b><br>${err.message}</div>`;
-            return false;
-        }
-    }
-
-    function createRows(container, data, start, count) {
-        const { daily, hourly } = data;
-        const rowConfigs = [
-            {name:'Conditions',label:'Sky / Emoji',getData:i=>{const ui=getWeatherUI(daily.weather_code[i]);return `<span style="font-size:1.5em">${ui.icon}</span><br><b>${ui.desc}</b>`;}},
-            {name:'Severe Potential',label:'Max CAPE / Min LI',getData:i=>{const dayCape=hourly.cape.slice(i*24,(i+1)*24);const dayLI=hourly.lifted_index.slice(i*24,(i+1)*24);const maxCape=Math.round(Math.max(...dayCape));const minLI=Math.min(...dayLI).toFixed(1);const sev=getSeverity(maxCape,minLI);return `<div class="${sev.cls}">${sev.text}</div><div style="font-size:10px">${maxCape} / ${minLI}</div>`;}},
-            {name:'Temperatures',label:'High / Low (°F)',getData:i=>`<span class="high-temp">${Math.round(daily.temperature_2m_max[i])}°</span> / <span class="low-temp">${Math.round(daily.temperature_2m_min[i])}°</span>`},
-            {name:'Dewpoint',label:'Average Daily (°F)',getData:i=>{const slice=hourly.dew_point_2m.slice(i*24,(i+1)*24);const avg=Math.round(slice.reduce((a,b)=>a+b)/24);return `<span class="dew-val">${avg}°</span>`;}},
-            {name:'Humidity',label:'Average Relative (%)',getData:i=>{const slice=hourly.relative_humidity_2m.slice(i*24,(i+1)*24);const avg=Math.round(slice.reduce((a,b)=>a+b)/24);return `<span class="humidity-val">${avg}%</span>`;}},
-            {name:'Historical Records',label:'Record High / Low (Year)',getData:i=>{const mmdd=daily.time[i].slice(5);const h=almanacData[mmdd];if(!h)return '--';return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;}},
-            {name:'Historical Averages',label:'Avg High / Low',getData:i=>{const mmdd=daily.time[i].slice(5);const h=almanacData[mmdd];return h?`${h.avgH}° / ${h.avgL}°`:'--';}},
-            {name:'Feels Like',label:'Apparent High / Low',getData:i=>`${Math.round(daily.apparent_temperature_max[i])}° / ${Math.round(daily.apparent_temperature_min[i])}°`},
-            {name:'Precipitation',label:'Prob / Amount (Inches)',getData:i=>`<b>${daily.precipitation_probability_max[i]}%</b><br>${daily.precipitation_sum[i].toFixed(2)}"`},
-            {name:'Winds',label:'Dir | Max | Gust (MPH)',getData:i=>{
-                const speed=Math.round(daily.wind_speed_10m_max[i]);
-                const gust=Math.round(daily.wind_gusts_10m_max[i]);
-                const dir=getWindDir(daily.wind_direction_10m_dominant[i]);
-                const gustCls=gust>25?'gust-high':'';
-                return `<b>${dir}</b><br>${speed} / <span class="${gustCls}">G${gust}</span>`;
-            }}
-        ];
-
-        rowConfigs.forEach(row=>{
-            const tr=document.createElement('tr');
-            tr.innerHTML=`<td class="param-name"><div>${row.name}</div><span class="param-label">${row.label}</span></td>`;
-            for(let i=start;i<start+count;i++){
-                const td=document.createElement('td'); td.innerHTML=row.getData(i); tr.appendChild(td);
-            }
-            container.appendChild(tr);
-        });
+        if (cape >= 1500 || li <= -5) return {text:'⚠️ SEVERE',cls:'sev-high'};
+        if (cape >= 500 || li <= -2) return {text:'MODERATE',cls:'sev-mod'};
+        return {text:'STABLE',cls:'sev-none'};
     }
 
     async function init() {
-        const almanacReady = await sourceAlmanac();
-        if(!almanacReady) return;
-
         try {
-            // URL UPDATED to include wind_direction_10m_dominant
-            const url=`https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weather_code&hourly=cape,lifted_index,dew_point_2m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
+            const almRes = await fetch(ALMANAC_JSON_URL);
+            const almData = await almRes.json();
+
+            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weather_code&hourly=cape,lifted_index&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=15`;
             const res = await fetch(url);
             const data = await res.json();
 
-            const renderHeader = (rowId,start,count)=>{
-                const row=document.getElementById(rowId);
-                row.innerHTML='<th>Day / Date</th>';
-                for(let i=start;i<start+count;i++){
-                    const d=new Date(data.daily.time[i]+'T00:00:00');
-                    const day=d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase();
-                    const mmdd=data.daily.time[i].split('-').slice(1).join('/');
-                    row.innerHTML+=`<th><div class="day-col">${day}</div><div class="date-col">${mmdd}</div></th>`;
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('week1-container').style.display = 'block';
+            document.getElementById('week2-container').style.display = 'block';
+
+            const renderWeek = (gridId, almId, startIdx) => {
+                const grid = document.getElementById(gridId);
+                const almBox = document.getElementById(almId);
+
+                for(let i = startIdx; i < startIdx + 7; i++) {
+                    const dateRaw = data.daily.time[i];
+                    const d = new Date(dateRaw + 'T00:00:00');
+                    const dayName = d.toLocaleDateString('en-US', {weekday:'short'}).toUpperCase();
+                    const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+                    const mmdd = dateRaw.slice(5);
+                    const ui = getWeatherUI(data.daily.weather_code[i]);
+                    const h = Math.round(data.daily.temperature_2m_max[i]);
+                    const l = Math.round(data.daily.temperature_2m_min[i]);
+                    
+                    const maxCape = Math.round(Math.max(...data.hourly.cape.slice(i*24, (i+1)*24)));
+                    const minLI = Math.min(...data.hourly.lifted_index.slice(i*24, (i+1)*24)).toFixed(1);
+                    const sev = getSeverity(maxCape, minLI);
+                    
+                    const windDir = getWindDir(data.daily.wind_direction_10m_dominant[i]);
+                    const windGust = Math.round(data.daily.wind_gusts_10m_max[i]);
+
+                    // Day Column
+                    grid.innerHTML += `
+                        <div class="day-column">
+                            <div class="day-name">${dayName}</div>
+                            <div class="day-date">${dateStr}</div>
+                            <div class="weather-icon">${ui.icon}</div>
+                            <div class="temp-group">
+                                <span class="hi-temp">${h}°</span>
+                                <span class="lo-temp">${l}°</span>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Rain</div>
+                                <div class="stat-val">${data.daily.precipitation_probability_max[i]}%</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Wind Gust</div>
+                                <div class="stat-val">${windDir} ${windGust}</div>
+                            </div>
+                            <div class="severity-tag ${sev.cls}">${sev.text}</div>
+                        </div>
+                    `;
+
+                    // Almanac Cell
+                    const a = almData[mmdd] || {avgH:'--', avgL:'--', recH:'--', recHY:'--', recL:'--', recLY:'--'};
+                    almBox.innerHTML += `
+                        <div class="almanac-cell">
+                            <b>AVG: ${a.avgH}/${a.avgL}</b><br>
+                            REC HI: ${a.recH} (${a.recHY})<br>
+                            REC LO: ${a.recL} (${a.recLY})
+                        </div>
+                    `;
                 }
             };
 
-            renderHeader('head1',1,7);
-            renderHeader('head2',8,7);
+            renderWeek('grid-week1', 'almanac-week1', 1);
+            renderWeek('grid-week2', 'almanac-week2', 8);
 
-            createRows(document.getElementById('body1'),data,1,7);
-            createRows(document.getElementById('body2'),data,8,7);
-
-            document.getElementById('status').style.display='none';
-            document.getElementById('mainContent').style.display='block';
-            document.getElementById('updateTime').innerText="Forecast Outlook (Starts Tomorrow)";
-            document.getElementById('lastUpdate').innerText='Last Model Sync (GFS): '+new Date().toLocaleTimeString();
-
-            const aiData = { station: {lat:LAT, lon:LON}, forecast_daily: data.daily, forecast_hourly: data.hourly };
-            document.getElementById('ai-data').textContent = JSON.stringify(aiData);
-
-        } catch(err){
-            document.getElementById('status').innerHTML=`<div class="error-box"><b>Forecast Sync Error:</b><br>${err.message}</div>`;
+        } catch (e) {
+            document.getElementById('status').innerText = "Sync Error. Please try again.";
         }
     }
 
     init();
 </script>
+
 </body>
 </html>
