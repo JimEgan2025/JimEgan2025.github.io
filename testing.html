@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TX Weather Command | Strategic GIS Hub</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root { 
+    --primary: #ffcc00; 
+    --bg: #020617; 
+    --panel: #0f172a; 
+    --border: #1e293b; 
+    --text: #f8fafc;
+    --danger: #ef4444;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg); overflow: hidden; }
+  
+  body { 
+    display: flex; 
+    font-family: 'Inter', sans-serif; 
+    color: var(--text);
+    width: 1200px;
+    height: 800px;
+    margin: auto;
+    border: 3px solid var(--border);
+  }
+  
+  #sidebar, #right-panel { 
+    width: 320px; 
+    height: 100%; 
+    background: var(--panel); 
+    display: flex; 
+    flex-direction: column; 
+    border-color: var(--border); 
+    border-style: solid;
+    position: relative;
+    z-index: 2000;
+  }
+  #sidebar { border-right-width: 3px; }
+  #right-panel { border-left-width: 3px; }
+  #map { flex: 1; height: 100%; background: #000; z-index: 1; }
+
+  header { 
+    background: #000; 
+    padding: 0 25px; 
+    border-bottom: 3px solid var(--primary); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    position: absolute; 
+    top: 0; left: 320px; right: 320px; 
+    z-index: 3000; 
+    height: 60px;
+  }
+  
+  header h1 { margin: 0; font-size: 20px; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+  
+  .section-title { 
+    font-size: 13px; 
+    text-transform: uppercase; 
+    color: var(--primary); 
+    padding: 15px 20px 8px; 
+    font-weight: 900; 
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .control-group { padding: 15px 20px; }
+  label { display: flex; align-items: center; margin: 12px 0; cursor: pointer; font-size: 15px; font-weight: 700; color: #cbd5e1; }
+  input[type="checkbox"] { width: 22px; height: 22px; margin-right: 15px; accent-color: var(--primary); }
+  
+  .btn-focus { 
+    background: var(--primary); 
+    color: #000; border: none; 
+    padding: 8px 16px; border-radius: 6px; 
+    font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase;
+  }
+
+  #alert-list { padding: 15px; flex-grow: 1; overflow-y: auto; }
+  .alert-card { 
+    background: #1e293b; padding: 15px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--border);
+    border-left: 6px solid var(--primary);
+  }
+  .alert-card.Extreme { border-left-color: var(--danger); background: #450a0a; }
+  .alert-card.Severe { border-left-color: #f97316; background: #431407; }
+  .alert-card span { display: block; font-size: 16px; font-weight: 900; margin-bottom: 4px; }
+  .alert-card small { font-size: 13px; font-weight: 700; color: var(--primary); }
+  
+  .legend-box { padding: 20px; background: #000; margin: 10px; border-radius: 12px; border: 1px solid var(--border); }
+  .l-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+  .l-box { width: 24px; height: 16px; margin-right: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2); }
+
+  #as-of { font-weight: 800; font-family: monospace; color: var(--primary); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Texas Weather Command</h1>
+  <button class="btn-focus" onclick="focusVizcaya()">Focus: Vizcaya</button>
+  <div id="as-of">SYNCING...</div>
+</header>
+
+<div id="sidebar">
+  <div style="height:60px;"></div>
+  
+  <div class="section-title">Atmospheric Overlays</div>
+  <div class="control-group">
+    <label><input type="checkbox" id="radar" checked> Live NEXRAD Radar</label>
+    <label><input type="checkbox" id="sat"> GOES-16 IR Satellite</label>
+  </div>
+  
+  <div class="section-title">SPC Risk Levels</div>
+  <div class="control-group">
+    <label><input type="checkbox" id="spc1" checked> Day 1 Outlook (Today)</label>
+    <label><input type="checkbox" id="spc2"> Day 2 Outlook</label>
+    <label><input type="checkbox" id="wwa" checked> Watches & Warnings</label>
+  </div>
+
+  <div class="section-title">Risk Legend</div>
+  <div class="legend-box">
+    <div class="l-item"><div class="l-box" style="background:#c0e8c0"></div> Marginal</div>
+    <div class="l-item"><div class="l-box" style="background:#f6e38b"></div> Slight</div>
+    <div class="l-item"><div class="l-box" style="background:#ffbc7b"></div> Enhanced</div>
+    <div class="l-item"><div class="l-box" style="background:#ff8a8a"></div> Moderate</div>
+    <div class="l-item"><div class="l-box" style="background:#ff6060"></div> High Risk</div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div id="right-panel">
+  <div style="height:60px;"></div>
+  <div class="section-title">Live Alert Feed</div>
+  <div id="alert-list"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+
+<script>
+// 1. Initialize Map
+const map = L.map('map', { 
+    zoomControl: false,
+    attributionControl: false 
+}).setView([31.2, -99.5], 6);
+
+// 2. Base Layer (Dark Bottom)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+
+// 3. Create Custom Panes for Overlays (Higher z-index = on top of radar)
+map.createPane('topLabels');
+map.getPane('topLabels').style.zIndex = 650;      // Very top
+map.getPane('topLabels').style.pointerEvents = 'none';
+
+map.createPane('brightBorders');
+map.getPane('brightBorders').style.zIndex = 640;  // Just below names
+map.getPane('brightBorders').style.pointerEvents = 'none';
+
+// 4. ADD CITY NAMES TO TOP PANE
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+    pane: 'topLabels'
+}).addTo(map);
+
+// 5. ADD BRIGHT STATE BORDERS TO BORDER PANE
+L.esri.dynamicMapLayer({
+  url: 'https://mapservices.weather.noaa.gov/vector/rest/services/reference/State_Boundaries/MapServer',
+  layers: [0],
+  pane: 'brightBorders'
+}).addTo(map);
+
+// 6. ADD BRIGHT COUNTY BORDERS
+L.esri.dynamicMapLayer({
+  url: 'https://mapservices.weather.noaa.gov/vector/rest/services/reference/County_Boundaries/MapServer',
+  layers: [0],
+  pane: 'brightBorders',
+  opacity: 0.4
+}).addTo(map);
+
+function focusVizcaya() { map.flyTo([30.5871, -97.6410], 10); }
+
+// WEATHER LAYERS (Standard Panes = Below the custom ones)
+const layers = {
+  radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', {
+    layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.8, zIndex: 100
+  }).addTo(map),
+
+  sat: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', {
+    layers: 'conus_ir_4km', format: 'image/png', transparent: true, opacity: 0.5, zIndex: 90
+  }),
+
+  wwa: L.esri.featureLayer({
+    url: 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer/1',
+    style: function(f) {
+      const e = f.properties.event.toLowerCase();
+      if (e.includes('tornado')) return { color: '#ff0000', weight: 5, fillOpacity: 0.4 };
+      if (e.includes('severe')) return { color: '#ff6600', weight: 4, fillOpacity: 0.3 };
+      return { color: '#ffcc00', weight: 2, fillOpacity: 0.2 };
+    }
+  }).addTo(map),
+
+  spc1: L.esri.dynamicMapLayer({ 
+    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
+    layers: [1], opacity: 0.5 
+  }).addTo(map),
+
+  spc2: L.esri.dynamicMapLayer({ 
+    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
+    layers: [9], opacity: 0.5 
+  })
+};
+
+// UI Listeners
+document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+  checkbox.onchange = () => {
+    const layer = layers[checkbox.id];
+    if (checkbox.checked) { map.addLayer(layer); } 
+    else { map.removeLayer(layer); }
+  };
+});
+
+async function updateAlerts() {
+  try {
+    const res = await fetch('https://api.weather.gov/alerts/active?area=TX');
+    const data = await res.json();
+    const list = document.getElementById('alert-list');
+    document.getElementById('as-of').innerText = new Date().toLocaleTimeString();
+
+    if (!data.features?.length) {
+      list.innerHTML = '<div style="color:#94a3b8; padding:20px; font-weight:800; text-align:center;">NO ACTIVE ALERTS</div>';
+      return;
+    }
+
+    list.innerHTML = data.features.slice(0, 12).map(f => {
+      const p = f.properties;
+      return `
+        <div class="alert-card ${p.severity}" onclick="map.flyTo([${f.geometry?.coordinates[0][0][1] || 31.5}, ${f.geometry?.coordinates[0][0][0] || -99.5}], 8)">
+          <span>${p.event}</span>
+          <small>${p.areaDesc.split(';')[0]}</small>
+        </div>
+      `;
+    }).join('');
+  } catch (e) { list.innerHTML = 'Sync Error.'; }
+}
+
+updateAlerts();
+setInterval(updateAlerts, 300000);
+</script>
+</body>
+</html>
