@@ -2,136 +2,203 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Gulf OPS v11.2 - Impact Projection Ready</title>
+<title>GULF OPS v12.0 - Live Tropical Tracking</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
-  --bg:#020617; --panel:#0f172a; --border:#1e293b; --text:#e5e7eb;
+  --bg:#020617; --panel:#0f172a; --border:#1e293b; --text:#f8fafc;
   --muted:#94a3b8; --ok:#22c55e; --warn:#ef4444; --watch:#fde047; --risk:#f97316; --marine:#06b6d4; --tropical:#d946ef;
 }
-body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui;overflow:hidden;}
-header{padding:0 16px;background:#020617;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center;height:50px;}
-.grid{display:grid;grid-template-columns:1fr 320px;height:calc(100vh - 50px);}
-#map{height:100%;background:#020617;cursor:crosshair;}
-.side{display:flex;flex-direction:column;gap:8px;padding:8px;overflow-y:auto;border-left:1px solid var(--border);}
-.card{background:var(--panel);border-radius:6px;padding:12px;border:1px solid var(--border);flex-shrink:0;}
-.card h2{margin:0 0 4px;font-size:0.65rem;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
-.big{font-size:1.4rem;font-weight:900;line-height:1.1;letter-spacing:-0.5px;}
-.small{font-size:0.75rem;color:var(--muted);margin-top:4px;}
-.warn{color:var(--warn);} .marine{color:var(--marine); font-weight:bold;} .tropical{color:var(--tropical);}
-button{background:#1e293b;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px 10px;cursor:pointer;font-size:0.7rem;font-weight:600;}
-button.active{background:var(--risk);color:white;border-color:white;}
-#timestamp{font-family:monospace; font-size: 0.75rem; color: var(--muted); background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;}
+* { box-sizing: border-box; }
+body { 
+    margin:0; background:var(--bg); color:var(--text); 
+    font-family: 'Inter', system-ui, sans-serif;
+    width: 1200px; height: 800px; margin: auto; overflow: hidden;
+    border: 2px solid var(--border);
+}
+
+header {
+    padding: 0 25px; background: #020617; border-bottom: 3px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; height: 80px;
+}
+
+.grid { display: grid; grid-template-columns: 1fr 380px; height: 720px; }
+#map { height: 100%; background: #020617; }
+
+.side { 
+    display: flex; flex-direction: column; gap: 15px; padding: 15px; 
+    background: #020617; border-left: 3px solid var(--border); overflow-y: auto;
+}
+
+.card {
+    background: var(--panel); border-radius: 12px; padding: 20px;
+    border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.card h2 {
+    margin: 0 0 10px; font-size: 14px; font-weight: 800; text-transform: uppercase;
+    color: var(--muted); letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px;
+}
+
+.big { font-size: 28px; font-weight: 900; line-height: 1.1; letter-spacing: -1px; }
+.small { font-size: 15px; font-weight: 500; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+
+.alert-item {
+    background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
+    padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; font-weight: 700;
+}
+
+.tropical-badge {
+    background: var(--tropical); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+}
+
+button {
+    background: #1e293b; color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 15px; cursor: pointer; font-size: 13px; font-weight: 800;
+}
+button.active { background: var(--risk); border-color: white; }
+
+#timestamp {
+    font-family: monospace; font-size: 14px; font-weight: 700; color: var(--ok);
+    background: rgba(34, 197, 94, 0.1); padding: 6px 12px; border-radius: 6px;
+}
 </style>
 </head>
 <body>
+
 <header>
-  <div style="display:flex; align-items:center; gap:15px;">
-    <h1 style="font-size:1.1rem; margin:0;">REGIONAL OPS <span style="color:var(--risk)">v11.2</span></h1>
-    <div id="timestamp">SYNCING LIVE...</div>
+  <div style="display:flex; align-items:center; gap:20px;">
+    <h1 style="font-size:28px; margin:0; font-weight:900;">GULF OPS <span style="color:var(--tropical)">v12.0</span></h1>
+    <div id="timestamp">LIVE SATELLITE SYNC...</div>
   </div>
-  <div style="display:flex; gap:5px;">
-    <button id="btnProj" onclick="toggleProjection()">PATH PROJECTION</button>
-    <button id="btnSST" onclick="toggleLayer('sst', this)">OCEAN TEMP</button>
-    <button id="btnRadar" class="active" onclick="toggleLayer('radar', this)">RADAR</button>
-    <button id="btnHaz" class="active" onclick="toggleLayer('hazards', this)">HAZARDS</button>
+  <div style="display:flex; gap:10px;">
+    <button id="btnTropical" class="active" onclick="fetchTropicalData()">Update Live Tracks</button>
+    <button onclick="toggleLayer('radar', this)" class="active">Radar</button>
   </div>
 </header>
+
 <div class="grid">
   <div id="map"></div>
   <div class="side">
-    <div class="card"><h2>Mission Status</h2><div class="big" id="gogo">STABLE</div><div class="small" id="gogoDetail">TX/5-State Region Monitoring</div></div>
-    <div class="card"><h2>Tropical Impact Tool</h2><div id="projText" class="small">Click 'Path Projection' and select two points on map to simulate a track.</div></div>
-    <div class="card"><h2>Marine (Early Warning)</h2><div id="marine" class="small">Clear</div></div>
-    <div class="card" style="flex-grow:1"><h2>Advisories & Watches</h2><div id="watches" class="small">--</div></div>
+    <div class="card" style="border-left: 5px solid var(--tropical);">
+        <h2>Active Tropical Systems</h2>
+        <div class="big" id="stormName" style="color:var(--tropical)">NO ACTIVE CYCLONES</div>
+        <div class="small" id="stormStats">Monitoring NHC Atlantic/Gulf Basin.</div>
+    </div>
+    
+    <div class="card">
+        <h2>Live Advisory Data</h2>
+        <div id="advisoryText" class="small">Waiting for NHC broadcast...</div>
+    </div>
+    
+    <div class="card">
+        <h2>Marine Risk</h2>
+        <div id="marine" class="small">Scanning Offshore Buoys...</div>
+    </div>
+    
+    <div class="card" style="flex-grow:1">
+        <h2>NWS Active Watches</h2>
+        <div id="watches" class="small">--</div>
+    </div>
   </div>
 </div>
 
 <script>
-const map = L.map('map', {zoomControl: false, minZoom: 4}).setView([31.0, -97.0], 6);
+const map = L.map('map', {zoomControl: false}).setView([25.0, -90.0], 5);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-const sstLayer = L.tileLayer.wms("https://nowcoast.noaa.gov/arcgis/services/nowcoast/analysis_ocean_sfc_sst_time/MapServer/WmsServer", {
-  layers: "1", format: 'image/png', transparent: true, opacity: 0.4
-});
-
 const radar = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
-  layers: "nexrad-n0r", format: 'image/png', transparent: true, opacity: 0.4
+  layers: "nexrad-n0r", format: 'image/png', transparent: true, opacity: 0.7
 }).addTo(map);
 
+const tropicalLayer = L.layerGroup().addTo(map);
 const hazardLayer = L.layerGroup().addTo(map);
-const projLayer = L.layerGroup().addTo(map);
 
-let projectionMode = false;
-let points = [];
+/**
+ * FETCH LIVE TROPICAL DATA
+ * Pulls from the NWS/NHC Public GIS Feed
+ */
+async function fetchTropicalData() {
+    try {
+        // NWS Feed for Tropical Cyclone Forecast Tracks
+        const response = await fetch('https://services9.arcgis.com/RHVPFullBXYwv2vV/arcgis/rest/services/Tropical_Cyclone_Forecast_Track/FeatureServer/0/query?where=1%3D1&outFields=*&f=pjson');
+        const data = await response.json();
+        
+        tropicalLayer.clearLayers();
+        
+        if (data.features && data.features.length > 0) {
+            const storm = data.features[0].attributes;
+            document.getElementById('stormName').innerText = storm.STORMNAME || "ACTIVE SYSTEM";
+            document.getElementById('stormStats').innerText = `Intensity: ${storm.INTENSITY} MPH | Pressure: ${storm.MSLP}mb`;
+            document.getElementById('advisoryText').innerHTML = `<b>Movement:</b> ${storm.MOVEMENT}<br><b>Advisory:</b> #${storm.ADVISNUM}<br><b>Forecast:</b> NHC Official Path Updated.`;
 
-function toggleProjection() {
-    projectionMode = !projectionMode;
-    document.getElementById("btnProj").classList.toggle("active");
-    if(!projectionMode) { projLayer.clearLayers(); points = []; }
-}
+            // Draw the track on map
+            // Note: In a production environment, we would also pull the 'Cone' layer 
+            // and the 'Points' layer from the same ArcGIS server.
+            L.geoJSON(data, {
+                style: { color: '#d946ef', weight: 5, dashArray: '10, 10' }
+            }).addTo(tropicalLayer);
 
-map.on('click', (e) => {
-    if(!projectionMode) return;
-    points.push(e.latlng);
-    L.circleMarker(e.latlng, {color: '#d946ef', radius: 6}).addTo(projLayer);
-    
-    if(points.length === 2) {
-        const line = L.polyline(points, {color: '#d946ef', weight: 4, dashArray: '10, 10'}).addTo(projLayer);
-        // Draw simulated cone
-        L.polygon([
-            points[0],
-            [points[1].lat + 1.5, points[1].lng - 1.5],
-            [points[1].lat + 1.5, points[1].lng + 1.5]
-        ], {color: '#d946ef', fillOpacity: 0.2, weight: 1}).addTo(projLayer);
-        document.getElementById("projText").innerHTML = `<b class="tropical">Simulated Impact Path</b><br>Origin: ${points[0].lat.toFixed(1)}, ${points[0].lng.toFixed(1)}<br>Inland: ${points[1].lat.toFixed(1)}, ${points[1].lng.toFixed(1)}`;
-        points = [];
+            // Add a pulsing marker for the current eye
+            const currentPoint = data.features[0].geometry.paths[0][0];
+            L.circleMarker([currentPoint[1], currentPoint[0]], {
+                color: '#fff', fillColor: '#d946ef', fillOpacity: 1, radius: 10
+            }).addTo(tropicalLayer).bindTooltip("STORM CENTER", {permanent: true});
+
+        } else {
+            document.getElementById('stormName').innerText = "NO ACTIVE SYSTEMS";
+            document.getElementById('stormStats').innerText = "Gulf and Atlantic Basins are clear.";
+        }
+    } catch (e) {
+        console.error("Tropical Sync Error:", e);
     }
-});
-
-const coastPoly = {
-  "LA": [[29.7, -93.8], [28.8, -93.8], [28.2, -89.4], [29.3, -89.1], [30.1, -89.6]],
-  "TX": [[29.7, -94.2], [28.0, -94.0], [26.0, -97.2], [29.5, -94.5]],
-  "FL": [[30.4, -87.4], [29.2, -87.4], [29.2, -83.5], [30.1, -83.5]]
-};
+}
 
 async function fetchAlerts() {
   try {
-    const res = await fetch("https://api.weather.gov/alerts/active?area=TX,NM,OK,AR,LA,MS,AL,FL");
+    const res = await fetch("https://api.weather.gov/alerts/active?area=TX,LA,MS,AL,FL");
     const data = await res.json();
     hazardLayer.clearLayers();
-    const ui = { marine: document.getElementById("marine"), watch: document.getElementById("watches") };
-    Object.values(ui).forEach(div => div.innerHTML = "Clear");
+    
+    const uiMarine = document.getElementById("marine");
+    const uiWatch = document.getElementById("watches");
+    uiWatch.innerHTML = "";
+    uiMarine.innerHTML = "OFFSHORE NOMINAL";
 
-    data.features.forEach(a => {
-      const p = a.properties, k = p.event.toLowerCase(), state = p.areaDesc.split(';')[0].substring(0,2);
-      if(a.geometry) {
-        L.geoJSON(a, { style: { color: k.includes("tornado") ? "#ff0000" : "#06b6d4", weight: 3, fillOpacity: 0.3 } }).addTo(hazardLayer);
-      } else if (k.includes("craft") || k.includes("marine")) {
-        const poly = coastPoly[state];
-        if(poly) L.polygon(poly, {color: '#06b6d4', fillOpacity: 0.4, weight: 1}).addTo(hazardLayer);
+    data.features.forEach((a, i) => {
+      const p = a.properties, k = p.event.toLowerCase();
+      if(a.geometry && i < 15) { 
+        L.geoJSON(a, { style: { color: k.includes("hurricane") ? "#d946ef" : "#fb7185", weight: 3, fillOpacity: 0.2 } }).addTo(hazardLayer);
       }
-      if (k.includes("marine") || k.includes("craft")) {
-        if(ui.marine.innerText === "Clear") ui.marine.innerHTML = "";
-        ui.marine.innerHTML += `<div class="alert-item marine">${p.event} [${state}]</div>`;
+      
+      if (k.includes("marine") || k.includes("gale")) {
+        uiMarine.innerHTML = `<div class="alert-item marine">${p.event}</div>`;
+      } else if (i < 5) {
+        uiWatch.innerHTML += `<div class="alert-item">${p.event}</div>`;
       }
     });
+    
     document.getElementById("timestamp").innerText = "SYNC: " + new Date().toLocaleTimeString();
-  } catch(e) { console.error("Sync Error"); }
+  } catch(e) { console.error("Alert Sync Error"); }
 }
 
 function toggleLayer(type, btn) {
     btn.classList.toggle('active');
-    const active = btn.classList.contains('active');
-    if(type === 'radar') active ? map.addLayer(radar) : map.removeLayer(radar);
-    if(type === 'hazards') active ? map.addLayer(hazardLayer) : map.removeLayer(hazardLayer);
-    if(type === 'sst') active ? map.addLayer(sstLayer) : map.removeLayer(sstLayer);
+    if(type === 'radar') btn.classList.contains('active') ? map.addLayer(radar) : map.removeLayer(radar);
 }
 
+// Initial Loads
+fetchTropicalData();
 fetchAlerts();
-setInterval(fetchAlerts, 300000);
+
+// Auto-Refresh (Every 5 minutes)
+setInterval(() => {
+    fetchTropicalData();
+    fetchAlerts();
+}, 300000);
+
 </script>
 </body>
 </html>
