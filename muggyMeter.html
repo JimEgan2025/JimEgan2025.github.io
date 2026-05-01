@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viccaya WX - Muggy Meter Pro</title>
+    <title>Vizcaya WX - Muggy Meter Pro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #020617;
             --card-bg: #0f172a;
             --border: #1e293b;
-            --viccaya-blue: #38bdf8;
+            --vizcaya-gold: #fbbf24;
+            --vizcaya-blue: #38bdf8;
             --text-muted: #94a3b8;
-            /* High Contrast Comfort Colors */
+            /* Comfort Colors */
             --dry: #0ea5e9;
             --pleasant: #10b981;
             --comfortable: #84cc16;
@@ -26,84 +27,108 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
+            background-color: #000;
             color: #f8fafc;
-            padding: 30px;
-            /* Optimized for Facebook Landscape Sharing */
-            width: 1080px; 
-            margin: auto;
+            padding: 40px 0;
+            display: flex;
+            justify-content: center;
         }
 
-        /* BRAND HEADER - MUCH LARGER */
+        .canvas {
+            width: 1080px;
+            background-color: var(--bg);
+            padding: 40px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* BRAND HEADER */
         .brand-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid var(--border);
+            align-items: flex-start;
+            margin-bottom: 30px;
         }
         .brand-left h1 {
-            font-size: 52px;
+            font-size: 58px;
             font-weight: 900;
             letter-spacing: -3px;
-            line-height: 1;
+            line-height: 0.9;
+            margin-bottom: 10px;
         }
-        .brand-left h1 span { color: var(--viccaya-blue); }
+        .brand-left h1 span { color: var(--vizcaya-blue); }
         .brand-left p {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 16px;
+            font-size: 18px;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-top: 5px;
+            letter-spacing: 5px;
         }
 
+        .station-box { text-align: right; }
         .station-id {
-            font-size: 18px;
-            font-weight: 800;
+            font-size: 22px;
+            font-weight: 900;
             color: #fff;
-            background: var(--viccaya-blue);
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        /* SUMMARY TEXT - BOXIER AND BOLDER */
-        #summary-text {
-            display: block;
-            margin-bottom: 30px;
-            padding: 25px;
-            background: linear-gradient(90deg, #1e293b, #0f172a);
-            border-radius: 16px;
-            font-size: 24px;
-            font-weight: 600;
+            background: linear-gradient(90deg, #1e293b, #334155);
+            padding: 10px 20px;
+            border-radius: 12px;
+            display: inline-block;
             border: 1px solid var(--border);
-            line-height: 1.4;
         }
 
-        /* THE CHART AREA */
-        .chart-card {
+        /* SUMMARY BOX */
+        #summary-card {
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 20px;
+            border-left: 8px solid var(--vizcaya-blue);
+        }
+        #summary-text {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        /* THE CHART */
+        .chart-container {
             background: var(--card-bg);
             border-radius: 30px;
-            padding: 30px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            padding: 45px 30px 20px 30px;
             border: 1px solid #334155;
+            position: relative;
+        }
+
+        /* Metric Indicator Label */
+        .metric-indicator {
+            position: absolute;
+            top: 15px;
+            left: 180px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--vizcaya-blue);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
         }
 
         .chart-viewport {
-            height: 500px;
+            height: 450px;
             position: relative;
             display: flex;
         }
 
-        /* Left Side Scale Labels */
-        .y-axis-labels {
-            width: 140px;
+        .y-axis {
+            width: 150px;
             display: flex;
             flex-direction: column-reverse;
-            padding-right: 15px;
             border-right: 2px solid var(--border);
+            padding-right: 15px;
+            z-index: 10;
         }
 
         .y-label {
@@ -112,36 +137,29 @@
             align-items: center;
             justify-content: flex-end;
             font-size: 13px;
-            font-weight: 900;
-            text-transform: uppercase;
+            font-weight: 800;
             color: var(--text-muted);
+            text-transform: uppercase;
         }
 
-        /* Background Comfort Bands */
         .zones {
             position: absolute;
-            inset: 0 0 0 140px; /* Offset by y-axis width */
+            inset: 0 0 0 150px;
             display: flex;
             flex-direction: column-reverse;
-            z-index: 1;
         }
-        .zone {
-            width: 100%;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            align-items: center;
-            padding-left: 20px;
-        }
+        .zone { width: 100%; border-top: 1px solid rgba(255,255,255,0.03); }
+        .z-sticky { background: rgba(245, 158, 11, 0.03); }
+        .z-muggy { background: rgba(239, 68, 68, 0.05); }
+        .z-oppressive { background: rgba(168, 85, 247, 0.07); }
 
-        /* Bars Stage */
         .bars-stage {
             position: relative;
-            z-index: 2;
+            z-index: 20;
             flex: 1;
             display: flex;
             justify-content: space-around;
             align-items: flex-end;
-            padding: 0 10px;
         }
 
         .bar-col {
@@ -151,100 +169,105 @@
             flex-direction: column;
             justify-content: flex-end;
             align-items: center;
+            position: relative;
         }
 
         .bar {
-            width: 70%; /* Thicker bars */
-            border-radius: 8px 8px 0 0;
+            width: 60px;
+            border-radius: 12px 12px 4px 4px;
             position: relative;
-            background: linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.4));
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: height 1s ease-out;
+            background: #475569;
         }
 
         .bar-val {
             position: absolute;
-            top: -40px;
+            top: -45px;
             width: 100%;
             text-align: center;
             font-weight: 900;
-            font-size: 26px; /* Huge numbers */
-            text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+            font-size: 30px;
         }
 
-        /* X-AXIS - MUCH BOLDER */
+        .bar.is-peak {
+            box-shadow: 0 0 40px currentColor;
+            z-index: 30;
+        }
+        
+        .peak-label {
+            position: absolute;
+            top: -75px;
+            background: #fff;
+            color: #000;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
         .x-axis {
             height: 100px;
             display: flex;
-            margin-left: 140px;
-            border-top: 3px solid var(--border);
-            z-index: 2;
+            margin-left: 150px;
+            border-top: 2px solid var(--border);
         }
-        .date-item { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-        }
-        .date-item .day { font-weight: 900; font-size: 22px; color: #fff; text-transform: uppercase; }
-        .date-item .date { font-size: 14px; font-weight: 700; color: var(--text-muted); }
-
-        /* Color Overlay Classes */
-        .z-oppressive { background: rgba(168, 85, 247, 0.15); }
-        .z-muggy { background: rgba(239, 68, 68, 0.12); }
-        .z-sticky { background: rgba(245, 158, 11, 0.08); }
+        .date-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .day-name { font-weight: 900; font-size: 24px; color: #fff; }
+        .day-date { font-size: 14px; font-weight: 600; color: var(--text-muted); }
 
         .footer {
-            margin-top: 40px;
-            font-size: 16px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
             color: var(--text-muted);
-            text-align: center;
             font-weight: 700;
-            letter-spacing: 2px;
+            font-size: 14px;
+            letter-spacing: 1px;
         }
 
         .live-tag {
-            color: #10b981;
-            font-weight: 900;
-            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 5px;
+            color: #10b981;
         }
-        .dot { width: 10px; height: 10px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+        .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="canvas">
     <div class="brand-header">
         <div class="brand-left">
-            <h1>VICCAYA <span>WX</span></h1>
-            <p>Muggy Meter • Humidity Outlook</p>
+            <h1>VIZCAYA <span>WX</span></h1>
+            <p>Muggy Meter • Dew Point Analysis</p>
         </div>
-        <div class="brand-right" style="text-align: right;">
+        <div class="station-box">
             <div class="station-id">ROUND ROCK, TX</div>
-            <div class="live-tag"><div class="dot"></div> GFS HIGH-RES CORE</div>
+            <div class="live-tag" style="margin-top: 10px; justify-content: flex-end;">
+                <div class="dot"></div> GFS HIGH-RES CORE
+            </div>
         </div>
     </div>
 
-    <div id="summary-text">Analyzing atmospheric moisture content...</div>
+    <div id="summary-card">
+        <div id="summary-text">Calculating moisture levels...</div>
+    </div>
 
-    <div class="chart-card">
+    <div class="chart-container">
+        <div class="metric-indicator">Metric: Max Daily Dew Point (°F)</div>
         <div class="chart-viewport">
-            <!-- Left Scale -->
-            <div class="y-axis-labels">
+            <div class="y-axis">
                 <div class="y-label" style="height: 20%;">30-40° DRY</div>
                 <div class="y-label" style="height: 20%;">40-50° NICE</div>
                 <div class="y-label" style="height: 20%;">50-60° COMFY</div>
                 <div class="y-label" style="height: 10%;">60-65° STICKY</div>
                 <div class="y-label" style="height: 10%;">65-70° MUGGY</div>
-                <div class="y-label" style="height: 20%; color:#f87171">70°+ OPPRESSIVE</div>
+                <div class="y-label" style="height: 20%; color:var(--oppressive)">70°+ OPPRESSIVE</div>
             </div>
 
-            <!-- Background Bands -->
             <div class="zones">
                 <div class="zone" style="height: 20%;"></div>
                 <div class="zone" style="height: 20%;"></div>
@@ -254,15 +277,14 @@
                 <div class="zone z-oppressive" style="height: 20%;"></div>
             </div>
 
-            <!-- Data Bars -->
             <div class="bars-stage" id="barsStage"></div>
         </div>
-
         <div class="x-axis" id="xAxis"></div>
     </div>
 
     <div class="footer">
-        VICCAYA WEATHER SERVICES • UPDATED: <span id="update-time">--:--</span>
+        <div>VIZCAYA WEATHER SERVICES</div>
+        <div>UPDATED: <span id="update-time">--:--</span></div>
     </div>
 </div>
 
@@ -270,12 +292,12 @@
     const CONFIG = {
         lat: 30.5097,
         lon: -97.6921,
-        min: 30,
-        max: 80
+        minDP: 30, 
+        maxDP: 80  
     };
 
     function getComfort(dp) {
-        if (dp < 50) return { label: 'VERY DRY', color: 'var(--dry)' };
+        if (dp < 50) return { label: 'CRISP / DRY', color: 'var(--dry)' };
         if (dp < 60) return { label: 'PLEASANT', color: 'var(--pleasant)' };
         if (dp < 65) return { label: 'STICKY', color: 'var(--sticky)' };
         if (dp < 70) return { label: 'MUGGY', color: 'var(--muggy)' };
@@ -288,7 +310,7 @@
             const data = await res.json();
             render(data.daily);
         } catch (e) {
-            document.getElementById('summary-text').textContent = "ERROR: DATA STREAM OFFLINE";
+            document.getElementById('summary-text').textContent = "DATA OFFLINE";
         }
     }
 
@@ -298,28 +320,28 @@
         stage.innerHTML = '';
         x.innerHTML = '';
 
-        let highestDP = 0;
-        let highestDay = "";
+        const maxVal = Math.max(...daily.dew_point_2m_max);
+        const maxIndex = daily.dew_point_2m_max.indexOf(maxVal);
 
         daily.time.forEach((time, i) => {
             const dp = daily.dew_point_2m_max[i];
             const comfort = getComfort(dp);
-            const date = new Date(time + 'T00:00:00');
-            const dayName = date.toLocaleDateString('en-US', {weekday: 'short'});
-
-            if (dp > highestDP) {
-                highestDP = dp;
-                highestDay = i === 0 ? "Today" : dayName;
-            }
-
-            let pct = ((dp - CONFIG.min) / (CONFIG.max - CONFIG.min)) * 100;
-            pct = Math.max(10, Math.min(100, pct)); // Taller minimum bar
+            const dateObj = new Date(time + 'T00:00:00');
+            const dayName = dateObj.toLocaleDateString('en-US', {weekday: 'short'});
+            
+            let pct = ((dp - CONFIG.minDP) / (CONFIG.maxDP - CONFIG.minDP)) * 100;
+            pct = Math.max(8, Math.min(100, pct)); 
 
             const col = document.createElement('div');
             col.className = 'bar-col';
+            
+            const isPeak = i === maxIndex;
+            
             col.innerHTML = `
-                <div class="bar" style="height: ${pct}%; background-color: ${comfort.color}; box-shadow: 0 0 30px ${comfort.color}55">
-                    <div class="bar-val" style="color: ${comfort.color}">${Math.round(dp)}°</div>
+                ${isPeak ? '<div class="peak-label">Highest</div>' : ''}
+                <div class="bar ${isPeak ? 'is-peak' : ''}" 
+                     style="height: ${pct}%; background-color: ${comfort.color}; color: ${comfort.color}">
+                    <div class="bar-val">${Math.round(dp)}°</div>
                 </div>
             `;
             stage.appendChild(col);
@@ -327,15 +349,18 @@
             const label = document.createElement('div');
             label.className = 'date-item';
             label.innerHTML = `
-                <span class="day">${dayName}</span>
-                <span class="date">${date.getDate()} ${date.toLocaleDateString('en-US', {month: 'short'})}</span>
+                <span class="day-name">${dayName}</span>
+                <span class="day-date">${dateObj.getDate()} ${dateObj.toLocaleDateString('en-US', {month: 'short'})}</span>
             `;
             x.appendChild(label);
         });
 
-        const summary = getComfort(highestDP);
+        const peakComfort = getComfort(maxVal);
+        const peakDay = maxIndex === 0 ? "Today" : new Date(daily.time[maxIndex] + 'T00:00:00').toLocaleDateString('en-US', {weekday: 'long'});
+        
+        document.getElementById('summary-card').style.borderLeftColor = peakComfort.color;
         document.getElementById('summary-text').innerHTML = 
-            `MUGGY METER: Peak humidity of <span style="color:${summary.color}; font-weight:900;">${summary.label}</span> expected on <span style="color:#fff">${highestDay}</span>.`;
+            `Atmospheric moisture peaks on ${peakDay} with a <span style="color:${peakComfort.color}">${peakComfort.label}</span> dew point of ${Math.round(maxVal)}°.`;
         
         document.getElementById('update-time').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
