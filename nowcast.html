@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Today: Rain & Impact Nowcast</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { 
+            font-family: 'Arial Black', sans-serif; 
+            background:#0f172a; 
+            color:#fff;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nowcast-container {
+            width: 900px;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            color: #1e293b;
+        }
+
+        /* Top Alert Bar */
+        .alert-banner {
+            background: #2563eb;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            text-transform: uppercase;
+            border-bottom: 4px solid #1d4ed8;
+        }
+
+        .main-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 30px;
+            background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+            gap: 20px;
+        }
+
+        .current-focus {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .big-temp { font-size: 80px; line-height: 1; color: #1e3a8a; }
+        .condition-text { font-size: 28px; color: #334155; margin-bottom: 10px; }
+        
+        .impact-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 8px solid #2563eb;
+        }
+
+        .impact-val { font-size: 32px; font-weight: 900; color: #1e3a8a; }
+        .impact-label { font-size: 14px; color: #64748b; text-transform: uppercase; }
+
+        /* Hourly Timeline */
+        .timeline-container {
+            padding: 20px;
+            background: white;
+        }
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+        .hour-tick {
+            text-align: center;
+            padding: 10px 2px;
+            border-radius: 8px;
+            background: #f1f5f9;
+        }
+        .hour-time { font-size: 11px; font-weight: bold; color: #64748b; }
+        .hour-rain { font-size: 14px; font-weight: 900; color: #2563eb; margin: 5px 0; }
+        .hour-icon { font-size: 20px; }
+
+        .active-hour { background: #dbeafe; border: 1px solid #3b82f6; }
+
+        .footer {
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 15px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .rain-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        .rain-fill { height: 100%; background: #3b82f6; }
+
+        #status { padding: 100px; color: #3b82f6; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+<div id="status">📡 CALCULATING REMAINING RAINFALL...</div>
+
+<div class="nowcast-container" id="dashboard" style="display:none;">
+    <div class="alert-banner" id="banner-text">RAIN IMPACT: ACTIVE</div>
+    
+    <div class="main-display">
+        <div class="current-focus">
+            <div class="impact-label">Currently in Round Rock</div>
+            <div class="big-temp" id="curr-temp">--°</div>
+            <div class="condition-text" id="curr-desc">Loading...</div>
+            <div style="font-size: 14px; color: #64748b;">
+                High Today: <span id="day-high" style="color:#b91c1c; font-weight:bold;">--</span> | 
+                Low Today: <span id="day-low" style="color:#1d4ed8; font-weight:bold;">--</span>
+            </div>
+        </div>
+
+        <div class="impact-card">
+            <div class="impact-label">Remaining Rain (Est.)</div>
+            <div class="impact-val" id="total-remaining">0.00"</div>
+            <div class="impact-label" style="margin-top:15px;">Peak Wind Remaining</div>
+            <div class="impact-val" id="peak-wind" style="font-size: 24px;">-- mph</div>
+        </div>
+    </div>
+
+    <div class="timeline-container">
+        <div class="impact-label" style="text-align: center;">Next 12 Hours: Precipitation & Intensity</div>
+        <div class="timeline-grid" id="hourly-grid">
+            <!-- Hourly ticks injected here -->
+        </div>
+    </div>
+
+    <div class="footer">
+        Data Source: GFS 0.25° Resolution • Vizcaya Weather Center • Updated: <span id="update-time"></span>
+    </div>
+</div>
+
+<script>
+    const LAT = 30.5871, LON = -97.641;
+
+    function getWeatherIcon(code) {
+        const mapping = {
+            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 
+            51: '🌦️', 61: '🌧️', 63: '🌧️', 65: '🌧️', 80: '🌦️', 95: '⛈️'
+        };
+        return mapping[code] || '☁️';
+    }
+
+    function getWMOText(code) {
+        const mapping = {
+            0: 'Clear Skies', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast', 
+            45: 'Foggy', 51: 'Light Drizzle', 61: 'Rain', 63: 'Moderate Rain', 
+            65: 'Heavy Rain', 80: 'Showers', 95: 'Thunderstorms'
+        };
+        return mapping[code] || 'Cloudy';
+    }
+
+    async function updateNowcast() {
+        try {
+            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=1`;
+            
+            const res = await fetch(url);
+            const data = await res.json();
+
+            document.getElementById('status').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            const now = new Date();
+            const currentHour = now.getHours();
+
+            // 1. Set Main Stats
+            document.getElementById('curr-temp').innerText = Math.round(data.hourly.temperature_2m[currentHour]) + "°";
+            document.getElementById('curr-desc').innerText = getWMOText(data.hourly.weather_code[currentHour]);
+            document.getElementById('day-high').innerText = Math.round(data.daily.temperature_2m_max[0]) + "°";
+            document.getElementById('day-low').innerText = Math.round(data.daily.temperature_2m_min[0]) + "°";
+            document.getElementById('update-time').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            // 2. Calculate Remaining Rain and Wind
+            let remainingRain = 0;
+            let maxWind = 0;
+            for (let i = currentHour; i < 24; i++) {
+                remainingRain += data.hourly.precipitation[i];
+                if (data.hourly.wind_speed_10m[i] > maxWind) maxWind = data.hourly.wind_speed_10m[i];
+            }
+            document.getElementById('total-remaining').innerText = remainingRain.toFixed(2) + '"';
+            document.getElementById('peak-wind').innerText = Math.round(maxWind) + " mph";
+
+            if (remainingRain > 0.5) {
+                document.getElementById('banner-text').innerText = "HEAVY RAIN ALERT";
+                document.getElementById('banner-text').style.background = "#b91c1c";
+            }
+
+            // 3. Build Hourly Grid
+            const grid = document.getElementById('hourly-grid');
+            grid.innerHTML = ''; // Clear
+
+            for (let i = 0; i < 12; i++) {
+                const targetHour = currentHour + i;
+                if (targetHour >= 24) break; // Don't go into tomorrow
+
+                const timeLabel = new Date();
+                timeLabel.setHours(targetHour);
+                const timeStr = timeLabel.toLocaleTimeString([], {hour: 'numeric'});
+                
+                const rain = data.hourly.precipitation[targetHour];
+                const rainProb = data.hourly.precipitation_probability[targetHour];
+                const icon = getWeatherIcon(data.hourly.weather_code[targetHour]);
+                const rainPct = Math.min(rain * 200, 100); // Visual scaling for the bar
+
+                grid.innerHTML += `
+                    <div class="hour-tick ${i === 0 ? 'active-hour' : ''}">
+                        <div class="hour-time">${timeStr}</div>
+                        <div class="hour-icon">${icon}</div>
+                        <div class="hour-rain">${rain > 0 ? rain.toFixed(2) + '"' : '--'}</div>
+                        <div style="font-size:9px; color:#64748b;">${rainProb}%</div>
+                        <div class="rain-bar">
+                            <div class="rain-fill" style="width: ${rainPct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('status').innerText = "Sync Error. Retrying...";
+        }
+    }
+
+    updateNowcast();
+    // Auto-refresh every 15 minutes
+    setInterval(updateNowcast, 15 * 60 * 1000);
+</script>
+
+</body>
+</html>
