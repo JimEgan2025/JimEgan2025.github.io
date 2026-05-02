@@ -5,142 +5,215 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vizcaya Today: Rain & Impact Nowcast</title>
     <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #ffffff;
+            --accent-blue: #2563eb;
+            --accent-red: #dc2626;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
         body { 
-            font-family: 'Arial Black', sans-serif; 
-            background:#0f172a; 
-            color:#fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-dark); 
+            color: #fff;
             padding: 20px;
             display: flex;
             justify-content: center;
+            min-height: 100vh;
         }
 
         .nowcast-container {
-            width: 900px;
-            background: #fff;
-            border-radius: 15px;
+            width: 100%;
+            max-width: 950px;
+            background: var(--card-bg);
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
-            color: #1e293b;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            color: var(--text-main);
         }
 
-        /* Top Alert Bar */
+        /* Dynamic Alert Banner */
         .alert-banner {
-            background: #2563eb;
+            background: var(--accent-blue);
             color: white;
-            padding: 15px;
+            padding: 18px;
             text-align: center;
-            font-size: 24px;
+            font-size: 22px;
+            font-weight: 800;
             text-transform: uppercase;
-            border-bottom: 4px solid #1d4ed8;
+            letter-spacing: 1px;
         }
 
         .main-display {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            padding: 30px;
-            background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
-            gap: 20px;
+            grid-template-columns: 1.2fr 1fr;
+            padding: 40px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            gap: 30px;
         }
 
-        .current-focus {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+        .location-tag {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
-        .big-temp { font-size: 80px; line-height: 1; color: #1e3a8a; }
-        .condition-text { font-size: 28px; color: #334155; margin-bottom: 10px; }
+        .big-temp { 
+            font-size: 96px; 
+            font-weight: 900;
+            line-height: 0.9; 
+            color: #0f172a; 
+            letter-spacing: -4px;
+        }
         
-        .impact-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-left: 8px solid #2563eb;
+        .condition-text { 
+            font-size: 28px; 
+            font-weight: 600;
+            color: var(--text-muted); 
+            margin: 10px 0; 
         }
 
-        .impact-val { font-size: 32px; font-weight: 900; color: #1e3a8a; }
-        .impact-label { font-size: 14px; color: #64748b; text-transform: uppercase; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .impact-card {
+            background: rgba(255,255,255,0.7);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .impact-val { font-size: 28px; font-weight: 800; color: #0f172a; }
+        .impact-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
 
         /* Hourly Timeline */
         .timeline-container {
-            padding: 20px;
+            padding: 30px;
             background: white;
+            border-top: 1px solid #f1f5f9;
         }
+        
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
         .timeline-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
             gap: 5px;
-            margin-top: 15px;
         }
+
         .hour-tick {
             text-align: center;
-            padding: 10px 2px;
-            border-radius: 8px;
-            background: #f1f5f9;
+            padding: 12px 2px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid transparent;
         }
-        .hour-time { font-size: 11px; font-weight: bold; color: #64748b; }
-        .hour-rain { font-size: 14px; font-weight: 900; color: #2563eb; margin: 5px 0; }
-        .hour-icon { font-size: 20px; }
-
-        .active-hour { background: #dbeafe; border: 1px solid #3b82f6; }
-
-        .footer {
-            background: #1e293b;
-            color: #94a3b8;
-            padding: 15px;
-            text-align: center;
-            font-size: 13px;
+        
+        .active-hour { 
+            background: #eff6ff; 
+            border-color: #bfdbfe;
         }
 
-        .rain-bar {
-            height: 8px;
+        .hour-time { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .hour-icon { font-size: 22px; margin: 5px 0; }
+        
+        /* New Temperature Style */
+        .hour-temp { 
+            font-size: 17px; 
+            font-weight: 900; 
+            color: #1e293b; 
+            margin-bottom: 2px;
+        }
+
+        .hour-rain { font-size: 12px; font-weight: 800; color: var(--accent-blue); }
+        .hour-prob { font-size: 10px; font-weight: bold; color: #94a3b8; margin-bottom: 5px; }
+
+        .rain-bar-bg {
+            height: 5px;
             background: #e2e8f0;
-            border-radius: 4px;
-            margin-top: 5px;
+            border-radius: 10px;
+            width: 80%;
+            margin: 0 auto;
             overflow: hidden;
         }
-        .rain-fill { height: 100%; background: #3b82f6; }
+        .rain-bar-fill { height: 100%; background: var(--accent-blue); }
 
-        #status { padding: 100px; color: #3b82f6; font-size: 24px; }
+        .footer {
+            background: #f8fafc;
+            color: var(--text-muted);
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        #status { 
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 800; color: #3b82f6;
+        }
     </style>
 </head>
 <body>
 
-<div id="status">📡 CALCULATING REMAINING RAINFALL...</div>
+<div id="status">📡 SYNCING WITH VIZCAYA WEATHER STATION...</div>
 
 <div class="nowcast-container" id="dashboard" style="display:none;">
-    <div class="alert-banner" id="banner-text">RAIN IMPACT: ACTIVE</div>
+    <div class="alert-banner" id="banner-text">Weather Update: Vizcaya</div>
     
     <div class="main-display">
         <div class="current-focus">
-            <div class="impact-label">Currently in Round Rock</div>
+            <div class="location-tag">Round Rock, TX</div>
             <div class="big-temp" id="curr-temp">--°</div>
             <div class="condition-text" id="curr-desc">Loading...</div>
-            <div style="font-size: 14px; color: #64748b;">
-                High Today: <span id="day-high" style="color:#b91c1c; font-weight:bold;">--</span> | 
-                Low Today: <span id="day-low" style="color:#1d4ed8; font-weight:bold;">--</span>
+            <div style="font-size: 15px; color: var(--text-muted); font-weight: 600;">
+                Feels like <span id="feels-like">--</span> • 
+                High: <span id="day-high" style="color:var(--accent-red);">--</span> 
+                Low: <span id="day-low" style="color:var(--accent-blue);">--</span>
             </div>
         </div>
 
-        <div class="impact-card">
-            <div class="impact-label">Remaining Rain (Est.)</div>
-            <div class="impact-val" id="total-remaining">0.00"</div>
-            <div class="impact-label" style="margin-top:15px;">Peak Wind Remaining</div>
-            <div class="impact-val" id="peak-wind" style="font-size: 24px;">-- mph</div>
+        <div class="stats-grid">
+            <div class="impact-card" style="grid-column: span 2;">
+                <div class="impact-label">Expected Rain (Next 12h)</div>
+                <div class="impact-val" id="total-remaining">0.00"</div>
+            </div>
+            <div class="impact-card">
+                <div class="impact-label">Peak Wind</div>
+                <div class="impact-val" id="peak-wind" style="font-size: 20px;">-- mph</div>
+            </div>
+            <div class="impact-card">
+                <div class="impact-label">Humidity</div>
+                <div class="impact-val" id="humidity" style="font-size: 20px;">--%</div>
+            </div>
         </div>
     </div>
 
     <div class="timeline-container">
-        <div class="impact-label" style="text-align: center;">Next 12 Hours: Precipitation & Intensity</div>
+        <div class="timeline-header">
+            <div class="impact-label">12-Hour Forecast & Rain Impact</div>
+        </div>
         <div class="timeline-grid" id="hourly-grid">
-            <!-- Hourly ticks injected here -->
+            <!-- Data Injected Here -->
         </div>
     </div>
 
     <div class="footer">
-        Data Source: GFS 0.25° Resolution • Vizcaya Weather Center • Updated: <span id="update-time"></span>
+        <b>Vizcaya Weather Hub</b> • Updated <span id="update-time"></span> • Data: NOAA GFS
     </div>
 </div>
 
@@ -166,7 +239,8 @@
 
     async function updateNowcast() {
         try {
-            const url = `https://api.open-meteo.com/v1/gfs?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,precipitation,weather_code,wind_speed_10m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=1`;
+            // Fetch 2 days of data to handle midnight wrap-around
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,precipitation_probability,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=2`;
             
             const res = await fetch(url);
             const data = await res.json();
@@ -177,53 +251,65 @@
             const now = new Date();
             const currentHour = now.getHours();
 
-            // 1. Set Main Stats
+            // 1. Header Stats
             document.getElementById('curr-temp').innerText = Math.round(data.hourly.temperature_2m[currentHour]) + "°";
+            document.getElementById('feels-like').innerText = Math.round(data.hourly.apparent_temperature[currentHour]) + "°";
             document.getElementById('curr-desc').innerText = getWMOText(data.hourly.weather_code[currentHour]);
             document.getElementById('day-high').innerText = Math.round(data.daily.temperature_2m_max[0]) + "°";
             document.getElementById('day-low').innerText = Math.round(data.daily.temperature_2m_min[0]) + "°";
+            document.getElementById('humidity').innerText = data.hourly.relative_humidity_2m[currentHour] + "%";
             document.getElementById('update-time').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-            // 2. Calculate Remaining Rain and Wind
-            let remainingRain = 0;
+            // 2. Calculations for Banner & Cards
+            let totalRain = 0;
             let maxWind = 0;
-            for (let i = currentHour; i < 24; i++) {
-                remainingRain += data.hourly.precipitation[i];
-                if (data.hourly.wind_speed_10m[i] > maxWind) maxWind = data.hourly.wind_speed_10m[i];
+            for (let i = 0; i < 12; i++) {
+                totalRain += data.hourly.precipitation[currentHour + i];
+                if (data.hourly.wind_speed_10m[currentHour + i] > maxWind) maxWind = data.hourly.wind_speed_10m[currentHour + i];
             }
-            document.getElementById('total-remaining').innerText = remainingRain.toFixed(2) + '"';
+            document.getElementById('total-remaining').innerText = totalRain.toFixed(2) + '"';
             document.getElementById('peak-wind').innerText = Math.round(maxWind) + " mph";
 
-            if (remainingRain > 0.5) {
-                document.getElementById('banner-text').innerText = "HEAVY RAIN ALERT";
-                document.getElementById('banner-text').style.background = "#b91c1c";
+            const banner = document.getElementById('banner-text');
+            if (totalRain > 0.5) {
+                banner.innerText = "Heavy Rain Alert";
+                banner.style.background = "#b91c1c";
+            } else if (totalRain > 0) {
+                banner.innerText = "Rain Impact: Active";
+                banner.style.background = "#2563eb";
+            } else {
+                banner.innerText = "Conditions: Clear/Dry";
+                banner.style.background = "#059669";
             }
 
-            // 3. Build Hourly Grid
+            // 3. Hourly Grid Generation
             const grid = document.getElementById('hourly-grid');
-            grid.innerHTML = ''; // Clear
+            grid.innerHTML = ''; 
 
             for (let i = 0; i < 12; i++) {
-                const targetHour = currentHour + i;
-                if (targetHour >= 24) break; // Don't go into tomorrow
-
+                const idx = currentHour + i;
                 const timeLabel = new Date();
-                timeLabel.setHours(targetHour);
+                timeLabel.setHours(timeLabel.getHours() + i);
                 const timeStr = timeLabel.toLocaleTimeString([], {hour: 'numeric'});
                 
-                const rain = data.hourly.precipitation[targetHour];
-                const rainProb = data.hourly.precipitation_probability[targetHour];
-                const icon = getWeatherIcon(data.hourly.weather_code[targetHour]);
-                const rainPct = Math.min(rain * 200, 100); // Visual scaling for the bar
+                const temp = Math.round(data.hourly.temperature_2m[idx]);
+                const rain = data.hourly.precipitation[idx];
+                const prob = data.hourly.precipitation_probability[idx];
+                
+                // Temp Color Logic
+                let tColor = "#1e293b";
+                if (temp >= 90) tColor = "#dc2626";
+                else if (temp <= 45) tColor = "#2563eb";
 
                 grid.innerHTML += `
                     <div class="hour-tick ${i === 0 ? 'active-hour' : ''}">
                         <div class="hour-time">${timeStr}</div>
-                        <div class="hour-icon">${icon}</div>
-                        <div class="hour-rain">${rain > 0 ? rain.toFixed(2) + '"' : '--'}</div>
-                        <div style="font-size:9px; color:#64748b;">${rainProb}%</div>
-                        <div class="rain-bar">
-                            <div class="rain-fill" style="width: ${rainPct}%"></div>
+                        <div class="hour-icon">${getWeatherIcon(data.hourly.weather_code[idx])}</div>
+                        <div class="hour-temp" style="color: ${tColor}">${temp}°</div>
+                        <div class="hour-rain">${rain > 0 ? rain.toFixed(2) + '"' : '0"'}</div>
+                        <div class="hour-prob">${prob}%</div>
+                        <div class="rain-bar-bg">
+                            <div class="rain-bar-fill" style="width: ${Math.min(rain * 400, 100)}%"></div>
                         </div>
                     </div>
                 `;
@@ -236,7 +322,6 @@
     }
 
     updateNowcast();
-    // Auto-refresh every 15 minutes
     setInterval(updateNowcast, 15 * 60 * 1000);
 </script>
 
