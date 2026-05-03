@@ -3,286 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIZCAYA WEATHER NOWCAST</title>
+    <title>Vizcaya Command Center</title>
     <style>
-        /* High-Impact Social Media Styles */
         :root {
-            --bg-dark: #000000;
+            --bg-dark: #0f172a;
             --card-bg: #ffffff;
             --accent-blue: #2563eb;
             --accent-red: #ef4444;
-            --text-main: #000000;
-            --text-muted: #475569;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
-        
         body { 
             font-family: 'Arial Black', sans-serif; 
             background: var(--bg-dark); 
             color: #fff;
-            padding: 10px;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        .social-container {
-            width: 1000px; /* Wider for better social aspect ratio */
+        .dashboard-container {
+            width: 1300px;
             background: var(--card-bg);
-            border: 4px solid #334155;
+            border-radius: 28px;
             overflow: hidden;
             color: var(--text-main);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
+            border: 2px solid #334155;
         }
 
-        /* Large News-Style Banner */
-        .alert-banner {
-            background: var(--accent-blue);
-            color: white;
-            padding: 25px;
-            text-align: center;
-            font-size: 38px; /* Massive */
-            font-weight: 900;
-            text-transform: uppercase;
-            border-bottom: 8px solid rgba(0,0,0,0.2);
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white; padding: 25px; text-align: center; border-bottom: 8px solid #3b82f6;
         }
+        .header h1 { font-size: 48px; text-transform: uppercase; letter-spacing: 2px; }
+        .header p { font-size: 18px; font-family: Arial; font-weight: bold; color: #bfdbfe; text-transform: uppercase; margin-top: 5px; }
 
-        .main-display {
+        .main-layout {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            padding: 40px;
-            background: #fff;
-            gap: 20px;
-        }
-
-        .location-tag {
-            font-size: 20px;
-            color: var(--accent-blue);
-            text-transform: uppercase;
-            margin-bottom: -10px;
-        }
-
-        .big-temp { 
-            font-size: 150px; /* Extreme visibility */
-            font-weight: 900;
-            line-height: 1; 
-            letter-spacing: -6px;
-            margin-left: -5px;
-        }
-        
-        .condition-text { 
-            font-size: 42px; 
-            font-weight: 900;
-            color: #1e293b;
-            margin-bottom: 10px;
-            line-height: 1.1;
-        }
-
-        .feels-line {
-            font-size: 24px;
-            color: var(--text-muted);
-            font-weight: 900;
-        }
-
-        /* Stats Cards - Chunky */
-        .stats-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .impact-card {
-            background: #f1f5f9;
-            border-left: 15px solid var(--accent-blue);
-            padding: 20px;
-        }
-
-        .impact-val { font-size: 48px; font-weight: 900; color: #000; line-height: 1; }
-        .impact-label { font-size: 18px; color: var(--text-muted); text-transform: uppercase; }
-
-        /* Hourly Timeline - Dark for contrast */
-        .timeline-container {
+            grid-template-columns: 600px 1fr;
             padding: 30px;
-            background: #1e293b;
-            color: white;
+            gap: 35px;
         }
+
+        /* LEFT PANEL */
+        .left-panel { display: flex; flex-direction: column; gap: 20px; }
+        .station-embed {
+            width: 600px; height: 500px; border-radius: 20px; overflow: hidden; border: 3px solid #e2e8f0;
+        }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        .progression-bar {
+            background: #f8fafc; padding: 25px; border-radius: 20px; border: 2px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center;
+        }
+        .daypart-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 900; margin-bottom: 5px; }
+        .daypart-icon { font-size: 52px; margin: 5px 0; }
+        .daypart-status { font-size: 16px; font-weight: 900; text-transform: uppercase; color: var(--accent-blue); }
+
+        /* RIGHT PANEL */
+        .right-panel { display: flex; flex-direction: column; gap: 15px; }
+
+        .comp-table { width: 100%; }
+        .comp-row {
+            display: grid; grid-template-columns: 1.2fr 1fr 1fr; padding: 15px 0; border-bottom: 3px solid #f1f5f9; align-items: center;
+        }
+        .comp-header { font-size: 14px; color: var(--text-muted); text-transform: uppercase; font-weight: 900; }
+        .comp-val { font-size: 42px; font-weight: 900; }
+        .comp-label { font-size: 18px; color: #1e293b; text-transform: uppercase; }
+        .diff-val { font-size: 28px; font-weight: 900; }
+
+        .departure-tag { padding: 15px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .hotter { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
+        .colder { background: #dbeafe; color: #1d4ed8; border: 2px solid #93c5fd; }
+
+        /* CLIMATE CARDS */
+        .climate-card {
+            padding: 20px; border-radius: 20px; border: 3px solid #e2e8f0;
+        }
+        .hist-temp-card { background: #fff7ed; border-color: #ffedd5; text-align: center; }
+        .rain-tracker-card { background: #eff6ff; border-color: #bfdbfe; text-align: center; }
+
+        .card-label { font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
         
-        .timeline-header {
-            font-size: 22px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            text-align: center;
-            letter-spacing: 2px;
-            color: #94a3b8;
-        }
-
-        .timeline-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 8px;
-        }
-
-        .hour-tick {
-            text-align: center;
-            padding: 15px 5px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-        }
+        /* UNIFIED CLIMATE GRID */
+        .unified-climate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .climate-column { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa; }
+        .climate-sub-label { font-size: 12px; color: #9a3412; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #ffedd5; padding-bottom: 5px; }
         
-        .active-hour { background: var(--accent-blue); }
+        .val-block { margin-bottom: 10px; }
+        .val-block span { font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase; }
+        .val-block b { font-size: 38px; color: #1e293b; line-height: 1; }
+        .val-block .yr { font-size: 14px; color: #ea580c; font-weight: bold; }
 
-        .hour-time { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
-        .hour-icon { font-size: 32px; margin-bottom: 8px; }
-        .hour-temp { font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 5px; }
-        .hour-rain { font-size: 16px; font-weight: 900; color: #60a5fa; }
+        .rain-val { font-size: 64px; color: #1d4ed8; font-weight: 900; line-height: 1; }
+        .rain-sub { font-size: 14px; color: #64748b; font-weight: bold; margin-top: 5px; }
 
-        .footer {
-            background: #000;
-            color: #64748b;
-            padding: 15px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
+        /* 5-DAY GRID */
+        .forecast-5day { display: grid; grid-template-columns: repeat(5, 1fr); background: #f1f5f9; gap: 2px; border-top: 4px solid #cbd5e1; }
+        .day-card { background: #fff; padding: 25px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .fc-name { font-size: 22px; color: var(--accent-blue); font-weight: 900; text-transform: uppercase; }
+        .fc-icon { font-size: 50px; margin: 8px 0; }
+        .fc-temps { font-size: 26px; font-weight: 900; }
+        .fc-rain { font-size: 16px; color: #3b82f6; font-weight: 900; margin-top: 5px; }
+
+        /* FOOTER STRIP */
+        .climate-strip {
+            background: #1e293b; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; color: white;
         }
+        .stat-box span { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-box b { font-size: 32px; color: #fff; line-height: 1; }
 
-        #status { font-size: 30px; color: white; font-weight: 900; }
+        #status { font-size: 32px; color: #3b82f6; text-align: center; padding-top: 100px; }
     </style>
 </head>
 <body>
 
-<div id="status">📡 GENERATING REPORT...</div>
+<div id="status">📡 OPTIMIZING COMMAND CENTER...</div>
 
-<div class="social-container" id="dashboard" style="display:none;">
-    <div class="alert-banner" id="banner-text">VIZCAYA WEATHER ALERT</div>
-    
-    <div class="main-display">
-        <div class="current-focus">
-            <div class="location-tag">ROUND ROCK, TX</div>
-            <div class="big-temp" id="curr-temp">--°</div>
-            <div class="condition-text" id="curr-desc">LOADING</div>
-            <div class="feels-line">
-                FEELS LIKE <span id="feels-like" style="color:#000">--°</span>
+<div class="dashboard-container" id="dashboard" style="display:none;">
+    <div class="header">
+        <h1>VIZCAYA COMMAND CENTER</h1>
+        <p id="current-date">LIVE PINPOINT DATA • ROUND ROCK, TX</p>
+    </div>
+
+    <div class="main-layout">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+            <div class="station-embed">
+                <iframe id="station-frame" src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"></iframe>
             </div>
-            <div class="feels-line" style="margin-top:5px;">
-                HIGH: <span id="day-high" style="color:var(--accent-red)">--°</span> | 
-                LOW: <span id="day-low" style="color:var(--accent-blue)">--°</span>
+            
+            <div class="progression-bar">
+                <div class="daypart"><div class="daypart-label">Morning</div><div class="daypart-icon" id="icon-am">--</div><div class="daypart-status" id="desc-am">--</div></div>
+                <div class="daypart"><div class="daypart-label">Afternoon</div><div class="daypart-icon" id="icon-pm">--</div><div class="daypart-status" id="desc-pm">--</div></div>
+                <div class="daypart"><div class="daypart-label">Evening</div><div class="daypart-icon" id="icon-eve">--</div><div class="daypart-status" id="desc-eve">--</div></div>
             </div>
         </div>
 
-        <div class="stats-grid">
-            <div class="impact-card">
-                <div class="impact-label">RAINFALL NEXT 12H</div>
-                <div class="impact-val" id="total-remaining">0.00"</div>
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+            <div class="comp-table">
+                <div class="comp-row" style="border-bottom: 3px solid #1e3a8a;">
+                    <div class="comp-header">TODAY'S METRIC</div><div class="comp-header">EXPECTED</div><div class="comp-header">VS. NORMAL</div>
+                </div>
+                <div class="comp-row"><div class="comp-label">Day High</div><div class="comp-val" id="fore-high">--°</div><div class="diff-val" id="diff-high">--°</div></div>
+                <div class="comp-row"><div class="comp-label">Day Low</div><div class="comp-val" id="fore-low">--°</div><div class="diff-val" id="diff-low">--°</div></div>
             </div>
-            <div class="impact-card" style="border-left-color: #f59e0b;">
-                <div class="impact-label">PEAK GUSTS</div>
-                <div class="impact-val" id="peak-wind">-- MPH</div>
+
+            <div id="departure-msg" class="departure-tag">ANALYZING...</div>
+
+            <!-- UNIFIED CLIMATE BOX -->
+            <div class="climate-card hist-temp-card">
+                <div class="card-label" style="color:#9a3412;">Historical Climate Normals & Records</div>
+                <div class="unified-climate-grid">
+                    <div class="climate-column">
+                        <div class="climate-sub-label">High Side</div>
+                        <div class="val-block"><span>NORMAL</span><b id="hist-high-card">--°</b></div>
+                        <div class="val-block"><span>RECORD</span><b id="rec-high">--°</b><div class="yr" id="rec-high-yr"></div></div>
+                    </div>
+                    <div class="climate-column">
+                        <div class="climate-sub-label">Low Side</div>
+                        <div class="val-block"><span>NORMAL</span><b id="hist-low-card">--°</b></div>
+                        <div class="val-block"><span>RECORD</span><b id="rec-low">--°</b><div class="yr" id="rec-low-yr"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="climate-card rain-tracker-card">
+                <div class="card-label" style="color:#1e40af;">Historical Rainfall YTD Normal</div>
+                <div class="rain-val" id="hist-rain-ytd">--.--"</div>
+                <div class="rain-sub">Compare to station's "Yearly Rain"</div>
             </div>
         </div>
     </div>
 
-    <div class="timeline-container">
-        <div class="timeline-header">12-HOUR HOURLY OUTLOOK</div>
-        <div class="timeline-grid" id="hourly-grid">
-            <!-- Data Injected Here -->
-        </div>
-    </div>
+    <div class="forecast-5day" id="grid-5day"></div>
 
-    <div class="footer">
-        VIZCAYA TODAY • UPDATED <span id="update-time"></span>
+    <div class="climate-strip">
+        <div class="stat-box"><span>Rain Risk Today</span><b id="rain-prob">--%</b></div>
+        <div class="stat-box"><span>Expected Peak Gust</span><b id="peak-wind">-- MPH</b></div>
     </div>
 </div>
 
 <script>
-    const LAT = 30.5871, LON = -97.641;
+    const LAT = 30.509, LON = -97.692;
+    const ALMANAC_URL = 'https://JimEgan2025.github.io/almanac.json';
+    const FORECAST_URL = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,wind_gusts_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=7`;
 
-    function getWeatherIcon(code) {
-        const mapping = {
-            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 
-            51: '🌦️', 61: '🌧️', 63: '🌧️', 65: '🌧️', 80: '🌦️', 95: '⛈️'
-        };
-        return mapping[code] || '☁️';
+    function getWeatherUI(code) {
+        const mapping = { 0: {icon:'☀️',desc:'Sunny'}, 1:{icon:'🌤️',desc:'M. Clear'}, 2:{icon:'⛅',desc:'P. Cloudy'}, 3:{icon:'☁️',desc:'Cloudy'}, 45:{icon:'🌫️',desc:'Foggy'}, 51:{icon:'🌦️',desc:'Drizzle'}, 61:{icon:'🌧️',desc:'Rain'}, 63:{icon:'🌧️',desc:'Rain'}, 80:{icon:'🌦️',desc:'Showers'}, 95:{icon:'⛈️',desc:'Storms'}};
+        return mapping[code] || {icon:'☁️',desc:'Cloudy'};
     }
 
-    async function updateNowcast() {
+    async function refreshDashboard() {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=2`;
+            const [fRes, almRes] = await Promise.all([ 
+                fetch(FORECAST_URL + "&t=" + new Date().getTime()),
+                fetch(ALMANAC_URL + "?t=" + new Date().getTime()) 
+            ]);
+            const fore = await fRes.json();
+            const alm = await almRes.json();
             
-            const res = await fetch(url);
-            const data = await res.json();
-
             document.getElementById('status').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
 
-            const now = new Date();
-            const currentHour = now.getHours();
+            const t = new Date();
+            const mm = String(t.getMonth() + 1).padStart(2, '0');
+            const dd = String(t.getDate()).padStart(2, '0');
+            const dateKey = `${mm}-${dd}`;
+            const a = alm[dateKey] || {};
 
-            // Header Stats
-            document.getElementById('curr-temp').innerText = Math.round(data.hourly.temperature_2m[currentHour]) + "°";
-            document.getElementById('feels-like').innerText = Math.round(data.hourly.apparent_temperature[currentHour]) + "°";
-            document.getElementById('curr-desc').innerText = "CLOUDY"; // Standard fallback
+            // 1. REFRESH IFRAME
+            const frame = document.getElementById('station-frame');
+            frame.src = frame.src.split('?')[0] + '?cache=' + t.getTime();
+
+            // 2. DATA BINDING
+            document.getElementById('hist-rain-ytd').innerText = (a.accP || "0.00") + '"';
+
+            const fHigh = Math.round(fore.daily.temperature_2m_max[0]);
+            const fLow = Math.round(fore.daily.temperature_2m_min[0]);
+            const hHigh = parseInt(a.avgH) || 0;
+            const hLow = parseInt(a.avgL) || 0;
+
+            document.getElementById('fore-high').innerText = fHigh + "°";
+            document.getElementById('fore-low').innerText = fLow + "°";
             
-            const code = data.hourly.weather_code[currentHour];
-            const mapping = {0:'CLEAR', 1:'SUNNY', 2:'PARTLY CLOUDY', 3:'OVERCAST', 45:'FOGGY', 51:'DRIZZLE', 61:'RAIN', 63:'MODERATE RAIN', 65:'HEAVY RAIN', 80:'SHOWERS', 95:'T-STORMS'};
-            document.getElementById('curr-desc').innerText = (mapping[code] || 'CLOUDY').toUpperCase();
+            // Calculate and display differences
+            const diffH = fHigh - hHigh;
+            const diffL = fLow - hLow;
+            document.getElementById('diff-high').innerText = (diffH > 0 ? "+" : "") + diffH + "°";
+            document.getElementById('diff-high').style.color = diffH > 0 ? "#ef4444" : "#2563eb";
+            document.getElementById('diff-low').innerText = (diffL > 0 ? "+" : "") + diffL + "°";
+            document.getElementById('diff-low').style.color = diffL > 0 ? "#ef4444" : "#2563eb";
+            
+            // Historical Box
+            document.getElementById('hist-high-card').innerText = hHigh + "°";
+            document.getElementById('hist-low-card').innerText = hLow + "°";
 
-            document.getElementById('day-high').innerText = Math.round(data.daily.temperature_2m_max[0]) + "°";
-            document.getElementById('day-low').innerText = Math.round(data.daily.temperature_2m_min[0]) + "°";
-            document.getElementById('update-time').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}).toUpperCase();
+            // Records & Years
+            document.getElementById('rec-high').innerText = (a.recH || "--") + "°";
+            document.getElementById('rec-high-yr').innerText = a.recHY ? `(${a.recHY})` : "";
+            document.getElementById('rec-low').innerText = (a.recL || "--") + "°";
+            document.getElementById('rec-low-yr').innerText = a.recLY ? `(${a.recLY})` : "";
 
-            // 12h Stats
-            let totalRain = 0;
-            let maxWind = 0;
-            for (let i = 0; i < 12; i++) {
-                totalRain += data.hourly.precipitation[currentHour + i];
-                if (data.hourly.wind_speed_10m[currentHour + i] > maxWind) maxWind = data.hourly.wind_speed_10m[currentHour + i];
-            }
-            document.getElementById('total-remaining').innerText = totalRain.toFixed(2) + '"';
-            document.getElementById('peak-wind').innerText = Math.round(maxWind) + " MPH";
+            const diffMean = Math.round((fHigh+fLow)/2) - Math.round((hHigh+hLow)/2);
+            const depEl = document.getElementById('departure-msg');
+            if (diffMean > 0) { depEl.className="departure-tag hotter"; depEl.innerText=`🔥 TODAY IS ${diffMean}° ABOVE NORMAL`; }
+            else if (diffMean < 0) { depEl.className="departure-tag colder"; depEl.innerText=`❄️ TODAY IS ${Math.abs(diffMean)}° BELOW NORMAL`; }
+            else { depEl.innerText=`✅ TODAY IS ON PACE WITH NORMAL`; depEl.style.background="#f1f5f9"; }
 
-            const banner = document.getElementById('banner-text');
-            if (totalRain > 0.5) {
-                banner.innerText = "⚠️ HEAVY RAIN ALERT";
-                banner.style.background = "#b91c1c";
-            } else if (totalRain > 0) {
-                banner.innerText = "☔ RAIN IN THE FORECAST";
-                banner.style.background = "#2563eb";
-            } else {
-                banner.innerText = "✅ CLEAR SKIES AHEAD";
-                banner.style.background = "#059669";
-            }
+            // Dayparts
+            const hourly = fore.hourly.weather_code;
+            const getBlock = (codes) => {
+                const severities = codes.map(c => c === 95 ? 3 : (c >= 51 ? 2 : (c >= 1 ? 1 : 0)));
+                return codes[severities.indexOf(Math.max(...severities))];
+            };
+            document.getElementById('icon-am').innerText = getWeatherUI(getBlock(hourly.slice(7, 12))).icon;
+            document.getElementById('desc-am').innerText = getWeatherUI(getBlock(hourly.slice(7, 12))).desc;
+            document.getElementById('icon-pm').innerText = getWeatherUI(getBlock(hourly.slice(12, 18))).icon;
+            document.getElementById('desc-pm').innerText = getWeatherUI(getBlock(hourly.slice(12, 18))).desc;
+            document.getElementById('icon-eve').innerText = getWeatherUI(getBlock(hourly.slice(18, 24))).icon;
+            document.getElementById('desc-eve').innerText = getWeatherUI(getBlock(hourly.slice(18, 24))).desc;
 
-            // Grid
-            const grid = document.getElementById('hourly-grid');
-            grid.innerHTML = ''; 
-
-            for (let i = 0; i < 12; i++) {
-                const idx = currentHour + i;
-                const timeLabel = new Date();
-                timeLabel.setHours(timeLabel.getHours() + i);
-                const timeStr = timeLabel.toLocaleTimeString([], {hour: 'numeric'}).replace(" ", "");
-                
-                const temp = Math.round(data.hourly.temperature_2m[idx]);
-                const rain = data.hourly.precipitation[idx];
-                
-                grid.innerHTML += `
-                    <div class="hour-tick ${i === 0 ? 'active-hour' : ''}">
-                        <div class="hour-time">${timeStr}</div>
-                        <div class="hour-icon">${getWeatherIcon(data.hourly.weather_code[idx])}</div>
-                        <div class="hour-temp">${temp}°</div>
-                        <div class="hour-rain">${rain > 0 ? rain.toFixed(1) + '"' : '0"'}</div>
-                    </div>
-                `;
+            // 5-Day
+            const grid = document.getElementById('grid-5day');
+            grid.innerHTML = '';
+            for(let i=1; i<=5; i++) {
+                const dateObj = new Date(fore.daily.time[i] + 'T00:00:00');
+                const ui = getWeatherUI(fore.daily.weather_code[i]);
+                grid.innerHTML += `<div class="day-card"><div class="fc-name">${dateObj.toLocaleDateString('en-US',{weekday:'short'})}</div><div class="fc-icon">${ui.icon}</div><div class="fc-temps">${Math.round(fore.daily.temperature_2m_max[i])}° / ${Math.round(fore.daily.temperature_2m_min[i])}°</div><div class="fc-rain">☔ ${fore.daily.precipitation_probability_max[i]}%</div></div>`;
             }
 
-        } catch (e) {
-            document.getElementById('status').innerText = "ERROR LOADING DATA";
-        }
+            document.getElementById('rain-prob').innerText = fore.daily.precipitation_probability_max[0] + "%";
+            document.getElementById('peak-wind').innerText = Math.round(fore.daily.wind_gusts_10m_max[0]) + " MPH";
+            document.getElementById('current-date').innerText = t.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
+
+        } catch (e) { console.error(e); }
     }
 
-    updateNowcast();
-    setInterval(updateNowcast, 15 * 60 * 1000);
+    refreshDashboard();
+    setInterval(refreshDashboard, 15 * 60 * 1000);
 </script>
 
 </body>
