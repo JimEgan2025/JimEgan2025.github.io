@@ -3,83 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIZCAYA COMMAND v10.1</title>
+    <title>VIZCAYA COMMAND v13.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
-        body { font-family: 'JetBrains Mono', monospace; background-color: #05070a; color: #cbd5e1; }
-        .sector-card { background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; }
-        .sector-nw { border-top: 3px solid #a855f7; }       /* Purple/Northwest */
-        .sector-initiation { border-top: 3px solid #6366f1; } /* Blue/West */
-        .sector-trigger { border-top: 3px solid #f59e0b; }    /* Orange/Mid */
-        .sector-inflow { border-top: 3px solid #10b981; }     /* Green/East */
-        .status-breach { background: #991b1b; color: #fee2e2; border: 1px solid #ef4444; animation: pulse 2s infinite; }
-        .status-weak { background: #78350f; color: #fef3c7; border: 1px solid #d97706; }
-        .status-capped { background: #064e3b; color: #d1fae5; border: 1px solid #059669; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
+        body { font-family: 'JetBrains Mono', monospace; background-color: #010204; color: #cbd5e1; margin: 0; }
+        .glass-panel { background: rgba(10, 15, 25, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .node-vizcaya { border: 4px solid #ef4444 !important; background: rgba(239, 68, 68, 0.05); }
+        
+        /* Tactical Sizing */
+        .value-huge { font-size: 5.5rem; line-height: 0.8; font-weight: 900; letter-spacing: -0.05em; }
+        .value-large { font-size: 3.5rem; line-height: 0.9; font-weight: 900; }
+        
+        .ai-window { background: #05080f; border-left: 4px solid #3b82f6; position: relative; overflow: hidden; }
+        .ai-window::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(59, 130, 246, 0.03) 50%, transparent 50%); background-size: 100% 4px; pointer-events: none; }
+        
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        .cursor { border-right: 8px solid #3b82f6; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body class="p-2 md:p-6 text-xs">
+<body class="p-4 lg:p-10">
 
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-[1750px] mx-auto">
         <!-- HEADER -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-slate-800 pb-4">
+        <div class="flex flex-col xl:flex-row justify-between items-end mb-10 border-b-4 border-slate-800 pb-8 gap-6">
             <div>
-                <h1 class="text-3xl font-black italic text-white tracking-tighter uppercase italic">Vizcaya<span class="text-red-600 underline">Strategic</span>_v10.1</h1>
-                <p class="text-[10px] font-bold text-slate-500 tracking-[0.3em]">Full-Sector Surveillance Grid // Round Rock, TX</p>
+                <h1 class="text-6xl font-black italic text-white tracking-tighter uppercase leading-none">Vizcaya<span class="text-red-600 font-black">Command</span></h1>
+                <p class="text-xl font-bold text-slate-500 tracking-[0.4em] mt-3 uppercase">Tactical Intelligence Grid // v13.0</p>
             </div>
-            <div class="flex gap-4 items-center">
-                <div id="engineMode" class="text-[9px] font-bold text-slate-600 uppercase italic">Standby</div>
-                <button onclick="runNetworkScan()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-black px-8 py-3 rounded-lg uppercase tracking-widest transition-all shadow-lg">
-                    Update All Sectors
+            
+            <div class="flex items-center gap-8">
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase font-black mb-1 tracking-widest">Atmospheric Engine</p>
+                    <p id="engineStatus" class="text-2xl font-black text-blue-500 italic uppercase">AI CORE: READY</p>
+                </div>
+                <button id="updateBtn" class="bg-red-600 hover:bg-red-500 text-white font-black px-12 py-7 rounded-xl uppercase text-xl tracking-[0.2em] transition-all shadow-2xl active:scale-95 border-b-8 border-red-900">
+                    Run Strategic Scan
                 </button>
             </div>
         </div>
 
-        <!-- SENSOR INPUT & SECTOR GRID -->
-        <div class="grid grid-cols-1 lg:grid-cols-6 gap-4 mb-8 text-center">
-            <!-- DAVIS ANCHOR -->
-            <div class="sector-card p-5 rounded-xl border-l-4 border-l-red-600 bg-slate-900/50 lg:col-span-1">
-                <label class="block text-[9px] font-black text-red-500 uppercase mb-4 tracking-widest italic">Davis Console</label>
-                <div class="space-y-4">
+        <!-- AI INTERPRETATION BOX -->
+        <div class="ai-window p-8 rounded-3xl mb-10 shadow-2xl border border-blue-500/30">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                <h2 class="text-blue-500 font-black tracking-[0.3em] text-sm uppercase">Sentient AI Tactical Assessment</h2>
+            </div>
+            <div id="aiAssessment" class="text-2xl font-bold text-slate-200 leading-relaxed italic">
+                Awaiting sensor data input. Initiate scan for regional interpretation...
+            </div>
+            <div class="mt-6 flex gap-6">
+                <div class="bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-500/20">
+                    <span class="text-[10px] text-blue-500 font-black block uppercase mb-1">Threat Level</span>
+                    <span id="threatLevel" class="text-xl font-black text-blue-400">ANALYZING</span>
+                </div>
+                <div class="bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-500/20">
+                    <span class="text-[10px] text-blue-500 font-black block uppercase mb-1">Primary Concern</span>
+                    <span id="primaryConcern" class="text-xl font-black text-blue-400">NONE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+            <!-- VIZCAYA LOCAL NODE -->
+            <div class="lg:col-span-3 glass-panel p-8 rounded-3xl node-vizcaya shadow-2xl">
+                <p class="text-sm font-black text-red-500 mb-6 tracking-widest uppercase italic text-center underline">Core Node: Vizcaya Sentinel</p>
+                <div class="space-y-8">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 block mb-1">TEMP</span>
-                        <input type="number" id="localTemp" value="78.0" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-center text-white font-black text-xl outline-none focus:border-red-500">
+                        <label class="text-xs text-slate-400 font-black block mb-2 uppercase tracking-widest text-center">Davis Temp (°F)</label>
+                        <input type="number" id="localTemp" value="78.0" step="0.1" class="w-full bg-black border-2 border-slate-800 rounded-2xl p-6 text-7xl font-black text-white text-center focus:border-red-500 outline-none transition-all">
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-blue-400 block mb-1">DEW</span>
-                        <input type="number" id="localDew" value="68.5" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-center text-blue-400 font-black text-xl outline-none focus:border-blue-500">
+                        <label class="text-xs text-blue-400 font-black block mb-2 uppercase tracking-widest text-center">Davis Dew (°F)</label>
+                        <input type="number" id="localDew" value="68.5" step="0.1" class="w-full bg-black border-2 border-slate-800 rounded-2xl p-6 text-7xl font-black text-blue-400 text-center focus:border-blue-500 outline-none transition-all">
                     </div>
                 </div>
             </div>
 
-            <!-- REGIONAL SECTOR GRID -->
-            <div id="sectorGrid" class="lg:col-span-5 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2">
-                <!-- Sector cards auto-populated -->
+            <!-- QUICK-GRID -->
+            <div id="sectorGrid" class="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+                <!-- Cards injected here -->
             </div>
         </div>
 
         <!-- DATA MATRIX -->
-        <div class="sector-card rounded-xl overflow-hidden border border-slate-800 shadow-2xl">
-            <div class="p-3 bg-slate-900/80 border-b border-slate-800 flex justify-between items-center font-bold">
-                <span class="text-[10px] uppercase text-slate-400 italic">Meso-Stability Matrix // NW-Expansion</span>
-                <span id="breachAlert" class="text-[10px] uppercase text-orange-500 font-black tracking-tighter italic font-mono">---</span>
+        <div class="glass-panel rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-800">
+            <div class="p-8 bg-slate-900/80 border-b-4 border-slate-800 flex justify-between items-center">
+                <span class="text-xl font-black text-white uppercase italic tracking-[0.2em]">Theater Stability Matrix</span>
+                <span id="breachAlert" class="text-xl font-black text-slate-500 uppercase">Syncing...</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="text-[9px] font-black uppercase text-slate-500 bg-black/40">
-                        <tr>
-                            <th class="p-4">Sector Location</th>
-                            <th class="p-4 text-center">Model T/D</th>
-                            <th class="p-4 text-center text-red-500 italic underline font-black">CAPE</th>
-                            <th class="p-4 text-center text-orange-400 italic underline font-black">CIN</th>
-                            <th class="p-4 text-center">LI</th>
-                            <th class="p-4 text-center text-blue-400">PWAT</th>
-                            <th class="p-4">Condition</th>
+                    <thead>
+                        <tr class="text-sm text-slate-500 uppercase bg-black border-b border-slate-800">
+                            <th class="p-8 font-black">Location / Sector</th>
+                            <th class="p-8 text-center font-black">T/D</th>
+                            <th class="p-8 text-center text-red-500 font-black tracking-widest">CAPE (Energy)</th>
+                            <th class="p-8 text-center text-orange-400 font-black tracking-widest">CIN (Cap)</th>
+                            <th class="p-8 text-center text-indigo-400 font-black tracking-widest">LI (Buoyancy)</th>
+                            <th class="p-8 text-center text-blue-400 font-black uppercase">PWAT</th>
                         </tr>
                     </thead>
-                    <tbody id="regionalBody" class="text-[11px] divide-y divide-slate-800/50 text-slate-400 font-bold font-mono">
-                        <!-- Data injected here -->
+                    <tbody id="regionalBody" class="divide-y-2 divide-slate-800/50">
+                        <!-- Rows injected here -->
                     </tbody>
                 </table>
             </div>
@@ -88,104 +117,146 @@
 
     <script>
         const LOCATIONS = [
-            // NW SENTINELS (The Frontal Approach)
-            { name: "LAMPASAS", lat: 31.0632, lon: -98.1817, sector: "Northwest", local: false },
-            { name: "KILLEEN/GRK", lat: 31.0672, lon: -97.8289, sector: "Northwest", local: false },
-            { name: "SALADO", lat: 30.9474, lon: -97.5381, sector: "Northwest", local: false },
-            // WESTERN INITIATION (The Gun)
-            { name: "MASON", lat: 30.7488, lon: -99.2306, sector: "Initiation", local: false },
-            { name: "LLANO", lat: 30.7593, lon: -98.6750, sector: "Initiation", local: false },
-            { name: "BURNET", lat: 30.7577, lon: -98.2242, sector: "Trigger", local: false },
-            { name: "LIBERTY HILL", lat: 30.6644, lon: -97.9228, sector: "Trigger", local: false },
-            // CORE
-            { name: "VIZCAYA (LOCAL)", lat: 30.5871, lon: -97.6410, sector: "Core", local: true },
-            { name: "GEORGETOWN", lat: 30.6333, lon: -97.6775, sector: "Core", local: false },
-            // INFLOW (The Fuel)
-            { name: "AUSTIN EXEC", lat: 30.3972, lon: -97.5667, sector: "Inflow", local: false },
-            { name: "TAYLOR", lat: 30.5708, lon: -97.4094, sector: "Inflow", local: false }
+            { name: "MASON", sector: "WEST-INI", lat: 30.75, lon: -99.23 },
+            { name: "LLANO", sector: "WEST-INI", lat: 30.76, lon: -98.68 },
+            { name: "BURNET", sector: "WEST-INI", lat: 30.76, lon: -98.23 },
+            { name: "SALADO", sector: "NORTH", lat: 30.94, lon: -97.54 },
+            { name: "FLORENCE", sector: "NW", lat: 30.84, lon: -97.79 },
+            { name: "JARRELL", sector: "NORTH", lat: 30.82, lon: -97.60 },
+            { name: "GEORGETOWN", sector: "CORE", lat: 30.63, lon: -97.67 },
+            { name: "VIZCAYA (LOC)", sector: "ANCHOR", lat: 30.587, lon: -97.641, local: true },
+            { name: "TAYLOR", sector: "EAST", lat: 30.57, lon: -97.41 },
+            { name: "AUSTIN EXEC", sector: "SOUTH", lat: 30.40, lon: -97.57 },
+            { name: "AUSTIN (C-MABRY)", sector: "SOUTH", lat: 30.32, lon: -97.76 }
         ];
 
-        const CAPE_DEW_MULT = 0.22;
-        const CAPE_TEMP_MULT = 0.12;
-        const CIN_DEW_MULT = -28;
-        const CIN_TEMP_MULT = -22;
-
         async function runNetworkScan() {
-            const lTemp = parseFloat(document.getElementById('localTemp').value);
-            const lDew = parseFloat(document.getElementById('localDew').value);
+            const engineStatus = document.getElementById('engineStatus');
+            const aiBox = document.getElementById('aiAssessment');
             const grid = document.getElementById('sectorGrid');
             const tbody = document.getElementById('regionalBody');
-            const alertTag = document.getElementById('breachAlert');
-
-            grid.innerHTML = '';
-            tbody.innerHTML = '<tr><td colspan="7" class="p-20 text-center animate-pulse text-slate-600 font-black uppercase tracking-[0.5em]">Scanning Regional Grids...</td></tr>';
+            
+            engineStatus.innerText = "AI CORE PROCESSING...";
+            aiBox.innerHTML = "Accessing Open-Meteo satellite arrays... Computing stability index... <span class='cursor'></span>";
 
             const lats = LOCATIONS.map(l => l.lat).join(',');
             const lons = LOCATIONS.map(l => l.lon).join(',');
-            
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`);
-                const data = await res.json();
-                
-                tbody.innerHTML = '';
-                document.getElementById('engineMode').innerText = "ENGINE: ACTIVE // " + new Date().toLocaleTimeString();
 
+            try {
+                const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`);
+                const data = await response.json();
+                
+                grid.innerHTML = '';
+                tbody.innerHTML = '';
+
+                const results = Array.isArray(data) ? data : [data];
                 const now = new Date();
                 const hourStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().substring(0, 14) + "00";
 
-                LOCATIONS.forEach((loc, idx) => {
-                    const locData = Array.isArray(data) ? data[idx].hourly : data.hourly;
-                    let hIdx = locData.time.findIndex(t => t.startsWith(hourStr));
-                    if (hIdx === -1) hIdx = 0;
+                let vizData = {};
+                let initiationEnergy = 0;
 
-                    const mT = locData.temperature_2m[hIdx], mD = locData.dew_point_2m[hIdx];
-                    const rawCape = locData.cape[hIdx] || 0, rawCin = Math.abs(locData.convective_inhibition[hIdx] || 0);
-                    const rawLi = locData.lifted_index[hIdx] || 0, pwat = (locData.total_column_integrated_water_vapour[hIdx] / 25.4).toFixed(2);
+                results.forEach((result, idx) => {
+                    const loc = LOCATIONS[idx];
+                    const h = result.hourly.time.findIndex(t => t.startsWith(hourStr)) || 0;
+                    const d = result.hourly;
 
-                    let aCape = rawCape, aCin = rawCin, aLi = rawLi;
+                    let mT = Math.round(d.temperature_2m[h] || 0);
+                    let mD = Math.round(d.dew_point_2m[h] || 0);
+                    let cape = Math.round(d.cape[h] || 0);
+                    let cin = Math.round(Math.abs(d.convective_inhibition[h] || 0));
+                    let li = d.lifted_index[h] || 0;
+                    let pwat = (d.total_column_integrated_water_vapour[h] / 25.4).toFixed(2);
 
                     if (loc.local) {
-                        const dT = lTemp - mT, dD = lDew - mD;
-                        aCape = rawCape * (1 + (dD * CAPE_DEW_MULT) + (dT * CAPE_TEMP_MULT));
-                        aCin = Math.max(0, rawCin + (dD * CIN_DEW_MULT) + (dT * CIN_TEMP_MULT));
-                        aLi = rawLi - (dD * 0.4);
-                        alertTag.innerText = aCin < 20 ? "ALERT: VIZCAYA CAP BREACHED" : `CAP INTENSITY: ${Math.round(aCin)}`;
+                        const lT = parseFloat(document.getElementById('localTemp').value);
+                        const lD = parseFloat(document.getElementById('localDew').value);
+                        cape = Math.max(0, Math.round(cape * (1 + ((lD - mD) * 0.22) + ((lT - mT) * 0.12))));
+                        cin = Math.max(0, Math.round(cin + ((lD - mD) * -28) + ((lT - mT) * -22)));
+                        li = li - ((lD - mD) * 0.4);
+                        vizData = { cape, cin, li, pwat };
                     }
 
-                    let cond = "CAPPED", cClass = "status-capped", sectorClass = "sector-trigger";
-                    if (loc.sector === "Initiation") sectorClass = "sector-initiation";
-                    if (loc.sector === "Inflow") sectorClass = "sector-inflow";
-                    if (loc.sector === "Northwest") sectorClass = "sector-nw";
+                    if (loc.sector === "WEST-INI") initiationEnergy += cape;
 
-                    if (aCape > 500) {
-                        if (aCin < 20) { cond = "BREACH"; cClass = "status-breach"; }
-                        else if (aCin < 60) { cond = "WEAKENING"; cClass = "status-weak"; }
-                    } else { cond = "STABLE"; cClass = "bg-slate-800 text-slate-500 border border-slate-700"; }
-
-                    grid.innerHTML += `
-                        <div class="sector-card p-2 rounded-lg text-center ${sectorClass} ${loc.local ? 'ring-1 ring-white' : ''}">
-                            <p class="text-[7px] font-black text-slate-500 uppercase mb-1 tracking-tighter">${loc.name}</p>
-                            <p class="text-lg font-black ${cond === 'BREACH' ? 'text-red-500' : 'text-white'}">${Math.round(aCape)}</p>
-                            <p class="text-[7px] font-bold text-slate-600 uppercase">CIN: ${Math.round(aCin)}</p>
+                    // Grid
+                    if (idx % 2 === 0) {
+                        grid.innerHTML += `<div class="glass-panel p-6 rounded-3xl border-t-4 ${cape > 1000 ? 'border-red-600' : 'border-slate-800'}">
+                            <p class="text-[10px] font-black text-slate-500 mb-1 uppercase">${loc.name}</p>
+                            <p class="text-4xl font-black text-white">${cape}</p>
+                            <p class="text-[10px] font-black text-orange-500 mt-2">CIN: ${cin} | LI: ${li.toFixed(1)}</p>
                         </div>`;
+                    }
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td class="p-4 font-black text-slate-300 ${loc.local ? 'text-blue-400' : ''}">
-                                <span class="text-[8px] text-slate-600 uppercase mr-2 opacity-50 font-normal">${loc.sector}</span>${loc.name}
-                            </td>
-                            <td class="p-4 text-center text-slate-600">${Math.round(mT)}°/${Math.round(mD)}°</td>
-                            <td class="p-4 text-center font-black text-lg text-red-500">${Math.round(aCape)}</td>
-                            <td class="p-4 text-center font-black text-lg text-orange-400 font-mono">${Math.round(aCin)}</td>
-                            <td class="p-4 text-center font-bold text-slate-500 font-mono">${aLi.toFixed(1)}</td>
-                            <td class="p-4 text-center font-bold text-blue-500 font-mono">${pwat}"</td>
-                            <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[8px] font-black tracking-widest ${cClass}">${cond}</span></td>
-                        </tr>`;
+                    // Table
+                    tbody.innerHTML += `<tr class="${loc.local ? 'bg-red-600/10' : ''} border-b border-slate-800/50">
+                        <td class="p-8"><span class="text-xs text-slate-500 block uppercase mb-1">${loc.sector}</span><span class="text-3xl ${loc.local ? 'text-red-500' : 'text-slate-200'} font-black">${loc.name}</span></td>
+                        <td class="p-8 text-center text-slate-400 text-3xl font-bold">${mT}°/${mD}°</td>
+                        <td class="p-8 text-center text-red-500 value-huge">${cape}</td>
+                        <td class="p-8 text-center text-orange-400 value-huge">${cin}</td>
+                        <td class="p-8 text-center ${li <= 0 ? 'text-red-400' : 'text-green-500'} value-large font-black">${li.toFixed(1)}</td>
+                        <td class="p-8 text-center text-blue-500 text-4xl font-black">${pwat}"</td>
+                    </tr>`;
                 });
-            } catch (e) { console.error(e); }
+
+                // AI INTERPRETATION LOGIC
+                generateAIAssessment(vizData, initiationEnergy / 3);
+                engineStatus.innerText = "AI CORE: ACTIVE";
+
+            } catch (err) {
+                console.error(err);
+                aiBox.innerText = "CRITICAL ERROR: AI Neural Link Disconnected.";
+            }
         }
 
-        window.onload = runNetworkScan;
+        function generateAIAssessment(viz, avgIniCape) {
+            let assessment = "";
+            let threat = "LOW";
+            let concern = "NONE";
+            
+            if (viz.cin > 60) {
+                assessment = "The convective inhibition (CIN) is strong. A robust 'Cap' is currently suppressing storm development over Vizcaya. ";
+                threat = "GUARDED";
+                concern = "CAP SUPPRESSION";
+            } else if (viz.cin < 25 && viz.cape > 500) {
+                assessment = "The Cap has breached or is dangerously weak. Immediate explosive development is possible given current buoyancy levels. ";
+                threat = "HIGH";
+                concern = "CAP BREACH";
+            } else {
+                assessment = "The atmosphere is moderately stable, but moisture is pooling. ";
+            }
+
+            if (viz.cape > 2000) {
+                assessment += "High energy density (CAPE > 2000) detected. Any initiation will be violent. ";
+                threat = "ELEVATED";
+                concern = "ENERGY LOADING";
+            }
+
+            if (avgIniCape > 1000) {
+                assessment += "Initiation signals detected to the West (Mason/Llano). Track cells moving East toward the core theater. ";
+                if (threat !== "HIGH") threat = "ELEVATED";
+            }
+
+            if (viz.pwat > 1.6) {
+                assessment += "High PWAT values suggest extreme moisture loading. Flash flooding is a secondary tactical concern.";
+                concern = "HEAVY RAIN";
+            }
+
+            if (viz.li < -5) {
+                assessment += "Extreme buoyancy (LI -5) indicates the air is highly volatile.";
+                threat = "EXTREME";
+            }
+
+            document.getElementById('aiAssessment').innerText = assessment;
+            document.getElementById('threatLevel').innerText = threat;
+            document.getElementById('threatLevel').className = `text-xl font-black ${threat === 'EXTREME' || threat === 'HIGH' ? 'text-red-500 animate-pulse' : 'text-blue-400'}`;
+            document.getElementById('primaryConcern').innerText = concern;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('updateBtn').addEventListener('click', runNetworkScan);
+            runNetworkScan();
+        });
     </script>
 </body>
 </html>
