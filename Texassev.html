@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TX-OPS v45.2 | Marine & Coastal</title>
+    <title>TX-OPS v45.3 | Feed Fix</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,15 +26,14 @@
         .card h2 { margin: 0 0 5px; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .small { font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
         .feed-item { padding: 8px 0; border-bottom: 1px solid #1e293b; }
-        .trop-text { color: var(--trop); font-weight: bold; }
-        .marine-text { color: var(--marine); font-weight: bold; }
-        #activeLayers { position: absolute; bottom: 15px; left: 15px; background: rgba(15, 23, 42, 0.9); padding: 6px 10px; border-radius: 4px; font-size: 0.65rem; z-index: 1000; border: 1px solid var(--border); pointer-events: none; }
+        .marine-text { color: var(--marine); font-weight: 700; }
+        .md-text { color: var(--risk); font-weight: 700; }
     </style>
 </head>
 <body>
 
 <header> 
-    <h1>TX-OPS v45.2</h1> 
+    <h1>TX-OPS v45.3</h1> 
     <div class="controls">
         <button id="btn-radar" onclick="toggleLayer('radar')">Radar</button>
         <button id="btn-wwa" onclick="toggleLayer('wwa')">Hazards</button>
@@ -45,29 +44,28 @@
         <button id="btn-counties" onclick="toggleLayer('counties')">Counties</button>
         <button id="btn-borders" onclick="toggleLayer('borders')" class="active">Borders</button>
     </div>
-    <div id="lastUpdated" class="small" style="color:var(--muted)">Syncing...</div>
+    <div id="lastUpdated" class="small">Syncing...</div>
 </header>
 
 <div class="grid">
     <div id="map"></div>
-    <div id="activeLayers">Ready</div>
     <div class="side">
         <div class="card">
-            <h2>GULF TROPICAL & MARINE</h2>
-            <div id="marine-feed" class="small">Scanning Coastal Zones...</div>
+            <h2>GULF & MARINE WATCH</h2>
+            <div id="marine-feed" class="small">Checking Coastal Zones...</div>
         </div>
         <div class="card">
-            <h2>ACTIVE TX HAZARDS (LAND/SEA)</h2>
+            <h2>ACTIVE HAZARDS</h2>
             <div id="hazard-counts" class="small">
-                <span id="tor-count" class="warn">0</span> Tornado Warnings<br>
-                <span id="svr-count" class="risk">0</span> Severe T-Storm<br>
-                <span id="smw-count" class="marine">0</span> Special Marine<br>
+                <span id="tor-count" class="warn">0</span> Tornado <br>
+                <span id="svr-count" class="risk">0</span> Severe T-Storm <br>
+                <span id="smw-count" class="marine-text">0</span> Special Marine <br>
                 <span id="ffw-count" class="watch">0</span> Flash Flood
             </div>
         </div>
         <div class="card">
             <h2>SPC MESOSCALE FEED</h2>
-            <div id="md-feed" class="small">Loading discussions...</div>
+            <div id="md-feed" class="small">Awaiting new data...</div>
         </div>
     </div>
 </div>
@@ -87,7 +85,7 @@ const layers = {
     d3: L.esri.dynamicMapLayer({ url: spcBase, layers: [17], opacity: 0.4 }),
     md: L.esri.dynamicMapLayer({ url: mdUrl, layers: [0], opacity: 0.8 }),
     counties: L.esri.dynamicMapLayer({ url: 'https://maps.dot.state.tx.us/arcgis/rest/services/Boundaries/MapServer', layers: [1], opacity: 1 }),
-    borders: L.esri.featureLayer({ url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0', style: { color: '#ffffff', weight: 2, opacity: 1, fillOpacity: 0 }})
+    borders: L.esri.featureLayer({ url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_States_Generalized_Boundaries/FeatureServer/0', style: { color: '#ffffff', weight: 1, fillOpacity: 0 }})
 };
 
 layers.borders.addTo(map);
@@ -101,72 +99,60 @@ function toggleLayer(key) {
         layers[key].addTo(map);
         document.getElementById(`btn-${key}`).classList.add('active');
     }
-    if (map.hasLayer(layers.counties)) layers.counties.bringToFront();
-    if (map.hasLayer(layers.borders)) layers.borders.bringToFront();
-    updateUI();
 }
 
-function updateUI() {
-    const active = Object.keys(layers).filter(k => map.hasLayer(layers[k])).map(k => k.toUpperCase());
-    document.getElementById('activeLayers').innerHTML = `Active: ${active.join(' • ')}`;
-}
-
-async function fetchData() {
+async function fetchAll() {
     try {
-        const res = await fetch('https://api.weather.gov/alerts/active?area=TX');
-        const data = await res.json();
-        let counts = { tor: 0, svr: 0, ffw: 0, smw: 0 };
-        
-        data.features.forEach(f => {
+        // HAZARDS FETCH
+        const hRes = await fetch('https://api.weather.gov/alerts/active?area=TX');
+        const hData = await hRes.json();
+        let c = { tor: 0, svr: 0, ffw: 0, smw: 0 };
+        hData.features.forEach(f => {
             const e = f.properties.event;
-            if (e === 'Tornado Warning') counts.tor++;
-            else if (e === 'Severe Thunderstorm Warning') counts.svr++;
-            else if (e === 'Flash Flood Warning') counts.ffw++;
-            else if (e === 'Special Marine Warning') counts.smw++;
+            if (e === 'Tornado Warning') c.tor++;
+            if (e === 'Severe Thunderstorm Warning') c.svr++;
+            if (e === 'Flash Flood Warning') c.ffw++;
+            if (e === 'Special Marine Warning') c.smw++;
         });
+        document.getElementById('tor-count').innerText = c.tor;
+        document.getElementById('svr-count').innerText = c.svr;
+        document.getElementById('ffw-count').innerText = c.ffw;
+        document.getElementById('smw-count').innerText = c.smw;
 
-        document.getElementById('tor-count').innerText = counts.tor;
-        document.getElementById('svr-count').innerText = counts.svr;
-        document.getElementById('ffw-count').innerText = counts.ffw;
-        document.getElementById('smw-count').innerText = counts.smw;
-        document.getElementById('lastUpdated').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
-    } catch (e) { console.error("Alert fetch error"); }
-}
-
-async function fetchMarineAndTropical() {
-    try {
-        // Querying alerts for marine zones (GM) and specific marine/tropical events
-        const res = await fetch('https://api.weather.gov/alerts/active?region_type=marine');
-        const data = await res.json();
-        const feed = document.getElementById('marine-feed');
+        // MARINE & TROPICAL FETCH
+        const mRes = await fetch('https://api.weather.gov/alerts/active?region_type=marine');
+        const mData = await mRes.json();
+        const mFeed = document.getElementById('marine-feed');
+        const gulf = mData.features.filter(f => f.properties.affectedZones.some(z => z.includes('GM')));
         
-        // Filter for Gulf of Mexico (GM zones)
-        const gulfAlerts = data.features.filter(f => 
-            f.properties.affectedZones.some(z => z.includes('GM'))
-        );
-
-        if (gulfAlerts.length > 0) {
-            feed.innerHTML = '';
-            gulfAlerts.forEach(f => {
-                const div = document.createElement('div');
-                div.className = 'feed-item';
-                const isWarning = f.properties.severity === 'Extreme' || f.properties.severity === 'Severe';
-                const colorClass = isWarning ? 'warn' : 'marine-text';
-                div.innerHTML = `<span class="${colorClass}">${f.properties.event}</span><br><span style="font-size:0.65rem">${f.properties.headline}</span>`;
-                feed.appendChild(div);
-            });
+        if (gulf.length > 0) {
+            mFeed.innerHTML = gulf.slice(0, 3).map(f => `
+                <div class="feed-item"><span class="marine-text">${f.properties.event}</span><br>${f.properties.headline}</div>
+            `).join('');
         } else {
-            feed.innerHTML = '<div class="small" style="color:var(--ok)">No active Gulf/Marine hazards.</div>';
+            mFeed.innerHTML = '<span style="color:var(--ok)">No active Gulf threats.</span>';
         }
-    } catch (e) { console.error("Marine fetch error"); }
+
+        // SPC MD FEED (FIXED QUERY)
+        const mdRes = await fetch(`${mdUrl}/0/query?where=1%3D1&outFields=md_number,phenomena,issue_date&orderByFields=issue_date DESC&resultRecordCount=3&f=pjson`);
+        const mdData = await mdRes.json();
+        const mdFeed = document.getElementById('md-feed');
+        if (mdData.features && mdData.features.length > 0) {
+            mdFeed.innerHTML = mdData.features.map(f => `
+                <div class="feed-item"><span class="md-text">MD #${f.attributes.md_number}</span>: ${f.attributes.phenomena}</div>
+            `).join('');
+        } else {
+            mdFeed.innerHTML = 'No recent MDs issued.';
+        }
+
+        document.getElementById('lastUpdated').innerText = `Updated: ${new Date().toLocaleTimeString()}`;
+    } catch (err) {
+        console.error("Fetch failed", err);
+    }
 }
 
-// MD and Init calls
-async function fetchMDs() { /* ...Existing MD Fetch Logic... */ }
-
-fetchData();
-fetchMarineAndTropical();
-setInterval(() => { fetchData(); fetchMarineAndTropical(); }, 60000);
+fetchAll();
+setInterval(fetchAll, 60000);
 </script>
 </body>
 </html>
