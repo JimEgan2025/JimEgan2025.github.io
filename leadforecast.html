@@ -7,29 +7,28 @@
     <style>
         :root { --bg: #f1f5f9; --text: #1e293b; --accent: #2563eb; --border: #cbd5e1; --header: #334155; --almanac: #64748b; }
         html { scroll-behavior: smooth; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; font-size: 13px; line-height: 1.2; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; font-size: 13px; line-height: 1.1; }
         .container { max-width: 1600px; margin: 0 auto; }
         
+        /* Dashboard Header */
         .dashboard-header { background: white; padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; position: sticky; top: 10px; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .nav-links a { color: var(--accent); text-decoration: none; font-size: 0.8rem; font-weight: bold; border: 1px solid var(--border); padding: 5px 8px; border-radius: 4px; margin-right: 5px; }
 
+        /* Tables & Wraps */
         .summary-wrap, .hourly-wrap { background: #fff; padding: 15px; border-radius: 12px; border: 2px solid var(--accent); margin-bottom: 30px; overflow-x: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
         th { background: var(--accent); color: white; padding: 10px; border: 1px solid #1d4ed8; }
         td { border: 1px solid var(--border); padding: 10px 8px; text-align: center; font-weight: 700; }
         .row-label { background: #f8fafc; text-align: left !important; font-weight: bold !important; width: 220px; color: var(--header); }
         
-        /* STATUS & HAZARD STYLING */
-        .h-badge { padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; }
+        /* Indicators */
+        .h-badge { padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; display: inline-block; }
         .bg-red { background: #dc2626; }    
         .bg-blue { background: #1e40af; }   
-        .front-cold { color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 4px; }
+        .front-tag { color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 4px; }
         .front-arrival { background: #eff6ff !important; border: 3px solid #1d4ed8 !important; }
-        .conf-high { color: #16a34a; }
-        .conf-low { color: #dc2626; background: #fef2f2; }
 
-        /* GROUP HEADERS */
-        .metric-group { background: #334155; color: white; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.15em; padding: 8px 15px !important; text-align: left !important; }
+        .metric-group { background: #334155; color: white; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.15em; padding: 10px 15px !important; text-align: left !important; }
         .almanac-row { background: #f9fafb !important; color: var(--almanac); font-style: italic; font-size: 0.85em; }
 
         h2 { background: var(--header); color: white; padding: 10px 15px; margin: 40px 0 0 0; font-size: 1rem; border-radius: 8px 8px 0 0; }
@@ -39,12 +38,14 @@
 
         button { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-ss { background: #ef4444; }
+
         body.screenshot-mode { background: white; padding: 0; }
         body.screenshot-mode .dashboard-header, body.screenshot-mode h2, body.screenshot-mode .table-wrap, body.screenshot-mode .nav-links { display: none; }
-        body.screenshot-mode .summary-wrap { border: 5px solid var(--accent); margin: 0; border-radius: 0; }
-        body.screenshot-mode .summary-table { font-size: 18px; }
+        body.screenshot-mode .summary-wrap, body.screenshot-mode .hourly-wrap { border: 6px solid var(--accent); margin: 0 0 20px 0; border-radius: 0; }
+        body.screenshot-mode .summary-table, body.screenshot-mode .hourly-table { font-size: 18px; }
         .branding-header { display: none; }
-        body.screenshot-mode .branding-header { display: block !important; text-align: center; background: var(--accent); color: white; padding: 20px; }
+        body.screenshot-mode .branding-header { display: block !important; text-align: center; background: var(--accent); color: white; padding: 25px; }
+
         #loading { text-align: center; padding: 20px; font-weight: bold; color: var(--accent); background: #fff; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
     </style>
 </head>
@@ -53,26 +54,29 @@
 <div class="container">
     <div class="dashboard-header">
         <div>
-            <h1 style="margin:0; font-size: 1.1rem;">Vizcaya MOS Master</h1>
-            <span id="locInfo" style="font-size: 0.7rem; color: #64748b;">30.587, -97.641</span>
+            <h1 style="margin:0; font-size: 1.1rem;">Vizcaya Master MOS</h1>
+            <span id="locInfo" style="font-size: 0.7rem; color: #64748b;">Round Rock, TX</span>
         </div>
         <div class="nav-links">
-            <a href="#summary">Summary</a><a href="#hourly">24h Pinpoint</a><a href="#temp">Details</a>
+            <a href="#summary">7-Day</a><a href="#extended">8-14 Day</a><a href="#hourly">Timing</a><a href="#dashboard-content">Details</a>
         </div>
         <div style="display:flex; gap:8px;">
             <button class="btn-ss" onclick="document.body.classList.toggle('screenshot-mode')">📸 Screenshot</button>
-            <button onclick="loadData()">Refresh All</button>
+            <button onclick="loadData()">Refresh</button>
         </div>
     </div>
 
-    <div id="loading">📡 Accessing Professional Weather Data...</div>
+    <div id="loading">📡 Launching Stability Engine...</div>
+    <div class="branding-header"><h1>📍 Vizcaya Consensus Weather Report</h1></div>
 
-    <div class="branding-header"><h1>📍 Vizcaya 7-Day Consensus Forecast</h1></div>
-
+    <h2 id="summary">Executive 7-Day Summary <span>(Consensus vs Climatology)</span></h2>
     <div class="summary-wrap"><table id="summaryTable"><thead id="summaryHead"></thead><tbody id="summaryBody"></tbody></table></div>
 
-    <h2 id="hourly">24-Hour Frontal Pinpoint <span>(Timing Analysis)</span></h2>
-    <div class="hourly-wrap"><table class="hourly-table"><thead><tr><th>Hour</th><th>Temp</th><th>Feels</th><th>Wind</th><th>Gust</th><th>Rain %</th><th>Direction</th></tr></thead><tbody id="hourlyBody"></tbody></table></div>
+    <h2 id="extended">Extended 8-14 Day Trend <span>(Outlook Only)</span></h2>
+    <div class="summary-wrap"><table id="extendedTable"><thead id="extendedHead"></thead><tbody id="extendedBody"></tbody></table></div>
+
+    <h2 id="hourly">24-Hour Frontal Pinpoint</h2>
+    <div class="hourly-wrap"><table><thead><tr><th>Hour</th><th>Temp</th><th>Feels</th><th>Wind</th><th>Gust</th><th>Rain %</th><th>Direction</th></tr></thead><tbody id="hourlyBody"></tbody></table></div>
 
     <div id="dashboard-content"></div>
 </div>
@@ -82,29 +86,33 @@
     const LAT = 30.5871, LON = -97.641;
     const modelConfig = [{key:'ecmwf_ifs025',label:'ECMWF'}, {key:'gfs_seamless',label:'GFS'}, {key:'best_match',label:'Blend'}, {key:'gem_seamless',label:'GEM'}, {key:'icon_seamless',label:'ICON'}];
 
-    let almanac = {}, hourlyFrontIdx = -1;
+    let almanac = {}, hourlyFrontIdx = -1, dCore = null, dEnv = null;
 
     async function loadData() {
-        document.getElementById('loading').style.display = 'block';
+        const loader = document.getElementById('loading');
+        loader.style.display = 'block';
         try {
             const almRes = await fetch(ALMANAC_URL);
             if (almRes.ok) almanac = await almRes.json();
 
-            // Fetch 1: Core Daily Data (All Models)
-            const d1Url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,dewpoint_2m_max,apparent_temperature_max,apparent_temperature_min,snowfall_sum&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=auto&models=${modelConfig.map(m=>m.key).join(',')}`;
-            
-            // Fetch 2: Hourly Pinpoint (Blend Model)
-            const hUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&models=best_match`;
+            // Fetch 1: Core Daily
+            const d1Url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,cloud_cover_mean,weather_code&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16&models=${modelConfig.map(m=>m.key).join(',')}`;
+            const r1 = await fetch(d1Url); dCore = await r1.json();
 
-            const [r1, r2] = await Promise.all([fetch(d1Url), fetch(hUrl)]);
-            const dData = await r1.json();
-            const hData = await r2.json();
+            // Fetch 2: Environment
+            const d2Url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,dewpoint_2m_max&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=auto&forecast_days=16&models=best_match,ecmwf_ifs025,gfs_seamless,icon_seamless`;
+            const r2 = await fetch(d2Url); dEnv = await r2.json();
+
+            // Fetch 3: Hourly
+            const hUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&models=best_match`;
+            const r3 = await fetch(hUrl); const hData = await r3.json();
 
             renderHourly(hData);
-            renderSummary(dData);
-            renderDetails(dData);
-            document.getElementById('loading').style.display = 'none';
-        } catch (e) { document.getElementById('loading').innerText = "Sync Error. Please Refresh."; }
+            renderSummary(dCore, dEnv, 'summary', 0, 7, false);
+            renderSummary(dCore, dEnv, 'extended', 7, 14, true);
+            renderDetails(dCore, dEnv);
+            loader.style.display = 'none';
+        } catch (e) { loader.innerText = "Sync Error: API Timeout."; }
     }
 
     function getStats(data, keys, metric, day) {
@@ -116,14 +124,19 @@
         return { avg: s.reduce((a,b)=>a+b,0)/s.length, min, max, spread: max - min };
     }
 
+    function getSmartCondition(cloudPct, rainProb) {
+        if (rainProb > 45) return "🌧️ Rain";
+        if (rainProb > 20) return "🌦️ Isold Rain";
+        if (cloudPct < 20) return "☀️ Sunny";
+        if (cloudPct < 40) return "🌤️ Mostly Sunny";
+        if (cloudPct < 65) return "⛅ Partly Cloudy";
+        if (cloudPct < 85) return "🌥️ Mostly Cloudy";
+        return "☁️ Overcast";
+    }
+
     function degToCard(deg) {
         const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
         return arr[(Math.floor((deg / 22.5) + 0.5) % 16)];
-    }
-
-    function getWmoDesc(code) {
-        const m = { 0: "☀️ Sunny", 1: "🌤️ Clear", 2: "⛅ P.Cloudy", 3: "☁️ Cloudy", 45: "🌫️ Fog", 61: "🌧️ Rain", 63: "🌧️ Rain", 95: "⛈️ Storms" };
-        return m[code] || "Variable";
     }
 
     function renderHourly(data) {
@@ -134,96 +147,113 @@
         for (let i = nowIdx + 1; i < nowIdx + 24; i++) {
             const drop = h.temperature_2m[i-1] - h.temperature_2m[i];
             const isNorth = (h.wind_direction_10m[i] < 90 || h.wind_direction_10m[i] > 270);
-            const score = drop + (isNorth ? 6 : 0);
-            if (score > maxScore && score > 7) { maxScore = score; hourlyFrontIdx = i; }
+            if (drop + (isNorth ? 6 : 0) > maxScore && drop > 2.5) { maxScore = drop + (isNorth ? 6 : 0); hourlyFrontIdx = i; }
         }
         for (let i = nowIdx; i < nowIdx + 24; i++) {
             const row = body.insertRow(); if (i === hourlyFrontIdx) row.className = 'front-arrival';
-            const time = new Date(h.time[i]).toLocaleTimeString([], {hour:'numeric'});
+            const time = new Date(h.time[i]).toLocaleTimeString([],{hour:'numeric'});
             row.innerHTML = `<td>${time}</td><td>${Math.round(h.temperature_2m[i])}°</td><td>${Math.round(h.apparent_temperature[i])}°</td><td>${Math.round(h.wind_speed_10m[i])}</td><td>${Math.round(h.wind_gusts_10m[i])}</td><td>${h.precipitation_probability[i]}%</td><td><span style="display:inline-block; transform:rotate(${h.wind_direction_10m[i]}deg)">↓</span> ${degToCard(h.wind_direction_10m[i])}</td>`;
         }
     }
 
-    function renderSummary(data) {
-        const body = document.getElementById('summaryBody');
-        const dates = data.daily.time.slice(0, 7);
-        document.getElementById('summaryHead').innerHTML = '<tr><th class="row-label">DATE / METRIC</th>' + dates.map(d => `<th>${new Date(d+'T00:00').toLocaleDateString([],{weekday:'short'})}<br>${new Date(d+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</th>`).join('') + '</tr>';
-        
-        const mKeys = modelConfig.map(m=>m.key);
-        const rows = [
-            // GROUP 1
-            { l: 'Conditions', g: 'Overview & Hazards', f: d => getWmoDesc(data.daily.weather_code_best_match[d]) },
-            { l: 'Forecast Confidence', g: 'Overview & Hazards', f: d => {
-                const s = getStats(data, mKeys, 'temperature_2m_max', d);
-                if (s.spread <= 4) return '<span class="conf-high">High</span>';
-                if (s.spread <= 8) return '<span>Medium</span>';
-                return '<span class="conf-low">Low (Divergent)</span>';
-            }},
-            { l: 'Hazard Alerts', g: 'Overview & Hazards', f: d => {
-                const appMax = getStats(data, mKeys, 'apparent_temperature_max', d).avg;
-                const appMin = getStats(data, mKeys, 'apparent_temperature_min', d).avg;
-                const snow = getStats(data, mKeys, 'snowfall_sum', d).avg;
-                if (appMax >= 98) return '<span class="h-badge bg-red">🔥 High Heat</span>';
-                if (appMin <= 30) return '<span class="h-badge bg-blue">🧊 Freeze Risk</span>';
-                if (snow > 0.1) return '<span class="h-badge bg-blue">❄️ Snow Risk</span>';
-                return "---";
-            }},
-            { l: 'Frontal Analysis', g: 'Overview & Hazards', f: d => {
-                if (d === 0 && hourlyFrontIdx !== -1) return '<span class="front-cold">❄️ Arrival Tonight</span>';
-                const hT = getStats(data, mKeys, 'temperature_2m_max', d).avg;
-                const hP = d > 0 ? getStats(data, mKeys, 'temperature_2m_max', d-1).avg : hT;
-                const dir = data.daily.wind_direction_10m_dominant_best_match[d];
-                if (hT <= hP - 10 && (dir < 70 || dir > 290)) return '<span class="front-cold">❄️ Cold Front</span>';
-                return "Stable";
-            }},
-            // GROUP 2
-            { l: 'Consensus Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(data, mKeys, 'temperature_2m_max', d).avg)}° / ${Math.round(getStats(data, mKeys, 'temperature_2m_min', d).avg)}°` },
-            { l: 'Feels Like Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(data, mKeys, 'apparent_temperature_max', d).avg)}° / ${Math.round(getStats(data, mKeys, 'apparent_temperature_min', d).avg)}°` },
-            { l: 'Normal Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
-                const a = almanac[data.daily.time[d].substring(5)] || {avgH:'--',avgL:'--'};
-                return `${a.avgH}° / ${a.avgL}°`;
-            }},
-            { l: 'Historical Record', g: 'Temperature Analysis', isAlm: true, f: d => {
-                const a = almanac[data.daily.time[d].substring(5)] || {recH:'--',recHY:'',recL:'--',recLY:''};
-                return a.recH === '--' ? '--' : `${a.recH}° ('${a.recHY.toString().slice(-2)}) / ${a.recL}° ('${a.recLY.toString().slice(-2)})`;
-            }},
-            // GROUP 3
-            { l: 'Rain Prob / Avg', g: 'Precipitation, Wind & Humidity', f: d => `${Math.round(getStats(data, mKeys, 'precipitation_probability_max', d).avg)}% / ${getStats(data, mKeys, 'precipitation_sum', d).avg.toFixed(2)}"` },
-            { l: 'Humidity / Dew', g: 'Precipitation, Wind & Humidity', f: d => `${Math.round(getStats(data, mKeys, 'relative_humidity_2m_mean', d).avg)}% / ${Math.round(getStats(data, mKeys, 'dewpoint_2m_max', d).avg)}°` },
-            { l: 'Wind Consensus', g: 'Precipitation, Wind & Humidity', f: d => `${degToCard(data.daily.wind_direction_10m_dominant_best_match[d])} ${Math.round(getStats(data, mKeys, 'wind_speed_10m_max', d).avg)} mph` }
-        ];
+    function renderSummary(d1, d2, tableId, start, end, isExt) {
+        const body = document.getElementById(`${tableId}Body`);
+        const head = document.getElementById(`${tableId}Head`);
+        const dates = d1.daily.time.slice(start, end);
+        const mAll = modelConfig.map(m=>m.key);
+        const mSub = ['best_match','ecmwf_ifs025','gfs_seamless','icon_seamless'];
 
-        let lastG = '';
+        head.innerHTML = '<tr><th class="row-label">DATE / METRIC</th>' + dates.map(d => `<th>${new Date(d+'T00:00').toLocaleDateString([],{weekday:'short'})}<br>${new Date(d+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</th>`).join('') + '</tr>';
+        
+        let rows = [];
+
+        // OVERVIEW
+        rows.push({ l: 'Conditions', g: 'Overview & Hazards', f: d => getSmartCondition(getStats(d1,mAll,'cloud_cover_mean',d).avg, getStats(d2,mSub,'precipitation_probability_max',d).avg) });
+        if (!isExt) {
+            rows.push({ l: 'Hazard Alerts', g: 'Overview & Hazards', f: d => {
+                const aMax = getStats(d2, mSub, 'apparent_temperature_max', d).avg;
+                const aMin = getStats(d2, mSub, 'apparent_temperature_min', d).avg;
+                if (aMax >= 98) return '<span class="h-badge bg-red">🔥 High Heat</span>';
+                if (aMin <= 30) return '<span class="h-badge bg-blue">🧊 Freeze Risk</span>';
+                return "---";
+            }});
+            rows.push({ l: 'Frontal Analysis', g: 'Overview & Hazards', f: d => {
+                if (d === 0 && hourlyFrontIdx !== -1) return '<span class="front-tag">❄️ Arrival Tonight</span>';
+                const hT = getStats(d1, mAll, 'temperature_2m_max', d).avg, hP = d > 0 ? getStats(d1, mAll, 'temperature_2m_max', d-1).avg : hT;
+                const dir = d2.daily.wind_direction_10m_dominant_best_match[d];
+                return (hT <= hP - 10 && (dir < 70 || dir > 290)) ? '<span class="front-tag">❄️ Cold Front</span>' : "Stable";
+            }});
+        }
+
+        // TEMPERATURE
+        rows.push({ l: 'Consensus Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d1,mAll,'temperature_2m_max',d).avg)}° / ${Math.round(getStats(d1,mAll,'temperature_2m_min',d).avg)}°` });
+        rows.push({ l: 'Feels Like Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d2,mSub,'apparent_temperature_max',d).avg)}° / ${Math.round(getStats(d2,mSub,'apparent_temperature_min',d).avg)}°` });
+        if (!isExt) {
+            rows.push({ l: 'Normal (Avg) Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
+                const a = almanac[d1.daily.time[d].substring(5)] || {avgH:'--',avgL:'--'};
+                return `${a.avgH}° / ${a.avgL}°`;
+            }});
+            rows.push({ l: 'Historical Record', g: 'Temperature Analysis', isAlm: true, f: d => {
+                const a = almanac[d1.daily.time[d].substring(5)] || {recH:'--',recHY:'',recL:'--',recLY:''};
+                return a.recH === '--' ? '--' : `${a.recH}° ('${a.recHY.toString().slice(-2)}) / ${a.recL}° ('${a.recLY.toString().slice(-2)})`;
+            }});
+        }
+
+        // ENVIRONMENT
+        rows.push({ l: 'Rain Prob / Avg', g: 'Environment & Wind', f: d => `${Math.round(getStats(d2,mSub,'precipitation_probability_max',d).avg)}% / ${getStats(d1,mAll,'precipitation_sum',d).avg.toFixed(2)}"` });
+        rows.push({ l: 'Humidity / Dew', g: 'Environment & Wind', f: d => `${Math.round(getStats(d2,mSub,'relative_humidity_2m_mean',d).avg)}% / ${Math.round(getStats(d2,mSub,'dewpoint_2m_max',d).avg)}°` });
+        rows.push({ l: 'Wind Consensus', g: 'Environment & Wind', f: d => `${degToCard(d2.daily.wind_direction_10m_dominant_best_match[d])} ${Math.round(getStats(d2,mSub,'wind_speed_10m_max',d).avg)} mph` });
+
+        let lastGroup = '';
+        body.innerHTML = '';
         rows.forEach(r => {
-            if (r.g !== lastG) { body.innerHTML += `<tr><td colspan="8" class="metric-group">${r.g}</td></tr>`; lastG = r.g; }
-            body.innerHTML += `<tr class="${r.isAlm?'almanac-row':''}"><td>${r.l}</td>${dates.map((_,i)=>`<td>${r.f(i)}</td>`).join('')}</tr>`;
+            if (r.g !== lastGroup) { body.innerHTML += `<tr><td colspan="10" class="metric-group">${r.g}</td></tr>`; lastGroup = r.g; }
+            body.innerHTML += `<tr class="${r.isAlm?'almanac-row':''}"><td>${r.l}</td>${dates.map((_,i)=>`<td>${r.f(i + start)}</td>`).join('')}</tr>`;
         });
     }
 
-    function renderDetails(data) {
+    function renderDetails(d1, d2) {
         const cont = document.getElementById('dashboard-content'); cont.innerHTML = '';
-        const mKeys = modelConfig.map(m=>m.key);
-        const sets = [{t:'Dry Bulb Temp',m:'temperature_2m'}, {t:'Apparent Feels Like',m:'apparent_temperature'}, {t:'Precipitation Breakdown',m:'precipitation_sum'}, {t:'Wind & Gusts',m:'wind'}];
-        
+        const mAll = modelConfig.map(m=>m.key);
+        const mSub = ['best_match','ecmwf_ifs025','gfs_seamless','icon_seamless'];
+        const sets = [
+            {t:'Dry Bulb Temp', m:'temperature_2m', src:d1, k:mAll},
+            {t:'Precipitation Amount', m:'precipitation_sum', src:d1, k:mAll},
+            {t:'Humidity & Dew Point', m:'comfort', src:d2, k:mSub},
+            {t:'Wind & Gusts', m:'wind', src:d2, k:mSub}
+        ];
         sets.forEach(s => {
-            let h = `<h2>${s.t}</h2><div class="table-wrap"><table><thead><tr><th>Date</th>${modelConfig.map(m=>`<th>${m.label}</th>`).join('')}<th>Consensus</th></tr></thead><tbody>`;
+            let h = `<h2>${s.t} Breakdown</h2><div class="table-wrap"><table><thead><tr><th>Date</th>${s.k.map(v=>`<th>${v.toUpperCase()}</th>`).join('')}<th>Consensus</th></tr></thead><tbody>`;
             for (let d = 0; d < 7; d++) {
-                h += `<tr><td>${new Date(data.daily.time[d]+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</td>`;
-                let row = mKeys.map(k => {
-                    if (s.m==='precipitation_sum') return data.daily[`${s.m}_${k}`][d].toFixed(2);
-                    if (s.m==='wind') return `${Math.round(data.daily[`wind_speed_10m_max_${k}`][d])}/${Math.round(data.daily[`wind_gusts_10m_max_${k}`][d])}`;
-                    return `${Math.round(data.daily[`${s.m}_max_${k}`][d])}/${Math.round(data.daily[`${s.m}_min_${k}`][d])}`;
+                h += `<tr><td>${new Date(d1.daily.time[d]+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</td>`;
+                let rowVals = s.k.map(v => {
+                    if (s.m==='comfort') return `${Math.round(s.src.daily[`relative_humidity_2m_mean_${v}`][d])}%/${Math.round(s.src.daily[`dewpoint_2m_max_${v}`][d])}°`;
+                    if (s.m==='wind') return `${Math.round(s.src.daily[`wind_speed_10m_max_${v}`][d])}/${Math.round(s.src.daily[`wind_gusts_10m_max_${v}`][d])}`;
+                    if (s.m==='precipitation_sum') return s.src.daily[`${s.m}_${v}`][d].toFixed(2);
+                    return `${Math.round(s.src.daily[`${s.m}_max_${v}`][d])}/${Math.round(s.src.daily[`${s.m}_min_${v}`][d])}`;
                 });
-                const stats = getStats(data, mKeys, s.m==='wind'?'wind_speed_10m_max':(s.m==='precipitation_sum'?'precipitation_sum':s.m+'_max'), d);
-                row.forEach((v,i) => {
-                    const n = parseFloat(v.toString().split('/')[0]);
-                    h += `<td class="${(n===stats.min||n===stats.max)?'tossed':''}">${v}</td>`;
-                });
-                h += `<td class="avg-cell">---</td></tr>`;
+                
+                const nums = rowVals.map(rv => parseFloat(rv.split(/[%\/ ]/)[0]));
+                const min = Math.min(...nums), max = Math.max(...nums);
+                rowVals.forEach((rv, i) => h += `<td class="${(nums.length>3 && (nums[i]===min||nums[i]===max))?'tossed':''}">${rv}</td>`);
+                
+                // Calculate actual consensus for the last column
+                let cons = "";
+                if (s.m==='comfort') {
+                   cons = `${Math.round(getStats(s.src, s.k, 'relative_humidity_2m_mean', d).avg)}%/${Math.round(getStats(s.src, s.k, 'dewpoint_2m_max', d).avg)}°`;
+                } else if (s.m==='wind') {
+                   cons = `${Math.round(getStats(s.src, s.k, 'wind_speed_10m_max', d).avg)}/${Math.round(getStats(s.src, s.k, 'wind_gusts_10m_max', d).avg)}`;
+                } else if (s.m==='precipitation_sum') {
+                   cons = getStats(s.src, s.k, 'precipitation_sum', d).avg.toFixed(2);
+                } else {
+                   cons = `${Math.round(getStats(s.src, s.k, 'temperature_2m_max', d).avg)}/${Math.round(getStats(s.src, s.k, 'temperature_2m_min', d).avg)}`;
+                }
+                h += `<td class="avg-cell">${cons}</td></tr>`;
             }
             cont.innerHTML += h + '</tbody></table></div>';
         });
     }
+
     loadData();
 </script>
 </body>
