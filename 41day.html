@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Susan & Jim: The 41-Day Chronological Action Plan</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: #0b1116; }
+        #sidebar { width: 560px; background: #1c2833; color: white; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); z-index: 1001; }
+        .sidebar-header { padding: 15px; background: #17202a; border-bottom: 3px solid #3498db; text-align: center; }
+        
+        .status-bar { display: flex; background: #111; padding: 10px; font-size: 11px; justify-content: space-around; border-bottom: 1px solid #34495e; }
+        .risk-tag { padding: 2px 8px; border-radius: 3px; font-weight: bold; }
+        .level-1 { background: #27ae60; } .level-2 { background: #f1c40f; color: black; } 
+        .level-3 { background: #e67e22; } .level-4 { background: #c0392b; }
+        .ice-alert { background: #3498db; color: white; padding: 10px; font-size: 13px; font-weight: bold; text-align: center; display: none; }
+
+        .section { padding: 15px; border-bottom: 1px solid #2c3e50; }
+        h3 { margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #3498db; letter-spacing: 2px; }
+        
+        #photo-advice { background: #111; padding: 20px; border-radius: 8px; border-left: 5px solid #f1c40f; font-size: 14.5px; line-height: 1.6; color: #ecf0f1; min-height: 250px; overflow-y: auto; }
+        
+        #location-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; background: #17202a; }
+        .location-item { padding: 12px 18px; border-bottom: 1px solid #2c3e50; cursor: pointer; display: flex; align-items: center; border-left: 4px solid transparent; }
+        .location-item:hover { background: #2c3e50; border-left: 4px solid #3498db; }
+        .icon-box { margin-right: 15px; font-size: 24px; width: 40px; text-align: center; }
+        .day-num { color: #3498db; font-weight: bold; font-size: 11px; display: block; }
+        .site-name { font-weight: bold; font-size: 15px; color: #ecf0f1; }
+
+        .tag { font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; margin-right: 5px; color: white; text-transform: uppercase; }
+        .susan-tag { background: #8e44ad; } .jim-tag { background: #d35400; } .galaxy-tag { background: #27ae60; }
+        
+        #map { flex-grow: 1; }
+        .advice-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #222; }
+        .advice-header { font-weight: bold; color: #f1c40f; margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h2 style="margin:0; font-size: 18px;">41-DAY ACTION TIMELINE</h2>
+            <span style="font-size: 10px; color: #bdc3c7;">Chronological Action Days Only</span>
+        </div>
+
+        <div id="ice-warning" class="ice-alert">❄️ ICE PROTOCOL: EXPOSURE COMP +1.3 ❄️</div>
+
+        <div id="site-status" class="status-bar">
+            <span>RISK: <span id="risk-val" class="risk-tag level-1">--</span></span>
+            <span>SUN: <span id="sun-val">--</span></span>
+            <span>TEMP: <span id="temp-val">--</span></span>
+        </div>
+
+        <div class="section">
+            <h3>Daily Photography Mission</h3>
+            <div id="photo-advice">Select a day from the timeline to sync the map and gear tips.</div>
+        </div>
+
+        <ul id="location-list"></ul>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map', {zoomControl: false}).setView([9, -79], 4); // Centered on Panama midpoint
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        const itinerary = [
+            { day: "Day 1", date: "Nov 6", name: "Ft. Lauderdale", type: "Departure", risk: "LEVEL 1", rClass: "level-1", sun: "06:34/17:35", temp: "81°F", icon: "⚓", lat: 26.09, lon: -80.12, zoom: 12,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Port exit. Pelicans & Ospreys on channel markers. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Miami skyline 'Blue Hour' from Deck 3.</div>" },
+            
+            { day: "Day 3", date: "Nov 8", name: "Cozumel, Mexico", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "06:04/17:11", temp: "84°F", icon: "⚓", lat: 20.42, lon: -86.92, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> San Gervasio Ruins. Target: Endemic Cozumel Emerald hummingbird. <br><span class='tag galaxy-tag'>Galaxy</span> <b>0.6x Wide:</b> Turquoise water gradients on Catamaran.</div>" },
+            
+            { day: "Day 6", date: "Nov 11", name: "Panama Canal Transit", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "06:15/17:50", temp: "88°F", icon: "🚢", lat: 9.11, lon: -79.69, zoom: 11,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Toucans and Sloths in Culebra Cut. <br><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Lock gate engineering details.</div>" },
+
+            { day: "Day 7", date: "Nov 12", name: "Panama City", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "06:15/17:55", temp: "89°F", icon: "⚓", lat: 8.95, lon: -79.53, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>Night Mode:</b> Neon skyscraper glow. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Capuchin monkeys on Gatun Lake.</div>" },
+
+            { day: "Day 9", date: "Nov 14", name: "Manta, Ecuador", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "06:06/18:11", temp: "82°F", icon: "⚠️", lat: -0.96, lon: -80.71, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Vermilion Flycatcher (Pacoche Forest). <br><span class='tag jim-tag'>Jim</span> <b>Discretion:</b> High-risk zone. Use ZS200 for Panama Hat weaving textures. Stay in group.</div>" },
+
+            { day: "Day 12", date: "Nov 17", name: "Lima, Peru", type: "Port", risk: "LEVEL 4", rClass: "level-4", sun: "05:34/18:15", temp: "72°F", icon: "⚠️", lat: -12.04, lon: -77.12, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Inca Terns with white mustaches (Palomino Is). <br><span class='tag jim-tag'>Jim</span> <b>SAFETY:</b> Critical Risk. Use shuttle to Miraflores. a6600 for Baroque architecture.</div>" },
+
+            { day: "Day 15", date: "Nov 20", name: "Iquique, Chile", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "05:49/19:01", temp: "70°F", icon: "⚓", lat: -20.21, lon: -70.14, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Santa Laura ghost town industrial ruins. <br><span class='tag galaxy-tag'>Galaxy</span> <b>Ultrawide:</b> Atacama Giant geoglyph.</div>" },
+
+            { day: "Day 18", date: "Nov 23", name: "Valparaíso", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "06:31/20:31", temp: "75°F", icon: "⚠️", lat: -33.04, lon: -71.62, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Street murals and funiculars. <br><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Giant Hummingbirds (Patio Bellavista). Jim spots for Susan.</div>" },
+
+            { day: "Day 21", date: "Nov 26", name: "Puerto Chacabuco", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "05:42/21:26", temp: "57°F", icon: "⚓", lat: -45.45, lon: -72.81, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Andean Condor at Rio Simpson National Reserve. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Slow Shutter (1/4s) for Old Man's Beard Waterfall.</div>" },
+
+            { day: "Day 23", date: "Nov 28", name: "Amalia Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:10/21:45", temp: "48°F", icon: "❄️", lat: -50.78, lon: -73.75, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Zoom into deep blue ice crevasses. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Fur Seals on ice floes near glacier face.</div>" },
+
+            { day: "Day 24", date: "Nov 29", name: "Garibaldi Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:00/21:55", temp: "45°F", icon: "❄️", lat: -54.85, lon: -69.98, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> 4K Video of potential calving. <br><span class='tag galaxy-tag'>Galaxy</span> <b>Expert RAW:</b> Best for HDR fjord cliff contrast.</div>" },
+
+            { day: "Day 25", date: "Nov 30", name: "Pia Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:00/22:00", temp: "44°F", icon: "❄️", lat: -54.78, lon: -69.61, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>Burst Mode:</b> Capture the splash when ice hits water. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> 'Electric Blue' compression ice detail.</div>" },
+
+            { day: "Day 26", date: "Dec 1", name: "Punta Arenas", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "05:21/21:55", temp: "52°F", icon: "🐧", lat: -53.16, lon: -70.91, zoom: 13,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Magellanic Penguins (Magdalena Is). <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Sculpted cypress trees in the Municipal Cemetery.</div>" },
+
+            { day: "Day 30", date: "Dec 5", name: "Ushuaia", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "04:54/22:11", temp: "50°F", icon: "⚓", lat: -54.80, lon: -68.30, zoom: 12,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Beagle Channel panoramas. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Dolphin Gulls at Lapataia Bay.</div>" },
+
+            { day: "Day 32", date: "Dec 7", name: "Yankee Harbour", type: "Viking Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "33°F", icon: "🐧", lat: -62.53, lon: -59.78, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Gentoo Penguin highway. Focus on 'tobogganing' behavior.</div>" },
+
+            { day: "Day 33", date: "Dec 8", name: "Mikkelsen Harbour", type: "Viking Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "34°F", icon: "⚓", lat: -63.90, lon: -60.78, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Macro detail of whale bones. <br><span class='tag galaxy-tag'>Galaxy</span> <b>4K/60:</b> Special Ops boat approach.</div>" },
+
+            { day: "Day 34", date: "Dec 9", name: "Portal Point", type: "Mainland Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -64.50, lon: -61.76, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>0.6x Ultrawide:</b> Massive glacial scale from mainland step. <br><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Antarctic Terns nesting.</div>" },
+
+            { day: "Day 35", date: "Dec 10", name: "Danco Island", type: "Viking Excursion", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "33°F", icon: "🐧", lat: -64.73, lon: -62.59, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Ship at anchor from 300ft summit. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Gentoos at the peak.</div>" },
+
+            { day: "Day 36", date: "Dec 11", name: "Neumayer Channel", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "🚢", lat: -64.79, lon: -63.50, zoom: 12,
+              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>Hyperlapse:</b> From Observation Deck. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Humpback whale feeding zone.</div>" },
+
+            { day: "Day 37", date: "Dec 12", name: "Paradise Harbor", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "34°F", icon: "❄️", lat: -64.81, lon: -62.86, zoom: 14,
+              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Whales and falling ice splashes. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Reflection shots in still water.</div>" }
+        ];
+
+        const list = document.getElementById('location-list');
+        itinerary.forEach((s, i) => {
+            const li = document.createElement('li');
+            li.className = 'location-item';
+            li.innerHTML = `<div class='icon-box'>${s.icon}</div><div class='info-box'><span class='day-num'>${s.day} | ${s.date}</span><span class='site-name'>${s.name}</span></div>`;
+            li.onclick = () => {
+                map.flyTo([s.lat, s.lon], s.zoom, { duration: 3 });
+                document.getElementById('risk-val').textContent = s.risk;
+                document.getElementById('risk-val').className = "risk-tag " + s.rClass;
+                document.getElementById('sun-val').textContent = s.sun;
+                document.getElementById('temp-val').textContent = s.temp;
+                document.getElementById('photo-advice').innerHTML = s.advice;
+                document.getElementById('ice-warning').style.display = (s.type.includes("Glacier") || s.day.startsWith("D3") || s.name.includes("Channel")) ? "block" : "none";
+            };
+            list.appendChild(li);
+            L.marker([s.lat, s.lon]).addTo(map).bindPopup(s.name);
+        });
+    </script>
+</body>
+</html>
