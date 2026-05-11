@@ -10,15 +10,30 @@
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; font-size: 13px; line-height: 1.1; }
         .container { max-width: 1600px; margin: 0 auto; }
         
-        .dashboard-header { background: white; padding: 15px 25px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; position: sticky; top: 10px; z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .nav-links a { color: var(--accent); text-decoration: none; font-size: 0.8rem; font-weight: bold; border: 1px solid var(--border); padding: 5px 8px; border-radius: 4px; margin-right: 5px; }
+        /* Centered Header */
+        .dashboard-header { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            text-align: center;
+            margin-bottom: 25px; 
+            position: sticky; 
+            top: 10px; 
+            z-index: 1000; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+        }
+        .header-title { font-size: 1.5rem; margin: 0; color: var(--header); font-weight: 800; }
+        .header-as-of { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-weight: 500; }
 
+        /* Tables & Wraps */
         .summary-wrap, .hourly-wrap { background: #fff; padding: 15px; border-radius: 12px; border: 2px solid var(--accent); margin-bottom: 30px; overflow-x: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
         th { background: var(--accent); color: white; padding: 10px; border: 1px solid #1d4ed8; }
         td { border: 1px solid var(--border); padding: 10px 8px; text-align: center; font-weight: 700; }
         .row-label { background: #f8fafc; text-align: left !important; font-weight: bold !important; width: 220px; color: var(--header); }
         
+        /* Indicators */
         .h-badge { padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; display: inline-block; min-width: 60px; }
         .bg-red { background: #dc2626; }    
         .bg-blue { background: #1e40af; }   
@@ -33,15 +48,6 @@
         .avg-cell { font-weight: bold; border-left: 2px solid #22c55e; background: #f0fdf4 !important; color: #166534; }
         .tossed { text-decoration: line-through; opacity: 0.25; font-weight: normal !important; }
 
-        button { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-ss { background: #ef4444; }
-
-        body.screenshot-mode { background: white; padding: 0; }
-        body.screenshot-mode .dashboard-header, body.screenshot-mode h2, body.screenshot-mode .table-wrap, body.screenshot-mode .nav-links { display: none; }
-        body.screenshot-mode .summary-wrap, body.screenshot-mode .hourly-wrap { border: 6px solid var(--accent); margin: 0 0 20px 0; border-radius: 0; }
-        .branding-header { display: none; }
-        body.screenshot-mode .branding-header { display: block !important; text-align: center; background: var(--accent); color: white; padding: 25px; }
-
         #loading { text-align: center; padding: 20px; font-weight: bold; color: var(--accent); background: #fff; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
     </style>
 </head>
@@ -49,21 +55,12 @@
 
 <div class="container">
     <div class="dashboard-header">
-        <div>
-            <h1 style="margin:0; font-size: 1.1rem;">Vizcaya Master MOS</h1>
-            <span id="locInfo" style="font-size: 0.7rem; color: #64748b;">Round Rock, TX</span>
-        </div>
-        <div class="nav-links">
-            <a href="#summary">7-Day</a><a href="#extended">8-14 Day</a><a href="#hourly">Timing</a><a href="#dashboard-content">Details</a>
-        </div>
-        <div style="display:flex; gap:8px;">
-            <button class="btn-ss" onclick="document.body.classList.toggle('screenshot-mode')">📸 Screenshot</button>
-            <button onclick="loadData()">Refresh</button>
-        </div>
+        <div class="header-title">Vizcaya Master MOS</div>
+        <div id="asOfTime" class="header-as-of">Synchronizing...</div>
+        <div style="font-size: 0.65rem; color: #94a3b8; margin-top: 3px;">Round Rock, TX • Updates Hourly</div>
     </div>
 
     <div id="loading">📡 Filtering Forecast Noise...</div>
-    <div class="branding-header"><h1>📍 Vizcaya Consensus Weather Report</h1></div>
 
     <h2 id="summary">Executive 7-Day Summary <span>(Consensus vs Climatology)</span></h2>
     <div class="summary-wrap"><table id="summaryTable"><thead id="summaryHead"></thead><tbody id="summaryBody"></tbody></table></div>
@@ -86,7 +83,9 @@
 
     async function loadData() {
         const loader = document.getElementById('loading');
+        const asOfLabel = document.getElementById('asOfTime');
         loader.style.display = 'block';
+        
         try {
             const [almRes, r1, r2, r3] = await Promise.all([
                 fetch(ALMANAC_URL),
@@ -104,8 +103,16 @@
             renderSummary(dCore, dEnv, 'summary', 0, 7, false);
             renderSummary(dCore, dEnv, 'extended', 7, 14, true);
             renderDetails(dCore, dEnv);
+            
+            // Update timestamp
+            const now = new Date();
+            asOfLabel.innerText = `As of ${now.toLocaleDateString([], {month:'short', day:'numeric'})}, ${now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+            
             loader.style.display = 'none';
-        } catch (e) { loader.innerText = "Sync Error."; console.error(e); }
+        } catch (e) { 
+            loader.innerText = "Sync Error. Retrying in 1 minute..."; 
+            setTimeout(loadData, 60000); 
+        }
     }
 
     function getStats(data, keys, metric, day) {
@@ -117,8 +124,7 @@
         return { avg: s.reduce((a,b)=>a+b,0)/s.length, min: s[0], max: s[s.length-1], spread: rawSpread };
     }
 
-    function getSmartCondition(cloudPct, rainProb, isRemainingDay = false) {
-        // If this is for "Today", and rain chance is now low post-front, override rain label
+    function getSmartCondition(cloudPct, rainProb) {
         if (rainProb > 45) return "🌧️ Rain";
         if (rainProb > 20) return "🌦️ Isold Rain";
         if (cloudPct < 20) return "☀️ Sunny";
@@ -169,25 +175,20 @@
         const head = document.getElementById(`${tableId}Head`);
         const dates = d1.daily.time.slice(start, end);
         const mAll = modelConfig.map(m=>m.key);
-        const mSub = ['best_match','ecmwf_ifs025','gfs_seamless','icon_seamless'];
+        const mSub = ['best_match','ecmwf_ifs025', 'gfs_seamless','icon_seamless'];
 
         head.innerHTML = '<tr><th class="row-label">DATE / METRIC</th>' + dates.map(d => `<th>${new Date(d+'T00:00').toLocaleDateString([],{weekday:'short'})}<br>${new Date(d+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</th>`).join('') + '</tr>';
         
         let rows = [];
 
-        // Condition override for "Today" to ignore rain that already happened
         rows.push({ l: 'Conditions', g: 'Overview & Hazards', f: d => {
             let rainProb = getStats(d2, mSub, 'precipitation_probability_max', d).avg;
-            let cloudPct = getStats(d1, mAll, 'cloud_cover_mean', d).avg;
-            
-            // If Day 0, look only at remaining hours
             if (d === 0 && hData) {
                 const nowIdx = hData.hourly.time.findIndex(t => new Date(t) >= new Date());
                 const endOfDayIdx = nowIdx + (24 - new Date().getHours());
-                const remainingProb = hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx);
-                rainProb = Math.max(...remainingProb);
+                rainProb = Math.max(...hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx));
             }
-            return getSmartCondition(cloudPct, rainProb);
+            return getSmartCondition(getStats(d1, mAll, 'cloud_cover_mean', d).avg, rainProb);
         }});
         
         rows.push({ l: 'Forecast Confidence', g: 'Overview & Hazards', f: d => {
@@ -213,9 +214,9 @@
             }});
         }
 
-        // TEMPERATURE ANALYSIS
         rows.push({ l: 'Consensus Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d1,mAll,'temperature_2m_max',d).avg)}° / ${Math.round(getStats(d1,mAll,'temperature_2m_min',d).avg)}°` });
         rows.push({ l: 'Feels Like Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d2,mSub,'apparent_temperature_max',d).avg)}° / ${Math.round(getStats(d2,mSub,'apparent_temperature_min',d).avg)}°` });
+        
         if (!isExt) {
             rows.push({ l: 'Normal (Avg) Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
                 const a = almanac[d1.daily.time[d].substring(5)] || {avgH:'--',avgL:'--'};
@@ -235,19 +236,14 @@
             }});
         }
 
-        // ENVIRONMENT & WIND
         rows.push({ l: 'Rain Prob / Exp. Amt', g: 'Environment & Wind', f: d => {
             let rainProb = Math.round(getStats(d2, mSub, 'precipitation_probability_max', d).avg);
             let rainSum = getStats(d1, mAll, 'precipitation_sum', d).avg;
-
-            // Day 0 override: only count rain remaining for the day
             if (d === 0 && hData) {
                 const nowIdx = hData.hourly.time.findIndex(t => new Date(t) >= new Date());
                 const endOfDayIdx = nowIdx + (24 - new Date().getHours());
-                const remainingProb = hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx);
-                const remainingSum = hData.hourly.precipitation.slice(nowIdx, endOfDayIdx);
-                rainProb = Math.max(...remainingProb);
-                rainSum = remainingSum.reduce((a, b) => a + b, 0);
+                rainProb = Math.max(...hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx));
+                rainSum = hData.hourly.precipitation.slice(nowIdx, endOfDayIdx).reduce((a, b) => a + b, 0);
             }
             return `${rainProb}% / ${rainSum.toFixed(2)}"` + (d === 0 ? ' <small>(Rem.)</small>' : '');
         }});
@@ -284,7 +280,6 @@
                 });
                 const nums = rowVals.map(rv => parseFloat(rv.split(/[%\/ ]/)[0]));
                 rowVals.forEach((rv, i) => h += `<td class="${(nums.length>3 && (nums[i]===Math.min(...nums)||nums[i]===Math.max(...nums)))?'tossed':''}">${rv}</td>`);
-                
                 let cons = "";
                 if (s.m==='comfort') cons = `${Math.round(getStats(s.src, s.k, 'relative_humidity_2m_mean', d).avg)}%/${Math.round(getStats(s.src, s.k, 'dewpoint_2m_max', d).avg)}°`;
                 else if (s.m==='wind') cons = `${Math.round(getStats(s.src, s.k, 'wind_speed_10m_max', d).avg)}/${Math.round(getStats(s.src, s.k, 'wind_gusts_10m_max', d).avg)}`;
@@ -296,7 +291,11 @@
         });
     }
 
+    // Initial Load
     loadData();
+
+    // Set auto-refresh to run every 1 hour (3,600,000 ms)
+    setInterval(loadData, 3600000);
 </script>
 </body>
 </html>
