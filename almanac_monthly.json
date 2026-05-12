@@ -1,0 +1,90 @@
+{
+  "station_metadata": {
+    "name": "Vizcaya",
+    "period_of_record": "130 Years",
+    "units": {
+      "temperature": "Fahrenheit",
+      "rainfall": "Inches"
+    }
+  },
+  "monthly_data": {
+    "01_january": {
+      "average_temp": { "mean": 48.9, "record_max_avg": 59.0, "record_max_year": 1952, "record_min_avg": 40.0, "record_min_year": 1930 },
+      "average_high": { "mean": 60.6, "record_max": 72.0, "record_max_year": 1923, "record_min": 49.0, "record_min_year": 1979 },
+      "average_low":  { "mean": 37.1, "record_max": 48.0, "record_max_year": 1952, "record_min": 25.0, "record_min_year": 1918 },
+      "rainfall":     { "mean": 2.11, "record_wettest": 10.10, "record_wettest_year": 1968, "record_driest": 0.00, "record_driest_year": 1971 }
+    },
+    "02_february": {
+      "average_temp": { "mean": 52.4, "record_max_avg": 61.0, "record_max_year": 2017, "record_min_avg": 41.0, "record_min_year": 1899 },
+      "average_high": { "mean": 64.4, "record_max": 75.0, "record_max_year": 1976, "record_min": 53.0, "record_min_year": 1899 },
+      "average_low":  { "mean": 40.3, "record_max": 52.0, "record_max_year": 1957, "record_min": 29.0, "record_min_year": 1899 },
+      "rainfall":     { "mean": 2.29, "record_wettest": 8.68, "record_wettest_year": 1992, "record_driest": 0.01, "record_driest_year": 1916 }
+    },
+    "03_march": {
+      "average_temp": { "mean": 60.0, "record_max_avg": 71.0, "record_max_year": 1907, "record_min_avg": 49.0, "record_min_year": 1915 },
+      "average_high": { "mean": 72.3, "record_max": 84.0, "record_max_year": 1907, "record_min": 60.0, "record_min_year": 1915 },
+      "average_low":  { "mean": 47.7, "record_max": 58.0, "record_max_year": 1907, "record_min": 37.0, "record_min_year": 2014 },
+      "rainfall":     { "mean": 2.33, "record_wettest": 7.16, "record_wettest_year": 2001, "record_driest": 0.00, "record_driest_year": 1904 }
+    },
+    "04_april": {
+      "average_temp": { "mean": 67.3, "record_max_avg": 75.0, "record_max_year": 1925, "record_min_avg": 61.0, "record_min_year": 1997 },
+      "average_high": { "mean": 79.1, "record_max": 88.0, "record_max_year": 1925, "record_min": 70.0, "record_min_year": 1997 },
+      "average_low":  { "mean": 55.4, "record_max": 65.0, "record_max_year": 1967, "record_min": 49.0, "record_min_year": 2018 },
+      "rainfall":     { "mean": 3.37, "record_wettest": 11.58, "record_wettest_year": 1997, "record_driest": 0.13, "record_driest_year": 2012 }
+    },
+    "05_may": {
+      "average_temp": { "mean": 74.5, "record_max_avg": 79.6, "record_max_year": 2022, "record_min_avg": 67.0, "record_min_year": 2016 },
+      "average_high": { "mean": 85.5, "record_max": 97.9, "record_max_year": 2022, "record_min": 79.0, "record_min_year": 1907 },
+      "average_low":  { "mean": 63.6, "record_max": 70.0, "record_max_year": 1902, "record_min": 54.0, "record_min_year": 2016 },
+      "rainfall":     { "mean": 4.39, "record_wettest": 14.83, "record_wettest_year": 2015, "record_driest": 0.69, "record_driest_year": 1960 }
+    },
+    "06_june": {
+      "average_temp": { "mean": 81.1, "record_max_avg": 87.0, "record_max_year": 1925, "record_min_avg": 74.0, "record_min_year": 1995 },
+      "average_high": { "mean": 92.1, "record_max": 100.0, "record_max_year": 1925, "record_min": 86.0, "record_min_year": 1983 },
+      "average_low":  { "mean": 69.9, "record_max": 74.1, "record_max_year": 2024, "record_min": 59.0, "record_min_year": 1995 },
+      "rainfall":     { "mean": 3.31, "record_wettest": 10.93, "record_wettest_year": 1919, "record_driest": 0.00, "record_driest_year": 1967 }
+    },
+    "07_july": {
+      "average_temp": { "mean": 84.0, "record_max_avg": 89.0, "record_max_year": 2011, "record_min_avg": 79.0, "record_min_year": 2007 },
+      "average_high": { "mean": 95.7, "record_max": 102.0, "record_max_year": 1978, "record_min": 88.0, "record_min_year": 2004 },
+      "average_low":  { "mean": 72.3, "record_max": 77.2, "record_max_year": 2022, "record_min": 69.0, "record_min_year": 2004 },
+      "rainfall":     { "mean": 2.06, "record_wettest": 10.49, "record_wettest_year": 2007, "record_driest": 0.00, "record_driest_year": 1913 }
+    },
+    "08_august": {
+      "average_temp": { "mean": 84.3, "record_max_avg": 90.0, "record_max_year": 2011, "record_min_avg": 77.0, "record_min_year": 2004 },
+      "average_high": { "mean": 96.6, "record_max": 104.0, "record_max_year": 2011, "record_min": 88.0, "record_min_year": 2004 },
+      "average_low":  { "mean": 72.1, "record_max": 77.0, "record_max_year": 2011, "record_min": 66.0, "record_min_year": 2004 },
+      "rainfall":     { "mean": 2.05, "record_wettest": 14.00, "record_wettest_year": 2016, "record_driest": 0.00, "record_driest_year": 1902 }
+    },
+    "09_september": {
+      "average_temp": { "mean": 78.7, "record_max_avg": 84.3, "record_max_year": 2023, "record_min_avg": 73.0, "record_min_year": 1974 },
+      "average_high": { "mean": 90.5, "record_max": 98.0, "record_max_year": 1977, "record_min": 84.0, "record_min_year": 1974 },
+      "average_low":  { "mean": 66.8, "record_max": 73.3, "record_max_year": 2023, "record_min": 58.0, "record_min_year": 1979 },
+      "rainfall":     { "mean": 3.54, "record_wettest": 17.75, "record_wettest_year": 2010, "record_driest": 0.02, "record_driest_year": 2011 }
+    },
+    "10_october": {
+      "average_temp": { "mean": 69.3, "record_max_avg": 76.0, "record_max_year": 1976, "record_min_avg": 61.0, "record_min_year": 1976 },
+      "average_high": { "mean": 81.9, "record_max": 90.0, "record_max_year": 1934, "record_min": 73.0, "record_min_year": 1976 },
+      "average_low":  { "mean": 56.6, "record_max": 65.0, "record_max_year": 2004, "record_min": 47.0, "record_min_year": 1917 },
+      "rainfall":     { "mean": 3.43, "record_wettest": 11.66, "record_wettest_year": 2010, "record_driest": 0.00, "record_driest_year": 2009 }
+    },
+    "11_november": {
+      "average_temp": { "mean": 58.5, "record_max_avg": 68.0, "record_max_year": 1927, "record_min_avg": 51.0, "record_min_year": 1959 },
+      "average_high": { "mean": 70.4, "record_max": 80.0, "record_max_year": 1927, "record_min": 62.0, "record_min_year": 1993 },
+      "average_low":  { "mean": 46.5, "record_max": 56.0, "record_max_year": 1927, "record_min": 38.0, "record_min_year": 1911 },
+      "rainfall":     { "mean": 2.61, "record_wettest": 11.42, "record_wettest_year": 1902, "record_driest": 0.00, "record_driest_year": 1903 }
+    },
+    "12_december": {
+      "average_temp": { "mean": 50.7, "record_max_avg": 61.0, "record_max_year": 2021, "record_min_avg": 40.0, "record_min_year": 1989 },
+      "average_high": { "mean": 62.2, "record_max": 74.0, "record_max_year": 1933, "record_min": 49.0, "record_min_year": 1914 },
+      "average_low":  { "mean": 39.3, "record_max": 57.5, "record_max_year": 2024, "record_min": 28.0, "record_min_year": 1989 },
+      "rainfall":     { "mean": 2.52, "record_wettest": 14.87, "record_wettest_year": 1913, "record_driest": 0.01, "record_driest_year": 1950 }
+    },
+    "annual": {
+      "average_temp": { "mean": 67.5, "record_max_avg": 70.6, "record_max_year": 1933, "record_min_avg": 63.6, "record_min_year": 1983 },
+      "average_high": { "mean": 79.2, "record_max": 83.1, "record_max_year": 1933, "record_min": 75.9, "record_min_year": 1983 },
+      "average_low":  { "mean": 55.6, "record_max": 60.9, "record_max_year": 2023, "record_min": 51.5, "record_min_year": 1983 },
+      "rainfall":     { "mean": 34.02, "record_wettest": 60.03, "record_wettest_year": 1919, "record_driest": 13.23, "record_driest_year": 1917 }
+    }
+  }
+}
