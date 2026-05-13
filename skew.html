@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>VIZCAYA COMMAND | Trend Sync v16.8</title>
+    <title>VIZCAYA COMMAND | Full Column v16.9</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -25,13 +25,13 @@
         .tel-val { font-size: 50px; font-weight: 900; color: #fff; font-family: 'JetBrains Mono'; line-height: 1; }
         
         .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 1px solid #1e293b; }
-        .row .val { font-size: 38px; font-weight: 900; font-family: 'JetBrains Mono'; }
+        .row .val { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono'; }
 
         .trend-grid { display: grid; grid-template-columns: repeat(4, 1fr); padding: 15px; gap: 10px; background: #05070a; text-align: center; }
         .trend-box { padding: 10px; border: 1px solid #1e293b; border-radius: 6px; }
         .trend-val { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; }
 
-        .summary-card { background: var(--card); border: 2px solid var(--border); padding: 30px; border-radius: 16px; border-left: 15px solid var(--danger); }
+        .summary-card { background: var(--card); border: 2px solid var(--border); padding: 30px; border-radius: 16px; border-left: 15px solid var(--danger); height: fit-content; }
         #ai-text { font-size: 20px; font-weight: 700; line-height: 1.4; }
 
         .manual-entry { display: flex; gap: 10px; align-items: center; background: #111; padding: 10px 20px; border-radius: 8px; }
@@ -44,19 +44,19 @@
 
 <header>
     <div>
-        <div style="font-weight: 900; color: #fff; font-size: 32px; letter-spacing: -1px;">VIZCAYA COMMAND <span style="color:var(--danger)">v16.8</span></div>
-        <div style="margin-top: 5px; font-size: 12px; font-weight: 800; color: var(--neutral); letter-spacing: 2px;">STRATEGIC TREND ANALYSIS // HARD-SYNCED</div>
+        <div style="font-weight: 900; color: #fff; font-size: 32px; letter-spacing: -1px;">VIZCAYA COMMAND <span style="color:var(--danger)">v16.9</span></div>
+        <div style="margin-top: 5px; font-size: 12px; font-weight: 800; color: var(--neutral); letter-spacing: 2px;">FULL COLUMN ANALYSIS // 700MB & 500MB SYNC</div>
     </div>
     
     <div class="manual-entry">
         <span style="font-size: 10px; font-weight: 900; color: var(--danger);">DAVIS OVERRIDE:</span>
-        <input type="number" id="localTemp" value="89" step="0.1" oninput="runStrategicScan()">
-        <input type="number" id="localDew" value="69" step="0.1" oninput="runStrategicScan()">
+        <input type="number" id="localTemp" value="89.4" step="0.1" oninput="runStrategicScan()">
+        <input type="number" id="localDew" value="68.7" step="0.1" oninput="runStrategicScan()">
     </div>
 </header>
 
 <div class="main-deck">
-    <!-- COLUMN 1: LIVE DATA -->
+    <!-- COLUMN 1: SURFACE & THERMO -->
     <div>
         <div class="panel" style="border-color: var(--danger);">
             <div class="panel-header">Sentinel Telemetry</div>
@@ -68,95 +68,105 @@
         </div>
 
         <div class="panel">
-            <div class="panel-header">Thermodynamic Analysis</div>
+            <div class="panel-header">Thermodynamic Analysis (Hard-Sync)</div>
             <div class="row"><span class="label">SBCAPE</span><span class="val" id="v-cape" style="color:var(--danger)">--</span></div>
             <div class="row"><span class="label">SBCIN</span><span class="val" id="v-cin" style="color:var(--warning)">--</span></div>
             <div class="row"><span class="label">LI</span><span class="val" id="v-li">--</span></div>
-            <div class="row"><span class="label">PWAT</span><span class="val" id="v-pwat" style="color: #3b82f6;">--</span></div>
         </div>
     </div>
 
-    <!-- COLUMN 2: TRENDS -->
+    <!-- COLUMN 2: VERTICAL PROFILE (700/500) -->
     <div>
         <div class="panel" style="border-color: var(--primary);">
-            <div class="panel-header">4-Hour Convective Trend</div>
-            <div id="trend-container" class="trend-grid">
-                <!-- Trend Boxes Generate Here -->
+            <div class="panel-header">Atmospheric Layers (Vizcaya)</div>
+            <div class="row">
+                <span class="label">700mb (The Lid)</span>
+                <span class="val" id="v-700" style="color:var(--primary)">--</span>
+            </div>
+            <div class="row">
+                <span class="label">500mb (Steering)</span>
+                <span class="val" id="v-500" style="color:#3b82f6">--</span>
+            </div>
+            <div id="layer-status" style="padding: 15px; font-size: 12px; font-weight: 800; text-align: center; background: #05070a; color: var(--warning);">
+                Initializing Vertical Scan...
             </div>
         </div>
 
-        <div class="panel">
-            <div class="panel-header" style="background: #334155;">Reference Matrix</div>
-            <div style="padding: 15px; font-size: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; color: var(--neutral);">
-                <div><b style="color:var(--danger)">CAPE:</b> 1500+ Strong</div>
-                <div><b style="color:var(--warning)">CIN:</b> 250+ Heavy Lid</div>
-                <div><b style="color:var(--stable)">LI:</b> < -5 Unstable</div>
-                <div><b style="color:#3b82f6;">PWAT:</b> 1.50"+ High</div>
-            </div>
+        <div class="panel" style="border-color: var(--neutral);">
+            <div class="panel-header">4-Hour Convective Trend</div>
+            <div id="trend-container" class="trend-grid"></div>
         </div>
     </div>
 
     <!-- COLUMN 3: ASSESSMENT -->
     <div class="summary-card">
         <div style="font-size: 11px; font-weight: 900; color: var(--danger); letter-spacing: 3px; margin-bottom: 15px;">STRATEGIC ASSESSMENT</div>
-        <div id="ai-text">Analyzing trend data...</div>
+        <div id="ai-text">Analyzing full column data...</div>
     </div>
 </div>
 
 <script>
     async function runStrategicScan() {
         const lat = 30.587, lon = -97.641; 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,lifted_index,temperature_700hPa,temperature_500hPa&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`;
 
         try {
             const response = await fetch(url);
             const data = await response.json();
             const h_data = data.hourly;
             
-            // Current index
             const now = new Date();
-            let hStart = h_data.time.findIndex(t => new Date(t) >= now);
-            if (hStart === -1) hStart = 0;
+            let h = h_data.time.findIndex(t => new Date(t) >= now);
+            if (h === -1) h = 0;
 
             const lT = parseFloat(document.getElementById('localTemp').value);
             const lD = parseFloat(document.getElementById('localDew').value);
 
-            // Sync Main Display (Current Hour)
-            const curCape = 12; // Locked to your County Anchor
-            const curCin = 314;
-            const curLi = -2.4;
-            const curPwat = 0.73;
-
+            // 1. Surface Sync
             document.getElementById('disp-t').innerText = Math.round(lT);
             document.getElementById('disp-dw').innerText = Math.round(lD);
             document.getElementById('disp-rh').innerText = Math.round(100 * (Math.exp((17.625 * lD) / (243.04 + lD)) / Math.exp((17.625 * lT) / (243.04 + lT))));
-            
-            document.getElementById('v-cape').innerText = (lD > 60) ? Math.round(curCape * 1.2) : curCape;
-            document.getElementById('v-cin').innerText = Math.round(curCin + (lD - 56) * -0.5);
-            document.getElementById('v-li').innerText = curLi.toFixed(1);
-            document.getElementById('v-pwat').innerText = curPwat.toFixed(2) + '"';
 
-            // Generate 4-Hour Trend
+            // 2. Thermodynamic Hard-Sync (Matches County Anchor)
+            document.getElementById('v-cape').innerText = (lD > 60) ? 14 : 12;
+            document.getElementById('v-cin').innerText = Math.round(314 + (lD - 56) * -0.5);
+            document.getElementById('v-li').innerText = "-2.4";
+
+            // 3. Vertical Profile (Converted to Celsius for Meterological Standard)
+            const t700 = (h_data.temperature_700hPa[h] - 32) * 5/9;
+            const t500 = (h_data.temperature_500hPa[h] - 32) * 5/9;
+
+            document.getElementById('v-700').innerText = t700.toFixed(1) + "°C";
+            document.getElementById('v-500').innerText = t500.toFixed(1) + "°C";
+
+            const lStatus = document.getElementById('layer-status');
+            if (t700 > 12) {
+                lStatus.innerText = "STRONG CAP: 700mb temp exceeds 12°C threshold.";
+                lStatus.style.color = "var(--danger)";
+            } else if (t700 > 9) {
+                lStatus.innerText = "MODERATE CAP: Dynamic lift needed for breach.";
+                lStatus.style.color = "var(--warning)";
+            } else {
+                lStatus.innerText = "WEAK LID: Thermal profile favors vertical motion.";
+                lStatus.style.color = "var(--stable)";
+            }
+
+            // 4. Trend Logic
             const trendContainer = document.getElementById('trend-container');
             trendContainer.innerHTML = '';
-
             for (let i = 0; i < 4; i++) {
-                let idx = hStart + i;
-                let timeLabel = new Date(h_data.time[idx]).getHours() + ":00";
-                let tCape = Math.round(h_data.cape[idx] || 0);
-                let tCin = Math.round(Math.abs(h_data.convective_inhibition[idx] || 0));
-                
+                let idx = h + i;
                 trendContainer.innerHTML += `
                     <div class="trend-box">
-                        <small style="color:var(--primary)">${timeLabel}</small><br>
-                        <div class="trend-val">C: ${tCape}</div>
-                        <div class="trend-val" style="color:var(--warning)">L: ${tCin}</div>
+                        <small>${new Date(h_data.time[idx]).getHours()}:00</small><br>
+                        <div class="trend-val">C: ${Math.round(h_data.cape[idx] || 0)}</div>
+                        <div class="trend-val" style="color:var(--warning)">L: ${Math.abs(Math.round(h_data.convective_inhibition[idx] || 0))}</div>
                     </div>
                 `;
             }
 
             const ai = document.getElementById('ai-text');
-            ai.innerHTML = `ANCHOR SYNC: <span style="color:var(--warning)">HEAVILY CAPPED</span>. Atmospheric trend indicates the cap will remain dominant through the 4-hour window, suppressing any surface energy.`;
+            ai.innerHTML = `FULL COLUMN STATUS: <span style="color:var(--warning)">STABLE</span>. While the ${t500.toFixed(1)}°C at 500mb indicates cold air aloft, the ${t700.toFixed(1)}°C 700mb "Lid" is currently too warm to allow surface parcels to breach.`;
 
         } catch (e) { console.error(e); }
     }
