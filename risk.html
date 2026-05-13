@@ -2,348 +2,148 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vizcaya Risk Engine | Professional Broadcast Edition</title>
+<title>Vizcaya Risk Engine | Compact v6.8</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root {
-    --bg: #020617;
-    --card: #0f172a;
-    --text: #f8fafc;
-    --dim: #94a3b8;
-    --accent: #3b82f6;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #020617; color: #e5e7eb; padding: 10px; max-width: 1200px; margin: auto; }
+  h1 { text-align: center; margin: 5px 0 10px 0; color: #f8fafc; letter-spacing: -1px; font-size: 1.5rem; }
+  h2 { text-align: center; margin: 10px 0 8px 0; font-size: 1.1rem; color: #94a3b8; }
   
-  body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 25px;
-    width: 1080px; /* High-res Facebook Landscape */
-    margin: auto;
-  }
+  /* Compact Matrix Styling */
+  .matrix-container { background: #0a0f1d; border: 1px solid #1e293b; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+  .matrix-grid { display: grid; grid-template-columns: 180px repeat(7, 1fr); border-bottom: 1px solid #1e293b; }
+  .matrix-header { background: #111827; padding: 8px; text-align: center; font-size: 14px; font-weight: 800; color: #94a3b8; border-right: 1px solid #1e293b; }
+  .matrix-day-label { background: #111827; padding: 8px; text-align: center; font-size: 14px; font-weight: 900; color: #fff; border-right: 1px solid #1e293b; }
+  .matrix-row-label { padding: 6px 12px; font-size: 13px; font-weight: 800; color: #cbd5e1; border-right: 1px solid #1e293b; display: flex; align-items: center; background: #0f172a; text-transform: uppercase; }
+  .matrix-cell { padding: 4px; border-right: 1px solid #1e293b; display: flex; justify-content: center; align-items: center; min-height: 38px; }
+  
+  .indicator { width: 18px; height: 18px; border-radius: 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+  .active-indicator { box-shadow: 0 0 12px currentColor; border: none; }
 
-  /* TOP BAR AREA */
-  .top-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding: 0 10px;
-  }
+  /* Compact Severity Header */
+  #severity-index { height:40px; border-radius:8px; margin-bottom:12px; background:#1e293b; position:relative; overflow:hidden; border: 1px solid #334155; }
+  #severity-bar { height:100%; width:0%; background:#16a34a; transition:width 1.5s ease-in-out; }
+  #severity-text { position:absolute; width:100%; text-align:center; top:0; color:#fff; line-height:40px; font-weight:bold; font-size: 1.1rem; text-shadow: 1px 1px 4px #000; }
 
-  .live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 900;
-    text-transform: uppercase;
-    color: var(--danger);
-  }
+  /* Infrastructure Panel - Tightened */
+  .severe-panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .severe-row { display:flex; justify-content:space-between; padding:10px 15px; border-radius:6px; font-size: 0.9rem; font-weight: 600; }
+  .severe-low { background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); }
+  .severe-mod { background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: #fb923c; }
+  .severe-high { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; }
 
-  .pulse {
-    width: 10px;
-    height: 10px;
-    background: var(--danger);
-    border-radius: 50%;
-    box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  }
-
-  h1 { 
-    text-align: center; 
-    font-size: 48px; 
-    font-weight: 900; 
-    margin-bottom: 5px; 
-    letter-spacing: -2px;
-    text-transform: uppercase;
-    color: #fff;
-  }
-
-  .sub-header {
-    text-align: center;
-    color: var(--dim);
-    font-size: 16px;
-    margin-bottom: 30px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-  }
-
-  /* IMPACT BAR */
-  #severity-index {
-    height: 100px; /* Even taller for impact */
-    border-radius: 20px;
-    background: #1e293b;
-    position: relative;
-    overflow: hidden;
-    border: 3px solid #334155;
-    margin-bottom: 30px;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-  }
-  #severity-bar {
-    height: 100%;
-    width: 0%;
-    background: var(--success);
-    transition: width 2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-  }
-  #severity-text {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    top: 0;
-    line-height: 100px;
-    font-weight: 900;
-    font-size: 42px;
-    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-  }
-
-  .card {
-    background: var(--card);
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 25px;
-    border: 1px solid #1e293b;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-  }
-
-  .narrative-text { font-size: 26px; line-height: 1.5; font-weight: 500; }
-  .section-label { color: var(--accent); font-weight: 800; font-size: 16px; text-transform: uppercase; margin-bottom: 15px; display: block; }
-
-  /* TIMELINE GRID */
-  #timeline-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 15px;
-  }
-
-  .timeline-day {
-    background: rgba(15, 23, 42, 0.5);
-    border: 2px solid #334155;
-    border-radius: 15px;
-    overflow: hidden;
-    padding-bottom: 10px;
-  }
-
-  .timeline-day-label {
-    text-align: center;
-    font-size: 20px;
-    color: #fff;
-    font-weight: 900;
-    background: #1e293b;
-    padding: 12px 0;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #334155;
-  }
-
-  .timeline-hazard-row {
-    padding: 6px 12px;
-  }
-
-  .timeline-hazard-name {
-    font-size: 12px;
-    color: var(--dim);
-    margin-bottom: 4px;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  .timeline-hazard-bar {
-    height: 16px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-
-  /* INFRA PANEL */
-  .severe-panel-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .severe-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 22px 25px;
-    border-radius: 15px;
-    font-size: 22px;
-    font-weight: 800;
-  }
-  .severe-low { background: rgba(34, 197, 94, 0.1); border: 2px solid #22c55e; color: #4ade80; }
-  .severe-mod { background: rgba(245, 158, 11, 0.1); border: 2px solid #f59e0b; color: #fbbf24; }
-  .severe-high{ background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; color: #f87171; }
-
-  .alert-card {
-    background: #450a0a;
-    padding: 25px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    border-left: 12px solid var(--danger);
-    font-size: 22px;
-    font-weight: 700;
-  }
-
-  .footer-meta {
-    text-align: center;
-    margin-top: 40px;
-    font-size: 14px;
-    color: var(--dim);
-    border-top: 1px solid #1e293b;
-    padding-top: 20px;
-  }
+  .alert-card { background:#7f1d1d; padding:10px 15px; border-radius:6px; margin-bottom:8px; color:#fff; border-left: 6px solid #ef4444; font-size: 0.85rem; }
+  .safe-card { background: #111827; padding: 10px; border-radius: 6px; border-left: 6px solid #16a34a; font-size: 0.85rem; text-align: center; color: #4ade80; }
 </style>
 </head>
 <body>
 
-<div class="top-meta">
-    <div class="live-indicator"><div class="pulse"></div> GFS Core Live</div>
-    <div id="timestamp" style="font-size: 14px; font-weight: 700; color: var(--dim);"></div>
-</div>
-
-<h1>Vizcaya Risk Engine</h1>
-<p class="sub-header">Automated Operational Weather Intelligence</p>
+<h1>🌩 VIZCAYA RISK ENGINE</h1>
 
 <div id="severity-index">
   <div id="severity-bar"></div>
-  <div id="severity-text">CALCULATING THREAT LEVEL...</div>
+  <div id="severity-text">Loading Assets...</div>
 </div>
 
 <div id="alerts"></div>
 
-<div class="card">
-    <span class="section-label">Automated Narrative Analysis</span>
-    <div id="output" class="narrative-text">Synchronizing with GFS High-Res Models...</div>
-</div>
+<div class="matrix-container" id="matrix-output"></div>
 
-<h2 style="margin: 30px 0 15px 0; font-size: 28px; text-transform: uppercase; letter-spacing: -1px;">Operational Timeline</h2>
-<div id="timeline-grid"></div>
-
-<h2 style="margin: 40px 0 15px 0; font-size: 28px; text-transform: uppercase; letter-spacing: -1px;">Systems Infrastructure Impact</h2>
+<h2>⚡ Infrastructure Status</h2>
 <div id="severe-panel" class="severe-panel-grid"></div>
-
-<div class="footer-meta">
-    Vizcaya Risk Engine v5.1 | Round Rock, TX | Data: NOAA/NWS GFS Core
-</div>
 
 <script>
 const LAT = 30.5083, LON = -97.6789;
+const HAZARD_CONFIG = [
+  { key: 'freeze', label: 'Hard Freeze', color: '#3b82f6' },
+  { key: 'hail', label: 'Hail Potential', color: '#facc15' },
+  { key: 'flood', label: 'Heavy Rain', color: '#0ea5e9' },
+  { key: 'instab', label: 'Severe / Instab', color: '#22c55e' },
+  { key: 'wind', label: 'Wind Gusts', color: '#fbbf24' },
+  { key: 'heat', label: 'Heat Index', color: '#f97316' },
+  { key: 'fire', label: 'Fire Weather', color: '#fb923c' },
+  { key: 'fog', label: 'Fog / Vis', color: '#64748b' }
+];
 
 async function runRiskEngine() {
   try {
-    document.getElementById('timestamp').innerText = "DATA GENERATED: " + new Date().toLocaleString();
-
     const [weatherRes, alertRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation_probability,snowfall,weathercode,cape,lifted_index,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=8&timezone=auto`),
-      fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`, { headers: { 'User-Agent': 'VizcayaRiskEngine/5.1' }})
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,snowfall,weathercode,cape,lifted_index,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=8&timezone=auto`),
+      fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`, { headers: { 'User-Agent': 'VizcayaRiskEngine/6.8' }})
     ]);
 
     const weather = await weatherRes.json();
     const alertData = await alertRes.json();
     const h = weather.hourly;
     const alerts = alertData.features || [];
+    const alertText = alerts.map(a => (a.properties.event).toLowerCase()).join(" ");
+    
+    const dailyHazards = {}; 
+    let maxCape = 0, maxLift = 0;
 
-    const startIdx = 24; 
-    const times = h.time.slice(startIdx);
-    const temps = h.temperature_2m.slice(startIdx);
-    const appTemps = h.apparent_temperature.slice(startIdx);
-    const gusts = h.wind_gusts_10m.slice(startIdx);
-    const pops = h.precipitation_probability.slice(startIdx);
-    const snows = h.snowfall.slice(startIdx);
-    const codes = h.weathercode.slice(startIdx);
-    const capes = h.cape.slice(startIdx);
-    const lis = h.lifted_index.slice(startIdx);
-    const rhs = h.relative_humidity_2m.slice(startIdx);
-
-    const hazards = { freeze: [], ice: [], snow: [], fog: [], instab: [], heat: [], wind: [], fire: [], tropical: [] };
-
-    for(let i=0; i < times.length; i++) {
-      const d = new Date(times[i]);
-      const dayKey = d.getDate();
-      if (temps[i] <= 32) hazards.freeze.push(dayKey);
-      if (temps[i] <= 32 && pops[i] >= 20) hazards.ice.push(dayKey);
-      if (snows[i] >= 0.1) hazards.snow.push(dayKey);
-      if (codes[i] === 45 || codes[i] === 48) hazards.fog.push(dayKey);
-      if (capes[i] >= 1000 && lis[i] <= -2) hazards.instab.push(dayKey);
-      if (appTemps[i] >= 95) hazards.heat.push(dayKey);
-      if (gusts[i] >= 30) hazards.wind.push(dayKey);
-      if (gusts[i] > 15 && rhs[i] < 25) hazards.fire.push(dayKey);
-    }
-
-    const minTemp = Math.min(...temps);
-    const maxWind = Math.max(...gusts);
-    let score = 0;
-    if (minTemp <= 32) score += 20;
-    if (minTemp < 20) score += 20;
-    if (hazards.ice.length > 0) score += 30;
-    if (maxWind >= 30) score += 15;
-    if (hazards.instab.length > 0) score += 15;
-    const finalScore = Math.min(100, score);
-
-    const sevBar = document.getElementById("severity-bar");
-    sevBar.style.width = finalScore + "%";
-    sevBar.style.background = finalScore > 75 ? "#dc2626" : (finalScore > 35 ? "#f97316" : "#22c55e");
-    document.getElementById("severity-text").innerText = `IMPACT RISK: ${finalScore}%`;
-
-    const grid = document.getElementById("timeline-grid");
-    grid.innerHTML = "";
-    const hazardConfigs = [
-      { key: 'freeze', label: 'Freeze', color: '#3b82f6' },
-      { key: 'ice',    label: 'Ice/Sleet', color: '#ef4444' },
-      { key: 'instab', label: 'T-Storm', color: '#22c55e' },
-      { key: 'heat',   label: 'Heat', color: '#f97316' },
-      { key: 'wind',   label: 'Wind', color: '#fbbf24' },
-      { key: 'fire',   label: 'Fire', color: '#fb923c' }
-    ];
-
-    for(let d=0; d<7; d++) {
-      const dayDate = new Date(times[d * 24]);
-      const dayBox = document.createElement("div");
-      dayBox.className = "timeline-day";
-      dayBox.innerHTML = `<div class="timeline-day-label">${dayDate.toLocaleDateString('en-US', {weekday:'short', day:'numeric'})}</div>`;
+    for(let i=0; i < h.time.length; i++) {
+      const d = new Date(h.time[i]);
+      const dateStr = d.toLocaleDateString('en-US', {weekday:'short', day:'numeric'});
+      if (!dailyHazards[dateStr]) dailyHazards[dateStr] = { freeze:0, hail:0, flood:0, instab:0, wind:0, heat:0, fire:0, fog:0 };
       
-      hazardConfigs.forEach(h => {
-        const hasHazard = hazards[h.key].includes(dayDate.getDate());
-        dayBox.innerHTML += `
-          <div class="timeline-hazard-row">
-            <div class="timeline-hazard-name">${h.label}</div>
-            <div class="timeline-hazard-bar" style="${hasHazard ? `background:${h.color}; box-shadow: 0 0 15px ${h.color}; border: 1px solid #fff;` : ''}"></div>
-          </div>`;
-      });
-      grid.appendChild(dayBox);
+      const day = dailyHazards[dateStr];
+      if (h.temperature_2m[i] <= 32) day.freeze = 1;
+      if (h.cape[i] >= 2000 && h.lifted_index[i] <= -4) day.hail = 1;
+      if (h.precipitation[i] >= 0.25) day.flood = 1; 
+      if (h.cape[i] >= 1000 || alertText.includes("severe")) day.instab = 1;
+      if (h.wind_gusts_10m[i] >= 30) day.wind = 1;
+      if (h.apparent_temperature[i] >= 100) day.heat = 1;
+      if (h.wind_gusts_10m[i] > 15 && h.relative_humidity_2m[i] < 25) day.fire = 1;
+      if (h.weathercode[i] === 45 || h.weathercode[i] === 48) day.fog = 1;
+
+      if (i < 48) {
+          if (h.cape[i] > maxCape) maxCape = h.cape[i];
+          if (h.lifted_index[i] < maxLift) maxLift = h.lifted_index[i];
+      }
     }
 
-    const plumbingStatus = minTemp < 20 ? ["CRITICAL", "severe-high"] : (minTemp <= 32 ? ["MODERATE", "severe-mod"] : ["STABLE", "severe-low"]);
+    const dayKeys = Object.keys(dailyHazards).slice(0, 7);
+    let matrixHTML = `<div class="matrix-grid"><div class="matrix-header">HAZARD</div>`;
+    dayKeys.forEach(dk => matrixHTML += `<div class="matrix-day-label">${dk}</div>`);
+    matrixHTML += `</div>`;
+    HAZARD_CONFIG.forEach(hz => {
+      matrixHTML += `<div class="matrix-grid"><div class="matrix-row-label">${hz.label}</div>`;
+      dayKeys.forEach(dk => {
+        const isActive = dailyHazards[dk][hz.key];
+        matrixHTML += `<div class="matrix-cell"><div class="indicator ${isActive ? 'active-indicator' : ''}" style="${isActive ? `background:${hz.color}; color:${hz.color};` : ''}"></div></div>`;
+      });
+      matrixHTML += `</div>`;
+    });
+    document.getElementById('matrix-output').innerHTML = matrixHTML;
+
+    // Infrastructure Logic
+    let roofStatus = (maxCape > 2500 && maxLift < -5) ? ["AT RISK", "severe-high"] : (maxCape > 1500 ? ["MONITOR", "severe-mod"] : ["SECURE", "severe-low"]);
+    let vehicleStatus = (maxCape > 2000 || alertText.includes("hail") || alertText.includes("tornado")) ? ["EXPOSED", "severe-high"] : ["SAFE", "severe-low"];
+    const minT = Math.min(...h.temperature_2m.slice(0, 48));
+    const maxR = Math.max(...h.precipitation.slice(0, 48));
+
     document.getElementById("severe-panel").innerHTML = `
-      <div class="severe-row ${plumbingStatus[1]}"><span>PLUMBING LOAD</span><span>${plumbingStatus[0]}</span></div>
-      <div class="severe-row ${hazards.ice.length ? 'severe-high' : 'severe-low'}"><span>ROADWAY ICING</span><span>${hazards.ice.length ? 'HIGH' : 'LOW'}</span></div>
-      <div class="severe-row ${hazards.fire.length ? 'severe-high' : 'severe-low'}"><span>FIRE POTENTIAL</span><span>${hazards.fire.length ? 'RED FLAG' : 'LOW'}</span></div>
-      <div class="severe-row ${maxWind >= 30 ? 'severe-mod' : 'severe-low'}"><span>MAX WIND GUST</span><span>${maxWind.toFixed(0)} MPH</span></div>
+      <div class="severe-row ${vehicleStatus[1]}"><strong>Vehicle Fleet</strong><span>${vehicleStatus[0]}</span></div>
+      <div class="severe-row ${roofStatus[1]}"><strong>Roof Integrity</strong><span>${roofStatus[0]}</span></div>
+      <div class="severe-row ${maxR >= 0.25 ? 'severe-mod' : 'severe-low'}"><strong>Drainage Load</strong><span>${maxR > 0 ? maxR.toFixed(2) + '"' : 'NOMINAL'}</span></div>
+      <div class="severe-row ${minT <= 32 ? 'severe-mod' : 'severe-low'}"><strong>Plumbing Stress</strong><span>${minT <= 32 ? 'PROTECT' : 'STABLE'}</span></div>
     `;
 
-    if (alerts.length > 0) {
-      document.getElementById("alerts").innerHTML = alerts.map(a => `<div class="alert-card">⚠️ ${a.properties.event.toUpperCase()} IN EFFECT</div>`).join("");
-    }
+    // Alert Display
+    document.getElementById("alerts").innerHTML = alerts.length > 0 
+      ? alerts.map(a => `<div class="alert-card">⚠️ ${a.properties.event}</div>`).join("") 
+      : `<div class="safe-card">✅ Assets Secured. No Threats.</div>`;
 
-    let msg = `Projections indicate a floor of <b>${minTemp}°F</b> and peak gusts near <b>${maxWind.toFixed(0)} MPH</b>. `;
-    if (minTemp < 20) msg += `High risk of localized plumbing failures. `;
-    if (hazards.ice.length) msg += `Elevated surfaces and bridges may become hazardous. `;
-    document.getElementById("output").innerHTML = msg;
+    // Score calculation
+    let score = (alerts.length > 0 ? 15 : 0) + (minT <= 32 ? 20 : 0) + (maxCape > 2000 ? 25 : 0);
+    const finalScore = Math.min(100, score);
+    const sevBar = document.getElementById("severity-bar");
+    sevBar.style.width = finalScore + "%";
+    sevBar.style.background = finalScore > 40 ? "#f97316" : "#16a34a";
+    document.getElementById("severity-text").innerText = `IMPACT RISK: ${finalScore}%`;
 
   } catch (err) { console.error(err); }
 }
-
 runRiskEngine();
 </script>
 </body>
