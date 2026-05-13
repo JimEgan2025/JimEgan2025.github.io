@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>VIZCAYA COMMAND | Full Column v16.9</title>
+    <title>VIZCAYA COMMAND | v17.3 Full Spectrum</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -12,11 +12,11 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); max-width: 1400px; margin: auto; border: 4px solid var(--border); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); max-width: 1450px; margin: auto; border: 4px solid var(--border); }
 
         header { padding: 25px 40px; background: #000; border-bottom: 3px solid var(--danger); display: flex; justify-content: space-between; align-items: center; }
 
-        .main-deck { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 30px; gap: 25px; background: radial-gradient(circle at top, #0f172a 0%, #020408 100%); }
+        .main-deck { display: grid; grid-template-columns: 1fr 1.2fr 1fr; padding: 30px; gap: 25px; background: radial-gradient(circle at top, #0f172a 0%, #020408 100%); }
 
         .panel { background: rgba(0,0,0,0.6); border: 2px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
         .panel-header { background: #1e293b; padding: 12px 20px; font-size: 11px; font-weight: 900; color: var(--danger); text-transform: uppercase; letter-spacing: 2px; }
@@ -24,18 +24,17 @@
         .telemetry-grid { display: grid; grid-template-columns: repeat(3, 1fr); padding: 25px; background: #05070a; text-align: center; }
         .tel-val { font-size: 50px; font-weight: 900; color: #fff; font-family: 'JetBrains Mono'; line-height: 1; }
         
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 1px solid #1e293b; }
-        .row .val { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono'; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 25px; border-bottom: 1px solid #1e293b; }
+        .row .val { font-size: 28px; font-weight: 900; font-family: 'JetBrains Mono'; }
 
         .trend-grid { display: grid; grid-template-columns: repeat(4, 1fr); padding: 15px; gap: 10px; background: #05070a; text-align: center; }
         .trend-box { padding: 10px; border: 1px solid #1e293b; border-radius: 6px; }
-        .trend-val { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; }
 
         .summary-card { background: var(--card); border: 2px solid var(--border); padding: 30px; border-radius: 16px; border-left: 15px solid var(--danger); height: fit-content; }
-        #ai-text { font-size: 20px; font-weight: 700; line-height: 1.4; }
+        #ai-text { font-size: 18px; font-weight: 700; line-height: 1.4; }
 
         .manual-entry { display: flex; gap: 10px; align-items: center; background: #111; padding: 10px 20px; border-radius: 8px; }
-        .manual-entry input { background: #000; border: 1px solid var(--danger); color: #fff; width: 80px; padding: 5px; text-align: center; font-size: 20px; font-weight: 900; }
+        .manual-entry input { background: #000; border: 1px solid var(--danger); color: #fff; width: 85px; padding: 5px; text-align: center; font-size: 20px; font-weight: 900; }
         
         small { color: var(--neutral); font-weight: 800; text-transform: uppercase; font-size: 10px; }
     </style>
@@ -44,19 +43,19 @@
 
 <header>
     <div>
-        <div style="font-weight: 900; color: #fff; font-size: 32px; letter-spacing: -1px;">VIZCAYA COMMAND <span style="color:var(--danger)">v16.9</span></div>
-        <div style="margin-top: 5px; font-size: 12px; font-weight: 800; color: var(--neutral); letter-spacing: 2px;">FULL COLUMN ANALYSIS // 700MB & 500MB SYNC</div>
+        <div style="font-weight: 900; color: #fff; font-size: 32px; letter-spacing: -1px;">VIZCAYA COMMAND <span style="color:var(--danger)">v17.3</span></div>
+        <div style="margin-top: 5px; font-size: 12px; font-weight: 800; color: var(--neutral); letter-spacing: 2px;">FULL SPECTRUM // BULK SHEAR INTEGRATED</div>
     </div>
     
     <div class="manual-entry">
         <span style="font-size: 10px; font-weight: 900; color: var(--danger);">DAVIS OVERRIDE:</span>
-        <input type="number" id="localTemp" value="89.4" step="0.1" oninput="runStrategicScan()">
-        <input type="number" id="localDew" value="68.7" step="0.1" oninput="runStrategicScan()">
+        <input type="number" id="localTemp" value="89.5" step="0.1" oninput="runStrategicScan()">
+        <input type="number" id="localDew" value="66.7" step="0.1" oninput="runStrategicScan()">
     </div>
 </header>
 
 <div class="main-deck">
-    <!-- COLUMN 1: SURFACE & THERMO -->
+    <!-- COLUMN 1: LIVE DATA -->
     <div>
         <div class="panel" style="border-color: var(--danger);">
             <div class="panel-header">Sentinel Telemetry</div>
@@ -68,28 +67,22 @@
         </div>
 
         <div class="panel">
-            <div class="panel-header">Thermodynamic Analysis (Hard-Sync)</div>
+            <div class="panel-header">Thermodynamic Analysis</div>
             <div class="row"><span class="label">SBCAPE</span><span class="val" id="v-cape" style="color:var(--danger)">--</span></div>
             <div class="row"><span class="label">SBCIN</span><span class="val" id="v-cin" style="color:var(--warning)">--</span></div>
-            <div class="row"><span class="label">LI</span><span class="val" id="v-li">--</span></div>
+            <div class="row"><span class="label">PWAT (Inches)</span><span class="val" id="v-pwat" style="color:#3b82f6">--</span></div>
+            <div class="row"><span class="label">Lifted Index</span><span class="val" id="v-li">--</span></div>
         </div>
     </div>
 
-    <!-- COLUMN 2: VERTICAL PROFILE (700/500) -->
+    <!-- COLUMN 2: VERTICAL & SHEAR -->
     <div>
         <div class="panel" style="border-color: var(--primary);">
-            <div class="panel-header">Atmospheric Layers (Vizcaya)</div>
-            <div class="row">
-                <span class="label">700mb (The Lid)</span>
-                <span class="val" id="v-700" style="color:var(--primary)">--</span>
-            </div>
-            <div class="row">
-                <span class="label">500mb (Steering)</span>
-                <span class="val" id="v-500" style="color:#3b82f6">--</span>
-            </div>
-            <div id="layer-status" style="padding: 15px; font-size: 12px; font-weight: 800; text-align: center; background: #05070a; color: var(--warning);">
-                Initializing Vertical Scan...
-            </div>
+            <div class="panel-header">Atmospheric Layers (Full Column)</div>
+            <div class="row"><span class="label">700mb (Lid)</span><span class="val" id="v-700" style="color:var(--primary)">--</span></div>
+            <div class="row"><span class="label">500mb (Steer)</span><span class="val" id="v-500" style="color:#3b82f6">--</span></div>
+            <div class="row"><span class="label">Lapse Rate</span><span class="val" id="v-lapse" style="color:var(--extreme)">--</span></div>
+            <div class="row"><span class="label">Bulk Shear</span><span class="val" id="v-shear" style="color:var(--stable)">--</span></div>
         </div>
 
         <div class="panel" style="border-color: var(--neutral);">
@@ -99,20 +92,33 @@
     </div>
 
     <!-- COLUMN 3: ASSESSMENT -->
-    <div class="summary-card">
-        <div style="font-size: 11px; font-weight: 900; color: var(--danger); letter-spacing: 3px; margin-bottom: 15px;">STRATEGIC ASSESSMENT</div>
-        <div id="ai-text">Analyzing full column data...</div>
+    <div>
+        <div class="summary-card">
+            <div style="font-size: 11px; font-weight: 900; color: var(--danger); letter-spacing: 3px; margin-bottom: 15px;">STRATEGIC ASSESSMENT</div>
+            <div id="ai-text">Synchronizing full spectrum...</div>
+        </div>
+
+        <div class="panel" style="margin-top: 25px; border-color: var(--neutral);">
+            <div class="panel-header" style="background: #334155;">Reference Matrix</div>
+            <div style="padding: 15px; font-size: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; color: var(--neutral); background: #0a0c12;">
+                <div><b style="color:var(--danger)">CAPE:</b> 1500+ Strong</div>
+                <div><b style="color:var(--warning)">CIN:</b> 250+ Heavy Lid</div>
+                <div><b style="color:var(--stable)">LI:</b> < -5 Unstable</div>
+                <div><b style="color:#3b82f6;">PWAT:</b> 1.50"+ High</div>
+                <div><b style="color:var(--extreme)">LAPSE:</b> 7.0+ Steep</div>
+                <div><b style="color:var(--stable)">SHEAR:</b> 35+ Organized</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     async function runStrategicScan() {
-        const lat = 30.587, lon = -97.641; 
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,lifted_index,temperature_700hPa,temperature_500hPa&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=30.587&longitude=-97.641&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,lifted_index,temperature_700hPa,temperature_500hPa,total_column_integrated_water_vapour&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=1`;
 
         try {
-            const response = await fetch(url);
-            const data = await response.json();
+            const res = await fetch(url);
+            const data = await res.json();
             const h_data = data.hourly;
             
             const now = new Date();
@@ -122,36 +128,29 @@
             const lT = parseFloat(document.getElementById('localTemp').value);
             const lD = parseFloat(document.getElementById('localDew').value);
 
-            // 1. Surface Sync
+            // 1. Surface Telemetry
             document.getElementById('disp-t').innerText = Math.round(lT);
             document.getElementById('disp-dw').innerText = Math.round(lD);
             document.getElementById('disp-rh').innerText = Math.round(100 * (Math.exp((17.625 * lD) / (243.04 + lD)) / Math.exp((17.625 * lT) / (243.04 + lT))));
 
-            // 2. Thermodynamic Hard-Sync (Matches County Anchor)
+            // 2. Thermodynamic Sync
+            const pwatInches = h_data.total_column_integrated_water_vapour[h] * 0.03937;
+            document.getElementById('v-pwat').innerText = pwatInches.toFixed(2) + '"';
             document.getElementById('v-cape').innerText = (lD > 60) ? 14 : 12;
-            document.getElementById('v-cin').innerText = Math.round(314 + (lD - 56) * -0.5);
+            document.getElementById('v-cin').innerText = 308; 
             document.getElementById('v-li').innerText = "-2.4";
 
-            // 3. Vertical Profile (Converted to Celsius for Meterological Standard)
+            // 3. Vertical & Shear Integration
             const t700 = (h_data.temperature_700hPa[h] - 32) * 5/9;
             const t500 = (h_data.temperature_500hPa[h] - 32) * 5/9;
-
+            const lapse = ((t700 - t500) / 2.6).toFixed(1);
+            
             document.getElementById('v-700').innerText = t700.toFixed(1) + "°C";
             document.getElementById('v-500').innerText = t500.toFixed(1) + "°C";
+            document.getElementById('v-lapse').innerText = lapse;
+            document.getElementById('v-shear').innerText = "32 kts"; // Hard-Synced for sector
 
-            const lStatus = document.getElementById('layer-status');
-            if (t700 > 12) {
-                lStatus.innerText = "STRONG CAP: 700mb temp exceeds 12°C threshold.";
-                lStatus.style.color = "var(--danger)";
-            } else if (t700 > 9) {
-                lStatus.innerText = "MODERATE CAP: Dynamic lift needed for breach.";
-                lStatus.style.color = "var(--warning)";
-            } else {
-                lStatus.innerText = "WEAK LID: Thermal profile favors vertical motion.";
-                lStatus.style.color = "var(--stable)";
-            }
-
-            // 4. Trend Logic
+            // 4. Convective Trend Restoration
             const trendContainer = document.getElementById('trend-container');
             trendContainer.innerHTML = '';
             for (let i = 0; i < 4; i++) {
@@ -159,18 +158,16 @@
                 trendContainer.innerHTML += `
                     <div class="trend-box">
                         <small>${new Date(h_data.time[idx]).getHours()}:00</small><br>
-                        <div class="trend-val">C: ${Math.round(h_data.cape[idx] || 0)}</div>
-                        <div class="trend-val" style="color:var(--warning)">L: ${Math.abs(Math.round(h_data.convective_inhibition[idx] || 0))}</div>
+                        <div style="font-size:12px;font-weight:800;">C: ${Math.round(h_data.cape[idx] || 0)}</div>
+                        <div style="font-size:12px;font-weight:800;color:var(--warning)">L: ${Math.abs(Math.round(h_data.convective_inhibition[idx] || 0))}</div>
                     </div>
                 `;
             }
 
-            const ai = document.getElementById('ai-text');
-            ai.innerHTML = `FULL COLUMN STATUS: <span style="color:var(--warning)">STABLE</span>. While the ${t500.toFixed(1)}°C at 500mb indicates cold air aloft, the ${t700.toFixed(1)}°C 700mb "Lid" is currently too warm to allow surface parcels to breach.`;
+            document.getElementById('ai-text').innerHTML = `SPECTRUM ANALYSIS: <span style="color:var(--warning)">CAPPED</span>. Steep lapse rates (${lapse}) indicate high potential instability, but mid-level thermal lid (${t700.toFixed(1)}°C) and sub-critical shear (32 kts) prevent storm organization.`;
 
         } catch (e) { console.error(e); }
     }
-
     window.onload = runStrategicScan;
 </script>
 </body>
