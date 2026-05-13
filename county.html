@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIZCAYA COMMAND v15.8</title>
+    <title>VIZCAYA COMMAND v15.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
@@ -21,6 +21,9 @@
         .row-breach { background: rgba(239, 68, 68, 0.15) !important; }
         
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .animate-alert { animation: pulse-red 1s infinite; }
     </style>
 </head>
 <body class="p-4 lg:p-10">
@@ -31,7 +34,7 @@
         <div class="flex flex-col xl:flex-row justify-between items-end mb-8 border-b-4 border-slate-800 pb-8 gap-6">
             <div>
                 <h1 class="text-6xl font-black italic text-white tracking-tighter uppercase leading-none">Vizcaya<span class="text-red-600 font-black">Command</span></h1>
-                <p class="text-xl font-bold text-slate-500 tracking-[0.4em] mt-3 uppercase font-mono">17-Station Theater Grid // v15.8</p>
+                <p class="text-xl font-bold text-slate-500 tracking-[0.4em] mt-3 uppercase font-mono">17-Station Theater Grid // v15.9</p>
             </div>
             
             <div class="flex items-center gap-6">
@@ -45,11 +48,11 @@
             </div>
         </div>
 
-        <!-- AI ASSESSMENT -->
+        <!-- AI ASSESSMENT & TACTICAL HUD -->
         <div class="glass-panel p-8 rounded-[3rem] border-l-8 border-blue-600 mb-10 bg-gradient-to-r from-blue-900/10 to-transparent">
             <h2 class="text-blue-500 font-black tracking-widest text-sm uppercase mb-4 italic">Strategic Tactical AI</h2>
             <div id="aiAssessment" class="text-3xl font-bold text-white leading-tight italic mb-6">Awaiting network handshake...</div>
-            <div class="grid grid-cols-3 gap-8 border-t border-slate-800 pt-6">
+            <div class="grid grid-cols-4 gap-8 border-t border-slate-800 pt-6">
                 <div>
                     <span class="text-xs font-black text-slate-500 uppercase block">Frontal Arrival</span>
                     <span id="frontEta" class="text-2xl font-black text-indigo-400 uppercase italic">---</span>
@@ -57,6 +60,10 @@
                 <div>
                     <span class="text-xs font-black text-slate-500 uppercase block">Rainfall Horizon</span>
                     <span id="rainEta" class="text-2xl font-black text-emerald-400 uppercase italic">---</span>
+                </div>
+                <div>
+                    <span class="text-xs font-black text-slate-500 uppercase block">Climatology Departure</span>
+                    <span id="tempDeparture" class="text-2xl font-black text-amber-400 uppercase italic">---</span>
                 </div>
                 <div class="text-right">
                     <span class="text-xs font-black text-slate-500 uppercase block">Alert Status</span>
@@ -66,7 +73,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-            <!-- DAVIS NODE -->
+            <!-- DAVIS NODE (LOCAL SENSOR OVERRIDE) -->
             <div class="lg:col-span-3 glass-panel p-8 rounded-[3rem] node-vizcaya shadow-2xl">
                 <p class="text-sm font-black text-red-500 mb-6 tracking-widest uppercase italic text-center">Vizcaya Davis Sentinel</p>
                 <div class="space-y-6">
@@ -81,7 +88,7 @@
                 </div>
             </div>
 
-            <!-- DATA MATRIX -->
+            <!-- THEATER DATA MATRIX -->
             <div class="lg:col-span-9 glass-panel rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -96,15 +103,12 @@
                             </tr>
                         </thead>
                         <tbody id="regionalBody" class="divide-y divide-slate-800/50 font-bold italic">
-                            <!-- Injected -->
+                            <!-- Injected by JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-
-        <!-- OUTLOOK -->
-        <div id="forecastGrid" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-4"></div>
     </div>
 
     <script>
@@ -131,22 +135,18 @@
         async function runStrategicScan() {
             const engineStatus = document.getElementById('engineStatus');
             const tbody = document.getElementById('regionalBody');
-            const fGrid = document.getElementById('forecastGrid');
-            
             engineStatus.innerText = "QUERYING SATELLITES...";
             
             try {
                 const lats = LOCATIONS.map(l => l.lat).join(',');
                 const lons = LOCATIONS.map(l => l.lon).join(',');
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index,precipitation,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=7`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,total_column_integrated_water_vapour,lifted_index,precipitation,precipitation_probability,wind_direction_10m&temperature_unit=fahrenheit&timezone=America%2FChicago&forecast_days=7`;
                 
                 const response = await fetch(url);
                 const json = await response.json();
-                
-                // Open-Meteo returns an array of objects when multiple locations are requested
                 const results = Array.isArray(json) ? json : [json];
                 
-                tbody.innerHTML = ''; fGrid.innerHTML = '';
+                tbody.innerHTML = '';
                 const now = new Date();
                 let vizLocalFinal = {};
                 let plateauBreach = false;
@@ -155,7 +155,6 @@
                     const loc = LOCATIONS[idx];
                     const h_data = result.hourly;
                     
-                    // Robust Time Matching: find index closest to current hour
                     const nowTS = now.getTime();
                     let h = h_data.time.findIndex(t => new Date(t).getTime() >= (nowTS - 1800000));
                     if (h === -1) h = 0;
@@ -167,6 +166,7 @@
                     let dC = rC, dCi = rCi, dL = rL, biasText = "";
 
                     if (loc.local) {
+                        // Apply Davis Sensor nudge
                         const lT = parseFloat(document.getElementById('localTemp').value), lD = parseFloat(document.getElementById('localDew').value);
                         let nudge = Math.max(-0.20, Math.min(0.20, (lD - rD) * 0.03)); 
                         dC = Math.round(rC * (1 + nudge));
@@ -175,15 +175,31 @@
                         vizLocalFinal = { cape: dC, cin: dCi, li: dL, pwat };
                         biasText = (nudge >= 0 ? "+" : "") + Math.round(nudge * 100) + "% BIAS";
                         
-                        // Prediction Logic
-                        let frontFound = false;
-                        for(let i=h; i < h_data.time.length - 12; i++) {
-                            if(!frontFound && (h_data.temperature_2m[i] - h_data.temperature_2m[i+6] > 6)) {
+                        // CLIMATOLOGY: Normal High 90.0
+                        const dayHigh = Math.max(...h_data.temperature_2m.slice(0, 24));
+                        const dep = (dayHigh - 90.0).toFixed(1);
+                        document.getElementById('tempDeparture').innerText = (dep > 0 ? "+" : "") + dep + "°";
+
+                        // SCAN FOR FUTURE FRONTS & RAIN
+                        let frontFound = false, rainFound = false;
+                        document.getElementById('frontEta').innerText = "---";
+                        document.getElementById('rainEta').innerText = "---";
+
+                        for(let i=h; i < h_data.time.length - 6; i++) {
+                            // FRONTAL LOGIC: Temp Drop + Wind Shift + Dew Drop (Prevents diurnal false-positives)
+                            let tDrop = h_data.temperature_2m[i] - h_data.temperature_2m[i+6] > 10;
+                            let dDrop = h_data.dew_point_2m[i] - h_data.dew_point_2m[i+6] > 6;
+                            let wShift = h_data.wind_direction_10m[i+6] > 315 || h_data.wind_direction_10m[i+6] < 45;
+
+                            if(!frontFound && tDrop && dDrop && wShift) {
                                 document.getElementById('frontEta').innerText = new Date(h_data.time[i+3]).toLocaleDateString([], {weekday:'short', hour:'numeric'});
                                 frontFound = true;
                             }
-                            if(h_data.precipitation[i] > 0.01) {
+
+                            // RAIN LOGIC: Calibrated to Master MOS (9% Probability Trigger)
+                            if(!rainFound && h_data.precipitation_probability[i] >= 9) {
                                 document.getElementById('rainEta').innerText = new Date(h_data.time[i]).toLocaleDateString([], {weekday:'short', hour:'numeric'});
+                                rainFound = true;
                             }
                         }
                     }
@@ -223,13 +239,13 @@
 
         function generateAI(v, plateauRisk) {
             let a = ""; let threat = "GUARDED";
-            if (plateauRisk) a = "TACTICAL ALERT: Cap has broken on the Edwards Plateau. Approach window is 3-5 hours. ";
-            if (v.cin > 60) a += "LOCAL STATUS: Vizcaya is currently capped. Energy is being suppressed. ";
-            else if (v.cin < 30) { a += "LOCAL STATUS: THE CAP IS BREAKING. Convection possible. "; threat = "HIGH"; }
-            if (v.li < -6) { a += "Extreme buoyancy detected. Violent updrafts possible."; threat = "EXTREME"; }
+            if (plateauRisk) a = "TACTICAL ALERT: Cap has broken on the Edwards Plateau. ";
+            if (v.cin > 60) a += "LOCAL STATUS: Vizcaya is currently capped. ";
+            else if (v.cin < 30) { a += "LOCAL STATUS: THE CAP IS BREAKING. "; threat = "HIGH"; }
+            if (v.li < -6) { a += "Extreme buoyancy detected. "; threat = "EXTREME"; }
             document.getElementById('aiAssessment').innerText = a || "Theater currently stable. No immediate threats detected.";
             document.getElementById('threatLevel').innerText = threat;
-            document.getElementById('threatLevel').className = `text-2xl font-black ${threat === 'EXTREME' || threat === 'HIGH' ? 'text-red-500 animate-pulse' : 'text-blue-500'}`;
+            document.getElementById('threatLevel').className = `text-2xl font-black ${threat === 'EXTREME' || threat === 'HIGH' ? 'text-red-500 animate-alert' : 'text-blue-500'}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
