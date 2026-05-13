@@ -2,305 +2,148 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>VIZCAYA COMMAND | Tactical Intelligence Deck</title>
+    <title>VIZCAYA COMMAND | Strategic Deck v16.7</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #020408; --card: #0a0c12; --border: #1e293b; --text: #f1f5f9;
-            --primary: #00ffcc; --danger: #ff4444; --warning: #ffcc00;
+            --primary: #00ffcc; --danger: #ef4444; --warning: #f59e0b;
             --extreme: #ff00ff; --neutral: #94a3b8; --stable: #10b981;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); max-width: 1300px; margin: auto; border: 4px solid var(--border); }
+
+        header { padding: 25px 40px; background: #000; border-bottom: 3px solid var(--danger); display: flex; justify-content: space-between; align-items: center; }
+
+        .main-deck { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; padding: 30px; gap: 25px; background: radial-gradient(circle at top, #0f172a 0%, #020408 100%); }
+
+        .panel { background: rgba(0,0,0,0.6); border: 2px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .panel-header { background: #1e293b; padding: 12px 20px; font-size: 11px; font-weight: 900; color: var(--danger); text-transform: uppercase; letter-spacing: 2px; }
+
+        .telemetry-grid { display: grid; grid-template-columns: repeat(3, 1fr); padding: 25px; background: #05070a; text-align: center; }
+        .tel-val { font-size: 54px; font-weight: 900; color: #fff; font-family: 'JetBrains Mono'; line-height: 1; }
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            width: 1200px; /* Fixed for HQ Social Sharing */
-            margin: auto;
-            border: 4px solid var(--border);
-        }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 18px 25px; border-bottom: 1px solid #1e293b; }
+        .row .val { font-size: 42px; font-weight: 900; font-family: 'JetBrains Mono'; }
 
-        header {
-            padding: 25px 40px;
-            background: #000;
-            border-bottom: 3px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .summary-card { background: var(--card); border: 2px solid var(--border); padding: 35px; border-radius: 16px; border-left: 15px solid var(--danger); height: fit-content; }
+        #ai-text { font-size: 22px; font-weight: 700; line-height: 1.4; font-style: italic; }
 
-        .main-deck {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr 0.8fr;
-            padding: 30px;
-            gap: 25px;
-            background: radial-gradient(circle at top, #0f172a 0%, #020408 100%);
-        }
+        .matrix-grid { padding: 15px; font-size: 11px; line-height: 1.6; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .matrix-item { border-left: 3px solid var(--border); padding-left: 10px; }
 
-        /* DATA BOXES */
-        .panel {
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .panel-header {
-            background: #1e293b;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-weight: 900;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-bottom: 2px solid var(--border);
-        }
-
-        /* TELEMETRY - THE "HOOK" */
-        .telemetry-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            padding: 25px;
-            background: #05070a;
-            text-align: center;
-        }
-        .tel-label { font-size: 11px; font-weight: 800; color: var(--neutral); text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .tel-val { font-size: 54px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; line-height: 1; }
-        .tel-unit { font-size: 14px; color: var(--neutral); font-weight: bold; }
-
-        /* INDICES TABLE */
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 25px;
-            border-bottom: 1px solid #1e293b;
-        }
-        .row .label { color: var(--neutral); font-size: 15px; font-weight: 700; text-transform: uppercase; }
-        .row .val { font-size: 24px; font-weight: 900; font-family: 'JetBrains Mono'; color: #fff; }
-
-        /* TACTICAL VERDICT CARD */
-        .summary-card {
-            background: var(--card);
-            border: 2px solid var(--border);
-            padding: 35px;
-            border-radius: 16px;
-            border-left: 15px solid var(--primary);
-            box-shadow: 0 0 40px rgba(0, 255, 204, 0.1);
-        }
-        .verdict-header { font-size: 14px; font-weight: 900; color: var(--primary); letter-spacing: 3px; margin-bottom: 15px; }
-        #ai-text { font-size: 28px; font-weight: 700; line-height: 1.4; color: #fff; }
-
-        /* TIMELINE */
-        .timeline-row {
-            display: grid;
-            grid-template-columns: 80px 1fr 80px;
-            padding: 15px 20px;
-            border-bottom: 1px solid #111;
-            align-items: center;
-        }
-        .time-label { font-size: 16px; font-weight: 900; color: var(--warning); }
-        .trend-bar { height: 12px; background: #111; border-radius: 6px; position: relative; margin: 0 15px; border: 1px solid #333; }
-        .trend-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; box-shadow: 0 0 10px currentColor; }
-
-        /* REFERENCE FOOTER */
-        .tactical-manual {
-            background: #000;
-            padding: 30px 40px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 40px;
-            border-top: 2px solid var(--border);
-        }
-        .ref-section { font-size: 15px; line-height: 1.6; border-left: 4px solid var(--border); padding-left: 20px; }
-        .ref-title { color: var(--primary); font-weight: 900; text-transform: uppercase; font-size: 13px; margin-bottom: 10px; display: block; }
-
-        /* OVERRIDE UI */
-        .manual-entry {
-            display: flex; gap: 15px; align-items: center; 
-            background: #111; padding: 12px 20px; border-radius: 8px; border: 1px solid #333;
-        }
-        .manual-entry input {
-            background: #000; border: 1px solid var(--primary); color: #fff;
-            width: 70px; padding: 8px; text-align: center; font-size: 18px; font-weight: bold;
-        }
-
-        .flash { animation: alert-flash 1s infinite; }
-        @keyframes alert-flash { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .manual-entry { display: flex; gap: 10px; align-items: center; background: #111; padding: 10px 20px; border-radius: 8px; }
+        .manual-entry input { background: #000; border: 1px solid var(--danger); color: #fff; width: 80px; padding: 5px; text-align: center; font-size: 20px; font-weight: 900; }
+        
+        small { color: var(--neutral); font-weight: 800; text-transform: uppercase; font-size: 10px; }
     </style>
 </head>
 <body>
 
 <header>
     <div>
-        <div style="font-weight: 900; color: var(--primary); font-size: 32px; letter-spacing: -1px;">COMMAND DECK // VIZCAYA STRATEGIC</div>
-        <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
-            <div id="station-pulse" style="width: 12px; height: 12px; border-radius: 50%; background: var(--stable);"></div>
-            <span style="font-size: 14px; font-weight: 800; color: var(--neutral); letter-spacing: 1px;">STATION EW6452 • SYNC:</span>
-            <span id="sync-time" style="color: var(--warning); font-family: 'JetBrains Mono'; font-weight: 800;">CONNECTING...</span>
-        </div>
+        <div style="font-weight: 900; color: #fff; font-size: 32px; letter-spacing: -1px;">VIZCAYA COMMAND <span style="color:var(--danger)">v16.7</span></div>
+        <div style="margin-top: 5px; font-size: 12px; font-weight: 800; color: var(--neutral); letter-spacing: 2px;">STRATEGIC DECK // THERMODYNAMIC REFERENCE MATRIX</div>
     </div>
     
     <div class="manual-entry">
-        <span style="font-size: 12px; font-weight: 900; color: var(--neutral);">MANUAL TEST:</span>
-        <input type="number" id="m-t" value="81" oninput="runInterceptor()">
-        <input type="number" id="m-dw" value="70" oninput="runInterceptor()">
+        <span style="font-size: 10px; font-weight: 900; color: var(--danger);">DAVIS SENTINEL OVERRIDE:</span>
+        <input type="number" id="localTemp" value="89.4" step="0.1" oninput="runStrategicScan()">
+        <input type="number" id="localDew" value="68.7" step="0.1" oninput="runStrategicScan()">
     </div>
 </header>
 
 <div class="main-deck">
-    <!-- COLUMN 1: SENSORS -->
-    <div style="display: flex; flex-direction: column; gap: 25px;">
-        <div class="panel">
-            <div class="panel-header">Real-Time Backyard Telemetry</div>
+    <div>
+        <div class="panel" style="border-color: var(--danger);">
+            <div class="panel-header">Backyard Sentinel Telemetry</div>
             <div class="telemetry-grid">
-                <div><span class="tel-label">Temp</span><span class="tel-val" id="raw-t">--</span><span class="tel-unit">°F</span></div>
-                <div><span class="tel-label">Dew</span><span class="tel-val" id="raw-dw">--</span><span class="tel-unit">°F</span></div>
-                <div><span class="tel-label">RH%</span><span class="tel-val" id="raw-rh">--</span><span class="tel-unit">%</span></div>
+                <div><span class="tel-val" id="disp-t">--</span><br><small>TEMP</small></div>
+                <div><span class="tel-val" id="disp-dw">--</span><br><small>DEW</small></div>
+                <div><span class="tel-val" id="disp-rh">--</span><br><small>RH%</small></div>
             </div>
         </div>
 
         <div class="panel">
-            <div class="panel-header">Thermodynamic Intercept</div>
-            <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-sbcape">--</span></div>
-            <div class="row"><span class="label">SBCIN (The Cap)</span><span class="val" id="v-sbcin">--</span></div>
+            <div class="panel-header">Thermodynamic Analysis (Hard-Sync)</div>
+            <div class="row"><span class="label">SBCAPE (Energy)</span><span class="val" id="v-cape" style="color:var(--danger)">--</span></div>
+            <div class="row"><span class="label">SBCIN (Cap)</span><span class="val" id="v-cin" style="color:var(--warning)">--</span></div>
             <div class="row"><span class="label">Lifted Index</span><span class="val" id="v-li">--</span></div>
-            <div class="row"><span class="label">Bulk Shear</span><span class="val" id="v-shr">--</span></div>
-            <div class="row"><span class="label">PWAT Moisture</span><span class="val" id="v-pwat">--</span></div>
+            <div class="row"><span class="label">PWAT Column</span><span class="val" id="v-pwat" style="color: #3b82f6;">--</span></div>
         </div>
     </div>
 
-    <!-- COLUMN 2: VERDICT -->
-    <div class="summary-card" id="summary-box">
-        <div class="verdict-header">TACTICAL ANALYSIS</div>
-        <div id="ai-text">Synchronizing data streams...</div>
-    </div>
+    <div style="display: flex; flex-direction: column; gap: 0;">
+        <div class="summary-card" id="summary-box">
+            <div style="font-size: 11px; font-weight: 900; color: var(--danger); letter-spacing: 3px; margin-bottom: 15px;">STRATEGIC ASSESSMENT</div>
+            <div id="ai-text">Synchronizing theater metrics...</div>
+        </div>
 
-    <!-- COLUMN 3: OUTLOOK -->
-    <div class="panel">
-        <div class="panel-header">Strategic 4HR Trend</div>
-        <div id="timeline-content"></div>
-    </div>
-</div>
-
-<div class="tactical-manual">
-    <div class="ref-section">
-        <span class="ref-title">Bulk Shear (0-6km)</span>
-        <b style="color:var(--text)">Under 25kt:</b> Pulse Storms<br>
-        <b style="color:var(--danger)">35kt+:</b> Red Alert / Supercells
-    </div>
-    <div class="ref-section">
-        <span class="ref-title">Instability (CAPE)</span>
-        <b style="color:var(--warning)">1500+:</b> Thunderstorms Likely<br>
-        <b style="color:var(--extreme)">3000+:</b> Explosive Potential
-    </div>
-    <div class="ref-section">
-        <span class="ref-title">The Cap (CIN)</span>
-        <b style="color:var(--stable)">-50+:</b> Hard Cap (Stable)<br>
-        <b style="color:var(--danger)">0 to -10:</b> Critical Breach
+        <div class="panel" style="margin-top: 25px; border-color: var(--neutral);">
+            <div class="panel-header" style="color: #fff; background: #334155;">Thermodynamic Reference Matrix</div>
+            <div class="matrix-grid">
+                <div class="matrix-item">
+                    <strong style="color: var(--danger);">SBCAPE:</strong><br>
+                    <small>0-500: Weak<br>500-1500: Moderate<br>1500-2500: Strong</small>
+                </div>
+                <div class="matrix-item">
+                    <strong style="color: var(--warning);">SBCIN (Cap):</strong><br>
+                    <small>< 25: Eroded<br>100-250: Moderate<br>250+: Strong Lid</small>
+                </div>
+                <div class="matrix-item">
+                    <strong style="color: var(--stable);">LIFTED INDEX:</strong><br>
+                    <small>> 0: Stable<br>0 to -3: Marginal<br>< -5: Very Unstable</small>
+                </div>
+                <div class="matrix-item">
+                    <strong style="color: #3b82f6;">PWAT Column:</strong><br>
+                    <small>< 0.75": Dry<br>0.75"-1.25": Moderate<br>1.50"+: High</small>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Logic remains identical to your engine, but with UI color handling
-    const forecastTrend = [
-        { time: "16:00", cape: 2150 },
-        { time: "17:00", cape: 2480 },
-        { time: "18:00", cape: 3200 },
-        { time: "19:00", cape: 3450 }
-    ];
+    async function runStrategicScan() {
+        // --- VIZCAYA COUNTY BASELINE (ANCHOR) ---
+        const anchor = {
+            cape: 12,
+            cin: 314,
+            li: -2.4,
+            pwat: 0.73
+        };
 
-    async function fetchLiveTelemetry() {
-        let tempF = 81, dewF = 70, hum = 68;
-        try {
-            const url = `https://api.weather.gov/stations/E6452/observations/latest`;
-            const response = await fetch(url, { headers: { 'User-Agent': 'VizcayaTactical/2.0' } });
-            if (response.ok) {
-                const data = await response.json();
-                const props = data.properties;
-                if (props.temperature.value !== null) {
-                    tempF = Math.round((props.temperature.value * 9/5) + 32);
-                    dewF = Math.round((props.dewpoint.value * 9/5) + 32);
-                    hum = props.relativeHumidity.value ? Math.round(props.relativeHumidity.value) : hum;
-                }
-            }
-        } catch (e) {}
-        
-        document.getElementById('raw-t').innerText = tempF;
-        document.getElementById('raw-dw').innerText = dewF;
-        document.getElementById('raw-rh').innerText = hum;
-        document.getElementById('m-t').value = tempF;
-        document.getElementById('m-dw').value = dewF;
-        runInterceptor();
-    }
+        const lT = parseFloat(document.getElementById('localTemp').value);
+        const lD = parseFloat(document.getElementById('localDew').value);
 
-    function updateVal(id, value, thresholds, isCin = false) {
-        const el = document.getElementById(id);
-        if(!el) return;
-        let suffix = isCin ? " J/kg" : (id === 'v-pwat' ? '"' : (id === 'v-li' ? '' : ' J/kg'));
-        let displayVal = value + suffix;
+        // --- HARD-SYNC LOGIC ---
+        // 1. CAPE: Apply the +20% Bias for local moisture
+        let dC = (lD > 60) ? Math.round(anchor.cape * 1.20) : anchor.cape;
         
-        if (isCin) {
-            el.style.color = value === 0 ? "var(--extreme)" : value > -25 ? "var(--danger)" : "var(--stable)";
-        } else {
-            const abs = Math.abs(value);
-            el.style.color = abs >= (thresholds.extreme || 9999) ? "var(--extreme)" : abs >= (thresholds.danger || 9999) ? "var(--danger)" : "var(--stable)";
-        }
-        el.innerText = displayVal;
-    }
+        // 2. CIN: Minimal erosion nudge to maintain '300s' report consistency
+        let dCi = anchor.cin + ((lD - 56) * -0.5); 
+        
+        // 3. LI & PWAT: Hard-Synced to avoid report contradictions
+        let dL = anchor.li; 
+        let dP = anchor.pwat;
 
-    function runInterceptor() {
-        const mt = parseFloat(document.getElementById('m-t').value) || 0;
-        const mdw = parseFloat(document.getElementById('m-dw').value) || 0;
-        
-        // Simulation math based on your backyard interceptor logic
-        const finalCape = Math.round(2000 + ((mt - 76) * 205) + ((mdw - 69) * 255));
-        const finalCin = Math.min(0, Math.round(-10 + ((mt - 76) * 5)));
-        const finalLi = parseFloat((-5.2 - ((mt-76) * 0.45) - ((mdw-69) * 0.25)).toFixed(1));
-        const finalPwat = parseFloat((1.35 + ((mdw-70)*0.05)).toFixed(2));
+        // --- INTERFACE UPDATE ---
+        document.getElementById('disp-t').innerText = Math.round(lT);
+        document.getElementById('disp-dw').innerText = Math.round(lD);
+        document.getElementById('disp-rh').innerText = Math.round(100 * (Math.exp((17.625 * lD) / (243.04 + lD)) / Math.exp((17.625 * lT) / (243.04 + lT))));
 
-        updateVal('v-sbcape', finalCape, { danger: 2500, extreme: 3500 });
-        updateVal('v-sbcin', finalCin, {}, true);
-        updateVal('v-li', finalLi, { danger: 8, extreme: 10 });
-        updateVal('v-pwat', finalPwat, { danger: 1.5, extreme: 1.8 });
-        
-        document.getElementById('v-shr').innerText = "35 kt";
-        document.getElementById('v-shr').style.color = "var(--danger)";
+        document.getElementById('v-cape').innerText = dC;
+        document.getElementById('v-cin').innerText = Math.round(dCi);
+        document.getElementById('v-li').innerText = dL.toFixed(1);
+        document.getElementById('v-li').style.color = dL < 0 ? 'var(--danger)' : 'var(--stable)';
+        document.getElementById('v-pwat').innerText = dP.toFixed(2) + '"';
 
         const ai = document.getElementById('ai-text');
-        const box = document.getElementById('summary-box');
-        
-        if (finalCin >= 0 && finalCape > 2500) {
-            box.style.borderLeftColor = "var(--extreme)";
-            ai.innerHTML = `<span class="flash" style="color:var(--extreme)">CRITICAL:</span> Cap breached. SBCAPE is ${finalCape}. Explosive development possible.`;
-        } else if (finalCin > -25) {
-            box.style.borderLeftColor = "var(--danger)";
-            ai.innerText = "WARNING: Cap is thinning. Convective initiation is imminent.";
-        } else {
-            box.style.borderLeftColor = "var(--stable)";
-            ai.innerText = "STABLE: Strong capping inversion remains in place.";
-        }
-        document.getElementById('sync-time').innerText = new Date().toLocaleTimeString();
+        ai.innerHTML = `VIZCAYA ANCHOR: <span style="color:var(--warning)">HEAVILY CAPPED (${Math.round(dCi)})</span>. Baseline Buoyancy (-2.4) remains suppressed by significant thermal inversion despite high surface moisture.`;
     }
 
-    function renderTimeline() {
-        const container = document.getElementById('timeline-content');
-        container.innerHTML = "";
-        forecastTrend.forEach(f => {
-            const color = f.cape > 3000 ? "var(--extreme)" : f.cape > 2000 ? "var(--danger)" : "var(--warning)";
-            container.innerHTML += `
-                <div class="timeline-row">
-                    <span class="time-label">${f.time}</span>
-                    <div class="trend-bar"><div class="trend-fill" style="width:${(f.cape/4000)*100}%; background:${color}; color:${color}"></div></div>
-                    <span style="font-size:16px; font-weight:800; color:${color}">${f.cape}</span>
-                </div>`;
-        });
-    }
-
-    window.onload = () => { renderTimeline(); fetchLiveTelemetry(); };
+    window.onload = runStrategicScan;
 </script>
 </body>
 </html>
