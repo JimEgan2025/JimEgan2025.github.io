@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Weather Dashboard</title>
+    <title>VIZCAYA COMMAND | Weather Operations</title>
     <style>
         :root {
-            --sidebar-width: 220px;
-            --bg-dark: #0f0f0f;
-            --panel-bg: #1a1a1a;
+            --sidebar-width: 240px;
+            --bg-dark: #0a0a0a;
+            --panel-bg: #141414;
             --accent-blue: #007bff;
             --accent-gold: #d4a017;
-            --accent-red: #b22222;
+            --accent-red: #ff4d4d;
             --text-main: #e0e0e0;
-            --text-dim: #888;
+            --text-dim: #777;
+            --border-color: #2a2a2a;
         }
 
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
             margin: 0;
@@ -26,169 +33,217 @@
             overflow: hidden;
         }
 
-        /* Sidebar Navigation */
+        /* Sidebar */
         aside {
             width: var(--sidebar-width);
             background: var(--panel-bg);
-            border-right: 1px solid #333;
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            overflow-y: auto;
+            z-index: 100;
         }
 
         .sidebar-header {
-            padding: 20px 15px;
+            padding: 25px 15px;
             background: #000;
-            border-bottom: 1px solid #333;
+            border-bottom: 2px solid var(--accent-blue);
             text-align: center;
         }
 
         .sidebar-header h1 {
             margin: 0;
-            font-size: 0.9rem;
-            letter-spacing: 1.5px;
-            color: var(--accent-blue);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            color: #fff;
             text-transform: uppercase;
+        }
+
+        .nav-container {
+            flex-grow: 1;
+            overflow-y: auto;
         }
 
         .nav-group { border-bottom: 1px solid #222; }
         .group-header {
-            width: 100%; padding: 12px 15px; background: #1e1e1e; color: var(--text-dim);
+            width: 100%; padding: 14px 15px; background: #1a1a1a; color: var(--text-dim);
             text-align: left; border: none; cursor: pointer; font-size: 11px;
             font-weight: bold; text-transform: uppercase; display: flex; justify-content: space-between;
+            transition: color 0.3s;
         }
-        .group-header::after { content: '▼'; font-size: 8px; transition: transform 0.3s; }
-        .nav-group.active .group-header::after { transform: rotate(180deg); }
-        .sub-menu { display: none; background: #141414; padding: 5px 0; }
+        .group-header:hover { color: #fff; background: #222; }
+        .group-header::after { content: '▶'; font-size: 8px; transition: transform 0.3s; color: var(--accent-blue); }
+        .nav-group.active .group-header::after { transform: rotate(90deg); }
+        
+        .sub-menu { display: none; background: #0d0d0d; padding: 5px 0; }
         .nav-group.active .sub-menu { display: block; }
 
         .tab {
-            width: 100%; padding: 8px 25px; background: transparent; color: #aaa;
+            width: 100%; padding: 10px 20px; background: transparent; color: #888;
             border: none; text-align: left; cursor: pointer; font-size: 12px;
-            transition: all 0.2s; display: block;
+            transition: all 0.2s; border-left: 3px solid transparent;
         }
-        .tab:hover { color: #fff; background: #222; }
-        .tab.active { color: #fff; background: var(--accent-blue); font-weight: bold; }
+        .tab:hover { color: #fff; background: #1a1a1a; border-left: 3px solid #444; }
+        .tab.active { color: #fff; background: rgba(0, 123, 255, 0.15); border-left: 3px solid var(--accent-blue); font-weight: bold; }
 
         /* Main Content */
-        main { flex-grow: 1; display: flex; flex-direction: column; background: #000; overflow: hidden; }
+        main { flex-grow: 1; display: flex; flex-direction: column; background: #000; position: relative; }
         
         header {
-            padding: 10px 20px; background: #000; border-bottom: 1px solid #333;
+            padding: 10px 20px; background: #0a0a0a; border-bottom: 1px solid var(--border-color);
             display: flex; justify-content: space-between; align-items: center;
+            height: 50px;
         }
 
-        #viewerTitle { font-weight: bold; color: var(--accent-gold); text-transform: uppercase; font-size: 0.9rem; }
-
-        .controls { display: flex; gap: 10px; align-items: center; }
-        .btn-toggle {
-            background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px;
-            font-size: 10px; cursor: pointer; border-radius: 3px; text-transform: uppercase;
-        }
-        .btn-toggle:hover { background: var(--accent-blue); }
-        .btn-toggle.on { background: var(--accent-gold); color: #000; font-weight: bold; }
-
-        /* The scaling container */
-        .content-area { 
-            flex-grow: 1; 
-            position: relative; 
-            overflow: auto;
-            background: #000;
-        }
-
-        /* The Magic: Scaling the Iframe */
-        .iframe-wrapper {
-            width: 100%;
-            height: 100%;
-            transform-origin: top left;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        iframe { width: 100%; height: 100%; border: none; display: block; }
-        #imageViewer { max-width: 100%; height: auto; display: none; margin: 0 auto; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        #viewerTitle { font-weight: bold; color: var(--accent-gold); text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
         
-        .alert-btn { color: #ff9999 !important; }
-        .priority-btn { color: var(--accent-gold) !important; font-weight: bold; }
+        .live-indicator {
+            width: 8px; height: 8px; background: #ff0000; border-radius: 50%;
+            box-shadow: 0 0 8px #ff0000; animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .controls { display: flex; gap: 8px; align-items: center; }
+        .btn-tool {
+            background: #222; color: #eee; border: 1px solid #444; padding: 5px 10px;
+            font-size: 10px; cursor: pointer; border-radius: 3px; text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .btn-tool:hover { background: #333; border-color: var(--accent-blue); }
+        .btn-tool.active { background: var(--accent-gold); color: #000; font-weight: bold; border-color: var(--accent-gold); }
+
+        #clock { font-family: monospace; font-size: 14px; color: var(--accent-blue); background: #111; padding: 4px 8px; border-radius: 3px; border: 1px solid #222; }
+
+        /* Content Area */
+        .content-area { flex-grow: 1; position: relative; overflow: hidden; background: #000; }
+
+        #loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border: 3px solid #222; border-top: 3px solid var(--accent-blue);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+            display: none; z-index: 10;
+        }
+        @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        .iframe-wrapper {
+            width: 100%; height: 100%; transform-origin: top left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        iframe { width: 100%; height: 100%; border: none; display: block; background: transparent; }
+        
+        #imageViewer { 
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            max-width: 100%; max-height: 100%; margin: auto; display: none; 
+            object-fit: contain;
+        }
+        
+        .alert-btn { color: var(--accent-red) !important; }
+        .priority-btn { color: var(--accent-gold) !important; }
     </style>
 </head>
 <body>
 
 <aside>
-    <div class="sidebar-header"><h1>VIZCAYA COMMAND</h1></div>
-
-    <div class="nav-group active" id="grp-command">
-        <button class="group-header" onclick="toggleGroup('grp-command')">Command</button>
-        <div class="sub-menu">
-            <button class="tab active priority-btn" onclick="loadPage('leadforecast', this)">⭐ Lead Forecast</button>
-            <button class="tab" onclick="loadPage('wxcommand', this)">Wx Command</button>
-            <button class="tab" onclick="loadPage('texasdash', this)">Texas Dash</button>
-            <button class="tab" onclick="loadPage('dash360', this)">360 Dash</button>
-        </div>
+    <div class="sidebar-header">
+        <h1>VIZCAYA COMMAND</h1>
     </div>
 
-    <div class="nav-group" id="grp-live">
-        <button class="group-header" onclick="toggleGroup('grp-live')">Live Sensors</button>
-        <div class="sub-menu">
-            <button class="tab" onclick="loadPage('weatherlink', this)">📡 WeatherLink</button>
-            <button class="tab" onclick="loadPage('nowcast', this)">Nowcast</button>
-            <button class="tab" onclick="loadPage('masterrad', this)">Radar</button>
-            <button class="tab" onclick="loadPage('muggymeter', this)">Muggy Meter</button>
-            <button class="tab" onclick="loadPage('rainmeter', this)">Rain Meter</button>
-            <button class="tab" onclick="loadPage('textemps', this)">Tx Temps</button>
-            <button class="tab" onclick="loadPage('fronts', this)">Fronts</button>
-            <button class="tab" onclick="loadPage('overhead', this)">Satellite</button>
+    <div class="nav-container">
+        <!-- COMMAND GROUP -->
+        <div class="nav-group active" id="grp-command">
+            <button class="group-header" onclick="toggleGroup('grp-command')">Command Center</button>
+            <div class="sub-menu">
+                <button class="tab active priority-btn" onclick="loadPage('leadforecast', this)">⭐ Lead Forecast</button>
+                <button class="tab" onclick="loadPage('wxcommand', this)">Wx Command</button>
+                <button class="tab" onclick="loadPage('texasdash', this)">Texas Dash</button>
+                <button class="tab" onclick="loadPage('dash360', this)">360 Dash</button>
+            </div>
         </div>
-    </div>
 
-    <div class="nav-group" id="grp-outlooks">
-        <button class="group-header" onclick="toggleGroup('grp-outlooks')">Outlooks</button>
-        <div class="sub-menu">
-            <button class="tab" onclick="loadPage('hazards', this)">Tropical Hazards</button>
-            <button class="tab" onclick="loadPage('wpcsurface', this)">WPC Surface Prog</button>
-            <button class="tab" onclick="loadPage('meso500', this)">500mb Meso</button>
-            <button class="tab" onclick="loadPage('spcwpc', this)">SPC / WPC</button>
-            <button class="tab" onclick="loadPage('risk', this)">Risk Map</button>
-            <button class="tab" onclick="loadPage('tropical', this)">Tropical</button>
-            <button class="tab" onclick="loadPage('skew', this)">Skew-T</button>
+        <!-- LIVE SENSORS GROUP -->
+        <div class="nav-group" id="grp-live">
+            <button class="group-header" onclick="toggleGroup('grp-live')">Live Sensors</button>
+            <div class="sub-menu">
+                <button class="tab" onclick="loadPage('weatherlink', this)">📡 WeatherLink</button>
+                <button class="tab" onclick="loadPage('nowcast', this)">Nowcast</button>
+                <button class="tab" onclick="loadPage('masterrad', this)">Radar</button>
+                <button class="tab" onclick="loadPage('muggymeter', this)">Muggy Meter</button>
+                <button class="tab" onclick="loadPage('rainmeter', this)">Rain Meter</button>
+                <button class="tab" onclick="loadPage('textemps', this)">Tx Temps</button>
+                <button class="tab" onclick="loadPage('fronts', this)">Fronts</button>
+                <button class="tab" onclick="loadPage('overhead', this)">Satellite</button>
+            </div>
         </div>
-    </div>
 
-    <div class="nav-group" id="grp-regional">
-        <button class="group-header" onclick="toggleGroup('grp-regional')">Regional</button>
-        <div class="sub-menu">
-            <button class="tab" onclick="loadPage('texassev', this)">Tx Severe</button>
-            <button class="tab" onclick="loadPage('central', this)">Central Tx</button>
-            <button class="tab" onclick="loadPage('county', this)">County Map</button>
-            <button class="tab" onclick="loadPage('afd', this)">AFD Discussion</button>
+        <!-- ALMANAC GROUP (NEW - EASY TO FIND) -->
+        <div class="nav-group" id="grp-almanac">
+            <button class="group-header" onclick="toggleGroup('grp-almanac')">History & Almanac</button>
+            <div class="sub-menu">
+                <button class="tab" onclick="loadPage('annualalmanac', this)">📅 Annual Almanac</button>
+                <button class="tab" onclick="loadPage('almanac', this)">Daily Almanac</button>
+            </div>
         </div>
-    </div>
 
-    <div class="nav-group" id="grp-safety">
-        <button class="group-header" onclick="toggleGroup('grp-safety')">Safety & Sys</button>
-        <div class="sub-menu">
-            <button class="tab alert-btn" onclick="loadPage('alerts', this)">⚠️ Active Alerts</button>
-            <button class="tab alert-btn" onclick="loadPage('severe', this)">Severe Mode</button>
-            <button class="tab" onclick="loadPage('safety', this)">Safety Info</button>
-            <button class="tab" onclick="loadPage('almanac', this)">Almanac</button>
-            <button class="tab" onclick="loadPage('index', this)">Main Index</button>
+        <!-- FORECASTS GROUP -->
+        <div class="nav-group" id="grp-outlooks">
+            <button class="group-header" onclick="toggleGroup('grp-outlooks')">Forecast Outlooks</button>
+            <div class="sub-menu">
+                <button class="tab" onclick="loadPage('hazards', this)">Tropical Hazards</button>
+                <button class="tab" onclick="loadPage('wpcsurface', this)">WPC Surface Prog</button>
+                <button class="tab" onclick="loadPage('meso500', this)">500mb Meso</button>
+                <button class="tab" onclick="loadPage('spcwpc', this)">SPC / WPC</button>
+                <button class="tab" onclick="loadPage('risk', this)">Risk Map</button>
+                <button class="tab" onclick="loadPage('tropical', this)">Tropical Center</button>
+                <button class="tab" onclick="loadPage('skew', this)">Skew-T Analysis</button>
+            </div>
+        </div>
+
+        <!-- REGIONAL GROUP -->
+        <div class="nav-group" id="grp-regional">
+            <button class="group-header" onclick="toggleGroup('grp-regional')">Regional Data</button>
+            <div class="sub-menu">
+                <button class="tab" onclick="loadPage('texassev', this)">Tx Severe</button>
+                <button class="tab" onclick="loadPage('central', this)">Central Tx</button>
+                <button class="tab" onclick="loadPage('county', this)">County Map</button>
+                <button class="tab" onclick="loadPage('afd', this)">AFD Discussion</button>
+            </div>
+        </div>
+
+        <!-- SAFETY GROUP -->
+        <div class="nav-group" id="grp-safety">
+            <button class="group-header" onclick="toggleGroup('grp-safety')">Safety & Sys</button>
+            <div class="sub-menu">
+                <button class="tab alert-btn" onclick="loadPage('alerts', this)">⚠️ Active Alerts</button>
+                <button class="tab alert-btn" onclick="loadPage('severe', this)">Severe Mode</button>
+                <button class="tab" onclick="loadPage('safety', this)">Safety Info</button>
+                <button class="tab" onclick="loadPage('index', this)">Main Index</button>
+            </div>
         </div>
     </div>
 </aside>
 
 <main>
     <header>
-        <div id="viewerTitle">LEAD FORECAST OUTLOOK</div>
+        <div class="header-left">
+            <div class="live-indicator"></div>
+            <div id="viewerTitle">LEAD FORECAST OUTLOOK</div>
+        </div>
+        
         <div class="controls">
-            <button id="fitToggle" class="btn-toggle" onclick="toggleFit()">Fit to Window</button>
-            <div style="font-size: 10px; color: #555;">v8.4 Command</div>
+            <div id="clock">00:00:00</div>
+            <button class="btn-tool" onclick="refreshFrame()">Refresh</button>
+            <button id="fitToggle" class="btn-tool" onclick="toggleFit()">Fit View</button>
         </div>
     </header>
+
     <div class="content-area" id="contentArea">
+        <div id="loader"></div>
         <div id="frameWrapper" class="iframe-wrapper">
-            <iframe id="frame" src="https://jimegan2025.github.io/leadforecast.html"></iframe>
+            <iframe id="frame" src="https://jimegan2025.github.io/leadforecast.html" onload="hideLoader()"></iframe>
         </div>
-        <img id="imageViewer" src="">
+        <img id="imageViewer" src="" onload="hideLoader()">
     </div>
 </main>
 
@@ -220,6 +275,7 @@
         severe: "severe.html",
         safety: "safety.html",
         almanac: "almanac.html",
+        annualalmanac: "annualalmanac.html", // <--- ENSURED THIS IS HERE
         index: "index.html",
         hazards: "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png",
         wpcsurface: "https://aviationweather.gov/data/products/progs/F000_wpc_sfc.gif",
@@ -250,7 +306,8 @@
         alerts: "Active Weather Alerts",
         severe: "Severe Weather Protocols",
         safety: "Weather Safety Info",
-        almanac: "Climatology Almanac",
+        almanac: "Daily Climatology Almanac",
+        annualalmanac: "Annual Weather Almanac", // <--- ENSURED THIS IS HERE
         index: "Main Site Index",
         hazards: "Tropical Hazards Outlook",
         wpcsurface: "WPC Surface Forecast",
@@ -258,15 +315,19 @@
         weatherlink: "WeatherLink Station Summary"
     };
 
+    function showLoader() { document.getElementById("loader").style.display = "block"; }
+    function hideLoader() { document.getElementById("loader").style.display = "none"; }
+
     function loadPage(key, el) {
+        showLoader();
         const frame = document.getElementById("frame");
         const wrapper = document.getElementById("frameWrapper");
         const img = document.getElementById("imageViewer");
         const path = pages[key];
         const url = path.startsWith('http') ? path : baseUrl + path;
 
-        // Reset scaling whenever we change pages unless it's a known "big" page
-        if (['rainmeter', 'muggymeter', 'risk'].includes(key)) {
+        // Auto-fit management
+        if (['rainmeter', 'muggymeter', 'risk', 'weatherlink', 'annualalmanac'].includes(key)) {
             setFit(true);
         } else {
             setFit(false);
@@ -287,8 +348,19 @@
         el.classList.add("active");
     }
 
-    function toggleFit() {
-        setFit(!isFitToWindow);
+    function refreshFrame() {
+        showLoader();
+        const frame = document.getElementById("frame");
+        const img = document.getElementById("imageViewer");
+        if (frame.style.display !== "none") {
+            const currentSrc = frame.src;
+            frame.src = ''; 
+            frame.src = currentSrc;
+        } else {
+            const currentSrc = img.src;
+            img.src = '';
+            img.src = currentSrc;
+        }
     }
 
     function setFit(on) {
@@ -297,23 +369,36 @@
         const btn = document.getElementById("fitToggle");
         
         if (isFitToWindow) {
-            btn.classList.add("on");
-            // We scale the frame to 80% to bring most dash components into view
-            // You can change 0.8 to 0.7 if you want it even smaller
-            wrapper.style.width = "125%"; // 1 / 0.8
-            wrapper.style.height = "125%";
-            wrapper.style.transform = "scale(0.8)";
+            btn.classList.add("active");
+            wrapper.style.width = "133.33%"; 
+            wrapper.style.height = "133.33%";
+            wrapper.style.transform = "scale(0.75)";
         } else {
-            btn.classList.remove("on");
+            btn.classList.remove("active");
             wrapper.style.width = "100%";
             wrapper.style.height = "100%";
             wrapper.style.transform = "scale(1)";
         }
     }
 
+    function toggleFit() { setFit(!isFitToWindow); }
+
     function toggleGroup(id) {
-        document.getElementById(id).classList.toggle("active");
+        const activeGroup = document.getElementById(id);
+        const wasActive = activeGroup.classList.contains("active");
+        document.querySelectorAll(".nav-group").forEach(grp => grp.classList.remove("active"));
+        if (!wasActive) activeGroup.classList.add("active");
     }
+
+    function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 </script>
 </body>
 </html>
