@@ -6,11 +6,11 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: hidden; }
-  :root { --primary: #ffcc00; --bg: #050505; --panel: #121212; --border: #333; }
+  :root { --primary: #ffcc00; --bg: #050505; --panel: #121212; --border: #333; --ai-accent: #0ea5e9; }
   body { display: flex; font-family: 'Segoe UI', system-ui, sans-serif; color: #e0e0e0; }
   
   #sidebar, #right-panel { 
-    width: 320px; height: 100vh; padding: 15px; background: var(--panel); 
+    width: 340px; height: 100vh; padding: 15px; background: var(--panel); 
     z-index: 2000; overflow-y: auto; display: flex; flex-direction: column; 
     box-sizing: border-box; border-color: var(--border); border-style: solid;
   }
@@ -21,26 +21,26 @@
   header { 
     background: #1a1a1a; padding: 0 20px; border-bottom: 2px solid var(--primary); 
     display: flex; justify-content: space-between; align-items: center; 
-    position: absolute; top: 0; left: 320px; right: 320px; z-index: 3000; 
+    position: absolute; top: 0; left: 340px; right: 340px; z-index: 3000; 
     height: 45px; box-sizing: border-box;
   }
   
-  h1 { margin: 0; font-size: 1rem; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+  h1 { margin: 0; font-size: 0.9rem; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
   .section-title { font-size: 0.7rem; text-transform: uppercase; color: var(--primary); margin: 15px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 3px; font-weight: 800; }
   
+  /* AI Briefing Box Styling */
+  .ai-briefing-container { margin-bottom: 20px; border: 1px solid var(--ai-accent); border-radius: 6px; background: #081220; padding: 10px; }
+  .ai-label { font-size: 0.65rem; font-weight: 900; color: var(--ai-accent); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  #ai-summary-text { width: 100%; height: 180px; background: #000; border: 1px solid #1e293b; color: #94a3b8; font-family: 'Courier New', monospace; font-size: 0.7rem; padding: 8px; border-radius: 4px; resize: none; margin-bottom: 8px; line-height: 1.4; }
+  .copy-btn { background: var(--ai-accent); color: #fff; border: none; padding: 4px 10px; border-radius: 3px; font-size: 0.6rem; cursor: pointer; font-weight: bold; }
+
   label { display: flex; align-items: center; margin: 8px 0; cursor: pointer; font-size: 0.8rem; }
   input[type="checkbox"] { margin-right: 12px; accent-color: var(--primary); }
-  
   .btn-focus { background: var(--primary); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.7rem; }
 
-  .alert-card { background: #1a1a1a; border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 10px; font-size: 0.75rem; border: 1px solid #222; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-  .alert-card:hover { background: #222; }
+  .alert-card { background: #1a1a1a; border-left: 4px solid var(--primary); padding: 12px; margin-bottom: 10px; font-size: 0.75rem; border: 1px solid #222; border-radius: 6px; }
   .alert-card.Extreme { border-left-color: #ff0000; background: #2a1010; }
   .alert-card.Severe { border-left-color: #ff6600; background: #2a1a00; }
-  
-  .legend { font-size: 0.7rem; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 4px; margin-top: 10px; }
-  .l-item { display: flex; align-items: center; margin-bottom: 3px; }
-  .l-box { width: 12px; height: 12px; margin-right: 8px; border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
 <header>
   <h1>TX Weather Command</h1>
   <button class="btn-focus" onclick="focusVizcaya()">Focus: Vizcaya</button>
-  <div id="as-of" style="font-size:0.75rem;color:#888;">Syncing...</div>
+  <div id="as-of" style="font-size:0.7rem;color:#888;">Syncing...</div>
 </header>
 
 <div id="sidebar">
@@ -61,19 +61,18 @@
   <div class="section-title">SPC Severe Outlooks</div>
   <label><input type="checkbox" id="spc1" checked> Day 1 Severe (Today)</label>
   <label><input type="checkbox" id="spc2"> Day 2 Severe (Tomorrow)</label>
-  <label><input type="checkbox" id="spc3"> Day 3 Severe (Next Day)</label>
   
   <div class="section-title">Other Hazards</div>
   <label><input type="checkbox" id="wwa" checked> Watches & Warnings</label>
   <label><input type="checkbox" id="meso"> Mesoscale Discussions</label>
 
   <div class="section-title">SPC Legend</div>
-  <div class="legend">
-    <div class="l-item"><div class="l-box" style="background:#c0e8c0"></div> Marginal</div>
-    <div class="l-item"><div class="l-box" style="background:#f6e38b"></div> Slight</div>
-    <div class="l-item"><div class="l-box" style="background:#ffbc7b"></div> Enhanced</div>
-    <div class="l-item"><div class="l-box" style="background:#ff8a8a"></div> Moderate</div>
-    <div class="l-item"><div class="l-box" style="background:#ff6060"></div> High Risk</div>
+  <div style="font-size: 0.7rem; opacity: 0.8;">
+    <div style="color:#c0e8c0">■ Marginal</div>
+    <div style="color:#f6e38b">■ Slight</div>
+    <div style="color:#ffbc7b">■ Enhanced</div>
+    <div style="color:#ff8a8a">■ Moderate</div>
+    <div style="color:#ff6060">■ High Risk</div>
   </div>
 </div>
 
@@ -81,7 +80,14 @@
 
 <div id="right-panel">
   <div style="height:50px;"></div>
-  <div class="section-title">Live Texas Alert Feed</div>
+  
+  <div class="section-title">AI Strategic Briefing (Untruncated)</div>
+  <div class="ai-briefing-container">
+    <div class="ai-label"><span>Live Text Analysis</span> <button class="copy-btn" onclick="copyBriefing()">COPY BRIEFING</button></div>
+    <textarea id="ai-summary-text" readonly placeholder="Processing Texas NWS data..."></textarea>
+  </div>
+
+  <div class="section-title">Live Alert Feed</div>
   <div id="alert-list"></div>
 </div>
 
@@ -89,67 +95,23 @@
 <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 
 <script>
-// Map with subtle built-in labels
+// Base Map Initialization
 const map = L.map('map', { zoomControl: false }).setView([31.2, -99.5], 6);
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: 'CARTO'
-}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: 'CARTO' }).addTo(map);
 
 function focusVizcaya() { map.flyTo([30.5871, -97.6410], 10); }
 
+// WMS and Dynamic Layers
 const layers = {
-  radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', {
-    layers: 'nexrad-n0r-900913',
-    format: 'image/png',
-    transparent: true,
-    opacity: 0.7,
-    zIndex: 500
-  }).addTo(map),
-
-  sat: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', {
-    layers: 'conus_ir_4km',
-    format: 'image/png',
-    transparent: true,
-    opacity: 0.4,
-    zIndex: 400
-  }),
-
-  wwa: L.esri.featureLayer({
-    url: 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer/1',
-    style: function(f) {
-      const e = f.properties.event.toLowerCase();
-      if (e.includes('tornado')) return { color: '#ff0000', weight: 3, fillOpacity: 0.3 };
-      if (e.includes('severe')) return { color: '#ff6600', weight: 2, fillOpacity: 0.2 };
-      return { color: '#ffcc00', weight: 1, fillOpacity: 0.1 };
-    }
-  }).addTo(map),
-
-  // Corrected Categorical Indices for SPC
-  spc1: L.esri.dynamicMapLayer({ 
-    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
-    layers: [1], 
-    opacity: 0.5 
-  }).addTo(map),
-
-  spc2: L.esri.dynamicMapLayer({ 
-    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
-    layers: [9], 
-    opacity: 0.5 
-  }),
-
-  spc3: L.esri.dynamicMapLayer({ 
-    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
-    layers: [17], 
-    opacity: 0.5 
-  }),
-  
-  meso: L.esri.featureLayer({
-    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_mesoscale_discussions/MapServer/0',
-    style: { color: '#ff00ff', weight: 2, fillOpacity: 0.1 }
-  })
+  radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', { layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.7 }).addTo(map),
+  sat: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', { layers: 'conus_ir_4km', format: 'image/png', transparent: true, opacity: 0.4 }),
+  wwa: L.esri.featureLayer({ url: 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer/1' }).addTo(map),
+  spc1: L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', layers: [1], opacity: 0.5 }).addTo(map),
+  spc2: L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', layers: [9], opacity: 0.5 }),
+  meso: L.esri.featureLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_mesoscale_discussions/MapServer/0' })
 };
 
+// Layer Toggle Logic
 document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
   checkbox.onchange = () => {
     const layer = layers[checkbox.id];
@@ -163,28 +125,61 @@ async function updateAlerts() {
     const res = await fetch('https://api.weather.gov/alerts/active?area=TX');
     const data = await res.json();
     const list = document.getElementById('alert-list');
-    document.getElementById('as-of').innerText = 'Last Sync: ' + new Date().toLocaleTimeString();
+    const aiText = document.getElementById('ai-summary-text');
+    document.getElementById('as-of').innerText = 'Sync: ' + new Date().toLocaleTimeString();
 
     if (!data.features?.length) {
       list.innerHTML = '<div style="color:#666; padding:20px;">No active alerts.</div>';
+      aiText.value = "TX STRATEGIC BRIEFING: All sectors quiet.";
       return;
     }
 
+    // Update the Sidebar Feed
     list.innerHTML = data.features.slice(0, 15).map(f => {
       const p = f.properties;
-      return `
-        <div class="alert-card ${p.severity}" onclick="map.flyTo([${f.geometry?.coordinates[0][0][1] || 31.5}, ${f.geometry?.coordinates[0][0][0] || -99.5}], 7)">
+      return `<div class="alert-card ${p.severity}">
           <span style="font-weight:bold; color:#fff; display:block;">${p.event}</span>
-          <div style="color:var(--primary); font-size:0.75rem;">${p.senderName}</div>
-          <div style="color:#bbb; font-size:0.7rem; margin-top:4px;">${p.areaDesc.split(';')[0]}</div>
-        </div>
-      `;
+          <div style="color:var(--primary); font-size:0.7rem;">${p.senderName}</div>
+          <div style="color:#bbb; font-size:0.65rem; margin-top:4px;">${p.areaDesc.split(';')[0]}</div>
+        </div>`;
     }).join('');
-  } catch (e) { list.innerHTML = 'Error loading feed.'; }
+
+    // Generate Untruncated AI Briefing Text
+    const counts = {};
+    const locations = {};
+    
+    data.features.forEach(f => {
+        const e = f.properties.event;
+        counts[e] = (counts[e] || 0) + 1;
+        if(!locations[e]) locations[e] = [];
+        // Flatten and clean all listed counties/areas
+        const areas = f.properties.areaDesc.split(';').map(s => s.trim());
+        locations[e].push(...areas);
+    });
+
+    let briefing = `FULL TX STRATEGIC BRIEFING | ${new Date().toLocaleString()}\n`;
+    briefing += `TOTAL HAZARDS: ${data.features.length}\n`;
+    briefing += `-------------------------------------------\n`;
+
+    for (const [hazard, count] of Object.entries(counts)) {
+        const uniqueLocs = [...new Set(locations[hazard])].sort();
+        briefing += `[${count}] ${hazard.toUpperCase()}\n`;
+        briefing += `IMPACTED AREAS: ${uniqueLocs.join(", ")}\n\n`;
+    }
+
+    aiText.value = briefing;
+
+  } catch (e) { console.error("Update Error:", e); }
+}
+
+function copyBriefing() {
+    const copyText = document.getElementById("ai-summary-text");
+    copyText.select();
+    document.execCommand("copy");
 }
 
 updateAlerts();
-setInterval(updateAlerts, 300000);
+setInterval(updateAlerts, 300000); // 5 min refresh
 </script>
 </body>
 </html>
