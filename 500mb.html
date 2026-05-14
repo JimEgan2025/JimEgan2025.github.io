@@ -2,60 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Jet Stream Command | v2.2</title>
+    <title>Jet Stream Command | v3.0</title>
     <style>
         :root { --primary: #00f2ff; --bg: #0a0a0a; --panel: #161616; --text: #e0e0e0; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; align-items: center; justify-content: center; }
-        #sidebar { width: 480px; background: var(--panel); border: 1px solid #333; padding: 30px; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.7); }
-        h2 { color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 20px 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-align: center; }
+        #sidebar { width: 500px; background: var(--panel); border: 1px solid #333; padding: 30px; border-radius: 12px; }
+        h2 { color: var(--primary); font-size: 1rem; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 15px 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; text-align: center; }
         .instruction { font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 20px; line-height: 1.4; }
         .briefing-box { background: #081220; border: 1px solid #1e293b; padding: 20px; border-radius: 6px; }
         textarea { width: 100%; height: 260px; background: #000; border: 1px solid #333; color: #94a3b8; font-family: 'Courier New', monospace; font-size: 0.8rem; resize: none; outline: none; padding: 12px; box-sizing: border-box; line-height: 1.4; }
-        .btn { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 0.75rem; text-transform: uppercase; }
-        .btn-sync { background: #222; color: var(--primary); border: 1px solid var(--primary); margin-bottom: 5px; flex: 1; }
-        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 0.7rem; text-transform: uppercase; flex: 1; }
+        .btn-sync { background: #222; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .layer-label { font-size: 0.6rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Jet Stream Command</h2>
+    <h2>Surface & Upper-Air Command</h2>
     <div class="instruction">
-        <b>48HR SETUP ANALYSIS:</b> Use this view to confirm the timing of the "Cap" breaking and the arrival of the severe weather trigger.
+        <b>MULTI-LAYER ANALYSIS:</b> Sync surface progs to see fronts/pressure, then 500mb to see steering flow.
     </div>
 
+    <div class="layer-label">1. Surface Prog Charts (Fronts & Rain)</div>
     <div class="btn-group">
-        <button class="btn btn-sync" onclick="syncMap('00HR')">Current</button>
-        <button class="btn btn-sync" onclick="syncMap('24HR')">24HR Forecast</button>
-        <button class="btn btn-sync" onclick="syncMap('48HR')">48HR Forecast</button>
+        <button class="btn btn-sync" onclick="syncSurface('F000')">Current</button>
+        <button class="btn btn-sync" onclick="syncSurface('F024')">24HR Prog</button>
+        <button class="btn btn-sync" onclick="syncSurface('F048')">48HR Prog</button>
+    </div>
+
+    <div class="layer-label">2. 500MB Steering (Vorticity & Dips)</div>
+    <div class="btn-group">
+        <button class="btn btn-sync" onclick="syncUpper('00HR')">Current</button>
+        <button class="btn btn-sync" onclick="syncUpper('24HR')">24HR Upper</button>
+        <button class="btn btn-sync" onclick="syncUpper('48HR')">48HR Upper</button>
     </div>
 
     <div class="briefing-box">
         <textarea id="briefing-text" readonly></textarea>
-        <button class="btn" onclick="copyBriefing()">COPY FOR AI STRATEGIC REPORT</button>
+        <button class="btn" onclick="copyBriefing()">COPY INTEGRATED REPORT</button>
     </div>
 </div>
 
 <script>
-    function syncMap(timeframe) {
-        const url = `https://www.1800wxbrief.com/Website/weather/graphic/image?product=500MB_HGT_VORT_${timeframe}`;
-        window.open(url, `PilotMap_${timeframe}`, 'width=1100,height=850');
-        generateBriefing(timeframe);
+    function syncSurface(time) {
+        const url = `https://aviationweather.gov/data/products/progs/${time}_wpc_prog.gif`;
+        // Handle current chart filename variation
+        const finalUrl = (time === 'F000') ? `https://aviationweather.gov/data/products/progs/F000_wpc_sfc.gif` : url;
+        window.open(finalUrl, `Surface_${time}`, 'width=1100,height=850');
+        generateBriefing('SURFACE', time);
     }
 
-    function generateBriefing(mode) {
+    function syncUpper(time) {
+        const url = `https://www.1800wxbrief.com/Website/weather/graphic/image?product=500MB_HGT_VORT_${time}`;
+        window.open(url, `Upper_${time}`, 'width=1100,height=850');
+        generateBriefing('500MB', time);
+    }
+
+    function generateBriefing(layer, time) {
         const now = new Date();
-        const briefing = `500MB STRATEGIC FORECAST [${mode}] | ${now.toLocaleString()}
+        const briefing = `INTEGRATED WEATHER ANALYSIS [${layer} ${time}] | ${now.toLocaleString()}
 -------------------------------------------
-LEVEL: 500mb (FL180)
-TARGET: Saturday Setup / Weekend Transition
+LOCATION: Round Rock / Vizcaya Sector
+OBJECTIVE: Trend Verification & Asset Protection
 
-TACTICAL ASSESSMENT:
-1. RIDGING DEPLETION: Monitor the 48HR chart for the breakdown of high pressure over Texas. This marks the end of the Air Quality Alert.
-2. CONVECTIVE TRIGGER: Locate the vorticity maxima (energy pockets) at 48HR. Their proximity to Central Texas dictates the severity of the May 17-19 hail risk.
-3. FLOW AMPLITUDE: A deep trough at 48HR suggests higher potential for severe wind/hail events affecting Vizcaya infrastructure.
+STRATEGIC NOTES:
+1. SURFACE IMPACT: Identify blue lines (Cold Fronts) or red lines (Warm Fronts). Their movement toward Texas determines the "Uncapping" event for the atmosphere.
+2. PRESSURE DYNAMICS: Monitor the "H" (High Pressure) currently causing the Williamson County Air Quality Alert. If the "H" moves East in the 48HR prog, the alert will expire.
+3. PRECIPITATION SETUP: Look for green shaded areas (Rain) or dashed lines (Troughs) approaching the Red River.
 
-AI ACTION: Evaluate the 48HR progression to refine the 19% risk score. If the trough deepens significantly in this timeframe, escalate vehicle protection protocols.`;
+AI ACTION: Cross-reference the surface frontal positions with the 500mb vorticity. If a surface front aligns with an upper-air trough on Saturday (48HR), escalate hail protection for the Lexus and Santa Fe.`;
 
         document.getElementById('briefing-text').value = briefing;
     }
@@ -64,9 +81,9 @@ AI ACTION: Evaluate the 48HR progression to refine the 19% risk score. If the tr
         const copyText = document.getElementById("briefing-text");
         copyText.select();
         document.execCommand("copy");
-        alert("48HR Strategic Briefing Copied.");
+        alert("Integrated Briefing Copied.");
     }
-    generateBriefing('48HR');
+    generateBriefing('SURFACE', 'F000');
 </script>
 </body>
 </html>
