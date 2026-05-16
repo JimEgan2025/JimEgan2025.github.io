@@ -3,65 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya MOS Master Dashboard</title>
+    <title>Vizcaya Master MOS Dashboard</title>
     <style>
         :root { --bg: #f1f5f9; --text: #1e293b; --accent: #2563eb; --border: #cbd5e1; --header: #334155; --almanac: #64748b; }
         html { scroll-behavior: smooth; }
         
-        /* Increased base font from 13px to 15px */
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            padding: 20px; 
+            padding: 15px; 
             font-size: 15px; 
             line-height: 1.2; 
         }
         
-        .container { max-width: 1600px; margin: 0 auto; }
+        /* Narrowed for better Facebook/Mobile display */
+        .container { max-width: 900px; margin: 0 auto; }
         
-        /* Centered Header */
         .dashboard-header { 
             background: white; 
             padding: 20px; 
             border-radius: 12px; 
             border: 1px solid var(--border); 
             text-align: center;
-            margin-bottom: 25px; 
-            position: sticky; 
-            top: 10px; 
-            z-index: 1000; 
+            margin-bottom: 20px; 
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
         }
-        .header-title { font-size: 1.7rem; margin: 0; color: var(--header); font-weight: 800; }
-        .header-as-of { font-size: 0.9rem; color: #64748b; margin-top: 5px; font-weight: 500; }
+        .header-title { font-size: 1.8rem; margin: 0; color: var(--header); font-weight: 900; letter-spacing: -1px; }
+        .header-as-of { font-size: 1rem; color: #64748b; margin-top: 5px; font-weight: 600; }
 
-        /* Tables & Wraps */
-        .summary-wrap, .hourly-wrap { background: #fff; padding: 15px; border-radius: 12px; border: 2px solid var(--accent); margin-bottom: 30px; overflow-x: auto; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-        th { background: var(--accent); color: white; padding: 12px 10px; border: 1px solid #1d4ed8; font-size: 14px; }
-        td { border: 1px solid var(--border); padding: 12px 10px; text-align: center; font-weight: 700; font-size: 15px; }
+        .summary-wrap, .hourly-wrap, .table-wrap { 
+            background: #fff; 
+            padding: 10px; 
+            border-radius: 12px; 
+            border: 2px solid var(--accent); 
+            margin-bottom: 25px; 
+            overflow-x: auto; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: var(--accent); color: white; padding: 10px 5px; border: 1px solid #1d4ed8; font-size: 13px; text-transform: uppercase; }
+        td { border: 1px solid var(--border); padding: 10px 5px; text-align: center; font-weight: 700; font-size: 15px; }
         
-        /* Widened row label to accommodate larger font */
-        .row-label { background: #f8fafc; text-align: left !important; font-weight: bold !important; width: 250px; color: var(--header); }
+        .row-label { background: #f8fafc; text-align: left !important; font-weight: 800 !important; width: 180px; color: var(--header); padding-left: 12px; }
         
-        /* Indicators */
-        .h-badge { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; display: inline-block; min-width: 70px; }
+        .h-badge { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; display: inline-block; min-width: 65px; }
         .bg-red { background: #dc2626; }    
         .bg-blue { background: #1e40af; }   
         .front-tag { color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 3px 6px; }
-        .front-arrival { background: #eff6ff !important; border: 3px solid #1d4ed8 !important; }
+        .front-arrival { background: #eff6ff !important; border: 2px solid #1d4ed8 !important; }
 
-        .metric-group { background: #334155; color: white; text-transform: uppercase; font-size: 0.8em; letter-spacing: 0.15em; padding: 12px 15px !important; text-align: left !important; }
-        .almanac-row { background: #f9fafb !important; color: var(--almanac); font-style: italic; font-size: 0.9em; }
+        .metric-group { background: #334155; color: white; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.1em; padding: 10px 15px !important; text-align: left !important; }
+        .almanac-row { background: #f9fafb !important; color: var(--almanac); font-style: italic; font-size: 0.95em; }
 
-        h2 { background: var(--header); color: white; padding: 12px 15px; margin: 40px 0 0 0; font-size: 1.1rem; border-radius: 8px 8px 0 0; }
-        .table-wrap { background: white; padding: 10px; overflow-x: auto; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 0 0 8px 8px; }
-        .avg-cell { font-weight: bold; border-left: 2px solid #22c55e; background: #f0fdf4 !important; color: #166534; }
-        .tossed { text-decoration: line-through; opacity: 0.25; font-weight: normal !important; }
+        h2 { background: var(--header); color: white; padding: 12px 15px; margin: 30px 0 0 0; font-size: 1.2rem; border-radius: 8px 8px 0 0; font-weight: 800; }
+        
+        .avg-cell { font-weight: 900; border-left: 2px solid #22c55e; background: #f0fdf4 !important; color: #166534; }
+        .tossed { text-decoration: line-through; opacity: 0.3; font-weight: normal !important; }
 
         #loading { text-align: center; padding: 20px; font-weight: bold; color: var(--accent); background: #fff; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
+        .cond-icon { font-size: 1.2rem; display: block; }
+        .cond-text { font-size: 0.7rem; color: #64748b; font-weight: normal; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -69,42 +74,73 @@
 <div class="container">
     <div class="dashboard-header">
         <div class="header-title">Vizcaya Master MOS</div>
-        <div id="asOfTime" class="header-as-of">Synchronizing Data...</div>
-        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px;">Round Rock, TX • Automatic Hourly Updates</div>
+        <div id="asOfTime" class="header-as-of">Synchronizing Satellite Data...</div>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px; font-weight: 700;">ROUND ROCK, TX // v21.1 // NARROW-SYNC</div>
     </div>
 
     <div id="loading">📡 Filtering Forecast Noise...</div>
 
-    <h2 id="summary">Executive 7-Day Summary <span>(Consensus vs Climatology)</span></h2>
+    <h2 id="summary">Executive 7-Day Summary</h2>
     <div class="summary-wrap"><table id="summaryTable"><thead id="summaryHead"></thead><tbody id="summaryBody"></tbody></table></div>
 
-    <h2 id="extended">Extended 8-14 Day Trend <span>(Outlook Only)</span></h2>
-    <div class="summary-wrap"><table id="extendedTable"><thead id="extendedHead"></thead><tbody id="extendedBody"></tbody></table></div>
-
     <h2 id="hourly">24-Hour Frontal Pinpoint</h2>
-    <div class="hourly-wrap"><table><thead><tr><th>Hour</th><th>Temp</th><th>Dew</th><th>Wind</th><th>Gust</th><th>Rain %</th><th>Direction</th></tr></thead><tbody id="hourlyBody"></tbody></table></div>
+    <div class="hourly-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Hour</th>
+                    <th>Cond</th>
+                    <th>Temp</th>
+                    <th>Dew</th>
+                    <th>Wind</th>
+                    <th>Rain / %</th>
+                    <th>Dir</th>
+                </tr>
+            </thead>
+            <tbody id="hourlyBody"></tbody>
+        </table>
+    </div>
 
     <div id="dashboard-content"></div>
+
+    <h2 id="extended">Extended 8-14 Day Trend</h2>
+    <div class="summary-wrap"><table id="extendedTable"><thead id="extendedHead"></thead><tbody id="extendedBody"></tbody></table></div>
 </div>
 
 <script>
     const ALMANAC_URL = 'https://jimegan2025.github.io/almanac.json';
     const LAT = 30.5871, LON = -97.641;
-    const modelConfig = [{key:'ecmwf_ifs025',label:'ECMWF'}, {key:'gfs_seamless',label:'GFS'}, {key:'best_match',label:'Blend'}, {key:'gem_seamless',label:'GEM'}, {key:'icon_seamless',label:'ICON'}];
+    const modelConfig = [
+        {key:'ecmwf_ifs025',label:'ECM'}, 
+        {key:'gfs_seamless',label:'GFS'}, 
+        {key:'best_match',label:'BLN'}, 
+        {key:'gem_seamless',label:'GEM'}, 
+        {key:'icon_seamless',label:'ICN'}
+    ];
+
+    function getWeatherInfo(code) {
+        const map = {
+            0: ["☀️", "Clear"], 1: ["🌤️", "M. Clear"], 2: ["⛅", "P. Cloud"], 3: ["☁️", "Cloudy"],
+            45: ["🌫️", "Fog"], 48: ["🌫️", "Fog"], 51: ["🌦️", "Drizzle"], 53: ["🌦️", "Drizzle"],
+            55: ["🌦️", "Drizzle"], 61: ["🌧️", "Rain"], 63: ["🌧️", "Rain"], 65: ["🌧️", "H. Rain"],
+            71: ["❄️", "Snow"], 73: ["❄️", "Snow"], 75: ["❄️", "H. Snow"], 80: ["🌦️", "Showers"],
+            81: ["🌧️", "Showers"], 82: ["🌧️", "H. Showers"], 95: ["⛈️", "T-Storm"], 96: ["⛈️", "T-Storm"], 99: ["⛈️", "H. T-Storm"]
+        };
+        return map[code] || ["❓", "N/A"];
+    }
 
     let almanac = {}, hourlyFrontIdx = -1, dCore = null, dEnv = null, hData = null, frontalTimingLabel = "Stable";
 
     async function loadData() {
         const loader = document.getElementById('loading');
         const asOfLabel = document.getElementById('asOfTime');
-        loader.style.display = 'block';
         
         try {
             const [almRes, r1, r2, r3] = await Promise.all([
                 fetch(ALMANAC_URL),
                 fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,cloud_cover_mean,weather_code&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16&models=${modelConfig.map(m=>m.key).join(',')}`),
                 fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,dewpoint_2m_max&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=auto&forecast_days=16&models=best_match,ecmwf_ifs025,gfs_seamless,icon_seamless`),
-                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,dewpoint_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&models=best_match`)
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,dewpoint_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&models=best_match`)
             ]);
 
             if (almRes.ok) almanac = await almRes.json();
@@ -118,12 +154,11 @@
             renderDetails(dCore, dEnv);
             
             const now = new Date();
-            asOfLabel.innerText = `As of ${now.toLocaleDateString([], {month:'short', day:'numeric'})}, ${now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
-            
+            asOfLabel.innerText = `${now.toLocaleDateString([], {month:'short', day:'numeric'})} @ ${now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
             loader.style.display = 'none';
         } catch (e) { 
-            loader.innerText = "Sync Error. Retrying soon..."; 
-            setTimeout(loadData, 60000); 
+            loader.innerText = "Sync Error. Retrying..."; 
+            console.error(e);
         }
     }
 
@@ -136,16 +171,6 @@
         return { avg: s.reduce((a,b)=>a+b,0)/s.length, min: s[0], max: s[s.length-1], spread: rawSpread };
     }
 
-    function getSmartCondition(cloudPct, rainProb) {
-        if (rainProb > 45) return "🌧️ Rain";
-        if (rainProb > 20) return "🌦️ Isold Rain";
-        if (cloudPct < 20) return "☀️ Sunny";
-        if (cloudPct < 40) return "🌤️ Mostly Sunny";
-        if (cloudPct < 65) return "⛅ Partly Cloudy";
-        if (cloudPct < 85) return "🌥️ Mostly Cloudy";
-        return "☁️ Overcast";
-    }
-
     function degToCard(deg) {
         const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
         return arr[(Math.floor((deg / 22.5) + 0.5) % 16)];
@@ -156,7 +181,6 @@
         const h = data.hourly;
         const nowIdx = h.time.findIndex(t => new Date(t) >= new Date());
         hourlyFrontIdx = -1; let maxScore = 0;
-        frontalTimingLabel = "Stable / Post-Frontal";
 
         for (let i = nowIdx + 3; i < nowIdx + 36; i++) {
             const tempDrop = h.temperature_2m[i-3] - h.temperature_2m[i];
@@ -167,18 +191,19 @@
             if (wasSouthBefore && isNorthNow) score += 35; 
             if (dewDrop > 6) score += 15;
             score += tempDrop;
-            if (score > maxScore && score > 40 && tempDrop > 6) { 
-                maxScore = score; hourlyFrontIdx = i; 
-            }
+            if (score > maxScore && score > 35 && tempDrop > 5) { maxScore = score; hourlyFrontIdx = i; }
         }
         if (hourlyFrontIdx !== -1) {
             const fTime = new Date(h.time[hourlyFrontIdx]);
             frontalTimingLabel = (fTime.getDate() === new Date().getDate()) ? "❄️ Arrival Today" : "❄️ Front Tomorrow";
-        }
+        } else { frontalTimingLabel = "Stable"; }
+
         for (let i = nowIdx; i < nowIdx + 24; i++) {
             const row = body.insertRow(); if (i === hourlyFrontIdx) row.className = 'front-arrival';
             const time = new Date(h.time[i]).toLocaleTimeString([],{hour:'numeric'});
-            row.innerHTML = `<td>${time}</td><td>${Math.round(h.temperature_2m[i])}°</td><td>${Math.round(h.dewpoint_2m[i])}°</td><td>${Math.round(h.wind_speed_10m[i])}</td><td>${Math.round(h.wind_gusts_10m[i])}</td><td>${h.precipitation_probability[i]}%</td><td><span style="display:inline-block; transform:rotate(${h.wind_direction_10m[i]}deg)">↓</span> ${degToCard(h.wind_direction_10m[i])}</td>`;
+            const [icon, label] = getWeatherInfo(h.weather_code[i]);
+            const rainAmt = h.precipitation[i] > 0 ? h.precipitation[i].toFixed(2) + '"' : '0"';
+            row.innerHTML = `<td>${time}</td><td><span class="cond-icon">${icon}</span><span class="cond-text">${label}</span></td><td>${Math.round(h.temperature_2m[i])}°</td><td>${Math.round(h.dewpoint_2m[i])}°</td><td>${Math.round(h.wind_speed_10m[i])}<br><small>G:${Math.round(h.wind_gusts_10m[i])}</small></td><td>${rainAmt}<br><small>${h.precipitation_probability[i]}%</small></td><td><span style="display:inline-block; transform:rotate(${h.wind_direction_10m[i]}deg)">↓</span><br>${degToCard(h.wind_direction_10m[i])}</td>`;
         }
     }
 
@@ -190,79 +215,45 @@
         const mSub = ['best_match','ecmwf_ifs025', 'gfs_seamless','icon_seamless'];
 
         head.innerHTML = '<tr><th class="row-label">DATE / METRIC</th>' + dates.map(d => `<th>${new Date(d+'T00:00').toLocaleDateString([],{weekday:'short'})}<br>${new Date(d+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</th>`).join('') + '</tr>';
-        
         let rows = [];
         rows.push({ l: 'Conditions', g: 'Overview & Hazards', f: d => {
-            let rainProb = getStats(d2, mSub, 'precipitation_probability_max', d).avg;
-            if (d === 0 && hData) {
-                const nowIdx = hData.hourly.time.findIndex(t => new Date(t) >= new Date());
-                const endOfDayIdx = nowIdx + (24 - new Date().getHours());
-                rainProb = Math.max(...hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx));
-            }
-            return getSmartCondition(getStats(d1, mAll, 'cloud_cover_mean', d).avg, rainProb);
+            const [icon, label] = getWeatherInfo(d1.daily.weather_code_best_match[d]);
+            return `<span style="font-size:1.3rem">${icon}</span><br><small>${label}</small>`;
         }});
-        
-        rows.push({ l: 'Forecast Confidence', g: 'Overview & Hazards', f: d => {
+        rows.push({ l: 'Confidence', g: 'Overview & Hazards', f: d => {
             const s = getStats(d1, mAll, 'temperature_2m_max', d).spread;
             if (s <= 4) return '<span class="h-badge" style="background:#22c55e">High</span>';
             if (s <= 8) return '<span class="h-badge" style="background:#eab308">Medium</span>';
             return '<span class="h-badge" style="background:#ef4444">Low</span>';
         }});
-
         if (!isExt) {
             rows.push({ l: 'Hazard Alerts', g: 'Overview & Hazards', f: d => {
                 const aMax = getStats(d2, mSub, 'apparent_temperature_max', d).avg;
                 const aMin = getStats(d2, mSub, 'apparent_temperature_min', d).avg;
-                if (aMax >= 98) return '<span class="h-badge bg-red">🔥 High Heat</span>';
+                if (aMax >= 100) return '<span class="h-badge bg-red">🔥 Heat Risk</span>';
                 if (aMin <= 32) return '<span class="h-badge bg-blue">🧊 Freeze Risk</span>';
                 return "---";
             }});
-            rows.push({ l: 'Frontal Analysis', g: 'Overview & Hazards', f: d => {
-                if (d === 0) return `<span class="${frontalTimingLabel.includes('❄️') ? 'front-tag' : ''}">${frontalTimingLabel}</span>`;
-                const hT = getStats(d1, mAll, 'temperature_2m_max', d).avg, hP = getStats(d1, mAll, 'temperature_2m_max', d-1).avg;
-                const dir = d2.daily.wind_direction_10m_dominant_best_match[d];
-                return (hT <= hP - 12 && (dir < 60 || dir > 300)) ? '<span class="front-tag">❄️ Cold Front</span>' : "Stable";
-            }});
         }
-
         rows.push({ l: 'Consensus Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d1,mAll,'temperature_2m_max',d).avg)}° / ${Math.round(getStats(d1,mAll,'temperature_2m_min',d).avg)}°` });
-        rows.push({ l: 'Feels Like Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d2,mSub,'apparent_temperature_max',d).avg)}° / ${Math.round(getStats(d2,mSub,'apparent_temperature_min',d).avg)}°` });
-        
         if (!isExt) {
-            rows.push({ l: 'Normal (Avg) Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
+            rows.push({ l: 'Normal Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
                 const a = almanac[d1.daily.time[d].substring(5)] || {avgH:'--',avgL:'--'};
                 return `${a.avgH}° / ${a.avgL}°`;
             }});
-            rows.push({ l: 'Departure from Normal', g: 'Temperature Analysis', isAlm: true, f: d => {
-                const a = almanac[d1.daily.time[d].substring(5)];
-                if (!a || a.avgH === '--') return '--';
+            rows.push({ l: 'Departure', g: 'Temperature Analysis', isAlm: true, f: d => {
+                const a = almanac[d1.daily.time[d].substring(5)]; if (!a || a.avgH === '--') return '--';
                 const normAvg = (parseFloat(a.avgH) + parseFloat(a.avgL)) / 2;
                 const consAvg = (getStats(d1, mAll, 'temperature_2m_max', d).avg + getStats(d1, mAll, 'temperature_2m_min', d).avg) / 2;
                 const diff = consAvg - normAvg;
-                return `<span style="color:${diff < 0 ? '#2563eb' : '#dc2626'}; font-weight:800;">${diff > 0 ? '+' : ''}${diff.toFixed(1)}°</span>`;
-            }});
-            rows.push({ l: 'Historical Record', g: 'Temperature Analysis', isAlm: true, f: d => {
-                const a = almanac[d1.daily.time[d].substring(5)] || {recH:'--',recHY:'',recL:'--',recLY:''};
-                return a.recH === '--' ? '--' : `${a.recH}° ('${a.recHY.toString().slice(-2)}) / ${a.recL}° ('${a.recLY.toString().slice(-2)})`;
+                return `<span style="color:${diff < 0 ? '#2563eb' : '#dc2626'}; font-weight:900;">${diff > 0 ? '+' : ''}${diff.toFixed(1)}°</span>`;
             }});
         }
-
-        rows.push({ l: 'Rain Prob / Exp. Amt', g: 'Environment & Wind', f: d => {
-            let rainProb = Math.round(getStats(d2, mSub, 'precipitation_probability_max', d).avg);
-            let rainSum = getStats(d1, mAll, 'precipitation_sum', d).avg;
-            if (d === 0 && hData) {
-                const nowIdx = hData.hourly.time.findIndex(t => new Date(t) >= new Date());
-                const endOfDayIdx = nowIdx + (24 - new Date().getHours());
-                rainProb = Math.max(...hData.hourly.precipitation_probability.slice(nowIdx, endOfDayIdx));
-                rainSum = hData.hourly.precipitation.slice(nowIdx, endOfDayIdx).reduce((a, b) => a + b, 0);
-            }
-            return `${rainProb}% / ${rainSum.toFixed(2)}"` + (d === 0 ? ' <small>(Rem.)</small>' : '');
-        }});
+        rows.push({ l: 'Rain Amt / %', g: 'Environment & Wind', f: d => `${getStats(d1, mAll, 'precipitation_sum', d).avg.toFixed(2)}" / ${Math.round(getStats(d2, mSub, 'precipitation_probability_max', d).avg)}%` });
         rows.push({ l: 'Humidity / Dew', g: 'Environment & Wind', f: d => `${Math.round(getStats(d2, mSub, 'relative_humidity_2m_mean', d).avg)}% / ${Math.round(getStats(d2, mSub, 'dewpoint_2m_max', d).avg)}°` });
         rows.push({ l: 'Wind Consensus', g: 'Environment & Wind', f: d => `${degToCard(d2.daily.wind_direction_10m_dominant_best_match[d])} ${Math.round(getStats(d2,mSub,'wind_speed_10m_max',d).avg)} mph` });
 
-        let lastGroup = '';
-        body.innerHTML = '';
+        let lastGroup = ''; body.innerHTML = '';
         rows.forEach(r => {
             if (r.g !== lastGroup) { body.innerHTML += `<tr><td colspan="10" class="metric-group">${r.g}</td></tr>`; lastGroup = r.g; }
             body.innerHTML += `<tr class="${r.isAlm?'almanac-row':''}"><td>${r.l}</td>${dates.map((_,i)=>`<td>${r.f(i + start)}</td>`).join('')}</tr>`;
@@ -274,13 +265,14 @@
         const mAll = modelConfig.map(m=>m.key);
         const mSub = ['best_match', 'ecmwf_ifs025', 'gfs_seamless', 'icon_seamless'];
         const sets = [
-            {t:'Dry Bulb Temp', m:'temperature_2m', src:d1, k:mAll},
-            {t:'Precipitation Amount', m:'precipitation_sum', src:d1, k:mAll},
+            {t:'Dry Bulb Temperature Hi/Lo', m:'temperature_2m', src:d1, k:mAll},
+            {t:'Precipitation Amount (Inches)', m:'precipitation_sum', src:d1, k:mAll},
             {t:'Humidity & Dew Point', m:'comfort', src:d2, k:mSub},
-            {t:'Wind & Gusts', m:'wind', src:d2, k:mSub}
+            {t:'Wind Speed & Max Gusts', m:'wind', src:d2, k:mSub}
         ];
+        
         sets.forEach(s => {
-            let h = `<h2>${s.t} Breakdown</h2><div class="table-wrap"><table><thead><tr><th>Date</th>${s.k.map(v=>`<th>${v.toUpperCase()}</th>`).join('')}<th>Consensus</th></tr></thead><tbody>`;
+            let h = `<h2>${s.t}</h2><div class="table-wrap"><table><thead><tr><th>Date</th>${s.k.map(v=>`<th>${v.substring(0,3).toUpperCase()}</th>`).join('')}<th>CONS</th></tr></thead><tbody>`;
             for (let d = 0; d < 7; d++) {
                 h += `<tr><td>${new Date(d1.daily.time[d]+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</td>`;
                 let rowVals = s.k.map(v => {
