@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Texas Weather AI Stack - FULL 6-LAYER</title>
+    <style>
+        body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
+        .nav-overlay { 
+            position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 9999; 
+            display: flex; background: rgba(20,20,20,0.9); padding: 5px; border-radius: 0 0 10px 10px; 
+            border: 1px solid #444; border-top: none; gap: 4px;
+        }
+        button { 
+            cursor: pointer; padding: 6px 10px; border: none; border-radius: 4px; 
+            background: #222; color: #aaa; font-size: 10px; font-weight: bold; transition: 0.2s;
+        }
+        button:hover { background: #444; color: white; }
+        button.active { background: #0078d4; color: white; }
+        .view-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; }
+        .view-container.active { display: block; }
+        iframe, img { width: 100%; height: 100%; border: none; object-fit: contain; background: black; }
+        .system-tag { position: fixed; bottom: 10px; right: 15px; color: rgba(0,255,0,0.3); font-family: monospace; font-size: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-overlay">
+        <button class="btn active" onclick="show('radar', this)">RADAR</button>
+        <button class="btn" onclick="show('visible', this)">VISIBLE</button>
+        <button class="btn" onclick="show('ir', this)">IR</button>
+        <button class="btn" onclick="show('wv', this)">WATER VAPOR</button>
+        <button class="btn" onclick="show('glm', this)">GLM</button>
+        <button class="btn" onclick="show('prog', this)">PROG CHART</button>
+        <button onclick="toggleNav()" style="background:#400;">HIDE</button>
+    </div>
+
+    <div id="radar" class="view-container active">
+        <iframe src="https://radar.weather.gov/?settings=v1_eyJhZ2VuZGEiOnsiaWQiOiJ3ZWF0aGVyIiwiY2VudGVyIjpbLTk1Ljc1NSwzMS44MDRdLCJsb2NhdGlvbiI6Wy05Ny42NDcsMzAuNTc4XSwiem9vbSI6Ni4yMzgzMzA4ODgxNjQ1NTgsImxheWVyIjoiYnJlZl9xY2QifSwiYW5pbWF0aW5nIjp0cnVlLCJiYXNlIjoic3RhbmRhcmQiLCJhcnRjYyI6ZmFsc2UsImNvdW50eSI6dHJ1ZSwiY3dhIjpmYWxzZSwicmZjIjpmYWxzZSwic3RhdGUiOnRydWUsIm1lbnUiOnRydWUsInNob3J0RnVzZWRPbmx5IjpmYWxzZSwib3BhY2l0eSI6eyJhbGVydHMiOjEsImxvY2FsIjowLjk5LCJsb2NhbFN0YXRpb25zIjowLCJuYXRpb25hbCI6MC43NH19"></iframe>
+    </div>
+
+    <div id="visible" class="view-container">
+        <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/2400x2400.jpg">
+    </div>
+
+    <div id="ir" class="view-container">
+        <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/2400x2400.jpg">
+    </div>
+
+    <div id="wv" class="view-container">
+        <!-- GOES Band 08: Mid-level Water Vapor -->
+        <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/2400x2400.jpg">
+    </div>
+
+    <div id="glm" class="view-container">
+        <img src="https://cdn.star.nesdis.noaa.gov/GOES16/GLM/SECTOR/sp/EXTENT3/2400x2400.jpg">
+    </div>
+
+    <div id="prog" class="view-container">
+        <iframe src="https://aviationweather.gov/gfa/#progchart"></iframe>
+    </div>
+
+    <div class="system-tag">IX_INTEGRATION_RULE_ACTIVE</div>
+
+    <script>
+        function show(id, btn) {
+            document.querySelectorAll('.view-container').forEach(div => div.classList.remove('active'));
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+        function toggleNav() { document.querySelector('.nav-overlay').style.display = 'none'; }
+    </script>
+</body>
+</html>
