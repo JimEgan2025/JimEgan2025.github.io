@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vizcaya v12 — AI Data Command</title>
+
+<style>
+    :root {
+        --bg: #020617;
+        --card-bg: #0f172a;
+        --border: #1e293b;
+        --text-main: #f8fafc;
+        --text-dim: #94a3b8;
+        --accent: #facc15;
+        --low: #22c55e;
+        --mid: #eab308;
+        --high: #f97316;
+        --extreme: #ef4444;
+    }
+
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); padding-bottom: 50px; }
+    header { padding: 15px 20px; background: #1e293b; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .brand h1 { margin: 0; font-size: 18px; color: var(--accent); font-weight: 900; }
+
+    .nws-alert-bar { margin: 12px; padding: 12px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 8px; font-weight: bold; font-size: 13px; }
+    .summary-box { margin: 0 12px 12px; padding: 14px; background: rgba(30, 41, 59, 0.4); border-radius: 8px; font-size: 13px; line-height: 1.4; border-left: 4px solid var(--accent); }
+
+    .container { padding: 0 12px 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .card-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+    .card-value { font-size: 28px; font-weight: 900; margin: 4px 0; display: block; }
+    
+    .meter-bg { height: 4px; width: 100%; background: #1e293b; margin-top: 8px; border-radius: 2px; }
+    .meter-fill { height: 100%; border-radius: 2px; transition: width 0.8s; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #000; margin-top: 4px; text-transform: uppercase; }
+
+    /* AI Report Section */
+    .ai-section { margin: 12px; padding: 15px; background: #000; border: 1px solid #334155; border-radius: 10px; }
+    .ai-header { font-size: 12px; color: var(--accent); font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
+    textarea { width: 100%; height: 150px; background: #000; color: #22c55e; border: 1px solid #1e293b; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; box-sizing: border-box; resize: none; }
+    
+    button { background: var(--accent); color: #000; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+    .copy-btn { margin-top: 10px; background: #334155; color: white; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <h1>VIZCAYA v12</h1>
+        <div style="font-size: 10px; color: var(--text-dim);">GEORGETOWN, TX // COMMAND DASHBOARD</div>
+    </div>
+    <button onclick="refreshAll()">SYNC DATA</button>
+</header>
+
+<div class="nws-alert-bar" id="alert-bar">Synchronizing NWS API...</div>
+
+<div class="summary-box" id="assessment">Analyzing convective and hydrological environment...</div>
+
+<div class="container">
+    <div class="card">
+        <div class="card-label">SPC Category</div>
+        <span id="spc-val" class="card-value">--</span>
+        <div id="spc-badge" class="badge">--</div>
+    </div>
+    <div class="card">
+        <div class="card-label">WPC Flood Risk</div>
+        <span id="wpc-val" class="card-value">--</span>
+        <div id="wpc-badge" class="badge">--</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Hail Potential</div>
+        <span id="hail-val" class="card-value">--</span>
+        <div class="meter-bg"><div id="hail-bar" class="meter-fill"></div></div>
+    </div>
+    <div class="card">
+        <div class="card-label">Wind Damage</div>
+        <span id="wind-val" class="card-value">--</span>
+        <div class="meter-bg"><div id="wind-bar" class="meter-fill"></div></div>
+    </div>
+    <div class="card">
+        <div class="card-label">Tornado Index</div>
+        <span id="torn-val" class="card-value">--</span>
+        <div class="meter-bg"><div id="torn-bar" class="meter-fill"></div></div>
+    </div>
+    <div class="card">
+        <div class="card-label">CAPE (Energy)</div>
+        <span id="cape-val" class="card-value">--</span>
+        <div style="font-size: 10px; color: var(--text-dim);">J/kg (Fuel for Storms)</div>
+    </div>
+    <div class="card">
+        <div class="card-label">CIN (Resistance)</div>
+        <span id="cin-val" class="card-value">--</span>
+        <div style="font-size: 10px; color: var(--text-dim);" id="cin-status">The Cap</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Initiation Chance</div>
+        <span id="init-val" class="card-value">--</span>
+        <div class="meter-bg"><div id="init-bar" class="meter-fill"></div></div>
+        <div style="font-size: 10px; color: var(--text-dim); margin-top:5px;">Probability storms will fire.</div>
+    </div>
+</div>
+
+<div class="ai-section">
+    <div class="ai-header">AI Raw Data Export (Markdown)</div>
+    <textarea id="ai-text" readonly></textarea>
+    <button class="copy-btn" onclick="copyToClipboard()">Copy Data for AI Report</button>
+</div>
+
+<script>
+const LAT = 30.5871, LON = -97.641;
+let currentData = { alerts: "None" };
+
+async function refreshAll() {
+    await fetchNWS();
+    await fetchMeteo();
+    generateAIReport();
+}
+
+async function fetchNWS() {
+    const bar = document.getElementById('alert-bar');
+    try {
+        const res = await fetch(`https://api.weather.gov/alerts/active?point=${LAT},${LON}`);
+        const data = await res.json();
+        if (data.features && data.features.length > 0) {
+            currentData.alerts = data.features.map(f => f.properties.event).join(', ');
+            bar.innerHTML = `⚠️ ACTIVE: ${currentData.alerts}`;
+            bar.style.background = currentData.alerts.includes("Flood") ? "#064e3b" : "#7f1d1d";
+        } else {
+            currentData.alerts = "No active alerts";
+            bar.innerHTML = "✅ NO ACTIVE NWS ALERTS";
+            bar.style.background = "#1e1b4b";
+        }
+    } catch (e) { bar.innerText = "NWS Sync Error"; }
+}
+
+async function fetchMeteo() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=cape,wind_gusts_10m,convective_inhibition,precipitation,precipitation_probability&timezone=auto`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    const d = {
+        cape: data.hourly.cape[0] || 0,
+        gusts: data.hourly.wind_gusts_10m[0] || 0,
+        cin: Math.abs(data.hourly.convective_inhibition[0] || 0),
+        pop: data.hourly.precipitation_probability[0] || 0,
+        rain: data.hourly.precipitation[0] || 0
+    };
+
+    const risks = {
+        hail: Math.round(Math.min(100, (d.cape / 45) + (d.pop * 0.1))),
+        wind: Math.round(Math.min(100, (d.gusts * 2.1))),
+        torn: Math.round(Math.min(100, (d.cape / 70) + (d.gusts * 0.3))),
+        init: Math.round(Math.max(0, Math.min(100, (d.pop * 0.8) + (d.cape/100) - (d.cin/3))))
+    };
+
+    currentData = {...currentData, ...d, ...risks};
+
+    document.getElementById('cape-val').innerText = d.cape;
+    document.getElementById('cin-val').innerText = d.cin;
+    document.getElementById('cin-status').innerText = d.cin < 25 ? "Cap Weakening" : "Cap Holding";
+    
+    updateMeter('hail', risks.hail);
+    updateMeter('wind', risks.wind);
+    updateMeter('torn', risks.torn);
+    updateMeter('init', risks.init);
+
+    // SPC/WPC Logic
+    let sTxt = "MARGINAL", sCol = "#7fff00";
+    if (d.pop > 60 && d.cape > 2500) { sTxt = "ENHANCED"; sCol = "#ffb300"; }
+    else if (d.pop > 40 && d.cape > 1500) { sTxt = "SLIGHT"; sCol = "#f7f700"; }
+    setOut('spc', sTxt, sCol);
+
+    let wTxt = "MARGINAL", wCol = "#7fff00";
+    if (currentData.alerts.includes("Flood")) { wTxt = "FLOOD WATCH"; wCol = "#2e8b57"; }
+    setOut('wpc', wTxt, wCol);
+
+    document.getElementById('assessment').innerHTML = `<strong>COMMAND ASSESSMENT:</strong> Energy is ${d.cape > 2500 ? 'Extreme' : 'Moderate'}. Initiation chance is ${risks.init}%. ${currentData.alerts.includes("Flood") ? 'Flood Watch is the primary concern.' : ''}`;
+}
+
+function setOut(id, txt, col) {
+    const v = document.getElementById(id + '-val'), b = document.getElementById(id + '-badge');
+    v.innerText = txt; v.style.color = col; b.innerText = txt; b.style.backgroundColor = col;
+}
+
+function updateMeter(id, val) {
+    document.getElementById(id + '-val').innerText = val + '%';
+    const bar = document.getElementById(id + '-bar');
+    bar.style.width = val + '%';
+    bar.style.backgroundColor = val < 25 ? "#22c55e" : val < 55 ? "#eab308" : "#ef4444";
+}
+
+function generateAIReport() {
+    const report = `### VIZCAYA WEATHER DATA REPORT
+**Location:** Georgetown, TX (30.5871, -97.641)
+**Timestamp:** ${new Date().toLocaleString()}
+
+**1. OFFICIAL OUTLOOKS:**
+- NWS Alerts: ${currentData.alerts}
+- SPC Convective: ${document.getElementById('spc-val').innerText}
+- WPC Flood: ${document.getElementById('wpc-val').innerText}
+
+**2. TECHNICAL INGREDIENTS:**
+- CAPE (Energy): ${currentData.cape} J/kg
+- CIN (Inhibition): ${currentData.cin} J/kg
+- Convective Initiation Chance: ${currentData.init}%
+
+**3. LOCAL SEVERE HAZARDS:**
+- Hail Potential: ${currentData.hail}%
+- Wind Potential: ${currentData.wind}%
+- Tornado Index: ${currentData.torn}%
+
+**4. COMMAND SUMMARY:**
+${document.getElementById('assessment').innerText}`;
+    
+    document.getElementById('ai-text').value = report;
+}
+
+function copyToClipboard() {
+    const text = document.getElementById('ai-text');
+    text.select();
+    document.execCommand('copy');
+    alert("Report copied! You can now paste this into ChatGPT or Claude.");
+}
+
+refreshAll();
+setInterval(refreshAll, 600000);
+</script>
+
+</body>
+</html>
