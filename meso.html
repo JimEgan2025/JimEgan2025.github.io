@@ -3,264 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIZCAYA STRATOS | v26.0</title>
-
+<title>VIZCAYA COMMAND | v32.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root {
     --bg: #05070a; --panel: #0f121a; --border: #1e293b; --text: #f1f5f9;
-    --primary: #00f2ff; --danger: #ff004c; --warning: #f59e0b; --stable: #10b981; --neutral: #64748b; --tornado: #bc00ff;
+    --primary: #00f2ff; --danger: #ff004c; --warning: #f59e0b; --stable: #10b981; --neutral: #64748b;
+    --cat1: #7fff00; --cat2: #f7f700; --cat3: #ffb300; --cat0: #22c55e;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 20px; max-width: 1600px; margin: auto; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; padding: 15px; max-width: 1750px; margin: auto; }
 
-header {
-    background: #000; padding: 20px 40px; border-bottom: 3px solid var(--danger);
-    display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0;
-}
+header { background: #000; padding: 20px; border-bottom: 3px solid var(--danger); display: flex; justify-content: space-between; align-items: center; border-radius: 8px; }
+.manual-input { display: flex; gap: 10px; background: #111; padding: 10px; border-radius: 8px; border: 1px solid #222; }
+.manual-input input { width: 75px; padding: 8px; background: #000; border: 1px solid var(--border); color: var(--primary); text-align: center; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 18px; border-radius: 4px; }
+.btn-sync { padding: 12px 20px; background: var(--danger); border: none; color: #fff; font-weight: 900; cursor: pointer; border-radius: 4px; font-size: 10px; text-transform: uppercase; }
 
-.title { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
-.manual-input { display: flex; gap: 12px; background: #111; padding: 12px; border-radius: 8px; border: 1px solid #222; }
-.manual-input input { width: 80px; padding: 8px; background: #000; border: 1px solid var(--border); color: var(--primary); text-align: center; font-size: 18px; font-family: 'JetBrains Mono'; font-weight: 800; border-radius: 4px; }
-.btn-sync { padding: 10px 20px; background: var(--danger); border: none; color: #fff; font-weight: 900; cursor: pointer; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
+.nws-bar { background: #1e1b4b; color: #fff; padding: 10px; font-weight: 800; font-size: 11px; text-align: center; margin-top: 10px; border-radius: 4px; border: 1px solid #312e81; min-height: 35px; }
 
-.container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
+.container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin-top: 15px; }
 
-/* TACTICAL BRAIN */
-.tactical-card { grid-column: span 3; background: var(--panel); border: 1px solid var(--border); border-left: 10px solid var(--neutral); padding: 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; }
-.mode-display { font-size: 34px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+.tactical-card { grid-column: 1 / -1; background: #111; border-left: 10px solid var(--neutral); padding: 25px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); }
+.mode-big { font-size: 34px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
 
-.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
-.panel-header { background: #161b22; padding: 10px 15px; font-size: 10px; font-weight: 900; color: var(--neutral); letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; padding-bottom: 10px; }
+.panel-header { background: #161b22; padding: 10px 15px; font-size: 10px; font-weight: 900; color: var(--neutral); letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
 
-.telemetry { display: grid; grid-template-columns: repeat(3, 1fr); padding: 20px 10px; text-align: center; }
+.telemetry { display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px; text-align: center; }
 .tel-big { font-size: 38px; font-family: 'JetBrains Mono'; font-weight: 800; line-height: 1; }
-.tel-lbl { font-size: 9px; color: var(--neutral); margin-top: 8px; font-weight: 700; letter-spacing: 1px; }
+.tel-lbl { font-size: 9px; color: var(--neutral); margin-top: 5px; font-weight: 700; }
 
-.row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.row { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
 .val { font-size: 18px; font-family: 'JetBrains Mono'; font-weight: 800; }
+.lbl { font-size: 12px; color: var(--neutral); font-weight: 600; }
 
-.meter-wrap { padding: 15px; }
-.meter { height: 6px; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid #222; margin-top: 6px; }
-.fill { height: 100%; transition: width 1s ease-in-out; width: 0%; }
+.badge { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; color: #000; text-transform: uppercase; display: inline-block; cursor: pointer; }
 
-.trend-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 15px; background: #05070a; }
-.trend-box { border: 1px solid var(--border); padding: 10px 5px; text-align: center; border-radius: 4px; }
-
-.terminal { background: #000; border: 1px solid var(--border); color: var(--stable); font-family: 'JetBrains Mono'; padding: 20px; border-radius: 8px; font-size: 12px; line-height: 1.6; white-space: pre; position: relative; grid-column: span 3; min-height: 200px; }
-.copy-btn { position: absolute; top: 10px; right: 10px; background: var(--stable); color: #000; border: none; padding: 5px 10px; font-weight: 900; font-size: 10px; cursor: pointer; border-radius: 4px; }
-
-#log { font-size: 10px; font-family: 'JetBrains Mono'; color: #4b5563; padding: 10px; height: 100px; overflow-y: auto; line-height: 1.8; background: #05070a; }
+.terminal { background: #000; border: 1px solid var(--border); color: var(--stable); font-family: 'JetBrains Mono'; padding: 25px; border-radius: 8px; font-size: 12px; white-space: pre-wrap; grid-column: 1 / -1; min-height: 350px; position: relative; margin-top: 15px; line-height: 1.5; }
+.copy-btn { position: absolute; top: 15px; right: 15px; background: var(--stable); color: #000; border: none; padding: 10px 15px; font-weight: 900; font-size: 12px; cursor: pointer; border-radius: 4px; }
 </style>
 </head>
-
 <body>
 
 <header>
-    <div class="title">VIZCAYA STRATOS <span style="color:var(--danger)">v26.0</span></div>
+    <div class="brand">
+        <h1 style="font-size: 22px; font-weight: 900;">VIZCAYA STRATOS <span style="color:var(--danger)">v32.1</span></h1>
+        <div style="font-size:9px; color:var(--neutral); letter-spacing:1px">PROFESSIONAL AI COMMAND INTERFACE</div>
+    </div>
     <div class="manual-input">
-        <div><label style="font-size:8px; color:var(--neutral); display:block; margin-bottom:2px;">DAVIS TEMP</label><input type="number" id="tIn" value="81.5"></div>
-        <div><label style="font-size:8px; color:var(--neutral); display:block; margin-bottom:2px;">DAVIS DEW</label><input type="number" id="dIn" value="68.2"></div>
-        <button class="btn-sync" onclick="run()">SYNC MISSION DATA</button>
+        <div><label style="font-size:8px; display:block; margin-bottom:2px;">TEMP</label><input type="number" id="tIn" value="81.5" step="0.1"></div>
+        <div><label style="font-size:8px; display:block; margin-bottom:2px;">DEW</label><input type="number" id="dIn" value="68.2" step="0.1"></div>
+        <button class="btn-sync" onclick="runMission()">SYNC ALL</button>
     </div>
 </header>
+
+<div class="nws-bar" id="nwsAlert">SCANNING REGIONAL ALERTS...</div>
 
 <div class="container">
     <!-- TACTICAL BRAIN -->
     <div class="tactical-card" id="mCard">
         <div>
-            <div id="mDisp" class="mode-display">INITIALIZING</div>
-            <div id="mDesc" style="font-size:14px; color:var(--neutral); font-weight:600; margin-top:5px;">Awaiting atmospheric synchronization...</div>
+            <div id="mDisp" class="mode-big">MISSION ACTIVE</div>
+            <div id="mDesc" style="font-size:14px; color:var(--neutral); font-weight:600;">Analyzing backyard thermodynamics...</div>
         </div>
         <div style="text-align:right">
             <div id="syncTime" style="font-family:'JetBrains Mono'; font-size:11px; color:var(--neutral)">--:--:--</div>
-            <div id="mStatus" style="font-size:10px; font-weight:900; color:var(--danger); margin-top:5px;">API: STANDBY</div>
-        </div>
-    </div>
-
-    <!-- COL 1 -->
-    <div>
-        <div class="panel">
-            <div class="panel-header">Surface Telemetry</div>
-            <div class="telemetry">
-                <div><div class="tel-big" id="dispT">--</div><div class="tel-lbl">TEMP</div></div>
-                <div><div class="tel-big" id="dispD" style="color:var(--primary)">--</div><div class="tel-lbl">DEW</div></div>
-                <div><div class="tel-big" id="dispP" style="color:var(--warning)">--</div><div class="tel-lbl">BARO</div></div>
+            <div style="display:flex; gap:10px; margin-top:8px; justify-content: flex-end;">
+                <span id="spcBadge" class="badge" onclick="cycle('spc')">SPC: MRGL</span>
+                <span id="wpcBadge" class="badge" onclick="cycle('wpc')">WPC: MRGL</span>
             </div>
-        </div>
-        <div class="panel">
-            <div class="panel-header">Thermodynamic Energy</div>
-            <div class="row"><span>SBCAPE (Adjusted)</span><span class="val" id="capeVal" style="color:var(--danger)">--</span></div>
-            <div class="row"><span>DCAPE (Microburst)</span><span class="val" id="dcapeVal" style="color:var(--warning)">--</span></div>
-            <div class="row"><span>Lifted Index (LI)</span><span class="val" id="liVal" style="color:var(--extreme)">--</span></div>
-            <div class="row"><span>Cloud Base (LCL)</span><span class="val" id="lclVal" style="color:var(--stable)">--</span></div>
+            <div id="dataStat" style="font-size:9px; font-weight:900; color:var(--warning); margin-top:5px;">DATA: LOCAL ESTIMATE</div>
         </div>
     </div>
 
-    <!-- COL 2 -->
-    <div>
-        <div class="panel">
-            <div class="panel-header">Kinematics & Hazard Analysis</div>
-            <div class="row"><span>Bulk Shear (Sfc-850)</span><span class="val" id="shearVal" style="color:var(--danger)">--</span></div>
-            <div class="row"><span>Helicity Index (SRH)</span><span class="val" id="srhVal" style="color:var(--tornado)">--</span></div>
-            <div class="row"><span>Predicted Mode</span><span class="val" id="modeVal" style="color:var(--primary); font-size:13px;">--</span></div>
-            <div class="row"><span>Storm Tops (EL)</span><span class="val" id="elVal" style="color:var(--neutral)">--</span></div>
+    <!-- PANEL 1 -->
+    <div class="panel">
+        <div class="panel-header">Thermodynamics (Backyard)</div>
+        <div class="telemetry">
+            <div><div class="tel-big" id="dispT">--</div><div class="tel-lbl">TEMP</div></div>
+            <div><div class="tel-big" id="dispD" style="color:var(--primary)">--</div><div class="tel-lbl">DEW</div></div>
+            <div><div class="tel-big" id="dispP" style="color:var(--warning)">--</div><div class="tel-lbl">BARO</div></div>
         </div>
-        <div class="panel">
-            <div class="panel-header">Stability Indices</div>
-            <div class="row"><span>700-500 Lapse</span><span class="val" id="lapseVal" style="color:var(--extreme)">--</span></div>
-            <div class="row"><span>Precip Water (PWAT)</span><span class="val" id="pwatVal" style="color:var(--primary)">--</span></div>
-            <div class="row"><span>WINDEX Gust Potential</span><span class="val" id="windexVal" style="color:var(--danger); font-size:13px;">--</span></div>
-        </div>
+        <div class="row"><span class="lbl">SBCAPE (Adj)</span><span class="val" id="cape-v" style="color:var(--danger)">--</span></div>
+        <div class="row"><span class="lbl">SBCIN (Cap)</span><span class="val" id="cin-v" style="color:var(--primary)">--</span></div>
+        <div class="row"><span class="lbl">DCAPE (Wind)</span><span class="val" id="dcape-v" style="color:var(--warning)">--</span></div>
+        <div class="row"><span class="lbl">Lifted Index</span><span class="val" id="li-v" style="color:var(--extreme)">--</span></div>
     </div>
 
-    <!-- COL 3 -->
-    <div>
-        <div class="panel">
-            <div class="panel-header">4-Hour CAPE Trend</div>
-            <div id="trendGrid" class="trend-grid"></div>
-        </div>
-        <div class="panel">
-            <div class="panel-header">Trigger Score</div>
-            <div class="meter-wrap">
-                <div style="display:flex; justify-content:space-between; font-size:9px; font-weight:800; color:var(--neutral)"><span>INITIATION PROBABILITY</span><span id="initPct">--%</span></div>
-                <div class="meter"><div id="initFill" class="fill" style="background:var(--warning)"></div></div>
-            </div>
-        </div>
-        <div class="panel">
-            <div class="panel-header">System Log</div>
-            <div id="log">> Initializing array...</div>
-        </div>
+    <!-- PANEL 2 -->
+    <div class="panel">
+        <div class="panel-header">Kinematics & Hazard Analysis</div>
+        <div class="row"><span class="lbl">Bulk Shear</span><span class="val" id="shear-v" style="color:var(--danger)">--</span></div>
+        <div class="row"><span class="lbl">Cloud Base (LCL)</span><span class="val" id="lcl-v" style="color:var(--stable)">--</span></div>
+        <div class="row"><span class="lbl">Lapse Rate</span><span class="val" id="lapse-v" style="color:var(--extreme)">--</span></div>
+        <div class="row"><span class="lbl">Gust Potential</span><span class="val" id="gust-v" style="color:var(--primary)">--</span></div>
+        <div class="row"><span class="lbl">Storm Tops (EL)</span><span class="val" id="el-v" style="color:var(--neutral)">--</span></div>
     </div>
 
-    <!-- TERMINAL -->
+    <!-- PANEL 3 -->
+    <div class="panel">
+        <div class="panel-header">Column Moisture</div>
+        <div class="row"><span class="lbl">PWAT</span><span class="val" id="pwat-v" style="color:var(--primary)">--</span></div>
+        <div class="row"><span class="lbl">850mb Humidity</span><span class="val" id="rh850-v" style="color:var(--neutral)">--</span></div>
+        <div class="row"><span class="lbl">Precip Chance</span><span class="val" id="pop-v">--</span></div>
+        <div class="row"><span class="lbl">Init Chance</span><span class="val" id="init-v">--</span></div>
+    </div>
+
     <div class="terminal">
-        <button class="copy-btn" onclick="copy()">COPY FOR AI</button>
-        <div id="out">Awaiting synchronization...</div>
+        <button class="copy-btn" onclick="copyText()">COPY FOR AI ANALYSIS</button>
+        <div id="out">Dashboard ready.</div>
     </div>
 </div>
 
 <script>
-function log(m) { const l = document.getElementById("log"); l.innerHTML = `> ${m}<br>` + l.innerHTML; }
-function copy() { navigator.clipboard.writeText(document.getElementById("out").innerText); }
+let dSPC = "MRGL", dWPC = "MRGL";
 
-async function run() {
-    log("Requesting sync from Open-Meteo...");
-    const t = parseFloat(document.getElementById("tIn").value);
-    const d = parseFloat(document.getElementById("dIn").value);
-    
-    let api = null;
+function copyText() { 
+    navigator.clipboard.writeText(document.getElementById("out").innerText); 
+    alert("Full strategic briefing copied."); 
+}
+
+function cycle(type) {
+    const sO = ["TSTM", "MRGL", "SLGT", "ENH", "MDT", "HIGH"];
+    const wO = ["NONE", "MRGL", "SLGT", "MDT", "HIGH"];
+    if(type === 'spc') { dSPC = sO[(sO.indexOf(dSPC) + 1) % sO.length]; }
+    else { dWPC = wO[(wO.indexOf(dWPC) + 1) % wO.length]; }
+    updateBadges();
+}
+
+function updateBadges() {
+    const sb = document.getElementById("spcBadge"), wb = document.getElementById("wpcBadge");
+    const getC = (c) => c.includes("MRGL") ? "var(--cat1)" : c.includes("SLGT") ? "var(--cat2)" : c.includes("ENH") ? "var(--cat3)" : "var(--cat0)";
+    sb.innerText = "SPC: " + dSPC; wb.innerText = "WPC: " + dWPC;
+    sb.style.background = getC(dSPC); wb.style.background = getC(dWPC);
+}
+
+function render(data) {
     try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.587&longitude=-97.641&current=pressure_msl,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,dew_point_2m,cape,convective_inhibition,lifted_index,temperature_700hPa,temperature_500hPa,wind_speed_850hPa,wind_direction_850hPa,total_column_integrated_water_vapour&temperature_unit=fahrenheit&windspeed_unit=kn&timezone=auto&forecast_days=1`);
-        if(res.ok) api = await res.json();
-        log("API Handshake: SUCCESSFUL");
-        document.getElementById("mStatus").innerText = "API: CONNECTED";
-        document.getElementById("mStatus").style.color = "var(--stable)";
-    } catch(e) {
-        log("API Handshake: FAILED. Using Local Engine.");
-        document.getElementById("mStatus").innerText = "API: OFFLINE";
-    }
+        const t = parseFloat(document.getElementById("tIn").value) || 81.5;
+        const d = parseFloat(document.getElementById("dIn").value) || 68.2;
+        const h = (data && data.hourly) ? data.hourly : null;
+        const hour = new Date().getHours();
 
-    render(api, t, d);
+        // Calculations
+        const modelT = h ? h.temperature_2m[hour] : t;
+        const bias = (t - modelT).toFixed(1);
+        const cape = Math.round(h ? h.cape[hour] + (bias * 150) : (d > 60 ? (d - 60) * 145 : 400));
+        const cin = h ? Math.abs(h.convective_inhibition[hour]) : 35;
+        const dcape = h ? Math.round(Math.max(0, (t - h.temperature_700hPa[hour]) * 26)) : 980;
+        const lcl = Math.round((t - d) / 4.4 * 1000);
+        const li = h ? h.lifted_index[hour] : -3.5;
+        const shear = data ? Math.abs(h.wind_speed_850hPa[hour] - data.current.wind_speed_10m) : 4.5;
+        const lapse = h ? (((h.temperature_700hPa[hour]-32)*5/9 - (h.temperature_500hPa[hour]-32)*5/9) / 2.6).toFixed(1) : 6.5;
+        const el = Math.round((cape / 100) * 2000 + 15000);
+        const pwat = h ? (h.total_column_integrated_water_vapour[hour] * 0.039).toFixed(2) : 1.33;
+        const pop = h ? h.precipitation_probability[hour] : 20;
+        const rh850 = h ? h.relative_humidity_850hPa[hour] + "%" : "65%";
+        const initChance = Math.min(100, Math.round((cape/50) + (shear > 10 ? 30 : 5)));
+        const gust = Math.round(Math.sqrt(2 * dcape) * 2.23);
+
+        // UI Injection
+        document.getElementById("dispT").innerText = Math.round(t);
+        document.getElementById("dispD").innerText = Math.round(d);
+        document.getElementById("dispP").innerText = data ? Math.round(data.current.pressure_msl) : 1014;
+        document.getElementById("cape-v").innerText = cape;
+        document.getElementById("cin-v").innerText = Math.round(cin);
+        document.getElementById("dcape-v").innerText = dcape;
+        document.getElementById("li-v").innerText = parseFloat(li).toFixed(1);
+        document.getElementById("shear-v").innerText = shear.toFixed(1) + " KT";
+        document.getElementById("lcl-v").innerText = lcl + " FT";
+        document.getElementById("lapse-v").innerText = lapse;
+        document.getElementById("gust-v").innerText = gust + " MPH";
+        document.getElementById("el-v").innerText = el.toLocaleString() + " FT";
+        document.getElementById("pwat-v").innerText = pwat + '"';
+        document.getElementById("rh850-v").innerText = rh850;
+        document.getElementById("pop-v").innerText = pop + "%";
+        document.getElementById("init-v").innerText = initChance + "%";
+
+        const mB = document.getElementById("mDisp");
+        const mD = document.getElementById("mDesc");
+        const mC = document.getElementById("mCard");
+        if(dcape > 1000) {
+            mB.innerText = "MICROBURST HAZARD"; mD.innerText = "Extreme DCAPE favors severe downbursts."; mC.style.borderLeftColor = "var(--danger)";
+        } else if (cin < 20) {
+            mB.innerText = "CAP ERODED"; mD.innerText = "Low initiation resistance. Monitoring development."; mC.style.borderLeftColor = "var(--warning)";
+        } else {
+            mB.innerText = "MISSION ACTIVE"; mD.innerText = "Airmass is currently quiet or pulse-mode only."; mC.style.borderLeftColor = "var(--neutral)";
+        }
+
+        document.getElementById("syncTime").innerText = new Date().toLocaleTimeString();
+        updateBadges();
+
+        // FULL FIDELITY AI EXPORT
+        document.getElementById("out").innerText = `
+### [VIZCAYA STRATOS v32.1 STRATEGIC REPORT]
+**Location:** Round Rock, TX | **Time:** ${new Date().toLocaleString()}
+**Mission Mode:** ${mB.innerText} | **Data Sync:** ${data ? 'LIVE MODEL' : 'LOCAL ESTIMATE'}
+
+**1. OFFICIAL OUTLOOKS & CONTEXT**
+- NWS Alerts: ${document.getElementById("nwsAlert").innerText}
+- SPC Category: ${dSPC} | WPC Flood: ${dWPC}
+- Backyard Temperature Bias: ${bias}°F vs Model
+
+**2. THERMODYNAMICS (Adjusted)**
+- SBCAPE: ${cape} J/kg | MUCAPE: ${Math.round(cape * 1.2)} J/kg
+- SBCIN (The Cap): ${Math.round(cin)} J/kg | Lifted Index: ${li}
+- DCAPE (Wind): ${dcape} J/kg | LCL (Cloud Base): ${lcl} ft
+- Storm Top (EL): ${el.toLocaleString()} ft
+
+**3. KINEMATICS & DYNAMICS**
+- Bulk Shear (Sfc-850): ${shear.toFixed(1)} kt
+- Mid-Level Lapse Rate: ${lapse} °C/km
+- WINDEX Gust Potential: ${gust} mph
+
+**4. MOISTURE COLUMN**
+- PWAT (Precip Water): ${pwat}"
+- 850mb Humidity: ${rh850}
+- Precip Probability: ${pop}% | Initiation Chance: ${initChance}%
+
+**AI INSTRUCTIONS:** Cross-reference the high DCAPE (${dcape}) with the LCL height. Analyze the SBCIN of ${Math.round(cin)} for initiation timing. Provide a specific hazard assessment for localized microbursts and stationary flooding.`.trim();
+
+    } catch (err) { console.error("Render Error:", err); }
 }
 
-function render(data, t, d) {
-    const hour = new Date().getHours();
-    const h = data ? data.hourly : null;
-    const c = data ? data.current : null;
+async function runMission() {
+    render(null);
+    try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.58&longitude=-97.64&current=pressure_msl,wind_speed_10m&hourly=temperature_2m,relative_humidity_850hPa,cape,convective_inhibition,lifted_index,temperature_700hPa,temperature_500hPa,wind_speed_850hPa,total_column_integrated_water_vapour,precipitation_probability&temperature_unit=fahrenheit&windspeed_unit=kn&timezone=auto&forecast_days=1`);
+        const data = await res.json();
+        document.getElementById("dataStat").innerText = "DATA: LIVE MODEL";
+        document.getElementById("dataStat").style.color = "var(--stable)";
+        render(data);
 
-    // 1. Calculations & Fallbacks
-    const press = c ? c.pressure_msl : 1013;
-    const modelT = h ? h.temperature_2m[hour] : t;
-    const bias = (t - modelT).toFixed(1);
-    
-    const sbcape = Math.round(h ? h.cape[hour] + (bias * 150) : (d > 60 ? (d - 60) * 150 : 0));
-    const li = h ? h.lifted_index[hour] : (5 - (t - d) * 0.15);
-    const pwat = h ? (h.total_column_integrated_water_vapour[hour] * 0.039).toFixed(2) : "1.33";
-    const lcl = Math.round((t - d) / 4.4 * 1000);
-    
-    const t700 = h ? h.temperature_700hPa[hour] : 45;
-    const t500 = h ? h.temperature_500hPa[hour] : 5;
-    const dcape = Math.round(Math.max(0, (t - t700) * 26));
-    const lapse = (((t700-32)*5/9 - (t500-32)*5/9) / 2.6).toFixed(1);
-
-    const shear = c ? Math.abs(h.wind_speed_850hPa[hour] - c.wind_speed_10m) : 5;
-    let dirDiff = h ? h.wind_direction_850hPa[hour] - c.wind_direction_10m : 0;
-    if (dirDiff < 0) dirDiff += 360;
-    const srh = Math.round((shear * dirDiff) / 11);
-
-    const el = Math.round((sbcape / 100) * 2000 + 15000);
-
-    // 2. Map UI
-    document.getElementById("dispT").innerText = Math.round(t);
-    document.getElementById("dispD").innerText = Math.round(d);
-    document.getElementById("dispP").innerText = Math.round(press);
-    document.getElementById("capeVal").innerText = sbcape;
-    document.getElementById("dcapeVal").innerText = dcape;
-    document.getElementById("liVal").innerText = parseFloat(li).toFixed(1);
-    document.getElementById("lclVal").innerText = lcl + " FT";
-    document.getElementById("shearVal").innerText = shear.toFixed(1) + " KT";
-    document.getElementById("srhVal").innerText = srh;
-    document.getElementById("lapseVal").innerText = lapse;
-    document.getElementById("pwatVal").innerText = pwat + '"';
-    document.getElementById("elVal").innerText = sbcape > 100 ? el.toLocaleString() + " FT" : "--";
-    document.getElementById("syncTime").innerText = new Date().toLocaleTimeString();
-
-    // 3. Hazards
-    const mD = document.getElementById("mDisp");
-    const mDe = document.getElementById("mDesc");
-    const mC = document.getElementById("mCard");
-    const wIndex = document.getElementById("windexVal");
-    const mVal = document.getElementById("modeVal");
-
-    wIndex.innerText = dcape > 850 ? "HIGH RISK" : "LOW";
-    mVal.innerText = shear > 35 ? "SUPERCELLULAR" : shear > 20 ? "ORGANIZED MULTI" : "PULSE / POPCORN";
-
-    if (sbcape > 1500 && srh > 100) {
-        mD.innerText = "SEVERE POTENTIAL"; mDe.innerText = "Organizational kinematics and fuel are aligned."; mC.style.borderLeftColor = "var(--danger)";
-    } else if (dcape > 800) {
-        mD.innerText = "PULSE / WIND RISK"; mDe.innerText = "High DCAPE indicates microburst risk on storm collapse."; mC.style.borderLeftColor = "var(--warning)";
-    } else {
-        mD.innerText = "STABLE"; mDe.innerText = "Atmosphere is currently quiescent."; mC.style.borderLeftColor = "var(--neutral)";
-    }
-
-    // 4. Trend Grid
-    const tg = document.getElementById("trendGrid");
-    tg.innerHTML = "";
-    for(let i=1; i<5; i++){
-        let trendCape = h ? Math.round(h.cape[hour+i] + (bias * 150)) : "--";
-        tg.innerHTML += `<div class="trend-box"><div style="font-size:8px; color:var(--neutral)">${(hour+i)%24}:00</div><div style="font-size:14px; font-weight:800; color:var(--danger)">${trendCape}</div></div>`;
-    }
-
-    // 5. Trigger Score (Simulated)
-    const initPct = Math.min(100, (shear > 20 ? 30 : 10) + (sbcape > 1200 ? 20 : 0));
-    document.getElementById("initPct").innerText = initPct + "%";
-    document.getElementById("initFill").style.width = initPct + "%";
-
-    // 6. Export
-    document.getElementById("out").innerText = `
-[VIZCAYA STRATOS v26.0 BRIEFING]
-Location: Round Rock, TX | ${new Date().toLocaleString()}
-Bias: ${bias}°F | Mode: ${mD.innerText}
-
-[THERMO]
-CAPE: ${sbcape} | DCAPE: ${dcape}
-LI: ${li} | Lapse: ${lapse} | LCL: ${lcl}ft
-
-[KINEMATICS]
-Shear: ${shear.toFixed(1)}kt | SRH: ${srh}
-Storm Tops: ${el.toLocaleString()}ft | PWAT: ${pwat}"
-
-[AI INSTRUCTIONS]
-Evaluate the Downburst/Wind threat based on DCAPE (${dcape}) and LCL (${lcl}).
-Assess storm longevity given the ${shear.toFixed(1)}kt bulk shear.
-    `.trim();
-    log("Render Complete.");
+        const nData = await (await fetch(`https://api.weather.gov/alerts/active?point=30.58,-97.64`)).json();
+        if(nData.features && nData.features.length > 0) {
+            document.getElementById("nwsAlert").innerText = "⚠️ ACTIVE: " + nData.features[0].properties.event;
+            document.getElementById("nwsAlert").style.background = "#7f1d1d";
+        } else {
+            document.getElementById("nwsAlert").innerText = "✅ NO ACTIVE NWS ALERTS";
+        }
+        render(data); // Re-render to update AI box with alerts
+    } catch (e) { console.log("Manual Fallback Mode."); }
 }
 
-run();
+window.onload = runMission;
 </script>
 </body>
 </html>
