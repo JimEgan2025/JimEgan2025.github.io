@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NWS Pro 15-City Instant Tool</title>
+    <style>
+        :root {
+            --nws-navy: #002244;
+            --high-orange: #f4a041;
+            --low-blue: #2c6ca3;
+            --rain-teal: #3b9c8a;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: "Arial Narrow", Arial, sans-serif; background: #111; margin: 0; padding: 20px; color: #333; }
+        
+        #graphic { 
+            width: 1300px; background: white; border: 4px solid var(--nws-navy); 
+            margin: 0 auto 30px auto; padding-bottom: 15px; box-shadow: 0 10px 60px rgba(0,0,0,0.9);
+        }
+        .header { background: var(--nws-navy); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 36px; font-weight: bold; }
+        .header .meta { text-align: right; line-height: 1.2; font-size: 15px; }
+
+        .grid-container { display: flex; justify-content: space-between; gap: 12px; padding: 10px 15px; }
+        .section { flex: 1; min-width: 0; }
+
+        .section-title { color: white; text-align: center; font-size: 22px; font-weight: bold; padding: 8px; margin-bottom: 2px; }
+        .section-title.highs { background: var(--high-orange); }
+        .section-title.lows { background: var(--low-blue); }
+        .section-title.rain { background: var(--rain-teal); }
+        .sub-desc { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #ccc; background: white; }
+        th, td { border: 1px solid #ccc; text-align: center; height: 28px; overflow: hidden; white-space: nowrap; font-size: 13px; }
+        
+        .col-loc { width: 140px !important; text-align: left; background: #eee; font-weight: bold; padding-left: 8px; font-size: 14px; }
+        .col-day { font-size: 11px; background: #fff; font-weight: bold; }
+
+        /* NWS Heatmap Tiers */
+        .h95 { background: #d35400; color: white; }
+        .h90 { background: #e67e22; color: white; }
+        .h85 { background: #f39c12; }
+        .h80 { background: #f1c40f; }
+        .r85 { background: #1e8449; color: white; font-weight: bold; }
+        .r65 { background: #27ae60; color: white; }
+        .r40 { background: #82e0aa; }
+        .r15 { background: #d5f5e3; }
+
+        footer { border-top: 2px solid #eee; margin: 10px 15px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--nws-navy); }
+
+        #editor-container { width: 1300px; margin: 0 auto; background: #f0f0f0; padding: 20px; border-radius: 8px; border: 1px solid #999; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        textarea { width: 100%; height: 350px; font-family: 'Courier New', monospace; font-size: 14px; border: 1px solid #999; padding: 15px; line-height: 1.6; }
+        button { padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: var(--nws-navy); margin-left: 10px; }
+        button.fetch { background: #007bff; }
+    </style>
+</head>
+<body>
+
+<div id="graphic">
+    <div class="header">
+        <h1 contenteditable="true">Widespread Rain Chances Return Mid-Week</h1>
+        <div class="meta"><strong>weather.gov/ewx</strong><br>Updated: <span id="updateTime">Connecting...</span></div>
+    </div>
+    <div class="grid-container">
+        <div class="section"><div class="section-title highs">Highs</div><div class="sub-desc">Maximum Temperature (°F)</div><table id="highsTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
+        <div class="section"><div class="section-title lows">Lows</div><div class="sub-desc">Minimum Temperature (°F)</div><table id="lowsTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
+        <div class="section"><div class="section-title rain">Rain Chances</div><div class="sub-desc">Rain Probability (%)</div><table id="rainTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
+    </div>
+    <footer><div>NATIONAL WEATHER SERVICE AUSTIN/SAN ANTONIO</div><div>Follow: @NWSSanAntonio</div></footer>
+</div>
+
+<div id="editor-container">
+    <div class="controls">
+        <b>Real-Time AI Sync Box <span id="status"></span></b>
+        <button id="fetchBtn" class="fetch">Fetch Live Data (Instant)</button>
+    </div>
+    <textarea id="dataBox" spellcheck="false" placeholder="Waiting for satellite sync..."></textarea>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cityList = ["Austin", "Cuero", "Del Rio", "Eagle Pass", "Fredericksburg", "Georgetown", "Gonzales", "Kerrville", "La Grange", "Llano", "New Braunfels", "Rocksprings", "San Antonio", "San Marcos", "Uvalde"];
+        const coords = { 
+            "Austin": [30.26, -97.74], "Cuero": [29.09, -97.28], "Del Rio": [29.36, -100.89], 
+            "Eagle Pass": [28.70, -100.49], "Fredericksburg": [30.27, -98.87], "Georgetown": [30.63, -97.67], 
+            "Gonzales": [29.50, -97.44], "Kerrville": [30.04, -99.14], "La Grange": [29.90, -96.87], 
+            "Llano": [30.75, -98.67], "New Braunfels": [29.70, -98.12], "Rocksprings": [30.01, -100.20], 
+            "San Antonio": [29.42, -98.49], "San Marcos": [29.88, -97.94], "Uvalde": [29.20, -99.78] 
+        };
+
+        function getDates() {
+            const d = []; const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            for(let i=0; i<7; i++) { 
+                let date = new Date(); date.setDate(date.getDate() + i); 
+                d.push(`${date.getMonth()+1}/${date.getDate()} ${days[date.getDay()]}`); 
+            }
+            return d;
+        }
+
+        function addRow(tbody, city, vals, clsFn) {
+            let tr = document.createElement('tr');
+            let tdCity = document.createElement('td'); tdCity.className = 'col-loc'; tdCity.innerText = city; tr.appendChild(tdCity);
+            for(let i=0; i<7; i++) {
+                let td = document.createElement('td'); 
+                const v = vals[i] !== undefined ? Math.round(vals[i]) : "";
+                if (v !== "") { td.innerText = v; td.className = clsFn(v); }
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+
+        async function fetchLiveWeather() {
+            const status = document.getElementById('status'); status.innerText = "(Syncing Satellite...)";
+            try {
+                // INSTANT BATCH FETCH: This asks for all 15 cities in one single shot
+                const lats = cityList.map(name => coords[name][0]).join(',');
+                const lons = cityList.map(name => coords[name][1]).join(',');
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
+                
+                const res = await fetch(url);
+                const dataArray = await res.json();
+                
+                // Set Date Headers
+                const dates = getDates();
+                document.querySelectorAll('.date-row').forEach(row => {
+                    row.innerHTML = '<th class="col-loc">Location</th>' + dates.map(d => `<th class="col-day">${d.replace(' ', '<br>')}</th>`).join('');
+                });
+
+                // Clear Tables
+                const bodies = ['highsTable', 'lowsTable', 'rainTable'].map(id => document.querySelector(`#${id} tbody`));
+                bodies.forEach(b => b.innerHTML = '');
+
+                let textBoxValue = "";
+
+                // Process the Batch Result (This happens in milliseconds)
+                cityList.forEach((name, i) => {
+                    const data = dataArray[i].daily;
+                    const h = data.temperature_2m_max;
+                    const l = data.temperature_2m_min;
+                    const r = data.precipitation_probability_max;
+
+                    // Draw to Graphic
+                    addRow(bodies[0], name, h, v => v >= 95 ? 'h95' : (v >= 90 ? 'h90' : (v >= 85 ? 'h85' : (v >= 80 ? 'h80' : ''))));
+                    addRow(bodies[1], name, l, () => '');
+                    addRow(bodies[2], name, r, v => v >= 85 ? 'r85' : (v >= 65 ? 'r65' : (v >= 40 ? 'r40' : (v >= 15 ? 'r15' : ''))));
+
+                    // Build AI Data box
+                    textBoxValue += `${name} | ${h.map(Math.round).join(' ')} | ${l.map(Math.round).join(' ')} | ${r.join(' ')}\n\n`;
+                });
+
+                document.getElementById('dataBox').value = textBoxValue.trim();
+                document.getElementById('updateTime').innerText = new Date().toLocaleString();
+                status.innerText = "(Live Success!)"; status.style.color = "green";
+            } catch (e) { 
+                status.innerText = "(Sync Error)"; status.style.color = "red"; 
+            }
+        }
+
+        document.getElementById('fetchBtn').addEventListener('click', fetchLiveWeather);
+        
+        // Initial instant load
+        fetchLiveWeather();
+    });
+</script>
+</body>
+</html>
