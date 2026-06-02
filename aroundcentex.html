@@ -1,167 +1,144 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>NWS Pro 15-City Instant Tool</title>
-    <style>
-        :root {
-            --nws-navy: #002244;
-            --high-orange: #f4a041;
-            --low-blue: #2c6ca3;
-            --rain-teal: #3b9c8a;
-        }
-        * { box-sizing: border-box; }
-        body { font-family: "Arial Narrow", Arial, sans-serif; background: #111; margin: 0; padding: 20px; color: #333; }
-        
-        #graphic { 
-            width: 1300px; background: white; border: 4px solid var(--nws-navy); 
-            margin: 0 auto 30px auto; padding-bottom: 15px; box-shadow: 0 10px 60px rgba(0,0,0,0.9);
-        }
-        .header { background: var(--nws-navy); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { margin: 0; font-size: 36px; font-weight: bold; }
-        .header .meta { text-align: right; line-height: 1.2; font-size: 15px; }
-
-        .grid-container { display: flex; justify-content: space-between; gap: 12px; padding: 10px 15px; }
-        .section { flex: 1; min-width: 0; }
-
-        .section-title { color: white; text-align: center; font-size: 22px; font-weight: bold; padding: 8px; margin-bottom: 2px; }
-        .section-title.highs { background: var(--high-orange); }
-        .section-title.lows { background: var(--low-blue); }
-        .section-title.rain { background: var(--rain-teal); }
-        .sub-desc { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #ccc; background: white; }
-        th, td { border: 1px solid #ccc; text-align: center; height: 28px; overflow: hidden; white-space: nowrap; font-size: 13px; }
-        
-        .col-loc { width: 140px !important; text-align: left; background: #eee; font-weight: bold; padding-left: 8px; font-size: 14px; }
-        .col-day { font-size: 11px; background: #fff; font-weight: bold; }
-
-        /* NWS Heatmap Tiers */
-        .h95 { background: #d35400; color: white; }
-        .h90 { background: #e67e22; color: white; }
-        .h85 { background: #f39c12; }
-        .h80 { background: #f1c40f; }
-        .r85 { background: #1e8449; color: white; font-weight: bold; }
-        .r65 { background: #27ae60; color: white; }
-        .r40 { background: #82e0aa; }
-        .r15 { background: #d5f5e3; }
-
-        footer { border-top: 2px solid #eee; margin: 10px 15px; padding-top: 10px; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--nws-navy); }
-
-        #editor-container { width: 1300px; margin: 0 auto; background: #f0f0f0; padding: 20px; border-radius: 8px; border: 1px solid #999; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        textarea { width: 100%; height: 350px; font-family: 'Courier New', monospace; font-size: 14px; border: 1px solid #999; padding: 15px; line-height: 1.6; }
-        button { padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background: var(--nws-navy); margin-left: 10px; }
-        button.fetch { background: #007bff; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Texas Forecaster Consensus – Regional View</title>
+<style>
+  body {
+    margin: 0;
+    padding: 32px;
+    background: #eef3f8;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1f2937;
+  }
+  .report-box {
+    max-width: 940px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 2px solid #cbd5e1;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    padding: 28px 30px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: 30px;
+    font-weight: 700;
+    color: #0f3b66;
+    margin: 0;
+  }
+  .as-of {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+  }
+  .refresh-btn {
+    background: #0b5cab;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .refresh-btn:hover {
+    background: #094a8a;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: #64748b;
+    letter-spacing: 0.2px;
+    margin: 0 0 18px 0;
+  }
+  .region-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0b5cab;
+    margin: 22px 0 10px 0;
+  }
+  .region {
+    font-size: 17px;
+    line-height: 1.65;
+    color: #374151;
+    margin: 0;
+  }
+  .accent {
+    color: #0b5cab;
+    font-weight: 700;
+  }
+  .source-note {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e5e7eb;
+  }
+</style>
 </head>
 <body>
-
-<div id="graphic">
+  <div class="report-box">
     <div class="header">
-        <h1 contenteditable="true">Widespread Rain Chances Return Mid-Week</h1>
-        <div class="meta"><strong>weather.gov/ewx</strong><br>Updated: <span id="updateTime">Connecting...</span></div>
+      <h1 class="title">Texas Forecaster Consensus – Regional View</h1>
+      <button class="refresh-btn" onclick="location.reload()">Refresh</button>
     </div>
-    <div class="grid-container">
-        <div class="section"><div class="section-title highs">Highs</div><div class="sub-desc">Maximum Temperature (°F)</div><table id="highsTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
-        <div class="section"><div class="section-title lows">Lows</div><div class="sub-desc">Minimum Temperature (°F)</div><table id="lowsTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
-        <div class="section"><div class="section-title rain">Rain Chances</div><div class="sub-desc">Rain Probability (%)</div><table id="rainTable"><thead><tr class="date-row"></tr></thead><tbody></tbody></table></div>
+    <div class="as-of">
+      <strong>As of:</strong> Tuesday, June 02, 2026, 3:45 PM CDT | <strong>Sources:</strong> NWS Austin/San Antonio AFD, KVUE, KTBC FOX 7, KEYE CBS Austin, KXAN, KXXV Waco, KWTX, UT Weather Troy Kimmel, LCRA Bob Rose, Spectrum News Austin, NOAA 2026 hurricane outlook
     </div>
-    <footer><div>NATIONAL WEATHER SERVICE AUSTIN/SAN ANTONIO</div><div>Follow: @NWSSanAntonio</div></footer>
-</div>
-
-<div id="editor-container">
-    <div class="controls">
-        <b>Real-Time AI Sync Box <span id="status"></span></b>
-        <button id="fetchBtn" class="fetch">Fetch Live Data (Instant)</button>
+    <div class="subtitle">
+      What forecasters are thinking and following across broad areas of Texas right now
     </div>
-    <textarea id="dataBox" spellcheck="false" placeholder="Waiting for satellite sync..."></textarea>
-</div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const cityList = ["Austin", "Cuero", "Del Rio", "Eagle Pass", "Fredericksburg", "Georgetown", "Gonzales", "Kerrville", "La Grange", "Llano", "New Braunfels", "Rocksprings", "San Antonio", "San Marcos", "Uvalde"];
-        const coords = { 
-            "Austin": [30.26, -97.74], "Cuero": [29.09, -97.28], "Del Rio": [29.36, -100.89], 
-            "Eagle Pass": [28.70, -100.49], "Fredericksburg": [30.27, -98.87], "Georgetown": [30.63, -97.67], 
-            "Gonzales": [29.50, -97.44], "Kerrville": [30.04, -99.14], "La Grange": [29.90, -96.87], 
-            "Llano": [30.75, -98.67], "New Braunfels": [29.70, -98.12], "Rocksprings": [30.01, -100.20], 
-            "San Antonio": [29.42, -98.49], "San Marcos": [29.88, -97.94], "Uvalde": [29.20, -99.78] 
-        };
+    <div class="region-title">Texas Panhandle (Amarillo, Lubbock, Canyon)</div>
+    <p class="region">
+      Forecasters in the Panhandle are focused on an active upper low and destabilizing atmosphere that may produce scattered to widespread showers and storms Tuesday into Wednesday, with a slight severe threat mainly for hail and damaging winds. Rain chances start isolated this afternoon, increase Tuesday night into Wednesday morning, and could be scattered to widespread across the Caprock and western Panhandles if destabilization is sufficient. Highs are near or slightly below average for early June, with mild temperatures in the upper 80s to low 90s, and a cool day possible Wednesday under widespread clouds and rain. The most likely rainfall total for the next several days is on the order of 0.25 to 0.75 inch, with locally higher amounts possible if storms train or slow down, and a flash flood threat if boundaries stall.
+    </p>
 
-        function getDates() {
-            const d = []; const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            for(let i=0; i<7; i++) { 
-                let date = new Date(); date.setDate(date.getDate() + i); 
-                d.push(`${date.getMonth()+1}/${date.getDate()} ${days[date.getDay()]}`); 
-            }
-            return d;
-        }
+    <div class="region-title">North Texas (DFW, Fort Worth, Denton, Waco, Abilene, Big Spring)</div>
+    <p class="region">
+      In North Texas (including DFW, Fort Worth, Denton, Waco, Abilene, Big Spring), forecasters are tracking a hot pattern with triple-digit heat indices and isolated to scattered afternoon/evening storms, especially along and east of I-35. KXXV reports typical June heat continuing with highs climbing into the mid 90s, humidity making it feel like 100 to 105 almost each day, with isolated showers and storms possible each afternoon. Rain chances are generally 20–40% on a typical day, with Abilene and Big Spring on the western edge having similar hot, unstable conditions. The main rainfall window for the next several days is still Friday–Sunday in many forecast discussions.
+    </p>
 
-        function addRow(tbody, city, vals, clsFn) {
-            let tr = document.createElement('tr');
-            let tdCity = document.createElement('td'); tdCity.className = 'col-loc'; tdCity.innerText = city; tr.appendChild(tdCity);
-            for(let i=0; i<7; i++) {
-                let td = document.createElement('td'); 
-                const v = vals[i] !== undefined ? Math.round(vals[i]) : "";
-                if (v !== "") { td.innerText = v; td.className = clsFn(v); }
-                tr.appendChild(td);
-            }
-            tbody.appendChild(tr);
-        }
+    <div class="region-title">West Central Texas (San Angelo)</div>
+    <p class="region">
+      The pattern is hot and humid, with isolated to scattered afternoon/evening storms, and heat index often in the 100–105°F range. Rain chances are similar to North/Central Texas, with a better chance midweek as Gulf moisture increases. Highs are in the mid-to-upper 90s, with lows in the upper 60s to mid-70s.
+    </p>
 
-        async function fetchLiveWeather() {
-            const status = document.getElementById('status'); status.innerText = "(Syncing Satellite...)";
-            try {
-                // INSTANT BATCH FETCH: This asks for all 15 cities in one single shot
-                const lats = cityList.map(name => coords[name][0]).join(',');
-                const lons = cityList.map(name => coords[name][1]).join(',');
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=auto`;
-                
-                const res = await fetch(url);
-                const dataArray = await res.json();
-                
-                // Set Date Headers
-                const dates = getDates();
-                document.querySelectorAll('.date-row').forEach(row => {
-                    row.innerHTML = '<th class="col-loc">Location</th>' + dates.map(d => `<th class="col-day">${d.replace(' ', '<br>')}</th>`).join('');
-                });
+    <div class="region-title">Central Texas (Austin, Round Rock, San Antonio, Temple, Killeen)</div>
+    <p class="region">
+      <strong>NWS Austin/San Antonio AFD (Latest):</strong> Unsettled weather today through the middle of next week with daily shower and storm chances. Strong to marginally severe storms and locally heavy rains possible. Near widespread measurable rain by Sunday across the eastern 3/4 of the area. Above average temperatures most of the week, mild Sunday and Thursday. Quality rainfall amounts over 1/4 inch expected over about 80% of the forecast area. A typical spring cold front arrives today, bringing best chance of rain since Valentine's Day and possibly highest 2-day rainfall amounts so far this year. Combination of front, moderate shear, and CAPE values exceeding 2000 J/kg could lead to large hail and damaging winds.
+    </p>
+    <p class="region">
+      <strong>Local Forecasters (KVUE, UT Weather, KCEN, KXAN, FOX 7, CBS Austin):</strong> KVUE reports about 20% chance of isolated thunderstorms today, 20–30% Wednesday, drier Thursday and Friday, then hotter late week with 97°F on Friday and 96°F through the weekend. UT Weather (Troy Kimmel) reports rain and storm chances return beginning tonight in a more unstable environment: 20% tonight, 40% Wednesday, 60% Thursday, 70% Friday, corridor total 0.75 to 1.00 inch over 7 days ending Monday. KXXV daily forecast shows Tuesday scattered thunderstorms 49%, Wednesday 16%, Thursday 47%, Friday 53%, Saturday 70%, Sunday 60%, Monday 32%. LCRA Bob Rose forecasts high temperatures next week in the mid-90s across the Hill Country and coastal regions, upper 90s across Central Texas.
+    </p>
+    <p class="region">
+      <strong>Austin / IH-35 Corridor Summary:</strong> Hot and humid today (feels like 100–105°F), highs in low 90s tonight trending to mid 80s Friday under cloud cover and rain. Lightning threat with any thunderstorms all week. Rain chances increase Wednesday through Friday, then hot and drier late week with highs reaching 97°F on Friday in the Austin area.
+    </p>
 
-                // Clear Tables
-                const bodies = ['highsTable', 'lowsTable', 'rainTable'].map(id => document.querySelector(`#${id} tbody`));
-                bodies.forEach(b => b.innerHTML = '');
+    <div class="region-title">Gulf Coast (Houston, Galveston, Corpus Christi)</div>
+    <p class="region">
+      Along the Gulf Coast, forecasters are tracking tropical moisture and the sea breeze, which produce daily rain chances from today through the week, with increasing coverage Friday and Saturday. The pattern is very humid, with feels-like temperatures often in the 100–105°F range, highs in the low-to-mid 90s, and lows in the mid-to-upper 70s. Rain is scattered to numerous, with the best chance of more widespread storms as tropical moisture increases, and the typical June pattern favors daily afternoon/evening storms. A disturbance in the Gulf shifting westward will influence rain chances over the next couple of afternoons, moving toward Houston and Corpus Christi this afternoon.
+    </p>
 
-                let textBoxValue = "";
+    <div class="region-title">Lower Rio Grande Valley / Brownsville</div>
+    <p class="region">
+      Forecasters are watching the start of hurricane season (June 1–November 30) with a below-normal Atlantic season expected due to El Niño, but emphasize that one storm can have a major impact. NOAA forecasts 8–14 named storms, including 3–6 hurricanes and 1–3 major hurricanes, with about a 20% chance of a landfalling hurricane along the Gulf Coast from the Florida Panhandle to Brownsville this season. Day-to-day, hot and humid with scattered afternoon thunderstorms. The broader pattern is monitored for any tropical development that could affect the coast. Coastal impacts can still happen fast and one landfalling storm is all it takes.
+    </p>
 
-                // Process the Batch Result (This happens in milliseconds)
-                cityList.forEach((name, i) => {
-                    const data = dataArray[i].daily;
-                    const h = data.temperature_2m_max;
-                    const l = data.temperature_2m_min;
-                    const r = data.precipitation_probability_max;
+    <div class="region-title">West Texas (El Paso, Midland, Odessa, Big Bend)</div>
+    <p class="region">
+      West Texas forecasters are focused on hot, dry conditions with very low humidity and minimal rain, as the Southwest monsoon is not yet fully active. El Paso highs are in the mid-to-upper 90s, up to low 100s, with lows in the mid-60s to low 70s, and June rainfall totals typically well under 0.5 inch. The pattern is dominated by clear skies and desert heat, with only isolated afternoon storms possible far west or at higher elevations. Flood concerns exist in areas that have seen multiple rounds of rain over the past couple of days.
+    </p>
 
-                    // Draw to Graphic
-                    addRow(bodies[0], name, h, v => v >= 95 ? 'h95' : (v >= 90 ? 'h90' : (v >= 85 ? 'h85' : (v >= 80 ? 'h80' : ''))));
-                    addRow(bodies[1], name, l, () => '');
-                    addRow(bodies[2], name, r, v => v >= 85 ? 'r85' : (v >= 65 ? 'r65' : (v >= 40 ? 'r40' : (v >= 15 ? 'r15' : ''))));
-
-                    // Build AI Data box
-                    textBoxValue += `${name} | ${h.map(Math.round).join(' ')} | ${l.map(Math.round).join(' ')} | ${r.join(' ')}\n\n`;
-                });
-
-                document.getElementById('dataBox').value = textBoxValue.trim();
-                document.getElementById('updateTime').innerText = new Date().toLocaleString();
-                status.innerText = "(Live Success!)"; status.style.color = "green";
-            } catch (e) { 
-                status.innerText = "(Sync Error)"; status.style.color = "red"; 
-            }
-        }
-
-        document.getElementById('fetchBtn').addEventListener('click', fetchLiveWeather);
-        
-        // Initial instant load
-        fetchLiveWeather();
-    });
-</script>
+    <p class="region" style="margin-top: 22px;">
+      <strong>Statewide Pattern Summary:</strong> Forecasters across Texas are following a pattern with hot, humid conditions from the Panhandle through Central Texas and the Gulf Coast, while West Texas is seeing multiple rounds of rain with flood concerns. The main rain window for Central Texas is Wednesday through Friday, then hot and drier late week with highs reaching 97°F on Friday in the Austin area. The Lower Rio Grande Valley is at the start of a below-normal but still consequential 2026 hurricane season.
+    </p>
+  </div>
 </body>
 </html>
