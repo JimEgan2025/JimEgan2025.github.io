@@ -3,18 +3,35 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Weather Ops Center</title>
+<title>Weather Ops Center | Pro</title>
 
 <style>
+:root {
+  --bg-dark: #0a0f18;
+  --bg-sidebar: #111827;
+  --bg-card: #1f2937;
+  --accent: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --text-main: #f3f4f6;
+  --text-dim: #9ca3af;
+  --border: #374151;
+}
+
 *{margin:0;padding:0;box-sizing:border-box;}
 
 body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#07111d;
-  color:#fff;
-  height:100vh;
-  overflow:hidden;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  height: 100vh;
+  overflow: hidden;
 }
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 .dashboard{
   display:flex;
@@ -25,20 +42,36 @@ body{
 /* SIDEBAR */
 .sidebar{
   width:280px;
-  background:#101c2d;
-  border-right:1px solid #1e2a3a;
+  background: var(--bg-sidebar);
+  border-right:1px solid var(--border);
   display:flex;
   flex-direction:column;
+  z-index: 10;
+}
+
+.header-area {
+  padding: 15px;
+  border-bottom: 1px solid var(--border);
 }
 
 .header{
-  padding:15px;
-  font-weight:bold;
-  color:#5ecbff;
-  border-bottom:1px solid #1e2a3a;
+  font-weight: 800;
+  color: var(--accent);
   text-align: center;
-  font-size: 18px;
-  letter-spacing: 1px;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.search-box {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: white;
+  font-size: 12px;
 }
 
 .tabs{
@@ -47,37 +80,36 @@ body{
   padding:12px;
 }
 
-/* GROUP LABEL STYLE */
 .group-label{
   font-size: 10px;
   text-transform: uppercase;
-  color: #5ecbff;
+  color: var(--accent);
   margin: 18px 0 6px 4px;
   font-weight: bold;
   letter-spacing: 1px;
-  opacity: 0.8;
+  opacity: 0.7;
 }
-
-.group-label:first-child { margin-top: 5px; }
 
 .tab{
   width:100%;
-  padding:9px 12px;
-  margin-bottom:4px;
-  background:#16263d;
-  color:#fff;
+  padding:8px 12px;
+  margin-bottom:3px;
+  background: transparent;
+  color: var(--text-dim);
   border: 1px solid transparent;
   border-radius:6px;
   cursor:pointer;
   text-align:left;
-  font-size: 13px;
+  font-size: 12px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
 }
 
-.tab:hover{background:#243b5f; border-color: #3c5f97;}
-.tab.active{background:#3c5f97; color: #fff; border-color: #5ecbff;}
+.tab:hover{ background: var(--bg-card); color: #fff; }
+.tab.active{ background: var(--accent); color: #000; font-weight: bold; }
 
-/* MAIN */
+/* MAIN CONTENT */
 .main{
   flex:1;
   display:flex;
@@ -85,91 +117,51 @@ body{
 }
 
 .topbar{
-  height:55px;
-  background:#101c2d;
-  border-bottom:1px solid #1e2a3a;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 12px;
+  height: 60px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
 }
 
-.title{
-  font-weight:bold;
+.status-indicator { display: flex; align-items: center; gap: 10px; }
+.pulse {
+    width: 8px; height: 8px; background: #10b981; border-radius: 50%;
+    animation: pulse-animation 2s infinite;
+}
+@keyframes pulse-animation {
+  0% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0.7); }
+  100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
 }
 
-.controls{
-  display:flex;
-  gap:8px;
-}
+.clock-display { display: flex; gap: 20px; font-family: monospace; }
+.clock-item { text-align: right; }
+.clock-label { font-size: 8px; color: var(--accent); text-transform: uppercase; display: block; }
+.clock-time { font-size: 13px; font-weight: bold; }
 
+.controls{ display:flex; gap:8px; }
 .btn{
-  background:#1b2d48;
-  color:#fff;
-  border:1px solid #243b5f;
-  padding:7px 10px;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:12px;
+  background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border);
+  padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;
 }
-
-.btn:hover{background:#2a4369;}
+.btn:hover{ background: var(--border); border-color: var(--accent); }
 
 /* VIEWER */
-.viewer{
-  flex:1;
-  position:relative;
-}
-
-iframe{
-  width:100%;
-  height:100%;
-  border:none;
-  background:#fff;
-}
+.viewer{ flex:1; position:relative; background: #000; }
+iframe{ width:100%; height:100%; border:none; }
 
 #goes{
-  display:none;
-  position:absolute;
-  inset:0;
-  overflow-y:auto;
-  background:#07111d;
-  padding:18px;
+  display:none; position:absolute; inset:0; overflow-y:auto;
+  background: var(--bg-dark); padding: 20px;
 }
-
-.goes-header{
-  font-size:16px;
-  font-weight:bold;
-  color:#5ecbff;
-  margin-bottom:14px;
-}
-
-.goes-block{
-  background:#0f1c2d;
-  padding:12px;
-  margin-bottom:14px;
-  border-radius:10px;
-  text-align: center;
-}
-
-.goes-block img{
-  width:100%;
-  max-width: 600px;
-  height:auto;
-  background:#000;
-  border-radius:8px;
-}
-
-.copy-btn{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  background:#3c5f97;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
+.goes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 15px; }
+.goes-block{ background: var(--bg-sidebar); padding: 10px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+.goes-block img{ width: 100%; border-radius: 4px; margin-top: 8px; }
+.copy-btn {
+  width: 100%; max-width: 300px; margin: 20px auto; display: block; padding: 12px;
+  background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
 }
 </style>
 </head>
@@ -178,134 +170,171 @@ iframe{
 
 <div class="dashboard">
 
-<!-- SIDEBAR -->
 <div class="sidebar">
-<div class="header">WEATHER OPS</div>
+    <div class="header-area">
+        <div class="header">WEATHER OPS CENTER</div>
+        <input type="text" class="search-box" id="tabSearch" placeholder="Search 30+ products..." onkeyup="filterTabs()">
+    </div>
 
-<div class="tabs">
+    <div class="tabs" id="tabList">
+        <div class="group-label">Core Operations</div>
+        <button class="tab active" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button>
+        <button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
 
-  <div class="group-label">Core Operations</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button>
-  <button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
+        <div class="group-label">Forecasts</div>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/spcwpc.html','SPC/WPC Forecast')">SPC/WPC Forecast</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nwsoffices.html','NWS Offices')">NWS Offices</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/outlook.html','Outlook')">Outlook</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Rev Dash</button>
 
-  <div class="group-label">Forecasts</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/outlook.html','Outlook')">Outlook</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Rev Dash</button>
+        <div class="group-label">Radar & Severe</div>
+        <button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/Texassev.html','Texas Severe')">Texas Severe</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/spcwpc.html','SPC/WPC')">SPC/WPC</button>
 
-  <div class="group-label">Radar & Severe</div>
-  <button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/Texassev.html','Texas Severe')">Texas Severe</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/spcwpc.html','SPC/WPC')">SPC/WPC</button>
+        <div class="group-label">Atmospheric Profile</div>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/overhead.html','Overhead')">Overhead</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/meso.html','Meso')">Meso</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/county.html','County')">County</button>
 
-  <div class="group-label">Atmospheric Profile</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/overhead.html','Overhead')">Overhead</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/meso.html','Meso')">Meso</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/county.html','County')">County</button>
+        <div class="group-label">Almanac & Records</div>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
 
-  <div class="group-label">Almanac & Records</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
+        <div class="group-label">Metrics & Temps</div>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Texas Temps')">Texas Temps</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/temp_rain.html','Temp & Rain')">Temp & Rain</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
 
-  <div class="group-label">Metrics & Temps</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Texas Temperatures')">Texas Temps</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/temp_rain.html','Temp & Rain')">Temp & Rain</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
+        <div class="group-label">Tropical Sector</div>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Gulf Coast Region')">Gulf Coast Region</button>
+        <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
+        <button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
 
-  <div class="group-label">Tropical Sector</div>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Gulf Coast Region')">Gulf Coast Region</button>
-  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
-  <button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
-
-  <div class="group-label">Analysis</div>
-  <button class="tab" onclick="goes()">🛰 GOES Report</button>
-
+        <div class="group-label">Analysis</div>
+        <button class="tab" onclick="goes(this)">🛰 GOES Report</button>
+    </div>
 </div>
-</div>
 
-<!-- MAIN -->
 <div class="main">
+    <div class="topbar">
+        <div class="status-indicator">
+            <div class="pulse"></div>
+            <div style="font-weight:bold; font-size: 14px;" id="title">Home</div>
+        </div>
 
-<div class="topbar">
-<div class="title" id="title">Home</div>
+        <div class="clock-display">
+            <div class="clock-item">
+                <span class="clock-label">Local</span>
+                <span class="clock-time" id="clock-local">00:00:00</span>
+            </div>
+            <div class="clock-item">
+                <span class="clock-label">UTC (Z)</span>
+                <span class="clock-time" id="clock-utc">00:00:00</span>
+            </div>
+        </div>
 
-<div class="controls">
-<button class="btn" onclick="fitPage()">Fit Page</button>
-<button class="btn" onclick="refresh()">Refresh</button>
-</div>
-</div>
+        <div class="controls">
+            <button class="btn" onclick="popOut()">Pop Out</button>
+            <button class="btn" onclick="refresh()">Refresh</button>
+            <button class="btn" onclick="toggleSidebar()">Full View</button>
+        </div>
+    </div>
 
-<div class="viewer">
-<iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
-<div id="goes"></div>
-</div>
-
+    <div class="viewer">
+        <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
+        <div id="goes"><div class="goes-grid" id="goesGrid"></div></div>
+    </div>
 </div>
 </div>
 
 <script>
-function openTab(el,url,title){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('title').innerText = title;
-  document.getElementById('goes').style.display='none';
-  document.getElementById('frame').style.display='block';
-  document.getElementById('frame').src = url;
+function updateClocks() {
+    const now = new Date();
+    document.getElementById('clock-local').innerText = now.toLocaleTimeString();
+    document.getElementById('clock-utc').innerText = now.getUTCHours().toString().padStart(2, '0') + ":" + 
+        now.getUTCMinutes().toString().padStart(2, '0') + ":" + now.getUTCSeconds().toString().padStart(2, '0');
+}
+setInterval(updateClocks, 1000); updateClocks();
+
+function filterTabs() {
+    let input = document.getElementById('tabSearch').value.toLowerCase();
+    let tabs = document.getElementsByClassName('tab');
+    for (let i = 0; i < tabs.length; i++) {
+        tabs[i].style.display = tabs[i].innerText.toLowerCase().includes(input) ? "flex" : "none";
+    }
 }
 
-function goes(){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('frame').style.display='none';
-  document.getElementById('goes').style.display='block';
-  document.getElementById('title').innerText="GOES Analysis (Stable Multi-Band)";
-
-  const layers = [
-    ["Lightning","https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg"],
-    ["Infrared (Band 13)","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/600x600.jpg"],
-    ["Water Vapor (Band 08)","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/600x600.jpg"],
-    ["Air Mass RGB","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/AirMass/600x600.jpg"]
-  ];
-
-  const box = document.getElementById("goes");
-  box.innerHTML="";
-  let report="GOES LATEST STABLE REPORT\n\n";
-
-  layers.forEach(l=>{
-    report += l[0] + ":\n" + l[1] + "\n\n";
-    const div=document.createElement("div");
-    div.className="goes-block";
-    div.innerHTML=`<div style="font-weight:bold;margin-bottom:8px">${l[0]}</div><img src="${l[1]}?t=${Date.now()}">`;
-    box.appendChild(div);
-  });
-
-  const btn=document.createElement("button");
-  btn.className="copy-btn";
-  btn.innerText="COPY FULL GOES REPORT";
-  btn.onclick=()=>navigator.clipboard.writeText(report);
-  box.appendChild(btn);
+function openTab(el, url, title) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('title').innerText = title;
+    document.getElementById('goes').style.display = 'none';
+    document.getElementById('frame').style.display = 'block';
+    document.getElementById('frame').src = url;
 }
 
-function refresh(){
-  const f=document.getElementById("frame");
-  if(f.style.display!=='none') f.src=f.src;
-  else goes();
+function goes(el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('frame').style.display = 'none';
+    document.getElementById('goes').style.display = 'block';
+    document.getElementById('title').innerText = "GOES Satellite Analysis";
+
+    const layers = [
+        ["Lightning (GLM)", "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg"],
+        ["Infrared (Band 13)", "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/600x600.jpg"],
+        ["Water Vapor (Band 08)", "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/600x600.jpg"],
+        ["Air Mass RGB", "https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/AirMass/600x600.jpg"]
+    ];
+
+    const grid = document.getElementById("goesGrid");
+    grid.innerHTML = "";
+    let report = "GOES REPORT: " + new Date().toUTCString() + "\n\n";
+
+    layers.forEach(l => {
+        report += `${l[0]}: ${l[1]}\n`;
+        const div = document.createElement("div");
+        div.className = "goes-block";
+        div.innerHTML = `<div style="font-weight:bold; color:var(--accent); font-size:12px;">${l[0]}</div>
+                         <img src="${l[1]}?t=${Date.now()}">`;
+        grid.appendChild(div);
+    });
+
+    const btn = document.createElement("button");
+    btn.className = "copy-btn";
+    btn.innerText = "COPY ANALYSIS LINKS";
+    btn.onclick = () => {
+        navigator.clipboard.writeText(report);
+        btn.innerText = "COPIED!";
+        setTimeout(() => btn.innerText = "COPY ANALYSIS LINKS", 2000);
+    };
+    grid.appendChild(btn);
 }
 
-function fitPage(){
-  const f=document.getElementById("frame");
-  if(f.style.display!=='none'){
-    f.style.transform="scale(1)";
-    f.style.width="100%";
-    f.style.height="100%";
-  }
+function refresh() {
+    const f = document.getElementById("frame");
+    if(f.style.display !== 'none') f.src = f.src;
+    else goes(document.querySelector('.tab.active'));
+}
+
+function popOut() {
+    const f = document.getElementById("frame");
+    if(f.style.display !== 'none') window.open(f.src, '_blank');
+}
+
+function toggleSidebar() {
+    const sb = document.querySelector('.sidebar');
+    sb.style.display = (sb.style.display === 'none') ? 'flex' : 'none';
 }
 </script>
 </body>
