@@ -103,7 +103,6 @@ body{
   position:relative;
 }
 
-/* IFRAME */
 iframe{
   width:100%;
   height:100%;
@@ -111,7 +110,6 @@ iframe{
   background:#fff;
 }
 
-/* GOES MODE */
 #goes{
   display:none;
   position:absolute;
@@ -133,14 +131,13 @@ iframe{
   padding:12px;
   margin-bottom:14px;
   border-radius:10px;
+  text-align: center;
 }
 
-/* ✔ FIX: let latest.jpg define natural scale */
 .goes-block img{
   width:100%;
+  max-width: 600px; /* Kept at 600 to match the file native res */
   height:auto;
-  max-height:700px;
-  object-fit:contain;
   background:#000;
   border-radius:8px;
 }
@@ -170,14 +167,19 @@ iframe{
 <div class="tabs">
 
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/leadforecast.html','Lead Forecast')">Lead Forecast</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button>
+<button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
+
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/outlook.html','Outlook')">Outlook</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
+
+<button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/meso.html','Meso')">Meso</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/Texassev.html','Texas Severe')">Texas Severe</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button>
-
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/fronts.html','Fronts')">Fronts</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/dynamic24.html','Dynamic 24')">Dynamic 24</button>
 
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
@@ -185,18 +187,20 @@ iframe{
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/county.html','County')">County</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
 
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/temp_rain.html','Temp & Rain')">Temp & Rain</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
 
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/overhead.html','Overhead')">Overhead</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','Sky')">Sky</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Temps')">Temps</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Texas Temperatures')">Texas Temperatures</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Gulf Coast Region')">Gulf Coast Region</button>
 
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Rev Dash</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/retro.html','Retro')">Retro</button>
-
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
 <button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
 
+<button class="tab" onclick="latestLightning(this)">🛰 Latest Lightning</button>
 <button class="tab" onclick="goes()">🛰 GOES Report</button>
 
 </div>
@@ -215,98 +219,91 @@ iframe{
 </div>
 
 <div class="viewer">
-
 <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
-
 <div id="goes"></div>
-
 </div>
 
 </div>
-
 </div>
 
 <script>
-
-/* TAB SYSTEM */
 function openTab(el,url,title){
-document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-el.classList.add('active');
-document.getElementById('title').innerText = title;
-
-document.getElementById('goes').style.display='none';
-document.getElementById('frame').style.display='block';
-
-document.getElementById('frame').src = url;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('title').innerText = title;
+  document.getElementById('goes').style.display='none';
+  document.getElementById('frame').style.display='block';
+  document.getElementById('frame').src = url;
 }
 
-/* GOES MODE (NOW USING latest.jpg) */
+/* Uses the specific stable 600x600 JPG */
+function latestLightning(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('frame').style.display='none';
+  document.getElementById('goes').style.display='block';
+  document.getElementById('title').innerText="Latest Lightning (Southern Plains)";
+
+  const box = document.getElementById("goes");
+  const imgUrl = "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg";
+  
+  box.innerHTML=`
+    <div class="goes-header">GOES-19 LIGHTNING (EXTENT3)</div>
+    <div class="goes-block">
+        <img src="${imgUrl}?t=${Date.now()}">
+    </div>
+  `;
+}
+
+/* UPDATED GOES REPORT: Now using the stable 600x600 JPGs for all bands */
 function goes(){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('frame').style.display='none';
+  document.getElementById('goes').style.display='block';
+  document.getElementById('title').innerText="GOES Analysis (Stable Multi-Band)";
 
-document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  // Standardized to use the stable 600x600 file paths
+  const layers = [
+    ["Lightning","https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg"],
+    ["Infrared (Band 13)","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/600x600.jpg"],
+    ["Water Vapor (Band 08)","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/08/600x600.jpg"],
+    ["Air Mass RGB","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/AirMass/600x600.jpg"]
+  ];
 
-document.getElementById('frame').style.display='none';
-document.getElementById('goes').style.display='block';
+  const box = document.getElementById("goes");
+  box.innerHTML="";
+  let report="GOES LATEST STABLE REPORT\n\n";
 
-document.getElementById('title').innerText="GOES Analysis (Latest Frames)";
+  layers.forEach(l=>{
+    report += l[0] + ":\n" + l[1] + "\n\n";
+    const div=document.createElement("div");
+    div.className="goes-block";
+    div.innerHTML=`<div style="font-weight:bold;margin-bottom:8px">${l[0]}</div><img src="${l[1]}?t=${Date.now()}">`;
+    box.appendChild(div);
+  });
 
-const layers = [
-["Lightning","https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/latest.jpg"],
-["Infrared","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/10/latest.jpg"],
-["Water Vapor","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/07/latest.jpg"],
-["Air Mass","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/AirMass/latest.jpg"]
-];
-
-const box = document.getElementById("goes");
-box.innerHTML="";
-
-let report="GOES LATEST MULTI-LAYER REPORT\n\n";
-
-const header=document.createElement("div");
-header.className="goes-header";
-header.innerText="LATEST GOES ANALYSIS (OPTIMIZED FOR FULL SCENE VIEW)";
-box.appendChild(header);
-
-layers.forEach(l=>{
-
-report += l[0] + ":\n" + l[1] + "\n\n";
-
-const div=document.createElement("div");
-div.className="goes-block";
-
-div.innerHTML=`
-<div style="font-weight:bold;margin-bottom:8px">${l[0]}</div>
-<img src="${l[1]}?t=${Date.now()}">
-`;
-
-box.appendChild(div);
-
-});
-
-const btn=document.createElement("button");
-btn.className="copy-btn";
-btn.innerText="COPY FULL GOES REPORT";
-btn.onclick=()=>navigator.clipboard.writeText(report);
-box.appendChild(btn);
-
+  const btn=document.createElement("button");
+  btn.className="copy-btn";
+  btn.innerText="COPY FULL GOES REPORT";
+  btn.onclick=()=>navigator.clipboard.writeText(report);
+  box.appendChild(btn);
 }
 
-/* UTILITIES */
 function refresh(){
-const f=document.getElementById("frame");
-if(f.style.display!=='none') f.src=f.src;
+  const f=document.getElementById("frame");
+  if(f.style.display!=='none') f.src=f.src;
+  else if(document.getElementById('title').innerText.includes("Lightning")) latestLightning(document.querySelector('.tab.active'));
+  else goes();
 }
 
 function fitPage(){
-const f=document.getElementById("frame");
-if(f.style.display!=='none'){
-f.style.transform="scale(1)";
-f.style.width="100%";
-f.style.height="100%";
+  const f=document.getElementById("frame");
+  if(f.style.display!=='none'){
+    f.style.transform="scale(1)";
+    f.style.width="100%";
+    f.style.height="100%";
+  }
 }
-}
-
 </script>
-
 </body>
 </html>
