@@ -32,32 +32,50 @@ body{
 }
 
 .header{
-  padding:12px;
+  padding:15px;
   font-weight:bold;
   color:#5ecbff;
   border-bottom:1px solid #1e2a3a;
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 1px;
 }
 
 .tabs{
   flex:1;
   overflow-y:auto;
-  padding:10px;
+  padding:12px;
 }
+
+/* GROUP LABEL STYLE */
+.group-label{
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #5ecbff;
+  margin: 18px 0 6px 4px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+.group-label:first-child { margin-top: 5px; }
 
 .tab{
   width:100%;
-  padding:10px;
-  margin-bottom:8px;
+  padding:9px 12px;
+  margin-bottom:4px;
   background:#16263d;
   color:#fff;
-  border:none;
-  border-radius:8px;
+  border: 1px solid transparent;
+  border-radius:6px;
   cursor:pointer;
   text-align:left;
+  font-size: 13px;
+  transition: all 0.2s;
 }
 
-.tab:hover{background:#243b5f;}
-.tab.active{background:#3c5f97;}
+.tab:hover{background:#243b5f; border-color: #3c5f97;}
+.tab.active{background:#3c5f97; color: #fff; border-color: #5ecbff;}
 
 /* MAIN */
 .main{
@@ -88,7 +106,7 @@ body{
 .btn{
   background:#1b2d48;
   color:#fff;
-  border:none;
+  border:1px solid #243b5f;
   padding:7px 10px;
   border-radius:6px;
   cursor:pointer;
@@ -136,7 +154,7 @@ iframe{
 
 .goes-block img{
   width:100%;
-  max-width: 600px; /* Kept at 600 to match the file native res */
+  max-width: 600px;
   height:auto;
   background:#000;
   border-radius:8px;
@@ -162,46 +180,53 @@ iframe{
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-<div class="header">Weather Ops Center</div>
+<div class="header">WEATHER OPS</div>
 
 <div class="tabs">
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button>
-<button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
+  <div class="group-label">Core Operations</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button>
+  <button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/outlook.html','Outlook')">Outlook</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
+  <div class="group-label">Forecasts</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/outlook.html','Outlook')">Outlook</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Rev Dash</button>
 
-<button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/meso.html','Meso')">Meso</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/Texassev.html','Texas Severe')">Texas Severe</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button>
+  <div class="group-label">Radar & Severe</div>
+  <button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/Texassev.html','Texas Severe')">Texas Severe</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/spcwpc.html','SPC/WPC')">SPC/WPC</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
+  <div class="group-label">Atmospheric Profile</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/overhead.html','Overhead')">Overhead</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/meso.html','Meso')">Meso</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/county.html','County')">County</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/county.html','County')">County</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
+  <div class="group-label">Almanac & Records</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/temp_rain.html','Temp & Rain')">Temp & Rain</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
+  <div class="group-label">Metrics & Temps</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Texas Temperatures')">Texas Temps</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/temp_rain.html','Temp & Rain')">Temp & Rain</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/overhead.html','Overhead')">Overhead</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Texas Temperatures')">Texas Temperatures</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Gulf Coast Region')">Gulf Coast Region</button>
+  <div class="group-label">Tropical Sector</div>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Gulf Coast Region')">Gulf Coast Region</button>
+  <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
+  <button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
 
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Rev Dash</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
-<button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
-
-<button class="tab" onclick="latestLightning(this)">🛰 Latest Lightning</button>
-<button class="tab" onclick="goes()">🛰 GOES Report</button>
+  <div class="group-label">Analysis</div>
+  <button class="tab" onclick="goes()">🛰 GOES Report</button>
 
 </div>
 </div>
@@ -210,7 +235,7 @@ iframe{
 <div class="main">
 
 <div class="topbar">
-<div class="title" id="title">Weather Ops Center</div>
+<div class="title" id="title">Home</div>
 
 <div class="controls">
 <button class="btn" onclick="fitPage()">Fit Page</button>
@@ -236,33 +261,12 @@ function openTab(el,url,title){
   document.getElementById('frame').src = url;
 }
 
-/* Uses the specific stable 600x600 JPG */
-function latestLightning(el){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('frame').style.display='none';
-  document.getElementById('goes').style.display='block';
-  document.getElementById('title').innerText="Latest Lightning (Southern Plains)";
-
-  const box = document.getElementById("goes");
-  const imgUrl = "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg";
-  
-  box.innerHTML=`
-    <div class="goes-header">GOES-19 LIGHTNING (EXTENT3)</div>
-    <div class="goes-block">
-        <img src="${imgUrl}?t=${Date.now()}">
-    </div>
-  `;
-}
-
-/* UPDATED GOES REPORT: Now using the stable 600x600 JPGs for all bands */
 function goes(){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('frame').style.display='none';
   document.getElementById('goes').style.display='block';
   document.getElementById('title').innerText="GOES Analysis (Stable Multi-Band)";
 
-  // Standardized to use the stable 600x600 file paths
   const layers = [
     ["Lightning","https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/600x600.jpg"],
     ["Infrared (Band 13)","https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/600x600.jpg"],
@@ -292,7 +296,6 @@ function goes(){
 function refresh(){
   const f=document.getElementById("frame");
   if(f.style.display!=='none') f.src=f.src;
-  else if(document.getElementById('title').innerText.includes("Lightning")) latestLightning(document.querySelector('.tab.active'));
   else goes();
 }
 
