@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Tactical Command | v8.9</title>
+    <title>Vizcaya Tactical Command | v9.9</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root {
@@ -10,95 +10,79 @@
             --elevated: #475569; --significant: #f97316; --critical: #ef4444; --accent: #3b82f6;
         }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; max-width: 1300px; margin: auto; line-height: 1.4; }
-        h1 { text-align: center; margin: 5px 0 15px 0; color: #f8fafc; letter-spacing: 3px; font-size: 1.5rem; text-transform: uppercase; font-weight: 200; }
+        
+        /* ALERT BANNER SYSTEM */
+        #lightning-alert-banner { 
+            display: none; padding: 15px; border-radius: 10px; margin-bottom: 20px; 
+            text-align: center; font-weight: 900; letter-spacing: 2px; 
+            border: 2px solid transparent; animation: alert-pulse 2s infinite; 
+        }
+        .banner-critical { background: rgba(239, 68, 68, 0.2); border-color: var(--critical) !important; color: var(--critical); }
+        .banner-warning { background: rgba(249, 115, 22, 0.2); border-color: var(--significant) !important; color: var(--significant); }
+        
+        h1 { text-align: center; margin: 5px 0 10px 0; color: #f8fafc; letter-spacing: 3px; font-size: 1.5rem; text-transform: uppercase; font-weight: 200; }
         h1 b { font-weight: 900; color: var(--accent); }
         h2 { margin: 25px 0 10px 0; font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
         
-        /* Global Severity Bar */
-        #severity-index { height:45px; border-radius:8px; margin-bottom:15px; background:#1e293b; position:relative; overflow:hidden; border: 1px solid #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #severity-index { height:45px; border-radius:8px; margin-bottom:15px; background:#1e293b; position:relative; overflow:hidden; border: 1px solid #334155; }
         #severity-bar { height:100%; width:0%; background:#16a34a; transition:width 1.5s ease-in-out; }
         #severity-text { position:absolute; width:100%; text-align:center; top:0; color:#fff; line-height:45px; font-weight:900; font-size: 1.1rem; text-shadow: 1px 1px 4px #000; }
 
-        /* Matrix Architecture */
         .matrix-container { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .matrix-grid { display: grid; grid-template-columns: 180px repeat(7, 1fr); border-bottom: 1px solid var(--border); }
-        .matrix-day-label { background: #111827; padding: 12px; text-align: center; font-size: 13px; font-weight: 900; color: #fff; border-right: 1px solid var(--border); }
-        .matrix-row-label { padding: 10px 15px; font-size: 11px; font-weight: 800; color: #94a3b8; border-right: 1px solid var(--border); display: flex; align-items: center; background: #0f172a; text-transform: uppercase; }
+        .matrix-day-label { background: #111827; padding: 12px; text-align: center; font-size: 12px; font-weight: 900; color: #fff; border-right: 1px solid var(--border); }
+        .matrix-row-label { padding: 10px 15px; font-size: 10px; font-weight: 800; color: #94a3b8; border-right: 1px solid var(--border); display: flex; align-items: center; background: #0f172a; text-transform: uppercase; }
         .matrix-cell { padding: 6px; border-right: 1px solid var(--border); display: flex; justify-content: center; align-items: center; min-height: 55px; background: rgba(0,0,0,0.1); }
         
-        /* Full-Text Labels */
-        .label-box { width: 95%; padding: 6px 0; border-radius: 4px; font-size: 9px; font-weight: 900; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; color: #fff; transition: 0.3s; }
+        .label-box { width: 95%; padding: 6px 0; border-radius: 4px; font-size: 9px; font-weight: 900; text-align: center; text-transform: uppercase; color: #fff; }
         .lvl-1 { background: var(--elevated); border: 1px solid rgba(255,255,255,0.1); } 
-        .lvl-2 { background: var(--significant); box-shadow: 0 0 12px rgba(249, 115, 22, 0.4); } 
-        .lvl-3 { background: var(--critical); box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); animation: pulse 2s infinite; }
+        .lvl-2 { background: var(--significant); } 
+        .lvl-3 { background: var(--critical); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes alert-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0px transparent; } 50% { transform: scale(1.01); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); } }
 
-        /* Infrastructure readiness */
-        .infra-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .infra-row { display:flex; justify-content:space-between; padding:14px 18px; border-radius:8px; font-size: 0.9rem; font-weight: 800; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.5); }
+        .infra-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .infra-row { display:flex; flex-direction: column; justify-content:center; padding:12px; border-radius:8px; font-size: 0.85rem; font-weight: 800; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.5); text-align: center; }
+        .infra-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
         .status-low { color: #4ade80; } .status-mod { color: #fb923c; } .status-high { color: #ef4444; }
 
-        /* Grouped Tactical Scorecards */
         .group-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-top: 10px; }
         .group-box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; border-top: 4px solid var(--accent); }
-        .group-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; color: var(--accent); margin-bottom: 15px; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; letter-spacing: 1px; }
-        .event-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
-        .event-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .event-date { font-size: 1rem; font-weight: 800; color: #fff; display: block; margin-bottom: 4px; }
+        .group-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; color: var(--accent); margin-bottom: 15px; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+        .event-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
+        .event-date { font-size: 1rem; font-weight: 800; color: #fff; display: block; }
         .event-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; }
-        .event-desc b { color: #00f2fe; }
 
-        /* AI Syndicate Reporting */
-        #ai-text-area { width: 100%; height: 180px; background: #050810; border: 1px solid var(--border); color: #a5b4fc; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 15px; border-radius: 6px; margin-top: 10px; line-height: 1.5; }
+        #ai-text-area { width: 100%; height: 350px; background: #050810; border: 1px solid var(--border); color: #a5b4fc; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 15px; border-radius: 6px; margin-top: 10px; line-height: 1.5; }
         .copy-btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; float: right; margin-bottom: 10px; }
-
-        /* Cheat Sheet */
-        .cheat-sheet { width: 100%; border-collapse: collapse; font-size: 0.75rem; background: var(--panel); border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid var(--border); }
-        .cheat-sheet th { background: #111827; padding: 12px; text-align: left; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-        .cheat-sheet td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .c-elevated { color: #94a3b8; font-weight: 900; }
-        .c-significant { color: var(--significant); font-weight: 900; }
-        .c-critical { color: var(--critical); font-weight: 900; }
     </style>
 </head>
 <body>
+
+<!-- LIGHTNING PROXIMITY ALERT BANNER -->
+<div id="lightning-alert-banner"></div>
 
 <h1>VIZCAYA <b>SYSTEM COMMAND</b></h1>
 
 <div id="severity-index">
     <div id="severity-bar"></div>
-    <div id="severity-text">POLLING OPERATIONAL DATA...</div>
+    <div id="severity-text">INITIALIZING STACK...</div>
 </div>
 
+<h2>🛰️ Strategic 7-Day Planning Matrix</h2>
 <div class="matrix-container" id="matrix-output"></div>
 
-<h2>⚡ Infrastructure Readiness (Tomorrow Forecast)</h2>
+<h2>⚡ Tomorrow Infrastructure Readiness</h2>
 <div id="infra-panel" class="infra-grid"></div>
 
-<h2>⏳ Tactical Sequence Guide (Grouped by Vector)</h2>
+<h2>⏳ Tactical Chronology (Sequence Windows)</h2>
 <div id="grouped-scorecards" class="group-container"></div>
 
-<h2>🤖 AI Syndicate Report Generator</h2>
+<h2>🤖 AI Syndicate Data Stack (Protocol Export)</h2>
 <div class="ai-box" style="overflow:hidden; margin-top: 10px;">
-    <button class="copy-btn" onclick="copyAIText()">COPY MISSION DATA</button>
+    <button class="copy-btn" onclick="copyAIText()">COPY PROTOCOL DATA</button>
     <textarea id="ai-text-area" readonly></textarea>
 </div>
-
-<h2>📋 Readiness Level Reference</h2>
-<table class="cheat-sheet">
-    <thead>
-        <tr><th>Hazard Vector</th><th class="c-elevated">ELEVATED (E)</th><th class="c-significant">SIGNIFICANT (S)</th><th class="c-critical">CRITICAL (C)</th></tr>
-    </thead>
-    <tbody>
-        <tr><td>Hard Freeze</td><td>28° to 32°F</td><td>22° to 27°F</td><td>Below 22°F</td></tr>
-        <tr><td>Hail (CAPE)</td><td>1000 - 2000 J/kg</td><td>2000 - 3500 J/kg</td><td>Over 3500 J/kg</td></tr>
-        <tr><td>Heavy Rain</td><td>0.10" - 0.25"/hr</td><td>0.25" - 0.75"/hr</td><td>Over 0.75"/hr</td></tr>
-        <tr><td>Wind Gusts</td><td>25 - 35 mph</td><td>35 - 50 mph</td><td>Over 50 mph</td></tr>
-        <tr><td>Heat Index</td><td>95° - 102°F</td><td>103° - 109°F</td><td>Over 110°F</td></tr>
-        <tr><td>Visibility/Fog</td><td>1.5 - 3.0 mi</td><td>0.5 - 1.5 mi</td><td>Under 0.5 mi</td></tr>
-        <tr><td>Lightning</td><td>15% - 30% Prob</td><td>30% - 60% Prob</td><td>Over 60% Prob</td></tr>
-    </tbody>
-</table>
 
 <script>
 const LAT = 30.5083, LON = -97.6789;
@@ -118,17 +102,18 @@ const HAZARD_CONFIG = [
 async function runCommand() {
   try {
     const [omRes, tRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,cape&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16&timezone=auto`),
-      fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${LAT},${LON}&apikey=${T_IO_KEY}&units=imperial`)
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,cape,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16&timezone=auto`),
+      fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${LAT},${LON}&apikey=${T_IO_KEY}&units=imperial&fields=lightningProbability,lightningStrikeDistance,visibility,epaIndex,roadRiskScore`)
     ]);
 
     const h = (await omRes.json()).hourly;
     const tH = (await tRes.json()).timelines.hourly;
 
     const daily = {};
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomStr = tomorrow.toLocaleDateString('en-US', {weekday:'short', day:'numeric'});
-    let tomData = { cape: 0, minT: 100, rain: 0 };
+    const now = new Date();
+    const tomStr = new Date(new Date().setDate(now.getDate() + 1)).toLocaleDateString('en-US', {weekday:'short', day:'numeric'});
+    
+    let tomData = { cape: 0, minT: 100, lDist: 100, aqi: 0, road: 0, currentLightningDist: 100 };
 
     for(let i=0; i < 168; i++) {
       const d = new Date(h.time[i]);
@@ -146,21 +131,45 @@ async function runCommand() {
       daily[dKey].flood = Math.max(daily[dKey].flood, getL(h.precipitation[i], THRESHOLDS.flood));
       daily[dKey].wind = Math.max(daily[dKey].wind, getL(h.wind_gusts_10m[i], THRESHOLDS.wind));
       daily[dKey].heat = Math.max(daily[dKey].heat, getL(h.apparent_temperature[i], THRESHOLDS.heat));
+      
       if(tH[i]) {
-          daily[dKey].lightning = Math.max(daily[dKey].lightning, getL(tH[i].values.lightningProbability, THRESHOLDS.lightning));
-          daily[dKey].fog = Math.max(daily[dKey].fog, getL(tH[i].values.visibility, THRESHOLDS.fog, true));
-      }
+          const vals = tH[i].values;
+          daily[dKey].lightning = Math.max(daily[dKey].lightning, getL(vals.lightningProbability, THRESHOLDS.lightning));
+          daily[dKey].fog = Math.max(daily[dKey].fog, getL(vals.visibility, THRESHOLDS.fog, true));
+          
+          // Capture lightning proximity for the immediate window (first 6 hours)
+          if(i < 6 && vals.lightningStrikeDistance) {
+              tomData.currentLightningDist = Math.min(tomData.currentLightningDist, vals.lightningStrikeDistance);
+          }
 
+          if(dKey === tomStr) {
+              tomData.lDist = Math.min(tomData.lDist, vals.lightningStrikeDistance || 100);
+              tomData.aqi = Math.max(tomData.aqi, vals.epaIndex || 0);
+              tomData.road = Math.max(tomData.road, vals.roadRiskScore || 0);
+          }
+      }
       if(dKey === tomStr) {
           tomData.cape = Math.max(tomData.cape, h.cape[i]);
           tomData.minT = Math.min(tomData.minT, h.temperature_2m[i]);
-          tomData.rain = Math.max(tomData.rain, h.precipitation[i]);
       }
     }
 
-    // Render Matrix with Full Text
+    // LIGHTNING BANNER LOGIC
+    const banner = document.getElementById('lightning-alert-banner');
+    if(tomData.currentLightningDist <= 30) {
+        banner.style.display = 'block';
+        if(tomData.currentLightningDist <= 10) {
+            banner.className = 'banner-critical';
+            banner.innerHTML = `⚠️ CRITICAL SAFETY ALERT: LIGHTNING STRIKE WITHIN ${tomData.currentLightningDist.toFixed(1)} MILES ⚠️`;
+        } else {
+            banner.className = 'banner-warning';
+            banner.innerHTML = `⚡ LIGHTNING PROXIMITY WARNING: STRIKES DETECTED WITHIN ${tomData.currentLightningDist.toFixed(1)} MILES ⚡`;
+        }
+    }
+
+    // Render Matrix
     const dayKeys = Object.keys(daily).slice(0, 7);
-    let mHTML = `<div class="matrix-grid"><div class="matrix-day-label" style="background:#0f172a; color:#94a3b8; font-size:11px;">READINESS VECTOR</div>`;
+    let mHTML = `<div class="matrix-grid"><div class="matrix-day-label" style="background:#0f172a; color:#94a3b8; font-size:10px;">TACTICAL PHASE</div>`;
     dayKeys.forEach(dk => mHTML += `<div class="matrix-day-label">${dk}</div>`);
     mHTML += `</div>`;
     HAZARD_CONFIG.forEach(hz => {
@@ -175,63 +184,72 @@ async function runCommand() {
     document.getElementById('matrix-output').innerHTML = mHTML;
 
     // Infrastructure
+    const aqiSt = tomData.aqi > 100 ? 'status-high' : tomData.aqi > 50 ? 'status-mod' : 'status-low';
     document.getElementById("infra-panel").innerHTML = `
-      <div class="infra-row ${tomData.cape > 2000 ? 'status-high' : 'status-low'}"><span>Fleet Assets</span><span>${tomData.cape > 2000 ? 'EXPOSED' : 'SECURE'}</span></div>
-      <div class="infra-row ${tomData.minT <= 32 ? 'status-mod' : 'status-low'}"><span>Plumbing Readiness</span><span>${tomData.minT <= 32 ? 'MITIGATE' : 'STABLE'}</span></div>
+      <div class="infra-row ${tomData.cape > 2000 ? 'status-high' : 'status-low'}"><span class="infra-label">Fleet Readiness</span><span>${tomData.cape > 2000 ? 'EXPOSED' : 'SECURE'}</span></div>
+      <div class="infra-row ${tomData.road > 60 ? 'status-high' : 'status-low'}"><span class="infra-label">Road Transit Risk</span><span>${tomData.road > 60 ? 'DANGEROUS' : 'NOMINAL'}</span></div>
+      <div class="infra-row ${aqiSt}"><span class="infra-label">Air Quality (EPA)</span><span>${tomData.aqi > 100 ? 'UNHEALTHY' : 'GOOD'}</span></div>
+      <div class="infra-row ${tomData.lDist < 30 ? 'status-mod' : 'status-low'}"><span class="infra-label">Lightning Proximity</span><span>${tomData.lDist < 100 ? tomData.lDist.toFixed(0) + ' Mi' : 'CLEAR'}</span></div>
     `;
 
-    // Grouped Scoring
-    const findW = (arr, t, label, unit) => {
+    // Grouping & AI Logic
+    const findW = (arr, t, label, unit, dir='above') => {
         let wins = [], active = false, cur = null;
         for(let i=0; i<arr.length; i++) {
-            if (arr[i] >= t && !active) { active = true; cur = { start: new Date(h.time[i]), peakV: arr[i], peakT: new Date(h.time[i]), hrs: 0, label, unit }; }
-            if (active) { if(arr[i] > cur.peakV) { cur.peakV = arr[i]; cur.peakT = new Date(h.time[i]); } cur.hrs++; }
-            if (arr[i] < t && active) { active = false; wins.push(cur); }
+            const isB = dir==='above' ? arr[i] >= t : arr[i] <= t;
+            if (isB && !active) { active = true; cur = { start: new Date(h.time[i]), peakV: arr[i], peakT: new Date(h.time[i]), hrs: 0, label, unit }; }
+            if (active) { 
+                if((dir==='above' && arr[i] > cur.peakV) || (dir==='below' && arr[i] < cur.peakV)) { cur.peakV = arr[i]; cur.peakT = new Date(h.time[i]); }
+                cur.hrs++; 
+            }
+            if (!isB && active) { active = false; wins.push(cur); }
         }
         return wins;
     };
 
-    const categories = {
-        "Instability / Severe": findW(h.cape, 1000, 'CAPE', 'J/kg'),
-        "Wind Events": findW(h.wind_gusts_10m, 25, 'Gusts', 'mph'),
-        "Precipitation Windows": findW(h.precipitation, 0.1, 'Rain', '"/hr'),
-        "Thermal Trends": findW(h.apparent_temperature, 95, 'Heat', '°F')
+    let categories = { 
+        "Severe Instability": findW(h.cape, 1000, 'CAPE', 'J/kg'), 
+        "Wind Gust Activity": findW(h.wind_gusts_10m, 25, 'Gusts', 'mph'), 
+        "Precipitation": findW(h.precipitation, 0.1, 'Rain', '"/hr'),
+        "Thermal Trends": [...findW(h.apparent_temperature, 95, 'Heat Index', '°F'), ...findW(h.temperature_2m, 32, 'Freeze', '°F', 'below')].sort((a,b)=>a.start-b.start)
     };
 
     let gHTML = "";
+    let protocolLog = "";
     for (const [cat, events] of Object.entries(categories)) {
         if (events.length > 0) {
             gHTML += `<div class="group-box"><span class="group-title">${cat}</span>`;
             events.slice(0,3).forEach(e => {
-                gHTML += `
-                <div class="event-item">
-                    <span class="event-date">${e.start.toLocaleString('en-US', {weekday:'short', month:'short', day:'numeric'})}</span>
-                    <div class="event-desc">Opens <b>${e.start.toLocaleTimeString([], {hour:'numeric'})}</b>. Peak <b>${e.peakV.toFixed(e.unit==='"/hr'?2:0)}${e.unit}</b> at <b>${e.peakT.toLocaleTimeString([], {hour:'numeric'})}</b>.</div>
-                </div>`;
+                gHTML += `<div class="event-item"><span class="event-date">${e.start.toLocaleString('en-US', {weekday:'short', month:'short', day:'numeric'})}</span><div class="event-desc">Opens <b>${e.start.toLocaleTimeString([], {hour:'numeric'})}</b>. Peak <b>${e.peakV.toFixed(e.unit.includes('"')?2:0)}${e.unit}</b> at <b>${e.peakT.toLocaleTimeString([], {hour:'numeric'})}</b>.</div></div>`;
+                protocolLog += `[EVENT:${e.label.toUpperCase()}] Start:${e.start.toISOString()} | Duration:${e.hrs}h | PeakValue:${e.peakV.toFixed(2)}${e.unit} @ ${e.peakT.toISOString()}\n`;
             });
             gHTML += `</div>`;
         }
     }
-    document.getElementById('grouped-scorecards').innerHTML = gHTML || "<div style='opacity:0.5;'>No significant vectors detected.</div>";
+    document.getElementById('grouped-scorecards').innerHTML = gHTML;
 
-    // AI & Severity Sync
-    let score = Math.min(100, (tomData.cape / 120) + (tomData.minT <= 32 ? 35 : 0) + (tomData.rain * 25));
+    // AI DATA STACK EXPORT
+    let aiReport = `[STATION_ID: VIZCAYA_RR_TX]\n[REPORT_DATE: ${new Date().toISOString()}]\n\n`;
+    aiReport += `[[IMMEDIATE_HAZARD_ALERT]]\n`;
+    aiReport += `LightningAlert: ${tomData.currentLightningDist <= 30 ? 'ACTIVE' : 'NONE'}\nClosestApproach: ${tomData.currentLightningDist.toFixed(1)}mi\n\n`;
+    aiReport += `[[TOMORROW_LOGISTICS]]\n`;
+    aiReport += `RoadRiskIndex: ${tomData.road.toFixed(0)}/100\nAirQualityEPA: ${tomData.aqi}\nLightningProximityMax: ${tomData.lDist.toFixed(0)}mi\n\n`;
+    aiReport += `[[7_DAY_READINESS_MATRIX]]\n`;
+    dayKeys.forEach(dk => {
+        const act = HAZARD_CONFIG.filter(hz => daily[dk][hz.key] > 0).map(hz => `${hz.label}:${daily[dk][hz.key]===3?'CRITICAL':daily[dk][hz.key]===2?'SIGNIFICANT':'ELEVATED'}`);
+        aiReport += `${dk}: ${act.join(" | ") || 'NOMINAL'}\n`;
+    });
+    aiReport += `\n[[CHRONOLOGICAL_TACTICAL_LOG]]\n${protocolLog}\n[END_STACK]`;
+    document.getElementById("ai-text-area").value = aiReport;
+
+    let score = Math.min(100, (tomData.cape / 120) + (tomData.road / 2) + (tomData.currentLightningDist < 30 ? 40 : 0));
     document.getElementById("severity-bar").style.width = score + "%";
     document.getElementById("severity-text").innerText = `MISSION IMPACT RISK: ${score.toFixed(0)}%`;
-    let report = `VIZCAYA STRATEGIC MISSION REPORT\n7-DAY READINESS SYNOPSIS:\n`;
-    dayKeys.forEach(dk => {
-        const act = HAZARD_CONFIG.filter(hz => daily[dk][hz.key] > 0).map(hz => `${hz.label}(${daily[dk][hz.key]===3?'Critical':daily[dk][hz.key]===2?'Significant':'Elevated'})`);
-        report += `• ${dk}: ${act.join(", ") || 'Nominal'}\n`;
-    });
-    document.getElementById("ai-text-area").value = report;
 
   } catch (err) { console.error(err); }
 }
 
-function copyAIText() {
-    const area = document.getElementById("ai-text-area");
-    area.select(); document.execCommand("copy"); alert("Report Copied.");
-}
+function copyAIText() { document.getElementById("ai-text-area").select(); document.execCommand("copy"); alert("Protocol Data Stack Copied."); }
 runCommand();
 </script>
 </body>
