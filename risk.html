@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vizcaya Tactical Command | v9.9</title>
+    <title>Vizcaya Tactical Command | v10.1</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root {
@@ -11,12 +11,7 @@
         }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; max-width: 1300px; margin: auto; line-height: 1.4; }
         
-        /* ALERT BANNER SYSTEM */
-        #lightning-alert-banner { 
-            display: none; padding: 15px; border-radius: 10px; margin-bottom: 20px; 
-            text-align: center; font-weight: 900; letter-spacing: 2px; 
-            border: 2px solid transparent; animation: alert-pulse 2s infinite; 
-        }
+        #lightning-alert-banner { display: none; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-weight: 900; letter-spacing: 2px; border: 2px solid transparent; animation: alert-pulse 2s infinite; }
         .banner-critical { background: rgba(239, 68, 68, 0.2); border-color: var(--critical) !important; color: var(--critical); }
         .banner-warning { background: rgba(249, 115, 22, 0.2); border-color: var(--significant) !important; color: var(--significant); }
         
@@ -38,51 +33,68 @@
         .lvl-1 { background: var(--elevated); border: 1px solid rgba(255,255,255,0.1); } 
         .lvl-2 { background: var(--significant); } 
         .lvl-3 { background: var(--critical); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        @keyframes alert-pulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0px transparent; } 50% { transform: scale(1.01); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); } }
-
-        .infra-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        
+        .infra-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .infra-row { display:flex; flex-direction: column; justify-content:center; padding:12px; border-radius:8px; font-size: 0.85rem; font-weight: 800; border: 1px solid var(--border); background: rgba(15, 23, 42, 0.5); text-align: center; }
-        .infra-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
-        .status-low { color: #4ade80; } .status-mod { color: #fb923c; } .status-high { color: #ef4444; }
+        .infra-label { font-size: 0.55rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px; }
 
         .group-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 15px; margin-top: 10px; }
         .group-box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; border-top: 4px solid var(--accent); }
         .group-title { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; color: var(--accent); margin-bottom: 15px; display: block; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
         .event-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed rgba(255,255,255,0.1); }
-        .event-date { font-size: 1rem; font-weight: 800; color: #fff; display: block; }
         .event-desc { font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; }
 
-        #ai-text-area { width: 100%; height: 350px; background: #050810; border: 1px solid var(--border); color: #a5b4fc; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 15px; border-radius: 6px; margin-top: 10px; line-height: 1.5; }
+        #ai-text-area { width: 100%; height: 450px; background: #050810; border: 1px solid var(--border); color: #a5b4fc; font-family: 'Courier New', monospace; font-size: 0.85rem; padding: 15px; border-radius: 6px; margin-top: 10px; line-height: 1.5; }
         .copy-btn { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; float: right; margin-bottom: 10px; }
+
+        .cheat-sheet { width: 100%; border-collapse: collapse; font-size: 0.75rem; background: var(--panel); border-radius: 10px; overflow: hidden; margin-top: 10px; border: 1px solid var(--border); }
+        .cheat-sheet th { background: #111827; padding: 12px; text-align: left; color: #94a3b8; text-transform: uppercase; }
+        .cheat-sheet td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes alert-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.01); box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); } }
     </style>
 </head>
 <body>
 
-<!-- LIGHTNING PROXIMITY ALERT BANNER -->
 <div id="lightning-alert-banner"></div>
 
 <h1>VIZCAYA <b>SYSTEM COMMAND</b></h1>
 
 <div id="severity-index">
     <div id="severity-bar"></div>
-    <div id="severity-text">INITIALIZING STACK...</div>
+    <div id="severity-text">ANALYZING MISSION DATA...</div>
 </div>
 
 <h2>🛰️ Strategic 7-Day Planning Matrix</h2>
 <div class="matrix-container" id="matrix-output"></div>
 
-<h2>⚡ Tomorrow Infrastructure Readiness</h2>
+<h2>⚡ Operational Logistics (Tomorrow Forecast)</h2>
 <div id="infra-panel" class="infra-grid"></div>
 
-<h2>⏳ Tactical Chronology (Sequence Windows)</h2>
+<h2>⏳ Tactical Chronology</h2>
 <div id="grouped-scorecards" class="group-container"></div>
 
-<h2>🤖 AI Syndicate Data Stack (Protocol Export)</h2>
+<h2>🤖 AI Syndicate Data Stack (Protocol v10.1)</h2>
 <div class="ai-box" style="overflow:hidden; margin-top: 10px;">
-    <button class="copy-btn" onclick="copyAIText()">COPY PROTOCOL DATA</button>
+    <button class="copy-btn" onclick="copyAIText()">COPY DATA STACK</button>
     <textarea id="ai-text-area" readonly></textarea>
 </div>
+
+<h2>📋 Readiness Level Reference (Cheat Sheet)</h2>
+<table class="cheat-sheet">
+    <thead>
+        <tr><th>Hazard Vector</th><th style="color: #94a3b8;">ELEVATED (E)</th><th style="color: var(--significant);">SIGNIFICANT (S)</th><th style="color: var(--critical);">CRITICAL (C)</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Hard Freeze</td><td>28° to 32°F</td><td>22° to 27°F</td><td>Below 22°F</td></tr>
+        <tr><td>Hail (CAPE)</td><td>1000 - 2000 J/kg</td><td>2000 - 3500 J/kg</td><td>Over 3500 J/kg</td></tr>
+        <tr><td>Heavy Rain</td><td>0.10" - 0.25"/hr</td><td>0.25" - 0.75"/hr</td><td>Over 0.75"/hr</td></tr>
+        <tr><td>Wind Gusts</td><td>25 - 35 mph</td><td>35 - 50 mph</td><td>Over 50 mph</td></tr>
+        <tr><td>Air Quality (EPA)</td><td>51 - 100 (Mod)</td><td>101 - 150 (Unhealthy)</td><td>Over 150 (Severe)</td></tr>
+        <tr><td>Lightning Strike</td><td>30 - 50 Miles</td><td>10 - 30 Miles</td><td>Under 10 Miles</td></tr>
+    </tbody>
+</table>
 
 <script>
 const LAT = 30.5083, LON = -97.6789;
@@ -102,8 +114,8 @@ const HAZARD_CONFIG = [
 async function runCommand() {
   try {
     const [omRes, tRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,cape,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16&timezone=auto`),
-      fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${LAT},${LON}&apikey=${T_IO_KEY}&units=imperial&fields=lightningProbability,lightningStrikeDistance,visibility,epaIndex,roadRiskScore`)
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,precipitation,precipitation_probability,cape,shortwave_radiation&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=16&timezone=auto`),
+      fetch(`https://api.tomorrow.io/v4/weather/forecast?location=${LAT},${LON}&apikey=${T_IO_KEY}&units=imperial&fields=lightningProbability,lightningStrikeDistance,visibility,epaIndex,roadRiskScore,treeIndex,grassIndex,treePollenIndex,ragweedIndex,soilMoisture`)
     ]);
 
     const h = (await omRes.json()).hourly;
@@ -113,7 +125,7 @@ async function runCommand() {
     const now = new Date();
     const tomStr = new Date(new Date().setDate(now.getDate() + 1)).toLocaleDateString('en-US', {weekday:'short', day:'numeric'});
     
-    let tomData = { cape: 0, minT: 100, lDist: 100, aqi: 0, road: 0, currentLightningDist: 100 };
+    let tomData = { cape: 0, minT: 100, lDist: 100, aqi: 0, road: 0, currentLightningDist: 100, pollen: 0, soil: 0, solar: 0 };
 
     for(let i=0; i < 168; i++) {
       const d = new Date(h.time[i]);
@@ -137,15 +149,15 @@ async function runCommand() {
           daily[dKey].lightning = Math.max(daily[dKey].lightning, getL(vals.lightningProbability, THRESHOLDS.lightning));
           daily[dKey].fog = Math.max(daily[dKey].fog, getL(vals.visibility, THRESHOLDS.fog, true));
           
-          // Capture lightning proximity for the immediate window (first 6 hours)
-          if(i < 6 && vals.lightningStrikeDistance) {
-              tomData.currentLightningDist = Math.min(tomData.currentLightningDist, vals.lightningStrikeDistance);
-          }
+          if(i < 6 && vals.lightningStrikeDistance) tomData.currentLightningDist = Math.min(tomData.currentLightningDist, vals.lightningStrikeDistance);
 
           if(dKey === tomStr) {
               tomData.lDist = Math.min(tomData.lDist, vals.lightningStrikeDistance || 100);
               tomData.aqi = Math.max(tomData.aqi, vals.epaIndex || 0);
               tomData.road = Math.max(tomData.road, vals.roadRiskScore || 0);
+              tomData.pollen = Math.max(tomData.pollen, vals.treePollenIndex || 0, vals.grassIndex || 0);
+              tomData.soil = Math.max(tomData.soil, vals.soilMoisture || 0);
+              tomData.solar = Math.max(tomData.solar, h.shortwave_radiation[i]);
           }
       }
       if(dKey === tomStr) {
@@ -154,22 +166,15 @@ async function runCommand() {
       }
     }
 
-    // LIGHTNING BANNER LOGIC
     const banner = document.getElementById('lightning-alert-banner');
     if(tomData.currentLightningDist <= 30) {
         banner.style.display = 'block';
-        if(tomData.currentLightningDist <= 10) {
-            banner.className = 'banner-critical';
-            banner.innerHTML = `⚠️ CRITICAL SAFETY ALERT: LIGHTNING STRIKE WITHIN ${tomData.currentLightningDist.toFixed(1)} MILES ⚠️`;
-        } else {
-            banner.className = 'banner-warning';
-            banner.innerHTML = `⚡ LIGHTNING PROXIMITY WARNING: STRIKES DETECTED WITHIN ${tomData.currentLightningDist.toFixed(1)} MILES ⚡`;
-        }
+        banner.className = tomData.currentLightningDist <= 10 ? 'banner-critical' : 'banner-warning';
+        banner.innerHTML = `⚠️ LIGHTNING INTERCEPT: CLOSEST APPROACH ${tomData.currentLightningDist.toFixed(1)} MILES ⚠️`;
     }
 
-    // Render Matrix
     const dayKeys = Object.keys(daily).slice(0, 7);
-    let mHTML = `<div class="matrix-grid"><div class="matrix-day-label" style="background:#0f172a; color:#94a3b8; font-size:10px;">TACTICAL PHASE</div>`;
+    let mHTML = `<div class="matrix-grid"><div class="matrix-day-label" style="background:#0f172a; color:#94a3b8; font-size:10px;">READINESS PHASE</div>`;
     dayKeys.forEach(dk => mHTML += `<div class="matrix-day-label">${dk}</div>`);
     mHTML += `</div>`;
     HAZARD_CONFIG.forEach(hz => {
@@ -183,16 +188,13 @@ async function runCommand() {
     });
     document.getElementById('matrix-output').innerHTML = mHTML;
 
-    // Infrastructure
-    const aqiSt = tomData.aqi > 100 ? 'status-high' : tomData.aqi > 50 ? 'status-mod' : 'status-low';
     document.getElementById("infra-panel").innerHTML = `
-      <div class="infra-row ${tomData.cape > 2000 ? 'status-high' : 'status-low'}"><span class="infra-label">Fleet Readiness</span><span>${tomData.cape > 2000 ? 'EXPOSED' : 'SECURE'}</span></div>
-      <div class="infra-row ${tomData.road > 60 ? 'status-high' : 'status-low'}"><span class="infra-label">Road Transit Risk</span><span>${tomData.road > 60 ? 'DANGEROUS' : 'NOMINAL'}</span></div>
-      <div class="infra-row ${aqiSt}"><span class="infra-label">Air Quality (EPA)</span><span>${tomData.aqi > 100 ? 'UNHEALTHY' : 'GOOD'}</span></div>
-      <div class="infra-row ${tomData.lDist < 30 ? 'status-mod' : 'status-low'}"><span class="infra-label">Lightning Proximity</span><span>${tomData.lDist < 100 ? tomData.lDist.toFixed(0) + ' Mi' : 'CLEAR'}</span></div>
+      <div class="infra-row"><span class="infra-label">Road Transit</span><span class="${tomData.road > 60 ? 'status-high' : 'status-low'}">${tomData.road > 60 ? 'DANGER' : 'NOMINAL'}</span></div>
+      <div class="infra-row"><span class="infra-label">Tree / Outage</span><span class="${tomData.soil > 0.4 && tomData.cape > 1000 ? 'status-high' : 'status-low'}">${tomData.soil > 0.4 ? 'HIGH RISK' : 'STABLE'}</span></div>
+      <div class="infra-row"><span class="infra-label">Human Health</span><span class="${tomData.pollen > 3 ? 'status-mod' : 'status-low'}">${tomData.pollen > 3 ? 'ALLERGY ALERT' : 'NOMINAL'}</span></div>
+      <div class="infra-row"><span class="infra-label">Solar Output</span><span>${tomData.solar.toFixed(0)} W/m²</span></div>
     `;
 
-    // Grouping & AI Logic
     const findW = (arr, t, label, unit, dir='above') => {
         let wins = [], active = false, cur = null;
         for(let i=0; i<arr.length; i++) {
@@ -207,49 +209,44 @@ async function runCommand() {
         return wins;
     };
 
-    let categories = { 
-        "Severe Instability": findW(h.cape, 1000, 'CAPE', 'J/kg'), 
-        "Wind Gust Activity": findW(h.wind_gusts_10m, 25, 'Gusts', 'mph'), 
-        "Precipitation": findW(h.precipitation, 0.1, 'Rain', '"/hr'),
-        "Thermal Trends": [...findW(h.apparent_temperature, 95, 'Heat Index', '°F'), ...findW(h.temperature_2m, 32, 'Freeze', '°F', 'below')].sort((a,b)=>a.start-b.start)
-    };
-
-    let gHTML = "";
-    let protocolLog = "";
+    let categories = { "Severe Instability": findW(h.cape, 1000, 'CAPE', 'J/kg'), "Wind Activity": findW(h.wind_gusts_10m, 25, 'Gusts', 'mph'), "Precipitation": findW(h.precipitation, 0.1, 'Rain', '"/hr') };
+    let gHTML = "", protocolLog = "";
     for (const [cat, events] of Object.entries(categories)) {
         if (events.length > 0) {
             gHTML += `<div class="group-box"><span class="group-title">${cat}</span>`;
-            events.slice(0,3).forEach(e => {
-                gHTML += `<div class="event-item"><span class="event-date">${e.start.toLocaleString('en-US', {weekday:'short', month:'short', day:'numeric'})}</span><div class="event-desc">Opens <b>${e.start.toLocaleTimeString([], {hour:'numeric'})}</b>. Peak <b>${e.peakV.toFixed(e.unit.includes('"')?2:0)}${e.unit}</b> at <b>${e.peakT.toLocaleTimeString([], {hour:'numeric'})}</b>.</div></div>`;
-                protocolLog += `[EVENT:${e.label.toUpperCase()}] Start:${e.start.toISOString()} | Duration:${e.hrs}h | PeakValue:${e.peakV.toFixed(2)}${e.unit} @ ${e.peakT.toISOString()}\n`;
+            events.slice(0,2).forEach(e => {
+                gHTML += `<div class="event-item"><span style="font-size:1rem; font-weight:800; color:#fff;">${e.start.toLocaleString('en-US', {weekday:'short', day:'numeric'})}</span><div class="event-desc">Opens <b>${e.start.toLocaleTimeString([], {hour:'numeric'})}</b>. Peak <b>${e.peakV.toFixed(2)}${e.unit}</b> at <b>${e.peakT.toLocaleTimeString([], {hour:'numeric'})}</b>.</div></div>`;
+                protocolLog += `[EVENT:${e.label.toUpperCase()}] Start:${e.start.toISOString()} | Peak:${e.peakV.toFixed(2)}${e.unit}\n`;
             });
             gHTML += `</div>`;
         }
     }
     document.getElementById('grouped-scorecards').innerHTML = gHTML;
 
-    // AI DATA STACK EXPORT
-    let aiReport = `[STATION_ID: VIZCAYA_RR_TX]\n[REPORT_DATE: ${new Date().toISOString()}]\n\n`;
-    aiReport += `[[IMMEDIATE_HAZARD_ALERT]]\n`;
-    aiReport += `LightningAlert: ${tomData.currentLightningDist <= 30 ? 'ACTIVE' : 'NONE'}\nClosestApproach: ${tomData.currentLightningDist.toFixed(1)}mi\n\n`;
-    aiReport += `[[TOMORROW_LOGISTICS]]\n`;
-    aiReport += `RoadRiskIndex: ${tomData.road.toFixed(0)}/100\nAirQualityEPA: ${tomData.aqi}\nLightningProximityMax: ${tomData.lDist.toFixed(0)}mi\n\n`;
+    // AI DATA STACK EXPORT (Threshold Aware)
+    let aiReport = `[STATION: VIZCAYA_TACTICAL_V10.1]\n[EXPORT: ${new Date().toISOString()}]\n\n`;
+    aiReport += `[[STATION_THRESHOLD_METADATA]]\n`;
+    aiReport += `Hail_CAPE: Elevated>1000, Significant>2000, Critical>3500\n`;
+    aiReport += `Wind_Gusts: Elevated>25mph, Significant>35mph, Critical>50mph\n`;
+    aiReport += `Heavy_Rain: Elevated>0.10in/hr, Significant>0.25in/hr, Critical>0.75in/hr\n`;
+    aiReport += `Lightning_Dist: Elevated<50mi, Significant<30mi, Critical<10mi\n\n`;
+    aiReport += `[[LOGISTICS_INTELLIGENCE]]\nRoadRisk: ${tomData.road}/100\nTreeStress: ${tomData.soil > 0.4 ? 'CRITICAL' : 'NOMINAL'}\nPollenIndex: ${tomData.pollen}\nSolarPeak: ${tomData.solar}W/m2\n\n`;
     aiReport += `[[7_DAY_READINESS_MATRIX]]\n`;
     dayKeys.forEach(dk => {
-        const act = HAZARD_CONFIG.filter(hz => daily[dk][hz.key] > 0).map(hz => `${hz.label}:${daily[dk][hz.key]===3?'CRITICAL':daily[dk][hz.key]===2?'SIGNIFICANT':'ELEVATED'}`);
+        const act = HAZARD_CONFIG.filter(hz => daily[dk][hz.key] > 0).map(hz => `${hz.label}:${daily[dk][hz.key]}`);
         aiReport += `${dk}: ${act.join(" | ") || 'NOMINAL'}\n`;
     });
-    aiReport += `\n[[CHRONOLOGICAL_TACTICAL_LOG]]\n${protocolLog}\n[END_STACK]`;
+    aiReport += `\n[[TACTICAL_CHRONOLOGY]]\n${protocolLog}\n[END_STACK]`;
     document.getElementById("ai-text-area").value = aiReport;
 
-    let score = Math.min(100, (tomData.cape / 120) + (tomData.road / 2) + (tomData.currentLightningDist < 30 ? 40 : 0));
+    let score = Math.min(100, (tomData.cape / 100) + (tomData.road / 2) + (tomData.currentLightningDist < 20 ? 50 : 0));
     document.getElementById("severity-bar").style.width = score + "%";
     document.getElementById("severity-text").innerText = `MISSION IMPACT RISK: ${score.toFixed(0)}%`;
 
   } catch (err) { console.error(err); }
 }
 
-function copyAIText() { document.getElementById("ai-text-area").select(); document.execCommand("copy"); alert("Protocol Data Stack Copied."); }
+function copyAIText() { document.getElementById("ai-text-area").select(); document.execCommand("copy"); alert("Threshold-Aware Data Stack Copied."); }
 runCommand();
 </script>
 </body>
