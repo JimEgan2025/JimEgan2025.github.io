@@ -5,97 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Texas Weather Dashboard</title>
 <style>
-  :root { --primary: #1e3a8a; --bg: #f0f2f5; --card: #ffffff; --text: #1f2937; --accent: #f59e0b; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; margin:0; padding:10px; background: var(--bg); color: var(--text); }
-  .container { max-width:1200px; margin:0 auto; }
-  
-  /* Sticky Header and Tabs */
-  .sticky-header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: var(--bg);
-    padding-bottom: 10px;
-  }
-
-  header { background: var(--primary); color:#fff; padding:15px 20px; border-radius:12px; margin-bottom:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
-  header h1 { margin:0; font-size:1.4rem; }
-  
-  /* FIXED TABS: Now wraps to multiple lines so they are always visible */
-  .tabs { 
-    display: flex; 
-    flex-wrap: wrap; /* Allows tabs to drop to next line */
-    gap: 8px; 
-    margin-bottom: 5px; 
-    padding: 5px 0;
-  }
-  
-  .tab { 
-    padding: 8px 14px; 
-    border-radius: 20px; 
-    background: #fff; 
-    cursor: pointer; 
-    transition: 0.2s; 
-    white-space: nowrap; 
-    font-weight: 600; 
-    font-size: 0.85rem; 
-    border: 1px solid #d1d5db; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  }
-  
-  .tab.active { background: var(--primary); color:#fff; border-color: var(--primary); }
-  .tab:hover:not(.active) { background: #e5e7eb; }
-
-  .content { display:none; }
-  .content.active { display:block; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-  .card { background: var(--card); padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:20px; }
-  
-  .story-box { border-left:10px solid var(--primary); background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; }
-  .story-box h3 { margin:0 0 10px 0; color: var(--primary); }
-  .story-list { list-style: none; padding: 0; margin: 0; }
-  .story-list li { margin-bottom:12px; line-height:1.6; font-size:1.05rem; display: flex; }
-  .story-list li::before { content: "▶"; color: var(--primary); font-size: 0.8rem; margin-right: 12px; margin-top: 4px; }
-
-  .narrative-lead-box { background:#fffbeb; border:2px solid var(--accent); padding:15px; border-radius:12px; margin-bottom:15px; line-height:1.6; font-size:0.95rem; white-space: pre-wrap; }
-  .region-group { margin-bottom:15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-  .region-group strong { color: var(--primary); font-size:1.1rem; display: block; margin-bottom: 5px; }
-
-  .alerts-box { background:#fef3f2; border-left:5px solid #ef4444; padding:15px; border-radius:8px; margin:10px 0; font-size: 0.9rem; }
-  .forecast-item { border-bottom:1px solid #f3f4f6; padding:12px 0; }
-  .forecast-header { display:flex; justify-content:space-between; font-weight:bold; color: var(--primary); }
-  
-  img.weather-layer { width:100%; border-radius:8px; display:block; margin-top:10px; background: #000; min-height: 250px; }
-  
-  .refresh-btn { 
-    width: 100%;
-    padding: 12px; 
-    background: var(--accent); 
-    color: #000; 
-    border: none; 
-    border-radius: 8px; 
-    cursor: pointer; 
-    margin-bottom: 20px; 
-    font-weight: bold; 
-    font-size: 0.9rem;
-  }
+:root { --primary:#1e3a8a; --bg:#f0f2f5; --card:#ffffff; --text:#1f2937; --accent:#f59e0b; --danger:#ef4444; --muted:#6b7280; }
+body { font-family:'Segoe UI', system-ui, sans-serif; margin:0; padding:10px; background:var(--bg); color:var(--text); }
+.container { max-width:1200px; margin:0 auto; }
+.sticky-header { position:sticky; top:0; z-index:1000; background:var(--bg); padding-bottom:10px; }
+header { background:var(--primary); color:#fff; padding:15px 20px; border-radius:12px; margin-bottom:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1); }
+header h1 { margin:0; font-size:1.4rem; }
+.tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:5px; padding:5px 0; }
+.tab { padding:8px 14px; border-radius:20px; background:#fff; cursor:pointer; transition:0.2s; white-space:nowrap; font-weight:600; font-size:0.85rem; border:1px solid #d1d5db; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+.tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.tab:hover:not(.active) { background:#e5e7eb; }
+.content { display:none; }
+.content.active { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.card { background:var(--card); padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:20px; }
+.story-box { border-left:10px solid var(--primary); background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; }
+.story-box h3 { margin:0 0 10px 0; color:var(--primary); }
+.narrative-lead-box { background:#fffbeb; border:2px solid var(--accent); padding:15px; border-radius:12px; margin-bottom:15px; line-height:1.6; font-size:0.95rem; white-space:pre-wrap; }
+.alerts-box { background:#fef3f2; border-left:5px solid var(--danger); padding:15px; border-radius:8px; margin:10px 0; font-size:0.9rem; }
+.forecast-item { border-bottom:1px solid #f3f4f6; padding:12px 0; }
+.forecast-header { display:flex; justify-content:space-between; font-weight:bold; color:var(--primary); }
+img.weather-layer { width:100%; border-radius:8px; display:block; margin-top:10px; background:#000; min-height:380px; object-fit:cover; }
+.refresh-btn { width:100%; padding:12px; background:var(--accent); color:#000; border:none; border-radius:8px; cursor:pointer; margin-bottom:20px; font-weight:bold; font-size:0.9rem; }
+.summary-box { margin-top:20px; }
+.summary-textarea { width:100%; min-height:320px; border-radius:12px; border:1px solid #d1d5db; padding:14px; font-family:monospace; font-size:0.9rem; line-height:1.45; resize:vertical; background:#fff; white-space:pre; }
+.summary-label { font-weight:700; color:var(--primary); margin-bottom:8px; display:block; }
+.small-note { font-size:0.8rem; color:var(--muted); margin-top:8px; }
+.satellite-grid { display:grid; grid-template-columns:1fr; gap:18px; }
+.sat-title { font-weight:700; color:var(--primary); margin-bottom:8px; }
+.ai-buttons { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.ai-btn { padding:10px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:700; background:var(--primary); color:#fff; }
 </style>
 </head>
 <body>
-
 <div class="container">
-  <!-- Sticky wrapper for navigation -->
   <div class="sticky-header">
     <header>
       <h1>Texas State Weather</h1>
-      <div id="currentTime" style="font-size: 0.75rem; opacity: 0.9;"></div>
+      <div id="currentTime" style="font-size:0.75rem; opacity:0.9;"></div>
     </header>
     <div class="tabs" id="tabsContainer"></div>
   </div>
 
   <button class="refresh-btn" id="refreshBtn" style="display:none;">🔄 Refresh Local Data</button>
-  
   <div id="contentContainer"></div>
 </div>
 
@@ -111,23 +63,18 @@ const CITIES = [
   { name:'Corpus Christi', code:'CRP', lat:27.8006, lon:-97.3964, radar:'KCRP' },
   { name:'San Angelo', code:'SJT', lat:31.4638, lon:-100.4370, radar:'KSJT' },
   { name:'Lubbock', code:'LUB', lat:33.5779, lon:-101.8552, radar:'KLBB' },
-  { name:'Midland', code:'MAF', lat:31.9974, lon:-102.0779, radar:'KMAF' }
+  { name:'Midland', code:'MAF', lat:31.9974, lon:-102.0779, radar:'KMAF' },
+  { name:'Shreveport', code:'SHV', lat:32.5252, lon:-93.7502, radar:'KSHV' },
+  { name:'Lake Charles', code:'LCH', lat:30.2280, lon:-93.2174, radar:'KLCH' }
 ];
 
-const HEADERS = { 'User-Agent': 'JimEganWxDash/4.0 (jim.egan@gmail.com)' };
-
-const REGIONS = [
-  { name: 'North / Panhandle', offices: ['Dallas/FW', 'Amarillo', 'Lubbock'] },
-  { name: 'Central / West', offices: ['Austin/SAT', 'San Angelo', 'El Paso', 'Midland'] },
-  { name: 'Gulf Coast / South', offices: ['Houston', 'Brownsville', 'Corpus Christi'] }
-];
-
+const HEADERS = { 'User-Agent':'JimEganWxDash/4.0 (jim.egan@gmail.com)' };
 let currentTabIndex = 0;
 
 function init() {
   const tabs = document.getElementById('tabsContainer');
   const content = document.getElementById('contentContainer');
-  
+
   CITIES.forEach((city, i) => {
     const tab = document.createElement('div');
     tab.className = 'tab' + (i === 0 ? ' active' : '');
@@ -139,11 +86,11 @@ function init() {
     cont.className = 'content' + (i === 0 ? ' active' : '');
     cont.id = 'content-' + i;
     content.appendChild(cont);
-    
+
     loadTabData(i);
   });
 
-  document.getElementById('currentTime').textContent = "Last Sync: " + new Date().toLocaleString();
+  document.getElementById('currentTime').textContent = 'Last Sync: ' + new Date().toLocaleString();
   document.getElementById('refreshBtn').onclick = () => loadTabData(currentTabIndex);
 }
 
@@ -152,103 +99,183 @@ function switchTab(idx) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
   document.querySelectorAll('.content').forEach((c, i) => c.classList.toggle('active', i === idx));
   document.getElementById('refreshBtn').style.display = idx === 0 ? 'none' : 'block';
-  // Scroll to top when switching
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeText(text) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\u0000/g, '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function stripHeader(text) {
+  const t = normalizeText(text);
+  const idx = t.search(/\n\.(KEY MESSAGES|DISCUSSION|SHORT TERM|LONG TERM|AVIATION|UPDATE|SYNOPSIS)\./i);
+  return idx >= 0 ? t.slice(idx + 1).trim() : t;
+}
+
 function extractKeyMessages(text) {
-    if (!text) return "";
-    let regex = /(?:\.|\s|^)KEY\s+MESSAGES[\.\s:]+([\s\S]*?)(?=\n\.[A-Z]|\n&&|\nSYNOPSIS|\nSHORT TERM|$)/i;
-    let match = text.match(regex);
-    if (!match) {
-        regex = /(?:\.|\s|^)SYNOPSIS[\.\s:]+([\s\S]*?)(?=\n\.[A-Z]|\n&&|\nNEAR TERM|$)/i;
-        match = text.match(regex);
-    }
-    if (!match) return "";
-    return match[1].trim().replace(/^\s*-\s*/gm, '• ').split('\n').filter(line => line.trim().length > 10).slice(0, 5).join('\n');
+  const cleaned = stripHeader(text);
+  if (!cleaned) return [];
+  const sections = cleaned.split(/\n\.(?:KEY MESSAGES|DISCUSSION|SHORT TERM|LONG TERM|AVIATION|UPDATE|SYNOPSIS)\.\.\./i);
+  const blocks = sections.length > 1 ? sections : [cleaned];
+  const out = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').map(s => s.trim()).filter(Boolean);
+    const filtered = lines.filter(line =>
+      !/^&&$/.test(line) &&
+      !/^fxus/i.test(line) &&
+      !/^afd/i.test(line) &&
+      !/^national weather service/i.test(line) &&
+      !/^issued at/i.test(line) &&
+      !/^area forecast discussion/i.test(line) &&
+      !/^\.\.\.$/.test(line)
+    );
+    if (filtered.length) out.push(filtered.slice(0, 12).join('\n'));
+  }
+  return out;
+}
+
+function buildAIText(officeMsgs) {
+  return Object.entries(officeMsgs)
+    .map(([office, lines]) => `${office}\n${lines.join('\n')}`)
+    .join('\n\n---\n\n') || 'No office messages were extracted.';
 }
 
 async function loadTabData(idx) {
   const city = CITIES[idx];
   const container = document.getElementById(`content-${idx}`);
-  if (city.type === 'summary') { renderSummary(container); } 
-  else { renderCity(city, container, idx); }
+  if (city.type === 'summary') renderSummary(container);
+  else renderCity(city, container);
+}
+
+async function fetchAfdText(officeCode) {
+  const url = `https://api.weather.gov/products/types/AFD/locations/${officeCode}/latest`;
+  const res = await fetch(url, { headers: HEADERS });
+  const data = await res.json();
+  return normalizeText(data.productText || data.text || data.productTextPretty || '');
 }
 
 async function renderSummary(container) {
   container.innerHTML = `<div style="text-align:center; padding:40px;">📡 Analyzing Texas regional data...</div>`;
-  let officeMsgs = {};
-  const promises = CITIES.slice(1).map(async (office) => {
+  const officeMsgs = {};
+
+  const promises = CITIES.slice(1).map(async office => {
     try {
-      const res = await fetch(`https://api.weather.gov/products/types/AFD/locations/${office.code}/latest`, { headers: HEADERS });
-      const data = await res.json();
-      const extracted = extractKeyMessages(data.productText);
-      if (extracted) officeMsgs[office.name] = extracted;
-    } catch (e) { console.warn(`Office ${office.name} down`); }
-  });
-  await Promise.allSettled(promises);
-
-  const allText = Object.values(officeMsgs).join(' ').toLowerCase();
-  const storyPoints = [];
-  if (allText.includes('severe') || allText.includes('tornado') || allText.includes('hail')) storyPoints.push("<strong>Storm Watch:</strong> Regional offices are monitoring severe thunderstorm potential.");
-  if (allText.includes('fire') || allText.includes('red flag')) storyPoints.push("<strong>Fire Weather:</strong> High fire danger in dry/windy sectors.");
-  if (allText.includes('warm') || allText.includes('above normal')) storyPoints.push("<strong>Warming:</strong> Trend toward above-average temperatures expected.");
-  if (storyPoints.length === 0) storyPoints.push("<strong>Quiet Pattern:</strong> State-wide weather remains seasonal and generally stable.");
-
-  let regionHTML = `<div class="card"><h3>Regional Highlights</h3>`;
-  REGIONS.forEach(reg => {
-    const activeOffices = reg.offices.filter(o => officeMsgs[o]);
-    if (activeOffices.length > 0) {
-      regionHTML += `<div class="region-group"><strong>${reg.name}</strong>`;
-      activeOffices.forEach(o => { regionHTML += `<div class="narrative-lead-box"><b>${o}:</b><br>${officeMsgs[o]}</div>`; });
-      regionHTML += `</div>`;
+      const text = await fetchAfdText(office.code);
+      const extracted = extractKeyMessages(text);
+      if (extracted.length) officeMsgs[office.name] = extracted;
+    } catch (e) {
+      console.warn(`Office ${office.name} down`);
     }
   });
 
+  await Promise.allSettled(promises);
+
+  const summaryText = buildAIText(officeMsgs);
+
   container.innerHTML = `
-    <div class="story-box"><h3>Weather Story</h3><ul class="story-list">${storyPoints.map(p => `<li>${p}</li>`).join('')}</ul></div>
-    
-    <div class="card">
-        <h3>Statewide Radar Loop</h3>
-        <img class="weather-layer" src="https://cdn.tegna-media.com/wfaa/weather/animated-loops/comp/temp_880x495/state_tx_anim.gif" referrerpolicy="no-referrer">
+    <div class="story-box">
+      <h3>Weather Story</h3>
+      <div class="narrative-lead-box" style="white-space:normal;">Use the office key messages below to generate the statewide story.</div>
     </div>
 
     <div class="card">
-        <h3>Texas Sector Satellite (GEOCOLOR)</h3>
-        <img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES16/ABI/SECTOR/sp/GEOCOLOR/latest.jpg" referrerpolicy="no-referrer">
+      <h3>Statewide Radar</h3>
+      <img class="weather-layer" src="https://radar.weather.gov/ridge/standard/SOUTHPLAINS_loop.gif" alt="Texas statewide radar loop" referrerpolicy="no-referrer">
+      <div class="small-note">Statewide South Plains radar loop.</div>
     </div>
 
-    ${regionHTML}
+    <div class="card">
+      <h3>Satellite Views</h3>
+      <div class="satellite-grid">
+        <div><div class="sat-title">GeoColor</div><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/GEOCOLOR/1200x1200.jpg" alt="GeoColor satellite" referrerpolicy="no-referrer"></div>
+        <div><div class="sat-title">GLM</div><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg" alt="GLM lightning" referrerpolicy="no-referrer"></div>
+        <div><div class="sat-title">Band 07</div><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/07/1200x1200.jpg" alt="Band 07 satellite" referrerpolicy="no-referrer"></div>
+        <div><div class="sat-title">Band 10</div><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/10/1200x1200.jpg" alt="Band 10 satellite" referrerpolicy="no-referrer"></div>
+        <div><div class="sat-title">Band 13</div><img class="weather-layer" src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/13/1200x1200.jpg" alt="Band 13 satellite" referrerpolicy="no-referrer"></div>
+      </div>
+    </div>
+
+    <div class="card summary-box">
+      <span class="summary-label">AI Summary Input</span>
+      <textarea class="summary-textarea" id="aiSummaryBox" readonly>${escapeHtml(summaryText)}</textarea>
+      <div class="ai-buttons">
+        <button class="ai-btn" onclick="copySummary()">Copy Summary Input</button>
+      </div>
+      <div class="small-note">This box contains only the extracted office messages, formatted for copy/paste into AI.</div>
+    </div>
   `;
+
+  document.getElementById('currentTime').textContent = 'Last Sync: ' + new Date().toLocaleString();
 }
 
-async function renderCity(city, container, idx) {
+async function renderCity(city, container) {
   container.innerHTML = `<div style="text-align:center; padding:40px;">Fetching ${city.name} impacts...</div>`;
   try {
     const ptsRes = await fetch(`https://api.weather.gov/points/${city.lat},${city.lon}`, { headers: HEADERS });
     const pts = await ptsRes.json();
-    const [fcRes, afdRes, alertRes] = await Promise.all([
-        fetch(pts.properties.forecast, { headers: HEADERS }),
-        fetch(`https://api.weather.gov/products/types/AFD/locations/${city.code}/latest`, { headers: HEADERS }),
-        fetch(`https://api.weather.gov/alerts/active?point=${city.lat},${city.lon}`, { headers: HEADERS })
+    const [fcRes, afdText, alertRes] = await Promise.all([
+      fetch(pts.properties.forecast, { headers: HEADERS }),
+      fetchAfdText(city.code),
+      fetch(`https://api.weather.gov/alerts/active?point=${city.lat},${city.lon}`, { headers: HEADERS })
     ]);
     const fc = await fcRes.json();
-    const afd = await afdRes.json();
     const alerts = await alertRes.json();
-    const keyMsgs = extractKeyMessages(afd.productText);
-    const alertHTML = alerts.features.length > 0 ? alerts.features.map(f => `<div class="alerts-box"><strong>${f.properties.event}</strong><br>${f.properties.headline}</div>`).join('') : '<div style="color:#666; padding:10px;">No active alerts.</div>';
+    const keyMsgs = extractKeyMessages(afdText);
+
+    const alertHTML = alerts.features.length > 0
+      ? alerts.features.map(f => `<div class="alerts-box"><strong>${escapeHtml(f.properties.event)}</strong><br>${escapeHtml(f.properties.headline || '')}</div>`).join('')
+      : '<div style="color:#666; padding:10px;">No active alerts.</div>';
 
     container.innerHTML = `
-      <div class="card"><h3>Local Impacts</h3>${alertHTML}<div class="narrative-lead-box" style="margin-top:15px;">${keyMsgs || "Summary unavailable."}</div></div>
-      <div class="card"><h3>Radar Loop (${city.radar})</h3>
-        <img class="weather-layer" src="https://radar.weather.gov/ridge/standard/${city.radar}_loop.gif" referrerpolicy="no-referrer">
+      <div class="card">
+        <h3>Local Impacts</h3>
+        ${alertHTML}
+        <div class="narrative-lead-box" style="margin-top:15px;">${escapeHtml((keyMsgs || []).join('\n\n') || 'Summary unavailable.').replace(/\n/g, '<br>')}</div>
       </div>
-      <div class="card"><h3>7-Day Outlook</h3>
-        ${fc.properties.periods.slice(0, 6).map(p => `<div class="forecast-item"><div class="forecast-header"><span>${p.name}</span><span>${p.temperature}°${p.temperatureUnit}</span></div><div style="font-size:0.9rem;">${p.detailedForecast}</div></div>`).join('')}
+      <div class="card">
+        <h3>Radar Loop (${city.radar})</h3>
+        <img class="weather-layer" src="https://radar.weather.gov/ridge/standard/${city.radar}_loop.gif" alt="Local radar loop" referrerpolicy="no-referrer">
+      </div>
+      <div class="card">
+        <h3>7-Day Outlook</h3>
+        ${fc.properties.periods.slice(0, 6).map(p => `
+          <div class="forecast-item">
+            <div class="forecast-header">
+              <span>${escapeHtml(p.name)}</span>
+              <span>${p.temperature}°${escapeHtml(p.temperatureUnit)}</span>
+            </div>
+            <div style="font-size:0.9rem;">${escapeHtml(p.detailedForecast)}</div>
+          </div>
+        `).join('')}
       </div>
     `;
-  } catch (e) { container.innerHTML = `<div class="card" style="color:red;">Error loading data.</div>`; }
+  } catch (e) {
+    container.innerHTML = `<div class="card" style="color:red;">Error loading data.</div>`;
+  }
 }
+
+async function copySummary() {
+  const box = document.getElementById('aiSummaryBox');
+  if (!box) return;
+  await navigator.clipboard.writeText(box.value);
+}
+
 init();
 </script>
 </body>
