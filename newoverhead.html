@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIZCAYA STRATOS | v75.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #010409; color: #cbd5e1; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(13, 17, 23, 0.9); border: 1px solid #30363d; backdrop-filter: blur(12px); }
+        .panel-red { border-left: 4px solid #ef4444; }
+        .status-breach { background: #991b1b; color: #fee2e2; animation: pulse-red 2s infinite; }
+        .status-weak { background: #92400e; color: #fef3c7; }
+        .status-capped { background: #065f46; color: #d1fae5; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .value-huge { font-size: 2.2rem; line-height: 1; font-weight: 900; letter-spacing: -0.05em; }
+        input[type=number]::-webkit-inner-spin-button { display: none; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+
+    <div class="max-w-[1800px] mx-auto">
+        
+        <!-- HEADER -->
+        <header class="flex flex-col lg:flex-row justify-between items-end mb-6 gap-6 border-b border-slate-800 pb-6">
+            <div>
+                <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase leading-none">Vizcaya<span class="text-red-600">Stratos</span></h1>
+                <p class="text-xs font-bold text-slate-500 tracking-[0.4em] mt-2 uppercase font-mono">17-Station Resilient Grid // Full Synthesis // v75.0</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="glass p-3 rounded-xl border border-slate-700 flex gap-4">
+                    <div class="text-center">
+                        <p class="text-[8px] text-slate-500 font-black uppercase">Davis Temp</p>
+                        <input type="number" id="localTemp" value="82.0" step="0.1" class="bg-transparent text-2xl font-black text-white w-16 text-center outline-none">
+                    </div>
+                    <div class="text-center border-l border-slate-700 pl-4">
+                        <p class="text-[8px] text-blue-500 font-black uppercase">Davis Dew</p>
+                        <input type="number" id="localDew" value="72.0" step="0.1" class="bg-transparent text-2xl font-black text-blue-400 w-16 text-center outline-none">
+                    </div>
+                </div>
+                <button onclick="runGlobalSync()" class="bg-red-600 hover:bg-red-500 text-white font-black px-8 py-4 rounded-xl uppercase text-sm tracking-widest transition-all shadow-lg border-b-4 border-red-900">
+                    Sync Theater
+                </button>
+            </div>
+        </header>
+
+        <!-- TACTICAL HUD -->
+        <div id="mCard" class="glass p-6 rounded-2xl mb-6 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-[12px] border-l-slate-600">
+            <div class="text-center lg:text-left">
+                <div id="mDisp" class="text-4xl font-black italic uppercase text-white">Grid Standby</div>
+                <div id="mDesc" class="text-sm font-bold text-slate-500 uppercase mt-1">Awaiting 17-Point Scan...</div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div><p class="text-[9px] font-black text-slate-500 uppercase">Max Theater CAPE</p><p id="maxCape" class="text-xl font-black text-red-500 italic">--</p></div>
+                <div><p class="text-[9px] font-black text-slate-500 uppercase">Initiation</p><p id="init-hud" class="text-xl font-black text-orange-400 italic">--%</p></div>
+                <div><p class="text-[9px] font-black text-slate-500 uppercase">Threat Level</p><p id="threatLevel" class="text-xl font-black text-slate-400 italic">STANDBY</p></div>
+                <div><p class="text-[9px] font-black text-slate-500 uppercase">Pressure Spread</p><p id="pressSpread" class="text-xl font-black text-blue-400 mono italic">-- MB</p></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- VERTICAL STRUCTURE -->
+            <div class="glass p-6 rounded-2xl border-l-4 border-l-blue-500">
+                <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4 italic">Vertical Atmospheric Structure</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">700mb Temp</span><span id="t700Val" class="font-black text-blue-400">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">500mb Temp</span><span id="t500Val" class="font-black text-blue-400">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">700-500mb Lapse</span><span id="lapse-v" class="font-black text-red-500">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Bulk Shear (Sfc-850)</span><span id="shear-v" class="font-black text-yellow-500">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Storm Motion</span><span id="motion-v" class="font-black text-green-500">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase font-bold">Gust Potential</span><span id="gust-v" class="font-black text-orange-500">--</span></div>
+                </div>
+            </div>
+            <!-- THERMODYNAMICS -->
+            <div class="glass p-6 rounded-2xl border-l-4 border-l-red-600">
+                <h3 class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-4 italic">Thermodynamics (Adjusted)</h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCAPE (Adj)</p><p id="cape-v" class="text-3xl font-black text-red-500">--</p></div>
+                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCIN (Cap)</p><p id="cin-v" class="text-3xl font-black text-orange-500">--</p></div>
+                </div>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Lifted Index</span><span id="li-v" class="font-black text-blue-400">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">DCAPE (Wind Fuel)</span><span id="dcape-v" class="font-black text-indigo-400">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase font-bold">K-Index</span><span id="k-v" class="font-black text-yellow-500">--</span></div>
+                </div>
+            </div>
+            <!-- MOISTURE -->
+            <div class="glass p-6 rounded-2xl border-l-4 border-l-green-600">
+                <h3 class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-4 italic">Moisture Column & Probability</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">PWAT</span><span id="pwat-v" class="font-black text-blue-400">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Cloud Base (LCL)</span><span id="lcl-v" class="font-black text-slate-400">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Storm Tops (EL)</span><span id="el-v" class="font-black text-slate-300">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">850mb Humidity</span><span id="rh850-v" class="font-black text-blue-300">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase font-bold">Precip Chance</span><span id="pop-v" class="font-black text-green-500">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase font-bold">Initiation Chance</span><span id="init-v" class="font-black text-orange-400">--%</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TWO-COLUMN TABLE GRID -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-6">
+            <!-- LOCAL LOOK-AHEAD -->
+            <div class="xl:col-span-5 glass rounded-2xl overflow-hidden h-fit">
+                <div class="p-4 bg-slate-800/50 border-b border-slate-800 flex justify-between"><span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Local 10-Hour Projection</span></div>
+                <table class="w-full text-left mono text-[10px]">
+                    <thead class="bg-black text-slate-500 uppercase font-black">
+                        <tr><th class="p-3">HR</th><th class="p-3 text-center">T/D</th><th class="p-3 text-center">CAPE</th><th class="p-3 text-center text-orange-400">CIN</th><th class="p-3 text-center">STATUS</th></tr>
+                    </thead>
+                    <tbody id="forecastBody" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+
+            <!-- 17-STATION THEATER SCAN -->
+            <div class="xl:col-span-7 glass rounded-2xl overflow-hidden">
+                <div class="p-4 bg-slate-900/50 border-b border-slate-800"><span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">17-Station Theater Grid</span></div>
+                <div class="overflow-y-auto max-h-[440px] custom-scroll">
+                    <table class="w-full text-left mono text-[10px]">
+                        <thead class="sticky top-0 bg-black text-slate-500 uppercase font-black">
+                            <tr><th class="p-4">Sector / Station</th><th class="p-4 text-center">T/D</th><th class="p-4 text-center text-red-500">CAPE</th><th class="p-4 text-center text-orange-400">CIN</th><th class="p-4 text-center">STATUS</th></tr>
+                        </thead>
+                        <tbody id="regionalBody" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI BRIEFING -->
+        <div class="glass p-6 rounded-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-black text-green-500 uppercase tracking-[0.3em]">Strategic Briefing Stream</h3>
+                <button onclick="copyBriefing()" class="bg-green-600 hover:bg-green-500 text-black font-black text-[10px] px-6 py-2 rounded uppercase transition-colors">Copy For AI</button>
+            </div>
+            <textarea id="aiOut" readonly class="w-full h-80 bg-black/40 text-green-500/80 mono text-[10px] p-4 outline-none border border-slate-800 rounded-xl resize-none custom-scroll"></textarea>
+        </div>
+    </div>
+
+    <script>
+        const LOCATIONS = [
+            { name: "JUNCTION", lat: 30.49, lon: -99.77, sector: "PLATEAU" },
+            { name: "FREDERICKSBURG", lat: 30.27, lon: -98.87, sector: "PLATEAU" },
+            { name: "JOHNSON CITY", lat: 30.28, lon: -98.41, sector: "PLATEAU" },
+            { name: "MASON", lat: 30.75, lon: -99.23, sector: "WEST-INI" },
+            { name: "LLANO", lat: 30.76, lon: -98.68, sector: "WEST-INI" },
+            { name: "BURNET", lat: 30.76, lon: -98.23, sector: "WEST-INI" },
+            { name: "LAMPASAS", lat: 31.06, lon: -98.18, sector: "NORTH" },
+            { name: "KILLEEN (GRK)", lat: 31.06, lon: -97.82, sector: "NORTH" },
+            { name: "SALADO", lat: 30.94, lon: -97.54, sector: "NORTH" },
+            { name: "JARRELL", lat: 30.82, lon: -97.60, sector: "NORTH" },
+            { name: "LIBERTY HILL", lat: 30.66, lon: -97.92, sector: "CORE" },
+            { name: "GEORGETOWN", lat: 30.63, lon: -97.67, sector: "CORE" },
+            { name: "VIZCAYA (LOC)", lat: 30.587, lon: -97.641, sector: "ANCHOR", local: true },
+            { name: "TAYLOR", lat: 30.57, lon: -97.41, sector: "CORE" },
+            { name: "HUTTO", lat: 30.54, lon: -97.51, sector: "CORE" },
+            { name: "AUSTIN EXEC", lat: 30.40, lon: -97.57, sector: "SOUTH" },
+            { name: "AUSTIN (MABRY)", lat: 30.32, lon: -97.76, sector: "SOUTH" }
+        ];
+
+        async function runGlobalSync() {
+            const lT = parseFloat(document.getElementById("localTemp").value), lD = parseFloat(document.getElementById("localDew").value);
+            try {
+                const lats = LOCATIONS.map(l => l.lat).join(','), lons = LOCATIONS.map(l => l.lon).join(',');
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=pressure_msl,wind_speed_10m&hourly=temperature_2m,dew_point_2m,relative_humidity_2m,relative_humidity_850hPa,cape,convective_inhibition,lifted_index,k_index,temperature_700hPa,temperature_500hPa,wind_speed_850hPa,total_column_integrated_water_vapour,precipitation_probability,wind_gusts_10m&temperature_unit=fahrenheit&windspeed_unit=kn&timezone=auto&forecast_days=1`;
+                const res = await fetch(url);
+                const dataArray = await res.json();
+                renderTheater(Array.isArray(dataArray) ? dataArray : [dataArray], lT, lD);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderTheater(dataArr, localT, localD) {
+            const tbodyR = document.getElementById("regionalBody"), tbodyF = document.getElementById("forecastBody");
+            tbodyR.innerHTML = ""; tbodyF.innerHTML = "";
+            let maxC = 0, pPool = [], anchor = null, plateauBreach = false, regionalAIText = "";
+
+            dataArr.forEach((data, idx) => {
+                const loc = LOCATIONS[idx], h = data.hourly, hIdx = new Date().getHours() % 24;
+                let rT = h.temperature_2m[hIdx], rD = h.dew_point_2m[hIdx], rC = Math.round(h.cape[hIdx] || 0), rCi = Math.round(Math.abs(h.convective_inhibition[hIdx] || 0));
+                pPool.push(data.current.pressure_msl);
+                if (loc.local) {
+                    const dDelta = localD - rD;
+                    rC = Math.round(rC * Math.pow(1.18, dDelta));
+                    rCi = Math.round(Math.max(0, rCi - ((localT - rT) * 15) - (dDelta * 12)));
+                    anchor = { ...data, adjCape: rC, adjCin: rCi };
+                }
+                if (rC > maxC) maxC = rC;
+                if (loc.sector === "PLATEAU" && rCi < 25 && rC > 1500) plateauBreach = true;
+                let stat = rC > 500 ? (rCi < 25 ? "BREACH" : "CAPPED") : "STABLE";
+                tbodyR.innerHTML += `<tr class="${loc.local ? 'bg-red-500/10' : ''}"><td class="p-4"><span class="text-[7px] text-slate-500 block">${loc.sector}</span>${loc.name}</td><td class="p-4 text-center">${Math.round(rT)}/${Math.round(rD)}</td><td class="p-4 text-center text-red-500">${rC}</td><td class="p-4 text-center text-orange-400">${rCi}</td><td class="p-4 text-center font-black">${stat}</td></tr>`;
+                regionalAIText += `[${loc.name}] ${Math.round(rT)}/${Math.round(rD)} | CAPE: ${rC} | CIN: ${rCi} | ${stat}\n`;
+            });
+
+            if (anchor) {
+                const h = anchor.hourly, nowIdx = new Date().getHours() % 24;
+                const t700 = h.temperature_700hPa[nowIdx], t500 = h.temperature_500hPa[nowIdx];
+                const lapse = (((t700-32)*5/9 - (t500-32)*5/9) / 2.6).toFixed(1);
+                const dcape = Math.round(Math.max(0, (localT - t700) * 26)), shear = Math.abs(h.wind_speed_850hPa[nowIdx] - anchor.current.wind_speed_10m), gust = Math.round(Math.sqrt(2 * dcape) * 2.23);
+                const init = Math.round(Math.max(0, Math.min(100, (h.precipitation_probability[nowIdx] * 0.8) + (anchor.adjCape/100) - (anchor.adjCin/3))));
+
+                document.getElementById("t700Val").innerText = Math.round(t700) + "°F"; document.getElementById("t500Val").innerText = Math.round(t500) + "°F";
+                document.getElementById("lapse-v").innerText = lapse; document.getElementById("shear-v").innerText = shear.toFixed(1) + " KT";
+                document.getElementById("motion-v").innerText = Math.round(anchor.current.wind_speed_10m) + " KT"; document.getElementById("gust-v").innerText = gust + " MPH";
+                document.getElementById("cape-v").innerText = anchor.adjCape; document.getElementById("cin-v").innerText = anchor.adjCin;
+                document.getElementById("li-v").innerText = (h.lifted_index[nowIdx] - ((localD - h.dew_point_2m[nowIdx]) * 0.4)).toFixed(1);
+                document.getElementById("dcape-v").innerText = dcape; document.getElementById("init-v").innerText = init + "%";
+                document.getElementById("init-hud").innerText = init + "%"; document.getElementById("pwat-v").innerText = (h.total_column_integrated_water_vapour[nowIdx] / 25.4).toFixed(2) + '"';
+                document.getElementById("lcl-v").innerText = Math.round((localT - localD) / 4.4 * 1000) + " FT"; document.getElementById("el-v").innerText = Math.round((anchor.adjCape / 100) * 2000 + 15000).toLocaleString() + " FT";
+                document.getElementById("rh850-v").innerText = h.relative_humidity_850hPa[nowIdx] + "%"; document.getElementById("pop-v").innerText = h.precipitation_probability[nowIdx] + "%";
+                document.getElementById("k-v").innerText = Math.round(h.k_index[nowIdx]);
+
+                let lookAheadText = "";
+                for(let i=0; i<10; i++){
+                    let idx = (nowIdx + i) % 24, fHr = new Date(h.time[idx]).getHours(), fT = h.temperature_2m[idx], fD = h.dew_point_2m[idx];
+                    let fC = Math.round(h.cape[idx] * Math.pow(1.18, localD - fD)), fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - ((localT - fT) * 15) - ((localD - fD) * 12)));
+                    let stat = fC > 500 ? (fCi < 15 ? "BREACH" : "CAPPED") : "STABLE";
+                    tbodyF.innerHTML += `<tr><td class="p-3">${fHr}:00</td><td class="p-3 text-center">${Math.round(fT)}°/${Math.round(fD)}°</td><td class="p-3 text-center text-red-500 font-bold">${fC}</td><td class="p-3 text-center text-orange-400 font-bold">${fCi}</td><td class="p-3 text-center text-[8px] font-black">${stat}</td></tr>`;
+                    lookAheadText += `${fHr}:00 | ${fC} J/kg | ${fCi} J/kg | ${stat}\n`;
+                }
+
+                updateTactical(anchor, plateauBreach, lapse, dcape);
+                document.getElementById("aiOut").value = `### [VIZCAYA STRATOS v75 STRATEGIC REPORT]\n\n**1. THEATER MATRIX (17 STATIONS)**\n${regionalAIText}\n**2. LOCAL 10-HR TREND**\n${lookAheadText}\n**3. VERTICAL PROFILE**\nLapse Rate: ${lapse} | DCAPE: ${dcape} | Shear: ${shear.toFixed(1)} | EL: ${document.getElementById("el-v").innerText}\n**4. COMMAND SUMMARY**\nMode: ${document.getElementById("mDisp").innerText} | Spread: ${document.getElementById("pressSpread").innerText}`;
+            }
+
+            document.getElementById("maxCape").innerText = maxC + " J/KG";
+            document.getElementById("pressSpread").innerText = (Math.max(...pPool) - Math.min(...pPool)).toFixed(1) + " MB";
+            document.getElementById("syncTime").innerText = new Date().toLocaleTimeString();
+        }
+
+        function updateTactical(d, plateau, lapse, dcape) {
+            const mB = document.getElementById("mDisp"), mD = document.getElementById("mDesc"), mC = document.getElementById("mCard"), tL = document.getElementById("threatLevel");
+            let mode = "MISSION ACTIVE", desc = "Airmass stable.", lvl = "STABLE", col = "border-l-slate-600";
+            if (plateau) { mode = "PLATEAU BREACH"; desc = "Upstream initiation."; lvl = "HIGH"; col = "border-l-yellow-500"; }
+            if (d.adjCin < 25 && d.adjCape > 1000) { mode = "CAP BREACH"; desc = "Local initiation."; lvl = "EXTREME"; col = "border-l-red-600 status-breach"; }
+            else if (dcape > 1000 && lapse > 7.5) { mode = "WIND THREAT"; desc = "Microburst potential."; lvl = "SEVERE"; col = "border-l-orange-500"; }
+            mB.innerText = mode; mD.innerText = desc; tL.innerText = lvl; mC.className = `glass p-6 rounded-2xl mb-6 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-[12px] ${col}`;
+        }
+
+        function copyBriefing() { const el = document.getElementById("aiOut"); el.select(); document.execCommand("copy"); alert("Theater Briefing Copied."); }
+        window.onload = runGlobalSync;
+    </script>
+</body>
+</html>
