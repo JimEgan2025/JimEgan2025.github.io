@@ -2,72 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AI Data Compiler (v2)</title>
+    <title>AI Context Compiler</title>
     <style>
         :root {
-            --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #cbd5e1;
-            --primary: #2563eb; --danger: #dc2626; --success: #16a34a;
+            --bg: #f1f5f9; --card: #ffffff; --text: #0f172a; --border: #cbd5e1;
+            --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --gray: #64748b;
         }
         @media (prefers-color-scheme: dark) {
             :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; }
         }
         body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: auto; background: var(--bg); color: var(--text); }
         
-        .editor-box { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .section-label { font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--gray); margin-bottom: 8px; display: block; }
+        
+        /* Drafting Area */
+        .editor-box { background: var(--card); padding: 20px; border-radius: 8px; border: 2px solid var(--primary); margin-bottom: 30px; }
         input, textarea { 
             width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); 
-            border-radius: 6px; background: var(--bg); color: var(--text); box-sizing: border-box; 
+            border-radius: 6px; background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 14px;
         }
-        textarea { height: 150px; font-family: monospace; }
+        textarea { height: 120px; font-family: monospace; }
 
+        /* Saved Segments Area */
         .segment { 
             background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 6px; 
             border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; 
         }
         
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-        button { 
-            padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; 
-            font-weight: bold; transition: opacity 0.2s; 
-        }
-        button:hover { opacity: 0.8; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; border-top: 1px solid var(--border); padding-top: 20px; }
         
-        .btn-add { background: var(--primary); color: white; width: 100%; }
-        .btn-copy { background: #64748b; color: white; }
-        .btn-dl { background: var(--success); color: white; }
-        .btn-clear { background: #64748b; color: white; }
-        .btn-reset { background: var(--danger); color: white; margin-top: 40px; font-size: 11px; padding: 5px 10px; }
-        .del-btn { background: var(--danger); color: white; padding: 5px 10px; font-size: 12px; }
+        button { padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        
+        .btn-add { background: var(--primary); color: white; width: 100%; font-size: 16px; }
+        .btn-clear-draft { background: none; color: var(--gray); border: 1px solid var(--border); width: 100%; margin-top: 5px; font-size: 12px; }
+        .btn-clear-draft:hover { background: #fee2e2; color: #b91c1c; }
 
-        .stats { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .btn-copy { background: var(--text); color: var(--card); flex: 2; }
+        .btn-dl { background: var(--success); color: white; flex: 1; }
+        .btn-wipe { background: var(--danger); color: white; width: 100%; margin-top: 50px; opacity: 0.6; }
+        .btn-wipe:hover { opacity: 1; }
+        
+        .del-btn { background: none; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 11px; }
+        .del-btn:hover { background: var(--danger); color: white; }
+
+        .stats { font-size: 11px; color: var(--gray); text-align: right; }
     </style>
 </head>
 <body>
 
-    <h2>AI Data Compiler</h2>
-
+    <span class="section-label">1. Drafting Area (Type/Paste here)</span>
     <div class="editor-box">
-        <input type="text" id="label" placeholder="Label / Filename (e.g. style.css)">
+        <input type="text" id="label" placeholder="File Name or Label (e.g. instructions.txt)">
         <div class="stats" id="charCount">0 characters</div>
-        <textarea id="content" placeholder="Paste data here..." oninput="updateCounter()"></textarea>
-        <button class="btn-add" onclick="addSegment()">+ Add Segment</button>
-        <button class="btn-clear" style="width:100%; margin-top:5px; background:none; color:var(--text); border:1px solid var(--border)" onclick="clearEditor()">Clear Editor Fields</button>
+        <textarea id="content" placeholder="Paste your data here..." oninput="updateCounter()"></textarea>
+        
+        <button class="btn-add" onclick="addSegment()">Save Segment to List ↓</button>
+        <button class="btn-clear-draft" onclick="clearEditorOnly()">Empty these boxes</button>
     </div>
 
-    <h3>Compiled Segments (<span id="segCount">0</span>)</h3>
-    <div id="segmentList"></div>
+    <span class="section-label">2. Your Saved Collection (<span id="segCount">0</span>)</span>
+    <div id="segmentList">
+        <p style="color:var(--gray); font-style: italic; font-size: 14px;">No segments saved yet.</p>
+    </div>
 
     <div class="btn-group">
-        <button class="btn-copy" onclick="copyAll()">Copy Everything</button>
+        <button class="btn-copy" onclick="copyAll()">Copy Collection to Clipboard</button>
         <button class="btn-dl" onclick="downloadFile()">Download .txt</button>
     </div>
 
-    <!-- Hard Reset at bottom -->
-    <button class="btn-reset" onclick="hardReset()">Wipe All Data & Start Fresh</button>
+    <button class="btn-wipe" onclick="wipeCollection()">Wipe Entire Collection & Start Fresh</button>
 
     <script>
-        // Using a unique key to avoid old data collisions
-        const STORAGE_KEY = 'ai_compiler_v2_data';
+        const STORAGE_KEY = 'ai_compiler_v3';
         let segments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
         function updateCounter() {
@@ -76,84 +82,90 @@
 
         function render() {
             const list = document.getElementById('segmentList');
-            list.innerHTML = "";
-            
-            segments.forEach((s, index) => {
-                const div = document.createElement('div');
-                div.className = 'segment';
-                div.innerHTML = `
-                    <div style="cursor:pointer" onclick="loadIntoEditor(${index})">
-                        <strong>${s.label}</strong> <br>
-                        <small style="color:gray">${s.content.length} chars</small>
-                    </div>
-                    <button class="del-btn" onclick="deleteSegment(${index})">Delete</button>
-                `;
-                list.appendChild(div);
-            });
-
+            if (segments.length === 0) {
+                list.innerHTML = `<p style="color:var(--gray); font-style: italic; font-size: 14px;">No segments saved yet.</p>`;
+            } else {
+                list.innerHTML = "";
+                segments.forEach((s, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'segment';
+                    div.innerHTML = `
+                        <div style="cursor:pointer" onclick="loadIntoEditor(${index})" title="Click to edit">
+                            <strong>${s.label}</strong> 
+                            <small style="color:var(--gray); margin-left:10px;">${s.content.length} chars</small>
+                        </div>
+                        <button class="del-btn" onclick="deleteSegment(${index})">Delete</button>
+                    `;
+                    list.appendChild(div);
+                });
+            }
             document.getElementById('segCount').innerText = segments.length;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(segments));
         }
 
         function addSegment() {
-            const label = document.getElementById('label').value || "Untitled";
-            const content = document.getElementById('content').value;
-            if(!content) return alert("Textarea is empty.");
+            const labelInput = document.getElementById('label');
+            const contentInput = document.getElementById('content');
+            if(!contentInput.value.trim()) return alert("Drafting box is empty!");
 
-            segments.push({label, content});
-            clearEditor();
+            segments.push({
+                label: labelInput.value.trim() || "Untitled Segment",
+                content: contentInput.value
+            });
+            
+            clearEditorOnly();
             render();
         }
 
         function loadIntoEditor(index) {
-            if(confirm("Load this into the editor? (This will remove it from the list below)")) {
-                const s = segments[index];
-                document.getElementById('label').value = s.label;
-                document.getElementById('content').value = s.content;
-                deleteSegment(index);
-                updateCounter();
-            }
+            const s = segments[index];
+            document.getElementById('label').value = s.label;
+            document.getElementById('content').value = s.content;
+            segments.splice(index, 1); // Remove from list while editing
+            render();
+            updateCounter();
+            window.scrollTo(0,0);
         }
 
         function deleteSegment(index) {
-            segments.splice(index, 1);
-            render();
+            if(confirm("Delete this segment?")) {
+                segments.splice(index, 1);
+                render();
+            }
         }
 
-        function clearEditor() {
+        function clearEditorOnly() {
             document.getElementById('label').value = "";
             document.getElementById('content').value = "";
             updateCounter();
         }
 
-        function hardReset() {
-            if(confirm("This will permanently delete ALL segments and clear the window. Continue?")) {
+        function wipeCollection() {
+            if(confirm("DANGER: This will delete EVERYTHING in your saved list. Are you sure?")) {
                 segments = [];
-                clearEditor();
                 render();
             }
         }
 
         function getFullText() {
-            return segments.map(s => `--- START FILE: ${s.label} ---\n${s.content}\n--- END FILE ---\n`).join("\n\n");
+            return segments.map(s => `[FILE: ${s.label}]\n${s.content}\n\n---\n`).join("\n");
         }
 
         async function copyAll() {
-            if(segments.length === 0) return alert("Nothing to copy.");
+            if(segments.length === 0) return alert("Nothing saved to copy.");
             await navigator.clipboard.writeText(getFullText());
-            alert("All segments copied to clipboard!");
+            alert("Copied all saved segments to clipboard!");
         }
 
         function downloadFile() {
-            if(segments.length === 0) return alert("Nothing to download.");
+            if(segments.length === 0) return alert("Nothing saved to download.");
             const blob = new Blob([getFullText()], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'compiled_data.txt';
+            a.download = 'ai_compiled_data.txt';
             a.click();
         }
 
-        // Run on startup
         render();
     </script>
 </body>
