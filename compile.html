@@ -1,53 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Data Compiler</title>
+    <meta charset="UTF-8">
+    <title>AI Data Compiler (v2)</title>
     <style>
-        body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 700px; margin: auto; background: #f9f9f9; }
-        textarea { width: 100%; height: 120px; margin-bottom: 10px; display: block; border: 1px solid #ccc; padding: 8px; }
-        .segment { background: #fff; padding: 10px; margin-bottom: 10px; border-left: 5px solid #007bff; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .controls { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; }
-        .del-btn { background: #dc3545; }
+        :root {
+            --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #cbd5e1;
+            --primary: #2563eb; --danger: #dc2626; --success: #16a34a;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --border: #334155; }
+        }
+        body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: auto; background: var(--bg); color: var(--text); }
+        
+        .editor-box { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        input, textarea { 
+            width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); 
+            border-radius: 6px; background: var(--bg); color: var(--text); box-sizing: border-box; 
+        }
+        textarea { height: 150px; font-family: monospace; }
+
+        .segment { 
+            background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 6px; 
+            border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; 
+        }
+        
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        button { 
+            padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; 
+            font-weight: bold; transition: opacity 0.2s; 
+        }
+        button:hover { opacity: 0.8; }
+        
+        .btn-add { background: var(--primary); color: white; width: 100%; }
+        .btn-copy { background: #64748b; color: white; }
+        .btn-dl { background: var(--success); color: white; }
+        .btn-clear { background: #64748b; color: white; }
+        .btn-reset { background: var(--danger); color: white; margin-top: 40px; font-size: 11px; padding: 5px 10px; }
+        .del-btn { background: var(--danger); color: white; padding: 5px 10px; font-size: 12px; }
+
+        .stats { font-size: 12px; color: #64748b; margin-bottom: 4px; }
     </style>
 </head>
 <body>
+
     <h2>AI Data Compiler</h2>
-    <input type="text" id="label" placeholder="Enter Label" style="width: 100%; padding: 8px; margin-bottom: 10px;">
-    <textarea id="content" placeholder="Paste your data here..."></textarea>
-    <button onclick="addSegment()">+ Add Segment</button>
 
-    <h3>Segments</h3>
-    <div id="segmentList"></div>
-
-    <div class="controls">
-        <button onclick="downloadFile()" style="background: #28a745;">Download .txt File</button>
+    <div class="editor-box">
+        <input type="text" id="label" placeholder="Label / Filename (e.g. style.css)">
+        <div class="stats" id="charCount">0 characters</div>
+        <textarea id="content" placeholder="Paste data here..." oninput="updateCounter()"></textarea>
+        <button class="btn-add" onclick="addSegment()">+ Add Segment</button>
+        <button class="btn-clear" style="width:100%; margin-top:5px; background:none; color:var(--text); border:1px solid var(--border)" onclick="clearEditor()">Clear Editor Fields</button>
     </div>
 
+    <h3>Compiled Segments (<span id="segCount">0</span>)</h3>
+    <div id="segmentList"></div>
+
+    <div class="btn-group">
+        <button class="btn-copy" onclick="copyAll()">Copy Everything</button>
+        <button class="btn-dl" onclick="downloadFile()">Download .txt</button>
+    </div>
+
+    <!-- Hard Reset at bottom -->
+    <button class="btn-reset" onclick="hardReset()">Wipe All Data & Start Fresh</button>
+
     <script>
-        let segments = [];
+        // Using a unique key to avoid old data collisions
+        const STORAGE_KEY = 'ai_compiler_v2_data';
+        let segments = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+        function updateCounter() {
+            document.getElementById('charCount').innerText = `${document.getElementById('content').value.length} characters`;
+        }
 
         function render() {
             const list = document.getElementById('segmentList');
             list.innerHTML = "";
+            
             segments.forEach((s, index) => {
                 const div = document.createElement('div');
                 div.className = 'segment';
-                div.innerHTML = `<span><b>${s.label}</b></span> 
-                                 <button class="del-btn" onclick="deleteSegment(${index})">Delete</button>`;
+                div.innerHTML = `
+                    <div style="cursor:pointer" onclick="loadIntoEditor(${index})">
+                        <strong>${s.label}</strong> <br>
+                        <small style="color:gray">${s.content.length} chars</small>
+                    </div>
+                    <button class="del-btn" onclick="deleteSegment(${index})">Delete</button>
+                `;
                 list.appendChild(div);
             });
+
+            document.getElementById('segCount').innerText = segments.length;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(segments));
         }
 
         function addSegment() {
-            const label = document.getElementById('label').value || "Unnamed Segment";
+            const label = document.getElementById('label').value || "Untitled";
             const content = document.getElementById('content').value;
-            if(!content) return alert("Please paste some content.");
-            
+            if(!content) return alert("Textarea is empty.");
+
             segments.push({label, content});
-            document.getElementById('label').value = "";
-            document.getElementById('content').value = "";
+            clearEditor();
             render();
+        }
+
+        function loadIntoEditor(index) {
+            if(confirm("Load this into the editor? (This will remove it from the list below)")) {
+                const s = segments[index];
+                document.getElementById('label').value = s.label;
+                document.getElementById('content').value = s.content;
+                deleteSegment(index);
+                updateCounter();
+            }
         }
 
         function deleteSegment(index) {
@@ -55,15 +120,41 @@
             render();
         }
 
+        function clearEditor() {
+            document.getElementById('label').value = "";
+            document.getElementById('content').value = "";
+            updateCounter();
+        }
+
+        function hardReset() {
+            if(confirm("This will permanently delete ALL segments and clear the window. Continue?")) {
+                segments = [];
+                clearEditor();
+                render();
+            }
+        }
+
+        function getFullText() {
+            return segments.map(s => `--- START FILE: ${s.label} ---\n${s.content}\n--- END FILE ---\n`).join("\n\n");
+        }
+
+        async function copyAll() {
+            if(segments.length === 0) return alert("Nothing to copy.");
+            await navigator.clipboard.writeText(getFullText());
+            alert("All segments copied to clipboard!");
+        }
+
         function downloadFile() {
-            if(segments.length === 0) return alert("No data to compile.");
-            const final = segments.map(s => `[FILE: ${s.label}]\n${s.content}\n\n---\n`).join("\n");
-            const blob = new Blob([final], { type: 'text/plain' });
+            if(segments.length === 0) return alert("Nothing to download.");
+            const blob = new Blob([getFullText()], { type: 'text/plain' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'ai_compiled_data.txt';
+            a.download = 'compiled_data.txt';
             a.click();
         }
+
+        // Run on startup
+        render();
     </script>
 </body>
 </html>
