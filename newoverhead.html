@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIZCAYA STRATOS | COMMAND v84.0</title>
+    <title>VIZCAYA STRATOS | COMMAND v84.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
@@ -21,17 +21,14 @@
     </style>
 </head>
 <body class="p-2 md:p-6">
-
     <div class="max-w-[1800px] mx-auto">
-        
         <!-- HEADER -->
         <header class="flex flex-col lg:flex-row justify-between items-end mb-6 gap-6 border-b border-slate-800 pb-6">
             <div>
                 <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase leading-none">Vizcaya<span class="text-red-600">Stratos</span></h1>
-                <p class="text-xs font-bold text-slate-500 tracking-[0.4em] mt-2 uppercase font-mono">17-Station Resilient Grid // Texas Synthesis // v84.0</p>
+                <p class="text-xs font-bold text-slate-500 tracking-[0.4em] mt-2 uppercase font-mono">17-Station Resilient Grid // Texas Synthesis // v84.1 Calibrated</p>
             </div>
-            
-            <div class="flex flex-wrap items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-4">
                 <div class="glass p-3 rounded-xl border border-slate-700 flex gap-4">
                     <div class="text-center">
                         <p class="text-[8px] text-slate-500 font-black uppercase">Davis Temp</p>
@@ -176,14 +173,25 @@
                 const loc = LOCATIONS[idx], h = data.hourly, hIdx = new Date().getHours() % 24;
                 let rT = h.temperature_2m[hIdx], rD = h.dew_point_2m[hIdx], rC = Math.round(h.cape[hIdx] || 0), rCi = Math.round(Math.abs(h.convective_inhibition[hIdx] || 0));
                 pPool.push(data.current.pressure_msl);
+
                 if (loc.local) {
                     const dDelta = localD - rD;
-                    rC = Math.round(rC * Math.pow(1.18, dDelta));
-                    rCi = Math.round(Math.max(0, rCi - ((localT - rT) * 15) - (dDelta * 12)));
+                    const tDelta = localT - rT;
+                    
+                    // Calibrated, balanced scaling logic
+                    const capeMultiplier = Math.min(2.0, Math.max(0.5, 1 + (dDelta * 0.08)));
+                    rC = Math.round(rC * capeMultiplier);
+                    if (rC > 5500) rC = 5500; // Physical boundary limitation cap
+
+                    let cinReduction = (tDelta * 4) + (dDelta * 3);
+                    rCi = Math.round(Math.max(0, rCi - cinReduction));
+
                     anchor = { ...data, adjCape: rC, adjCin: rCi };
                 }
+
                 if (rC > maxC) maxC = rC;
                 if (loc.sector === "PLATEAU" && rCi < 25 && rC > 1500) plateauBreach = true;
+                
                 let stat = rC > 500 ? (rCi < 25 ? "BREACH" : "CAPPED") : "STABLE";
                 tbodyR.innerHTML += `<tr class="${loc.local ? 'bg-red-600/10' : ''}"><td class="p-4"><span class="text-[7px] text-slate-500 block font-black">${loc.sector}</span>${loc.name}</td><td class="p-4 text-center">${Math.round(rT)}/${Math.round(rD)}</td><td class="p-4 text-center text-red-500">${rC}</td><td class="p-4 text-center text-orange-400">${rCi}</td><td class="p-4 text-center">${stat}</td></tr>`;
                 regionalAIText += `[${loc.name}] ${Math.round(rT)}/${Math.round(rD)} | CAPE: ${rC} | CIN: ${rCi} | ${stat}\n`;
@@ -226,19 +234,28 @@
                 let lookAheadText = "";
                 for(let i=0; i<10; i++){
                     let idx = (nowIdx + i) % 24, fHr = new Date(h.time[idx]).getHours(), fT = h.temperature_2m[idx], fD = h.dew_point_2m[idx];
-                    let fC = Math.round(h.cape[idx] * Math.pow(1.18, localD - fD)), fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - ((localT - fT) * 15) - ((localD - fD) * 12)));
+                    
+                    // Mirroring calibrated scaling factors down the forecast line array loop
+                    let f_dDelta = localD - fD;
+                    let f_tDelta = localT - fT;
+                    let f_capeMultiplier = Math.min(2.0, Math.max(0.5, 1 + (f_dDelta * 0.08)));
+                    let fC = Math.round(h.cape[idx] * f_capeMultiplier);
+                    if (fC > 5500) fC = 5500;
+
+                    let f_cinReduction = (f_tDelta * 4) + (f_dDelta * 3);
+                    let fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - f_cinReduction));
+
                     let stat = fC > 500 ? (fCi < 15 ? "BREACH" : "CAPPED") : "STABLE";
                     tbodyF.innerHTML += `<tr class="${stat === 'BREACH' ? 'bg-red-500/20' : ''}"><td class="p-3">${fHr}:00</td><td class="p-3 text-center">${Math.round(fT)}°/${Math.round(fD)}°</td><td class="p-3 text-center text-red-500 font-bold">${fC}</td><td class="p-3 text-center text-orange-400 font-bold">${fCi}</td><td class="p-3 text-center text-[8px] font-black">${stat}</td></tr>`;
                     lookAheadText += `${fHr}:00 | T:${Math.round(fT)} D:${Math.round(fD)} | CAPE:${fC} | CIN:${fCi} | ${stat}\n`;
                 }
 
                 updateTactical(anchor, plateauBreach, lapse, dcape);
-                document.getElementById("aiOut").value = `### [VIZCAYA STRATOS v84.0 STRATEGIC REPORT]\n\n**1. REGIONAL THEATER SCAN (17 STATIONS)**\n${regionalAIText}\n**2. LOCAL 10-HR TREND (ADJUSTED)**\n${lookAheadText}\n**3. VERTICAL SOUNDING PROFILE**\nLapse Rate: ${lapse} | DCAPE: ${dcape} | Shear: ${shear.toFixed(1)} | EL Tops: ${document.getElementById("el-v").innerText}\n**4. COMMAND SUMMARY**\nMode: ${document.getElementById("mDisp").innerText} | Regional Pressure Spread: ${document.getElementById("pressSpread").innerText}`;
+                document.getElementById("aiOut").value = `### [VIZCAYA STRATOS v84.1 STRATEGIC REPORT]\n\n**1. REGIONAL THEATER SCAN (17 STATIONS)**\n${regionalAIText}\n**2. LOCAL 10-HR TREND (ADJUSTED)**\n${lookAheadText}\n**3. VERTICAL SOUNDING PROFILE**\nLapse Rate: ${lapse} | DCAPE: ${dcape} | Shear: ${shear.toFixed(1)} | EL Tops: ${document.getElementById("el-v").innerText}\n**4. COMMAND SUMMARY**\nMode: ${document.getElementById("mDisp").innerText} | Regional Pressure Spread: ${document.getElementById("pressSpread").innerText}`;
             }
 
             document.getElementById("maxCape").innerText = maxC + " J/KG";
             document.getElementById("pressSpread").innerText = (Math.max(...pPool) - Math.min(...pPool)).toFixed(1) + " MB";
-            document.getElementById("syncTime").innerText = new Date().toLocaleTimeString();
         }
 
         function updateTactical(d, plateau, lapse, dcape) {
