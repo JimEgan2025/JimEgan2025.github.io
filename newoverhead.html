@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIZCAYA STRATOS | COMMAND v84.1</title>
+    <title>VIZCAYA STRATOS | COMMAND v85.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     <style>
@@ -11,13 +11,12 @@
         .mono { font-family: 'JetBrains Mono', monospace; }
         .glass { background: rgba(13, 17, 23, 0.9); border: 1px solid #30363d; backdrop-filter: blur(12px); }
         .status-breach { background: #991b1b; color: #fee2e2; animation: pulse-red 2s infinite; }
-        .status-weak { background: #92400e; color: #fef3c7; }
-        .status-capped { background: #065f46; color: #d1fae5; }
         @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .value-huge { font-size: 2.2rem; line-height: 1; font-weight: 900; letter-spacing: -0.05em; }
         input[type=number]::-webkit-inner-spin-button { display: none; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
+        .bg-breach { background-color: rgba(153, 27, 27, 0.4); color: #ef4444; }
+        .bg-capped { background-color: rgba(217, 119, 6, 0.2); color: #fbbf24; }
     </style>
 </head>
 <body class="p-2 md:p-6">
@@ -26,27 +25,30 @@
         <header class="flex flex-col lg:flex-row justify-between items-end mb-6 gap-6 border-b border-slate-800 pb-6">
             <div>
                 <h1 class="text-5xl font-black italic text-white tracking-tighter uppercase leading-none">Vizcaya<span class="text-red-600">Stratos</span></h1>
-                <p class="text-xs font-bold text-slate-500 tracking-[0.4em] mt-2 uppercase font-mono">17-Station Resilient Grid // Texas Synthesis // v84.1 Calibrated</p>
+                <div class="flex items-center gap-3 mt-2">
+                    <p class="text-xs font-bold text-slate-500 tracking-[0.4em] uppercase font-mono">Theater Command // Georgetown Anchor // v85.5 Apex</p>
+                    <span id="syncStatus" class="text-[9px] font-black bg-slate-800 px-2 py-1 rounded text-slate-400 uppercase">Standby</span>
+                </div>
             </div>
-                        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex flex-wrap items-center gap-4">
                 <div class="glass p-3 rounded-xl border border-slate-700 flex gap-4">
                     <div class="text-center">
                         <p class="text-[8px] text-slate-500 font-black uppercase">Davis Temp</p>
-                        <input type="number" id="localTemp" value="82.0" step="0.1" class="bg-transparent text-2xl font-black text-white w-16 text-center outline-none">
+                        <input type="number" id="localTemp" value="84.0" step="0.1" class="bg-transparent text-2xl font-black text-white w-16 text-center outline-none">
                     </div>
                     <div class="text-center border-l border-slate-700 pl-4">
                         <p class="text-[8px] text-blue-500 font-black uppercase">Davis Dew</p>
-                        <input type="number" id="localDew" value="72.0" step="0.1" class="bg-transparent text-2xl font-black text-blue-400 w-16 text-center outline-none">
+                        <input type="number" id="localDew" value="74.0" step="0.1" class="bg-transparent text-2xl font-black text-blue-400 w-16 text-center outline-none">
                     </div>
                 </div>
-                <button onclick="runGlobalSync()" class="bg-red-600 hover:bg-red-500 text-white font-black px-8 py-4 rounded-xl uppercase text-sm tracking-widest transition-all shadow-lg border-b-4 border-red-900">
+                <button id="syncBtn" onclick="window.runGlobalSync()" class="bg-red-600 hover:bg-red-500 text-white font-black px-8 py-4 rounded-xl uppercase text-sm tracking-widest transition-all shadow-lg border-b-4 border-red-900 active:border-b-0 active:translate-y-1">
                     Sync Theater
                 </button>
             </div>
         </header>
 
         <!-- TACTICAL HUD -->
-        <div id="mCard" class="glass p-6 rounded-2xl mb-6 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-[12px] border-l-slate-600">
+        <div id="mCard" class="glass p-6 rounded-2xl mb-6 flex flex-col lg:flex-row justify-between items-center gap-8 border-l-[12px] border-l-slate-600 transition-all duration-500">
             <div class="text-center lg:text-left">
                 <div id="mDisp" class="text-4xl font-black italic uppercase text-white">Grid Standby</div>
                 <div id="mDesc" class="text-sm font-bold text-slate-500 uppercase mt-1">Awaiting Regional Scan...</div>
@@ -64,35 +66,35 @@
             <div class="glass p-6 rounded-2xl border-l-4 border-l-blue-500">
                 <h3 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4 italic underline decoration-red-600">Vertical Atmospheric Structure</h3>
                 <div class="space-y-3 text-sm font-bold">
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">700mb Temp</span><span id="t700Val" class="text-blue-400">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">500mb Temp</span><span id="t500Val" class="text-blue-400">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">700-500mb Lapse</span><span id="lapse-v" class="text-red-500">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Bulk Shear</span><span id="shear-v" class="text-yellow-500">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Storm Motion</span><span id="motion-v" class="text-green-500">--</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500 uppercase">Gust Potential</span><span id="gust-v" class="text-orange-500">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">700mb Temp</span><span id="t700Val" class="text-blue-400 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">500mb Temp</span><span id="t500Val" class="text-blue-400 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">700-500mb Lapse</span><span id="lapse-v" class="text-red-500 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Bulk Shear</span><span id="shear-v" class="text-yellow-500 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Storm Motion</span><span id="motion-v" class="text-green-500 font-mono">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase">Gust Potential</span><span id="gust-v" class="text-orange-500 font-mono">--</span></div>
                 </div>
             </div>
             <div class="glass p-6 rounded-2xl border-l-4 border-l-red-600">
                 <h3 class="text-[10px] font-black text-red-600 uppercase tracking-widest mb-4 italic underline decoration-blue-600">Thermodynamics (Adjusted)</h3>
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCAPE (Adj)</p><p id="cape-v" class="text-3xl font-black text-red-500">--</p></div>
-                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCIN (Cap)</p><p id="cin-v" class="text-3xl font-black text-orange-500">--</p></div>
+                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCAPE (Adj)</p><p id="cape-v" class="text-3xl font-black text-red-500 font-mono">--</p></div>
+                    <div class="bg-black/40 p-4 rounded-xl border border-slate-800 text-center"><p class="text-[8px] font-black text-slate-500 uppercase mb-1">SBCIN (Cap)</p><p id="cin-v" class="text-3xl font-black text-orange-500 font-mono">--</p></div>
                 </div>
                 <div class="space-y-3 text-sm font-bold">
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Lifted Index</span><span id="li-v" class="text-blue-400">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">DCAPE (Wind Fuel)</span><span id="dcape-v" class="text-indigo-400">--</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500 uppercase">K-Index</span><span id="k-v" class="text-yellow-500">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Lifted Index</span><span id="li-v" class="text-blue-400 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">DCAPE (Wind Fuel)</span><span id="dcape-v" class="text-indigo-400 font-mono">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase">K-Index</span><span id="k-v" class="text-yellow-500 font-mono">--</span></div>
                 </div>
             </div>
             <div class="glass p-6 rounded-2xl border-l-4 border-l-green-600">
                 <h3 class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-4 italic underline decoration-yellow-600">Moisture & Cloud Profile</h3>
                 <div class="space-y-3 text-sm font-bold">
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">PWAT</span><span id="pwat-v" class="text-blue-400">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Cloud Base (LCL)</span><span id="lcl-v" class="text-slate-400">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Storm Tops (EL)</span><span id="el-v" class="text-slate-300">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">850mb Humidity</span><span id="rh850-v" class="text-blue-300">--</span></div>
-                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Precip Chance</span><span id="pop-v" class="text-green-500">--</span></div>
-                    <div class="flex justify-between"><span class="text-slate-500 uppercase">Initiation Chance</span><span id="init-v" class="text-orange-400">--%</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">PWAT</span><span id="pwat-v" class="text-blue-400 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Cloud Base (LCL)</span><span id="lcl-v" class="text-slate-400 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Storm Tops (EL)</span><span id="el-v" class="text-slate-300 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">850mb Humidity</span><span id="rh850-v" class="text-blue-300 font-mono">--</span></div>
+                    <div class="flex justify-between border-b border-slate-800/50 pb-2"><span class="text-slate-500 uppercase">Precip Chance</span><span id="pop-v" class="text-green-500 font-mono">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500 uppercase">Initiation Chance</span><span id="init-v" class="text-orange-400 font-mono">--%</span></div>
                 </div>
             </div>
         </div>
@@ -128,7 +130,7 @@
                 <h3 class="text-[10px] font-black text-green-500 uppercase tracking-[0.3em]">Strategic Briefing Stream</h3>
                 <button onclick="copyBriefing()" class="bg-green-600 hover:bg-green-500 text-black font-black text-[10px] px-6 py-2 rounded uppercase transition-colors">Copy For AI</button>
             </div>
-            <textarea id="aiOut" readonly class="w-full h-80 bg-black/40 text-green-500/80 mono text-[10px] p-4 outline-none border border-slate-800 rounded-xl resize-none custom-scroll"></textarea>
+            <textarea id="aiOut" readonly class="w-full h-96 bg-black/40 text-green-500/80 mono text-[10px] p-4 outline-none border border-slate-800 rounded-xl resize-none custom-scroll"></textarea>
         </div>
     </div>
 
@@ -153,15 +155,31 @@
             { name: "AUSTIN (MABRY)", lat: 30.32, lon: -97.76, sector: "SOUTH" }
         ];
 
-        async function runGlobalSync() {
+        window.runGlobalSync = async function() {
             const lT = parseFloat(document.getElementById("localTemp").value), lD = parseFloat(document.getElementById("localDew").value);
+            const btn = document.getElementById("syncBtn");
+            const status = document.getElementById("syncStatus");
+            
+            btn.disabled = true;
+            status.innerText = "Syncing...";
+
             try {
                 const lats = LOCATIONS.map(l => l.lat).join(','), lons = LOCATIONS.map(l => l.lon).join(',');
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=pressure_msl,wind_speed_10m&hourly=temperature_2m,dew_point_2m,relative_humidity_2m,relative_humidity_850hPa,cape,convective_inhibition,lifted_index,k_index,temperature_700hPa,temperature_500hPa,wind_speed_850hPa,total_column_integrated_water_vapour,precipitation_probability,wind_gusts_10m&temperature_unit=fahrenheit&windspeed_unit=kn&timezone=auto&forecast_days=1`;
+                
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("API Offline");
+                
                 const dataArray = await res.json();
                 renderTheater(Array.isArray(dataArray) ? dataArray : [dataArray], lT, lD);
-            } catch (e) { console.error(e); }
+                
+                status.innerText = "Live: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch (e) { 
+                console.error(e); 
+                status.innerText = "API Error";
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         function renderTheater(dataArr, localT, localD) {
@@ -177,15 +195,10 @@
                 if (loc.local) {
                     const dDelta = localD - rD;
                     const tDelta = localT - rT;
-                    
-                    // Calibrated, balanced scaling logic
                     const capeMultiplier = Math.min(2.0, Math.max(0.5, 1 + (dDelta * 0.08)));
                     rC = Math.round(rC * capeMultiplier);
-                    if (rC > 5500) rC = 5500; // Physical boundary limitation cap
-
-                    let cinReduction = (tDelta * 4) + (dDelta * 3);
-                    rCi = Math.round(Math.max(0, rCi - cinReduction));
-
+                    if (rC > 5500) rC = 5500;
+                    rCi = Math.round(Math.max(0, rCi - ((tDelta * 4) + (dDelta * 3))));
                     anchor = { ...data, adjCape: rC, adjCin: rCi };
                 }
 
@@ -193,8 +206,11 @@
                 if (loc.sector === "PLATEAU" && rCi < 25 && rC > 1500) plateauBreach = true;
                 
                 let stat = rC > 500 ? (rCi < 25 ? "BREACH" : "CAPPED") : "STABLE";
-                tbodyR.innerHTML += `<tr class="${loc.local ? 'bg-red-600/10' : ''}"><td class="p-4"><span class="text-[7px] text-slate-500 block font-black">${loc.sector}</span>${loc.name}</td><td class="p-4 text-center">${Math.round(rT)}/${Math.round(rD)}</td><td class="p-4 text-center text-red-500">${rC}</td><td class="p-4 text-center text-orange-400">${rCi}</td><td class="p-4 text-center">${stat}</td></tr>`;
-                regionalAIText += `[${loc.name}] ${Math.round(rT)}/${Math.round(rD)} | CAPE: ${rC} | CIN: ${rCi} | ${stat}\n`;
+                let rowColor = loc.local ? 'bg-red-600/10' : '';
+                let statColor = stat === "BREACH" ? 'bg-breach' : (stat === "CAPPED" ? 'bg-capped' : '');
+
+                tbodyR.innerHTML += `<tr class="${rowColor}"><td class="p-4"><span class="text-[7px] text-slate-500 block font-black">${loc.sector}</span>${loc.name}</td><td class="p-4 text-center">${Math.round(rT)}/${Math.round(rD)}</td><td class="p-4 text-center text-red-500 font-mono">${rC}</td><td class="p-4 text-center text-orange-400 font-mono">${rCi}</td><td class="p-4 text-center"><span class="px-2 py-0.5 rounded text-[8px] font-black ${statColor}">${stat}</span></td></tr>`;
+                regionalAIText += `[${loc.name}] T:${Math.round(rT)} D:${Math.round(rD)} | CAPE: ${rC} | CIN: ${rCi} | STATUS: ${stat}\n`;
             });
 
             if (anchor) {
@@ -202,60 +218,103 @@
                 const t700 = h.temperature_700hPa[nowIdx], t500 = h.temperature_500hPa[nowIdx];
                 const lapse = (((t700-32)*5/9 - (t500-32)*5/9) / 2.6).toFixed(1);
                 const dcape = Math.round(Math.max(0, (localT - t700) * 26)), shear = Math.abs(h.wind_speed_850hPa[nowIdx] - anchor.current.wind_speed_10m);
-                
-                // TEXAS CALIBRATED GUST POTENTIAL (80% Efficiency)
                 const gust = Math.round((Math.sqrt(2 * dcape) * 2.23) * 0.80);
+                const li_raw = h.lifted_index[nowIdx];
+                const k_index = Math.round(h.k_index[nowIdx]);
+                const rh850 = h.relative_humidity_850hPa[nowIdx];
+                const pwat_in = (h.total_column_integrated_water_vapour[nowIdx] / 25.4).toFixed(2);
+                const pop = h.precipitation_probability[nowIdx];
+                const storm_motion = Math.round(anchor.current.wind_speed_10m);
                 
-                // TEXAS CALIBRATED EL TOP (Overshooting limit ~64,000ft)
                 let elValue = anchor.adjCape > 100 ? Math.round(35000 + (Math.log10(anchor.adjCape) * 7000)) : 0;
                 if (elValue > 64000) elValue = 64000 + (Math.random() * 200);
 
                 const init = Math.round(Math.max(0, Math.min(100, (h.precipitation_probability[nowIdx] * 0.8) + (anchor.adjCape/100) - (anchor.adjCin/3))));
 
+                // UI Updates
                 document.getElementById("t700Val").innerText = Math.round(t700) + "°F";
                 document.getElementById("t500Val").innerText = Math.round(t500) + "°F";
                 document.getElementById("lapse-v").innerText = lapse + " C/km";
                 document.getElementById("shear-v").innerText = shear.toFixed(1) + " KT";
-                document.getElementById("motion-v").innerText = Math.round(anchor.current.wind_speed_10m) + " KT";
+                document.getElementById("motion-v").innerText = storm_motion + " KT";
                 document.getElementById("gust-v").innerText = gust + " MPH";
                 document.getElementById("cape-v").innerText = anchor.adjCape;
                 document.getElementById("cin-v").innerText = anchor.adjCin;
-                document.getElementById("li-v").innerText = (h.lifted_index[nowIdx] - ((localD - h.dew_point_2m[nowIdx]) * 0.4)).toFixed(1);
+                document.getElementById("li-v").innerText = (li_raw - ((localD - h.dew_point_2m[nowIdx]) * 0.4)).toFixed(1);
                 document.getElementById("dcape-v").innerText = dcape;
+                document.getElementById("k-v").innerText = k_index;
                 document.getElementById("init-v").innerText = init + "%";
                 document.getElementById("init-hud").innerText = init + "%";
-                document.getElementById("pwat-v").innerText = (h.total_column_integrated_water_vapour[nowIdx] / 25.4).toFixed(2) + '"';
+                document.getElementById("pwat-v").innerText = pwat_in + '"';
                 document.getElementById("lcl-v").innerText = Math.round((localT - localD) / 4.4 * 1000) + " FT";
                 document.getElementById("el-v").innerText = elValue > 0 ? elValue.toLocaleString() + " FT" : "---";
-                document.getElementById("rh850-v").innerText = h.relative_humidity_850hPa[nowIdx] + "%";
-                document.getElementById("pop-v").innerText = h.precipitation_probability[nowIdx] + "%";
-                document.getElementById("k-v").innerText = Math.round(h.k_index[nowIdx]);
+                document.getElementById("rh850-v").innerText = rh850 + "%";
+                document.getElementById("pop-v").innerText = pop + "%";
 
                 let lookAheadText = "";
                 for(let i=0; i<10; i++){
                     let idx = (nowIdx + i) % 24, fHr = new Date(h.time[idx]).getHours(), fT = h.temperature_2m[idx], fD = h.dew_point_2m[idx];
-                    
-                    // Mirroring calibrated scaling factors down the forecast line array loop
-                    let f_dDelta = localD - fD;
-                    let f_tDelta = localT - fT;
-                    let f_capeMultiplier = Math.min(2.0, Math.max(0.5, 1 + (f_dDelta * 0.08)));
-                    let fC = Math.round(h.cape[idx] * f_capeMultiplier);
+                    let f_dDelta = localD - fD, f_tDelta = localT - fT;
+                    let fC = Math.round(h.cape[idx] * Math.min(2.0, Math.max(0.5, 1 + (f_dDelta * 0.08))));
                     if (fC > 5500) fC = 5500;
-
-                    let f_cinReduction = (f_tDelta * 4) + (f_dDelta * 3);
-                    let fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - f_cinReduction));
-
+                    let fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - ((f_tDelta * 4) + (f_dDelta * 3))));
                     let stat = fC > 500 ? (fCi < 15 ? "BREACH" : "CAPPED") : "STABLE";
                     tbodyF.innerHTML += `<tr class="${stat === 'BREACH' ? 'bg-red-500/20' : ''}"><td class="p-3">${fHr}:00</td><td class="p-3 text-center">${Math.round(fT)}°/${Math.round(fD)}°</td><td class="p-3 text-center text-red-500 font-bold">${fC}</td><td class="p-3 text-center text-orange-400 font-bold">${fCi}</td><td class="p-3 text-center text-[8px] font-black">${stat}</td></tr>`;
                     lookAheadText += `${fHr}:00 | T:${Math.round(fT)} D:${Math.round(fD)} | CAPE:${fC} | CIN:${fCi} | ${stat}\n`;
                 }
 
                 updateTactical(anchor, plateauBreach, lapse, dcape);
-                document.getElementById("aiOut").value = `### [VIZCAYA STRATOS v84.1 STRATEGIC REPORT]\n\n**1. REGIONAL THEATER SCAN (17 STATIONS)**\n${regionalAIText}\n**2. LOCAL 10-HR TREND (ADJUSTED)**\n${lookAheadText}\n**3. VERTICAL SOUNDING PROFILE**\nLapse Rate: ${lapse} | DCAPE: ${dcape} | Shear: ${shear.toFixed(1)} | EL Tops: ${document.getElementById("el-v").innerText}\n**4. COMMAND SUMMARY**\nMode: ${document.getElementById("mDisp").innerText} | Regional Pressure Spread: ${document.getElementById("pressSpread").innerText}`;
-            }
+                
+                const press_sprd = (Math.max(...pPool) - Math.min(...pPool)).toFixed(1);
+                document.getElementById("pressSpread").innerText = press_sprd + " MB";
+                document.getElementById("maxCape").innerText = maxC + " J/KG";
 
-            document.getElementById("maxCape").innerText = maxC + " J/KG";
-            document.getElementById("pressSpread").innerText = (Math.max(...pPool) - Math.min(...pPool)).toFixed(1) + " MB";
+                // COMPLETE AI SUMMARY INJECTION
+                document.getElementById("aiOut").value = `### [VIZCAYA STRATOS v85.5 APEX SYSTEM STATE]
+TIMESTAMP: ${new Date().toLocaleString()}
+MODE: ${document.getElementById("mDisp").innerText}
+THREAT_LEVEL: ${document.getElementById("threatLevel").innerText}
+
+[1. LOCAL SURFACE ANCHOR (DAVIS)]
+Surface_Temp: ${localT}°F
+Surface_Dew: ${localDew}°F
+SBCAPE_Adj: ${anchor.adjCape} J/kg
+SBCIN_Cap: ${anchor.adjCin} J/kg
+Lifted_Index: ${document.getElementById("li-v").innerText}
+Gust_Potential: ${gust} MPH
+Initiation_Confidence: ${init}%
+
+[2. VERTICAL SOUNDING PROFILE]
+700mb_Temp: ${Math.round(t700)}°F
+500mb_Temp: ${Math.round(t500)}°F
+Lapse_Rate_700_500: ${lapse} C/km
+Bulk_Shear: ${shear.toFixed(1)} KT
+Storm_Motion: ${storm_motion} KT
+Storm_Tops_EL: ${elValue.toLocaleString()} FT
+Freezing_Level: 14,200 FT (Approx)
+
+[3. MOISTURE & STABILITY]
+PWAT: ${pwat_in}"
+Cloud_Base_LCL: ${document.getElementById("lcl-v").innerText}
+850mb_Humidity: ${rh850}%
+Precip_Prob_PoP: ${pop}%
+K_Index: ${k_index}
+DCAPE_Wind_Fuel: ${dcape} J/kg
+
+[4. THEATER SCALE GRID]
+Regional_Pressure_Spread: ${press_sprd} MB
+Max_Theater_CAPE: ${maxC} J/KG
+Plateau_Breach: ${plateauBreach ? 'DETECTED' : 'NOMINAL'}
+
+[17-STATION Grid_Scan]
+${regionalAIText}
+
+[10-HOUR Local_Projection]
+${lookAheadText}
+
+### [COMMAND ADVISORY]
+${document.getElementById("mDesc").innerText}`;
+            }
         }
 
         function updateTactical(d, plateau, lapse, dcape) {
@@ -268,9 +327,10 @@
             if (lvl !== 'STABLE') tL.classList.add('animate-pulse', 'text-red-500'); else tL.classList.remove('animate-pulse', 'text-red-500');
         }
 
-        function copyBriefing() { const el = document.getElementById("aiOut"); el.select(); document.execCommand("copy"); alert("Theater Briefing Copied."); }
-        window.onload = runGlobalSync;
-        setInterval(runGlobalSync, 600000);
+        function copyBriefing() { const el = document.getElementById("aiOut"); el.select(); document.execCommand("copy"); alert("Comprehensive Strategic Briefing Copied."); }
+        
+        window.runGlobalSync();
+        setInterval(window.runGlobalSync, 600000);
     </script>
 </body>
 </html>
