@@ -6,15 +6,15 @@
     <title>Texas Weather Situation Room</title>
     <style>
         :root {
-            --extreme: #d73a49; /* Red */
-            --severe: #f66a0a;  /* Orange */
+            --extreme: #d73a49;  /* Red */
+            --severe: #f66a0a;   /* Orange */
             --moderate: #ffc107; /* Yellow */
             --minor: #0366d6;    /* Blue */
             --bg: #f6f8fa;
         }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            line-height: 1.6; color: #24292e; max-width: 900px; 
+            line-height: 1.6; color: #24292e; max-width: 1000px; 
             margin: 0 auto; padding: 20px; background-color: var(--bg); 
         }
         .header { border-bottom: 2px solid #e1e4e8; padding-bottom: 10px; margin-bottom: 20px; }
@@ -51,37 +51,213 @@
         .alert-headline { display: block; margin-bottom: 15px; font-weight: 600; color: #444; }
         .alert-areas { font-size: 0.95em; background: #f1f1f1; padding: 12px; border-radius: 6px; border: 1px solid #e1e4e8; }
         .alert-meta { font-size: 0.85em; color: #6a737d; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        /* Responsive Traveler Grid Hub Styling */
+        .hub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 40px;
+            margin-bottom: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .hub-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* AI Export Box Styling */
+        .summary-box {
+            background: #f0f7ff;
+            border: 1px solid #b4d5ff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(3, 102, 214, 0.05);
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .summary-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0366d6;
+            margin: 0;
+        }
+        .copy-btn {
+            background: #0366d6;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            font-size: 0.85em;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+        .copy-btn:hover { background: #024ea5; }
+        .copy-btn.copied { background: #28a745; }
+        
+        .ai-textarea {
+            width: 100%;
+            height: 250px;
+            box-sizing: border-box;
+            border: 1px solid #cbd1d6;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.85em;
+            background: #ffffff;
+            color: #24292e;
+            resize: vertical;
+        }
+
+        /* Right Side Transit Panel Box Styling */
+        .transit-panel {
+            background: #fffbfa;
+            border: 1px solid #fbdad0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(246, 106, 10, 0.05);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .panel-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #f66a0a;
+            margin: 0 0 5px 0;
+        }
+        .panel-desc {
+            font-size: 0.88em;
+            color: #586069;
+            margin: 0 0 15px 0;
+        }
+        .link-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            flex-grow: 1;
+        }
+        .transit-btn {
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid #e1e4e8;
+            border-left: 5px solid #6a737d;
+            padding: 12px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #24292e;
+            transition: all 0.15s ease;
+        }
+        .transit-btn:hover {
+            border-color: #f66a0a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transform: translateX(2px);
+        }
+        .transit-btn.drive-tx {
+            border-left-color: #d73a49;
+        }
+        .transit-btn strong {
+            font-size: 0.95em;
+            color: #1b1f23;
+        }
+        .transit-btn span {
+            font-size: 0.8em;
+            color: #6a737d;
+            margin-top: 2px;
+        }
+        .safety-alert {
+            margin-top: 20px;
+            background: #fff5f5;
+            border: 1px solid #ffe3e3;
+            color: #9e212b;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="index.html" class="nav-back">← Back to Main Page</a>
-        <h1>Texas Weather Alerts</h1>
+        <h1>Texas Weather Situation Room</h1>
         <p id="as-of-time">As of: Loading...</p>
-        <div id="update-status">Connecting to NWS...</div>
+        <div id="update-status">Connecting to National Weather Service...</div>
     </div>
 
     <div class="controls">
-        <span>Filter:</span>
-        <button class="filter-btn active" onclick="setFilter('All', this)">All Alerts</button>
+        <span>Filter Display View:</span>
+        <button class="filter-btn active" onclick="setFilter('All', this)">All Active Alerts</button>
         <button class="filter-btn" onclick="setFilter('Extreme', this)">⚠️ Extremes Only</button>
         <button class="filter-btn" onclick="setFilter('Severe', this)">Warnings Only</button>
     </div>
 
+    <!-- Live Standard Alert Feed -->
     <div id="alerts-container">
-        <p style="text-align: center; padding: 40px;">Fetching live data...</p>
+        <p style="text-align: center; padding: 40px;">Fetching live weather data...</p>
+    </div>
+
+    <!-- Traveler Intelligence Hub Layout Grid -->
+    <div class="hub-grid">
+        <!-- Left Column: AI High-Density Input Box -->
+        <div id="ai-summary-container"></div>
+
+        <!-- Right Column: Live Transit Quicklinks Panel -->
+        <div class="transit-panel">
+            <h3 class="panel-title">🛣️ Live Texas Transit Desk</h3>
+            <p class="panel-desc">Cross-reference active weather alerts with real-time road closures, construction delays, and regional transit networks.</p>
+            
+            <div class="link-grid">
+                <a href="https://drivetexas.org" target="_blank" rel="noopener" class="transit-btn drive-tx">
+                    <strong>DriveTexas.org</strong>
+                    <span>Official TxDOT Highway Conditions & Closures</span>
+                </a>
+                
+                <a href="https://www.txdot.gov/discover/highway-conditions-evacuation-routes.html" target="_blank" rel="noopener" class="transit-btn">
+                    <strong>TxDOT Evacuation Routes</strong>
+                    <span>Hurricane & Disaster Coastal Evacuation Maps</span>
+                </a>
+
+                <a href="https://www.weather.gov/fwd/radar" target="_blank" rel="noopener" class="transit-btn">
+                    <strong>NWS Radar Mosaic</strong>
+                    <span>Live Nexrad Radar Overlays for Texas Corridors</span>
+                </a>
+
+                <a href="https://www.accuweather.com/en/us/texas/weather-radar" target="_blank" rel="noopener" class="transit-btn">
+                    <strong>Regional Travel Impacts</strong>
+                    <span>Interstate Transit Delays & Visibility Maps</span>
+                </a>
+            </div>
+            
+            <div class="safety-alert">
+                <strong>⚠️ Driver Action Directive:</strong> If the AI summary alerts point to intense convective grid matrices along your transit zone, stay put. Frontage roads, low-water creek crossings, and urban underpasses across Texas are designed to flood first to protect the main interstate lanes. Turn around, don't drown.
+            </div>
+        </div>
     </div>
 
     <script>
         let currentFilter = 'All';
         let allAlerts = [];
+        let rawAiString = ""; 
 
         async function updateDashboard() {
             const status = document.getElementById('update-status');
             const asOfDisplay = document.getElementById('as-of-time');
-
-            // Sorting Weight (Lower number = Higher position)
             const severityWeights = { "Extreme": 1, "Severe": 2, "Moderate": 3, "Minor": 4, "Unknown": 5 };
 
             try {
@@ -89,28 +265,45 @@
                 if (!response.ok) throw new Error('NWS API Unreachable');
                 const data = await response.json();
                 
-                // 1. Sort by Severity first
                 allAlerts = data.features.sort((a, b) => {
                     return (severityWeights[a.properties.severity] || 99) - (severityWeights[b.properties.severity] || 99);
                 });
 
-                // 2. Update Timestamps
                 const now = new Date();
                 asOfDisplay.innerText = `As of: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
                 status.innerText = "System Live. Next auto-check in 5 minutes.";
 
                 renderAlerts();
+                generateAiSummary();
 
             } catch (error) {
                 status.innerHTML = `<span style="color:red;">⚠️ Error: ${error.message}. Retrying...</span>`;
             }
         }
 
+        function getIssuingOffice(senderString) {
+            if (!senderString) return 'NWS';
+            if (senderString.includes('WFO-')) {
+                return senderString.split('WFO-')[1].toUpperCase();
+            }
+            const match = senderString.match(/@([a-z0-9.]+)/i);
+            return match ? 'NWS' : senderString.toUpperCase();
+        }
+
+        function getRegionFromArea(areaDesc) {
+            const desc = (areaDesc || "").toLowerCase();
+            if (desc.includes("harris") || desc.includes("galveston") || desc.includes("coastal") || desc.includes("corpus") || desc.includes("jefferson")) return "Gulf Coast";
+            if (desc.includes("dallas") || desc.includes("tarrant") || desc.includes("collin") || desc.includes("denton") || desc.includes("panhandle") || desc.includes("lubbock") || desc.includes("amarillo")) return "North & Panhandle";
+            if (desc.includes("travis") || desc.includes("williamson") || desc.includes("bexar") || desc.includes("hays") || desc.includes("austin") || desc.includes("san antonio")) return "Central Texas";
+            if (desc.includes("el paso") || desc.includes("midland") || desc.includes("odessa") || desc.includes("pecos") || desc.includes("val verde")) return "West Texas";
+            if (desc.includes("hidalgo") || desc.includes("cameron") || desc.includes("webb") || desc.includes("laredo") || desc.includes("valley")) return "South Texas Border";
+            return "General / Other";
+        }
+
         function renderAlerts() {
             const container = document.getElementById('alerts-container');
             container.innerHTML = '';
 
-            // 3. Apply Filter
             const filtered = allAlerts.filter(item => {
                 if (currentFilter === 'All') return true;
                 if (currentFilter === 'Extreme') return item.properties.severity === 'Extreme';
@@ -120,15 +313,18 @@
 
             if (filtered.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align:center; padding: 50px; background:white; border-radius:8px;">
+                    <div style="text-align:center; padding: 50px; background:white; border-radius:8px; border:1px solid #d1d5da;">
                         <h2>☀️ No alerts in this category</h2>
+                        <p style="color: #586069; margin: 0;">Weather looks clear across Texas highways matching this filter.</p>
                     </div>`;
                 return;
             }
 
             filtered.forEach(item => {
                 const p = item.properties;
-                const url = p['@id'] || item.id || '#'; // NWS alert detail URL[web:7][web:15][web:134][web:139]
+                const url = p['@id'] || item.id || '#';
+                const officeCode = getIssuingOffice(p.senderName || p.sender);
+                const expiresText = p.expires ? new Date(p.expires).toLocaleString() : 'Unknown';
 
                 const card = document.createElement('a');
                 card.href = url;
@@ -136,20 +332,123 @@
                 card.rel = 'noopener noreferrer';
                 card.className = `alert-card severity-${p.severity || 'Unknown'}`;
 
-                const expiresText = p.expires
-                    ? new Date(p.expires).toLocaleString()
-                    : 'Unknown';
-
                 card.innerHTML = `
                     <span class="alert-title">${p.event}</span>
                     <span class="alert-headline">${p.headline || 'Active Statement'}</span>
                     <div class="alert-areas"><strong>Areas:</strong> ${p.areaDesc}</div>
                     <div class="alert-meta">
+                        <strong>Office:</strong> NWS-${officeCode} | 
                         <strong>Expires:</strong> ${expiresText} | 
                         <strong>Severity:</strong> ${p.severity || 'Unknown'}
                     </div>
                 `;
                 container.appendChild(card);
+            });
+        }
+
+        function generateAiSummary() {
+            const summaryContainer = document.getElementById('ai-summary-container');
+            const now = new Date();
+
+            if (allAlerts.length === 0) {
+                rawAiString = `SYSTEM STATUS: ALL CLEAR\nTimestamp: ${now.toLocaleString()}\nNo active National Weather Service warnings or advisories are in effect for Texas corridors. All major highways report standard operating weather baseline profiles.`;
+                summaryContainer.innerHTML = `
+                    <div class="summary-box">
+                        <div class="summary-header">
+                            <h3 class="summary-title">📋 High-Density AI Input Payload</h3>
+                            <button id="clip-btn" class="copy-btn" onclick="copyTextToClipboard()">Copy Payload</button>
+                        </div>
+                        <textarea class="ai-textarea" id="ai-raw-text" readonly>${rawAiString}</textarea>
+                    </div>`;
+                return;
+            }
+
+            const rolledUpAlerts = {};
+
+            allAlerts.forEach(item => {
+                const eventName = item.properties.event;
+                const severity = item.properties.severity || "Unknown";
+                const officeCode = getIssuingOffice(item.properties.senderName || item.properties.sender);
+                const region = getRegionFromArea(item.properties.areaDesc);
+
+                if (!rolledUpAlerts[eventName]) {
+                    rolledUpAlerts[eventName] = {
+                        severity: severity,
+                        count: 0,
+                        offices: new Set(),
+                        regions: new Set()
+                    };
+                }
+
+                rolledUpAlerts[eventName].count += 1;
+                rolledUpAlerts[eventName].offices.add(officeCode);
+                rolledUpAlerts[eventName].regions.add(region);
+            });
+
+            let matrixOutput = `CONTEXT: CURRENT TEXAS METRIC WEATHER DATA MATRIX\n`;
+            matrixOutput += `Generated: ${now.toLocaleDateString()} @ ${now.toLocaleTimeString()}\n`;
+            matrixOutput += `Total Raw Incoming Alerts Filtered: ${allAlerts.length}\n`;
+            matrixOutput += `--------------------------------------------------------\n`;
+
+            for (const [eventName, data] of Object.entries(rolledUpAlerts)) {
+                const officesStr = Array.from(data.offices).join(', ');
+                const regionsStr = Array.from(data.regions).join(', ');
+                
+                matrixOutput += `HAZARD: ${eventName}\n`;
+                matrixOutput += ` - Severity Level: ${data.severity}\n`;
+                matrixOutput += ` - Active Instances: ${data.count}\n`;
+                matrixOutput += ` - Impacted Zones: ${regionsStr}\n`;
+                matrixOutput += ` - Issuing Commands: WFO [${officesStr}]\n\n`;
+            }
+
+            // Transit Specific AI Safety Instructions Appended to Payload Output
+            matrixOutput += `========================================================\n`;
+            matrixOutput += `ROLE/INSTRUCTIONS FOR AI (TRAVEL ADVISORY EDITION):\n`;
+            matrixOutput += `You are a Texas Department of Transportation travel safety analyst and broadcast meteorologist. \n`;
+            matrixOutput += `Analyze the weather density matrix above and write a 3-paragraph "Texas Corridor Travel Brief" for commuters and long-haul drivers moving across the state.\n\n`;
+
+            matrixOutput += `Use this Highway Mapping Guide to cross-reference the active zones in the matrix:\n`;
+            matrixOutput += `- North & Panhandle impacts: Major disruptions to I-35N, I-40, and US-287.\n`;
+            matrixOutput += `- Central Texas impacts: Major disruptions to I-35 Corridor (DFW to San Antonio) and I-10 West.\n`;
+            matrixOutput += `- Gulf Coast impacts: Major disruptions to I-10 East, I-45, and US-59/I-69.\n`;
+            matrixOutput += `- West Texas impacts: Major disruptions to I-20 and I-10 West.\n`;
+            matrixOutput += `- South Texas Border impacts: Major disruptions to I-2, I-35S, and US-77.\n\n`;
+
+            matrixOutput += `Paragraph 1: Executive Summary for Drivers. Lead with the overall travel conditions across Texas. Clearly state which major interstate corridors are experiencing the worst road hazards (e.g., "Drivers on the I-35 corridor through Central Texas face major delays due to...") based on active severe counts.\n\n`;
+            matrixOutput += `Paragraph 2: Specific Corridor Breakdowns. Group the hazards by highway impact. Use bold bullet points for specific interstates if multiple hazards overlap. For instance, combine heavy downpours/flash floods as hydro-planing and visibility risks for specific highway stretches.\n\n`;
+            matrixOutput += `Paragraph 3: Driver Action Steps & Timing. Provide actionable advice for people currently on the road or planning a trip today (e.g., delaying travel, watching for low-water crossings, managing high winds if high-profile vehicles). Mention that road conditions can change rapidly and urge drivers to check DriveTexas.org alongside local radar before departing. Keep the tone authoritative, clear, and focused entirely on transit safety.`;
+
+            rawAiString = matrixOutput;
+
+            summaryContainer.innerHTML = `
+                <div class="summary-box">
+                    <div class="summary-header">
+                        <h3 class="summary-title">📋 High-Density AI Input Payload</h3>
+                        <button id="clip-btn" class="copy-btn" onclick="copyTextToClipboard()">Copy Payload</button>
+                    </div>
+                    <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #586069;">This box rolls up county data into a highway matrix. Pass this string into your AI model to generate a custom Interstate Travel Briefing.</p>
+                    <textarea class="ai-textarea" id="ai-raw-text" readonly>${rawAiString}</textarea>
+                </div>`;
+        }
+
+        function copyTextToClipboard() {
+            const copyBtn = document.getElementById('clip-btn');
+            const textArea = document.getElementById('ai-raw-text');
+            
+            if (!textArea) return;
+            
+            textArea.select();
+            textArea.setSelectionRange(0, 99999);
+
+            navigator.clipboard.writeText(textArea.value).then(() => {
+                copyBtn.innerText = "✓ Copied!";
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerText = "Copy Payload";
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
             });
         }
 
@@ -160,7 +459,7 @@
             renderAlerts();
         }
 
-        // Run and set interval
+        // Initialize and setup 5-minute polling interval
         updateDashboard();
         setInterval(updateDashboard, 300000);
     </script>
