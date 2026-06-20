@@ -1,135 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>GULF TSI - Environmental Support Profile</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-    :root { 
-        --primary: #22d3ee; 
-        --bg: #020617; 
-        --card: #0f172a; 
-        --text: #f8fafc;
-        --danger: #ef4444;
-        --success: #22c55e;
-        --warning: #f59e0b;
-    }
+    <meta charset="UTF-8">
+    <title>GULF GSI - Central Texas Support Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root { 
+             --primary: #22d3ee; 
+             --bg: #020617; 
+             --card: #0f172a; 
+             --text: #f8fafc;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --ai-box: #1e1b4b; /* Deep indigo for AI features */
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 30px; 
+            width: 1080px; /* FB Optimized */
+            margin: auto;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h1 { font-size: 48px; font-weight: 900; letter-spacing: -2px; text-transform: uppercase; }
+        .subtitle { color: #94a3b8; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* TSI GAUGE */
+        .main-gauge-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid #1e293b;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        .tsi-value-display { font-size: 84px; font-weight: 900; line-height: 1; color: var(--primary); }
+        .tsi-status-label { font-size: 28px; font-weight: 800; text-transform: uppercase; margin: 10px 0; }
+        
+        .risk-bar { 
+             height: 50px; 
+             border-radius: 12px; 
+             background: #1e293b; 
+             position: relative; 
+             overflow: hidden; 
+             margin-top: 25px;
+            border: 2px solid #334155;
+        }
+        .risk-fill { 
+             height: 100%; 
+             width: 0%; 
+             transition: width 2s ease-in-out; 
+             background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); 
+         }
+        
+        /* GRID LAYOUTS */
+        .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .metric-card { 
+             background: var(--card); 
+             padding: 20px; 
+             border-radius: 16px; 
+             text-align: center; 
+             border: 1px solid #1e293b;
+        }
+        .metric-val { font-size: 32px; font-weight: 800; color: #fff; }
+        .metric-label { font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        
+        h2 { font-size: 24px; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        h2::after { content: ''; flex-grow: 1; height: 2px; background: #1e293b; }
+        
+        .marine-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 25px;
+            background: #0f172a;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            border: 1px solid #1e293b;
+        }
+        
+        .forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .day-box {
+            background: #0f172a;
+            padding: 15px 5px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #1e293b;
+        }
+        .day-name { font-weight: 800; font-size: 16px; color: var(--primary); }
+        .day-rain { font-size: 22px; font-weight: 900; margin-top: 5px; }
+        
+        .strategy-box {
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 16px;
+            font-size: 18px;
+            line-height: 1.6;
+            border-left: 8px solid var(--primary);
+            margin-bottom: 30px;
+        }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-        font-family: 'Inter', system-ui, sans-serif; 
-        background: var(--bg); 
-        color: var(--text); 
-        padding: 30px; 
-        width: 1080px; /* FB Optimized */
-        margin: auto;
-    }
-
-    .header-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        border-bottom: 4px solid var(--primary);
-        padding-bottom: 15px;
-        margin-bottom: 30px;
-    }
-
-    h1 { font-size: 48px; font-weight: 900; letter-spacing: -2px; text-transform: uppercase; }
-    .subtitle { color: #94a3b8; font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-
-    /* TSI GAUGE */
-    .main-gauge-card {
-        background: var(--card);
-        border-radius: 24px;
-        padding: 40px;
-        text-align: center;
-        border: 1px solid #1e293b;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        margin-bottom: 30px;
-    }
-
-    .tsi-value-display { font-size: 84px; font-weight: 900; line-height: 1; color: var(--primary); }
-    .tsi-status-label { font-size: 28px; font-weight: 800; text-transform: uppercase; margin: 10px 0; }
-
-    .risk-bar { 
-        height: 50px; 
-        border-radius: 12px; 
-        background: #1e293b; 
-        position: relative; 
-        overflow: hidden; 
-        margin-top: 25px;
-        border: 2px solid #334155;
-    }
-    .risk-fill { 
-        height: 100%; 
-        width: 0%; 
-        transition: width 2s ease-in-out; 
-        background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); 
-    }
-
-    /* GRID LAYOUTS */
-    .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-    .metric-card { 
-        background: var(--card); 
-        padding: 20px; 
-        border-radius: 16px; 
-        text-align: center; 
-        border: 1px solid #1e293b;
-    }
-    .metric-val { font-size: 32px; font-weight: 800; color: #fff; }
-    .metric-label { font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-
-    h2 { font-size: 24px; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-    h2::after { content: ''; flex-grow: 1; height: 2px; background: #1e293b; }
-
-    .marine-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 15px 25px;
-        background: #0f172a;
-        margin-bottom: 8px;
-        border-radius: 12px;
-        font-size: 20px;
-        font-weight: 700;
-        border: 1px solid #1e293b;
-    }
-
-    .forecast-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-    .day-box {
-        background: #0f172a;
-        padding: 15px 5px;
-        border-radius: 12px;
-        text-align: center;
-        border: 1px solid #1e293b;
-    }
-    .day-name { font-weight: 800; font-size: 16px; color: var(--primary); }
-    .day-rain { font-size: 22px; font-weight: 900; margin-top: 5px; }
-
-    .strategy-box {
-        background: #1e293b;
-        padding: 25px;
-        border-radius: 16px;
-        font-size: 18px;
-        line-height: 1.6;
-        border-left: 8px solid var(--primary);
-    }
-</style>
+        /* NEW: AI INFERENCE OUTPUT BOX */
+        .ai-output-box {
+            background: var(--ai-box);
+            padding: 25px;
+            border-radius: 16px;
+            font-size: 18px;
+            line-height: 1.6;
+            border: 2px dashed var(--primary);
+            box-shadow: 0 10px 30px rgba(34, 211, 238, 0.1);
+        }
+    </style>
 </head>
 <body>
 
 <div class="header-section">
     <div>
         <h1>GULF SUPPORT INDEX</h1>
-        <div class="subtitle">Tropical Genesis Environment Profile</div>
+        <div class="subtitle">Central Texas Vector Analysis</div>
     </div>
-    <div style="text-align: right; color: var(--success); font-weight: 800; font-size: 18px;">
-        ● LIVE SENSOR SYNC
+    <div style="text-align: right; color: var(--warning); font-weight: 800; font-size: 18px;">
+        ● INDEX MODEL OVERLAY
     </div>
 </div>
 
 <div class="main-gauge-card">
-    <div class="metric-label">Atmospheric Support Potential</div>
+    <div class="metric-label">Gulf Support Score (GSI)</div>
     <div class="tsi-value-display" id="tsi-value">--</div>
     <div class="tsi-status-label" id="tsi-status">INITIALIZING...</div>
     <div class="risk-bar">
@@ -144,7 +152,7 @@
 
 <div class="metric-grid">
     <div class="metric-card" style="grid-column: span 2;">
-        <div class="metric-label">Texas Coastal Steering</div>
+        <div class="metric-label">Central Texas Steering Track</div>
         <div class="metric-val" id="steer-val">--</div>
     </div>
     <div class="metric-card" style="grid-column: span 2;">
@@ -157,115 +165,96 @@
 <div class="forecast-grid" id="tsi-forecast-grid"></div>
 
 <div class="strategy-box" style="margin-top: 30px;">
-    <strong style="color:var(--primary)">Technical Summary:</strong><br>
+    <strong style="color:var(--primary)">Model Track Evaluation:</strong><br>
     <span id="temp-eval">Analyzing data streams...</span>
 </div>
 
+<h2>🤖 AI Automated Meteorological Analysis</h2>
+<div class="ai-output-box">
+    <strong style="color: #a5b4fc;">Automated GSI Context Stream:</strong><br>
+    <span id="ai-analysis-text">
+        [MODEL_RAW_DATA_SUMMARY] <br>
+        TSI_SCORE: 59 | STATUS: MODERATE | WEIGHTED_SST: 85.94F | HUMIDITY: 70% | SHEAR: 6.9KT | STEER_DIR: 152DEG | BASIN_SST: [BOC:85.1, LOOP:87.1, CENTRAL:86.3, TX:85.1] | 7D_PRECIP_PROB: 51,20,2,1,1,1,1
+    </span>
+</div>
+
 <script>
-const TX_SITES = [
-  {name: 'North Texas Coast', lat: 29.1, lon: -94.6},
-  {name: 'Central Texas Coast', lat: 27.9, lon: -96.8},
-  {name: 'South Texas Coast', lat: 26.4, lon: -97.1}
-];
+/**
+ * 1. INJECT MODEL RAW DATA DIRECTLY
+ */
+const SPEC_MODEL_DATA = {
+  tsi_score: 59,
+  status: "MODERATE",
+  weighted_sst: 85.94,
+  humidity: 70,
+  shear: 6.9,
+  steer_dir: 152,
+  basin_sst: {
+    boc: 85.1,
+    loop: 87.1,
+    central: 86.3,
+    tx: 85.1
+  },
+  precip_prob: [51, 20, 2, 1, 1, 1, 1]
+};
 
-async function init() {
-  try {
-    const atmosRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=30.5083&longitude=-97.6789&hourly=relative_humidity_2m,wind_speed_10m,wind_direction_10m&current=relative_humidity_2m,wind_speed_10m,wind_direction_10m&daily=precipitation_probability_max&timezone=America/Chicago&forecast_days=7`);
-    const atmos = await atmosRes.json();
-
-    const txSST = [];
-    for (const site of TX_SITES) {
-        try {
-            const res = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${site.lat}&longitude=${site.lon}&current=sea_surface_temperature&temperature_unit=fahrenheit`);
-            const data = await res.json();
-            txSST.push({ name: site.name, tempF: data.current.sea_surface_temperature });
-        } catch (e) { txSST.push({ name: site.name, tempF: 72.0 }); }
-    }
-
-    const baseline = txSST[0].tempF;
-    const sstBasin = {
-        boc: Math.max(baseline, 78.5),
-        loop: Math.max(baseline + 2, 80.1),
-        central: baseline + 1.2,
-        texas: baseline
-    };
-
-    render(atmos, txSST, sstBasin);
-  } catch (err) {
-    document.getElementById('tsi-status').innerText = "OFFLINE";
+function init() {
+  const daysOfWeek = [];
+  const today = new Date();
+  for (let i = 0; i < 7; i++) {
+    const nextDay = new Date(today);
+    nextDay.setDate(today.getDate() + i);
+    daysOfWeek.push(nextDay.toLocaleDateString('en-US', { weekday: 'short' }));
   }
+  render(SPEC_MODEL_DATA, daysOfWeek);
 }
 
-function render(atmos, txSST, sstBasin) {
-  const current = atmos.current;
-  const rh = current.relative_humidity_2m;
-  const dir = current.wind_direction_10m;
-  const shear = current.wind_speed_10m;
-  const weightedSST = (sstBasin.boc * 0.4) + (sstBasin.loop * 0.3) + (sstBasin.central * 0.2) + (sstBasin.texas * 0.1);
+function render(data, days) {
+  const tsi = data.tsi_score;
+  const status = data.status;
+  const color = '#f59e0b'; // Moderate Orange
 
-  /**
-   * RECALIBRATED LOGIC (Less Aggressive)
-   * Base score of 0.
-   */
-  let tsi = 0;
-
-  // 1. SST Engine (Required > 80F for significant growth)
-  if (weightedSST > 80) {
-      tsi += (weightedSST - 80) * 10; 
-  }
-
-  // 2. Humidity Support
-  if (rh > 70) {
-      tsi += (rh - 70) * 0.5;
-  }
-
-  // 3. Wind Shear PENALTY (High shear = lower support)
-  if (shear > 15) {
-      tsi -= (shear - 15) * 2;
-  }
-
-  // 4. Steering (Secondary Factor)
-  if (dir >= 280 && dir <= 320) tsi += 10;
-
-  // Final Clamp
-  tsi = Math.max(5, Math.round(tsi));
-  tsi = Math.min(100, tsi);
-
-  const status = tsi >= 75 ? 'HIGH SUPPORT' : (tsi >= 40 ? 'MODERATE' : 'LOW SUPPORT');
-  const color = tsi >= 75 ? '#ef4444' : (tsi >= 40 ? '#f59e0b' : '#22c55e');
-
+  // Update Gauges
   document.getElementById('gulf-tsi').style.width = tsi + '%';
   document.getElementById('tsi-value').innerText = tsi + '%';
   document.getElementById('tsi-status').innerText = status;
   document.getElementById('tsi-status').style.color = color;
 
+  // Primary Metrics
   document.getElementById('atmos-grid').innerHTML = `
-    <div class="metric-card"><div class="metric-val">${shear}kt</div><div class="metric-label">Wind Shear</div></div>
-    <div class="metric-card"><div class="metric-val">${rh}%</div><div class="metric-label">Humidity</div></div>
-    <div class="metric-card"><div class="metric-val">${dir}°</div><div class="metric-label">Steer Dir</div></div>
-    <div class="metric-card"><div class="metric-val">${weightedSST.toFixed(1)}°</div><div class="metric-label">Avg SST</div></div>
+    <div class="metric-card"><div class="metric-val">${data.shear} kt</div><div class="metric-label">Wind Shear</div></div>
+    <div class="metric-card"><div class="metric-val">${data.humidity}%</div><div class="metric-label">Humidity</div></div>
+    <div class="metric-card"><div class="metric-val">${data.steer_dir}°</div><div class="metric-label">Steer Dir</div></div>
+    <div class="metric-card"><div class="metric-val">${data.weighted_sst.toFixed(2)}°</div><div class="metric-label">Avg SST</div></div>
   `;
 
-  document.getElementById('basin-avg').innerText = weightedSST.toFixed(1) + "° F";
-  document.getElementById('steer-val').innerText = dir + "° (" + (dir >= 280 && dir <= 320 ? 'TEXAS PATH' : 'OFFSHORE') + ")";
+  document.getElementById('basin-avg').innerText = data.weighted_sst.toFixed(2) + "° F";
+  
+  // Steering Path Calculations 
+  const isTexasPath = (data.steer_dir >= 135 && data.steer_dir <= 170);
+  document.getElementById('steer-val').innerText = data.steer_dir + "° (" + (isTexasPath ? 'CENTRAL TX RISK' : 'DIVERGENT') + ")";
 
-  const G_NAMES = {boc:'Bay Campeche', loop:'Loop Current', central:'Central Gulf', texas:'TX Sector'};
-  document.getElementById('sst-panel').innerHTML = Object.entries(sstBasin).map(([k, v]) => `
+  // Basin Breakdown
+  const G_NAMES = {boc:'Bay of Campeche', loop:'Loop Current', central:'Central Gulf', tx:'Texas Coast'};
+  document.getElementById('sst-panel').innerHTML = Object.entries(data.basin_sst).map(([k, v]) => `
     <div class="marine-row"><span>${G_NAMES[k]}</span><span style="color:${v >= 80 ? '#ef4444' : '#94a3b8'}">${v.toFixed(1)}°F</span></div>
   `).join('');
 
-  document.getElementById('tsi-forecast-grid').innerHTML = atmos.daily.time.map((d, i) => `
+  // 7-Day Forecast
+  document.getElementById('tsi-forecast-grid').innerHTML = data.precip_prob.map((prob, i) => `
     <div class="day-box">
-      <div class="day-name">${new Date(d + 'T00:00:00').toLocaleDateString('en-US', {weekday:'short'})}</div>
-      <div class="day-rain">${atmos.daily.precipitation_probability_max[i]}%</div>
+      <div class="day-name">${days[i]}</div>
+      <div class="day-rain">${prob}%</div>
     </div>
   `).join('');
 
-  document.getElementById('temp-eval').innerText = weightedSST >= 80 
-    ? "Gulf thermals are currently supportive of tropical maintenance. Environmental moisture is sufficient." 
-    : "Basin temperatures are currently below the 80°F threshold required for significant tropical development.";
+  // Fixed Evaluation Summary block
+  document.getElementById('temp-eval').innerText = isTexasPath 
+     ? `The steering vector at ${data.steer_dir}° indicates atmospheric alignment pushing directly toward the north-northwest. With an oceanic heat reservoir at ${data.basin_sst.tx}°F on the Texas coast and minimal wind shear (${data.shear}kt), conditions support inland moisture transport into Central Texas.` 
+     : "Steering vectors indicate tracking currents are deflected away from the Central Texas interior corridor.";
 }
 
+// Run on application load
 init();
 </script>
 </body>
