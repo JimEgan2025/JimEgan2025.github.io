@@ -22,7 +22,7 @@ body {
     color: var(--text);
     margin: 0;
     padding: 24px;
-    font-size: 18px;   /* BIGGER FONT */
+    font-size: 24px;   /* BIGGER FONT */
 }
 
 .container {
@@ -31,7 +31,7 @@ body {
 }
 
 h1 {
-    font-size: 20px;
+    font-size: 24px;
     margin-bottom: 16px;
 }
 
@@ -95,7 +95,7 @@ button {
 }
 
 .meta {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
 }
 
@@ -117,20 +117,27 @@ button {
 <div class="editor">
 
 <label>Label</label>
-<input id="label" placeholder="e.g. Gulf System Analysis / Jim's Input">
+<input id="label" placeholder="Enter Label">
 
 <div class="row">
 <div>
 <label>Type</label>
 <select id="type">
     <option value="USER_INPUT">User Input</option>
-    <option value="ATMOSPHERIC_VISUAL_BLOCK">Atmospheric Visual Block</option>
-    <option value="RADAR_SAT">Radar / Satellite</option>
+    <option value="AUSTIN_AFD">Austin AFD</option>
+    <option value="TEXAS_AFDS">TEXAS AFDs</option>
+    <option value="WPC_FORECAST">WPC Short Term Forecast</option>
+    <option value="WPC_LONG">WPC Long-TTerm Forecast</option>
+    <option value="FORECAST">Jim's Forecast SheetsUser Input</option>
+    <option value="ATMOSPHERIC_VISUAL_BLOCK">Radar, Satellite, SPC, Surface Analysis</option>
+    <option value="STATION">Station Summary Data</option>  
+    <option value="RADAR">Radar Image</option>   
+    <option value="SATELLIE">Satellite Image</option>
     <option value="SPC_WPC">SPC / WPC</option>
-    <option value="NHC_TROPICAL">NHC Tropical</option>
+    <option value="NHC_TROPICAL">NHC Tropical Discussion</option>
     <option value="NWS_ALERTS">NWS Alerts</option>
     <option value="MODEL_DATA">Model Data</option>
-    <option value="EXTREMES">Extremes</option>
+    <option value="EXTREMES">Texas Extremes</option>
     <option value="ALMANAC">Almanac</option>
     <option value="DERIVED_ANALYSIS">Derived Analysis</option>
 </select>
