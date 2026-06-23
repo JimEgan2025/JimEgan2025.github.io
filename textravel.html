@@ -1,537 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Texas Weather Decision Console</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-  :root {
-    --bg-color: #f1f5f9;
-    --card-bg: #ffffff;
-    --primary: #0f172a;
-    --accent: #2563eb;
-    --text-main: #334155;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --radius: 12px;
-  }
-
-  body {
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: var(--bg-color);
-    color: var(--text-main);
-    margin: 0;
-    padding: 0;
-  }
-
-  header {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: #fff;
-    padding: 1.5rem 2rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  }
-
-  header h1 {
-    margin: 0 0 0.25rem 0;
-    font-size: 1.7rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    font-weight: 500;
-  }
-
-  .container {
-    max-width: 1400px;
-    margin: 1.5rem auto;
-    padding: 0 1rem;
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: 1fr;
-  }
-
-  @media(min-width: 1024px) {
-    .container {
-      grid-template-columns: 350px 1fr;
-    }
-    .full-width {
-      grid-column: 1 / -1;
-    }
-  }
-
-  .panel {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border);
-  }
-
-  .panel h3 {
-    margin-top: 0;
-    margin-bottom: 1.2rem;
-    font-size: 1.1rem;
-    color: var(--primary);
-    border-bottom: 2px solid var(--bg-color);
-    padding-bottom: 0.6rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .control-group {
-    margin-bottom: 1rem;
-  }
-
-  label {
-    display: block;
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 0.3rem;
-  }
-
-  select, input, button {
-    width: 100%;
-    padding: 0.6rem;
-    font-size: 0.95rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    box-sizing: border-box;
-    background: #fff;
-    color: var(--text-main);
-  }
-
-  .coord-inputs {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  button {
-    background-color: var(--accent);
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
-    border: none;
-    transition: background-color 0.2s;
-    margin-top: 0.5rem;
-  }
-
-  button:hover { 
-    background-color: #1d4ed8; 
-  }
-
-  .status {
-    font-size: 0.85rem;
-    margin-top: 1rem;
-    color: var(--text-muted);
-    font-weight: 600;
-    padding: 0.75rem;
-    background: #f8fafc;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    text-align: center;
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-    min-width: 800px;
-  }
-
-  th, td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-
-  th {
-    background: #f8fafc;
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  tr:last-child td {
-    border-bottom: none;
-  }
-
-  tr:hover td {
-    background: #f1f5f9;
-  }
-
-  .temp-hot { color: #dc2626; font-weight: 700; }
-  .temp-cold { color: #2563eb; font-weight: 700; }
-  .temp-mild { color: #16a34a; font-weight: 700; }
-  
-  .pop-high { color: #2563eb; font-weight: 700; }
-  .pop-low { color: #94a3b8; }
-
-  pre {
-    white-space: pre-wrap;
-    font-size: 0.85rem;
-    max-height: 350px;
-    overflow: auto;
-    background: #f8fafc;
-    padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    color: var(--text-main);
-    line-height: 1.5;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  }
-
-  .sev-warn { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; border: 1px solid #fca5a5; font-weight: 700; font-size: 0.8rem; display: inline-block;}
-  .sev-watch { background: #ffedd5; color: #ea580c; padding: 4px 8px; border-radius: 4px; border: 1px solid #fdba74; font-weight: 700; font-size: 0.8rem; display: inline-block;}
-  .sev-adv { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; border: 1px solid #7dd3fc; font-weight: 700; font-size: 0.8rem; display: inline-block;}
-
-  .radar-container {
-    text-align: center;
-    background: #000;
-    padding: 4px;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 0 auto;
-    border-radius: 4px;
-  }
-</style>
-</head>
-
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Texas Weather Decision Console</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>  :root {    --bg-color: #f1f5f9;    --card-bg: #ffffff;    --primary: #0f172a;    --accent: #2563eb;    --text-main: #334155;    --text-muted: #64748b;    --border: #e2e8f0;    --radius: 12px;  }
+  body {    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;    background: var(--bg-color);    color: var(--text-main);    margin: 0;    padding: 0;  }
+  header {    background: linear-gradient(135deg, #1e293b, #0f172a);    color: #fff;    padding: 1.5rem 2rem;    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);  }
+  header h1 {    margin: 0 0 0.25rem 0;    font-size: 1.7rem;    font-weight: 700;    letter-spacing: -0.5px;  }
+  .subtitle {    font-size: 0.85rem;    color: #94a3b8;    font-weight: 500;  }
+  .container {    max-width: 1400px;    margin: 1.5rem auto;    padding: 0 1rem;    display: grid;    gap: 1.5rem;    grid-template-columns: 1fr;  }
+  @media(min-width: 1024px) {    .container {      grid-template-columns: 350px 1fr;    }    .full-width {      grid-column: 1 / -1;    }  }
+  .panel {    background: var(--card-bg);    border-radius: var(--radius);    padding: 1.5rem;    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);    border: 1px solid var(--border);  }
+  .panel h3 {    margin-top: 0;    margin-bottom: 1.2rem;    font-size: 1.1rem;    color: var(--primary);    border-bottom: 2px solid var(--bg-color);    padding-bottom: 0.6rem;    display: flex;    align-items: center;    gap: 0.5rem;  }
+  .control-group {    margin-bottom: 1rem;  }
+  label {    display: block;    font-weight: 600;    font-size: 0.85rem;    color: var(--text-muted);    margin-bottom: 0.3rem;  }
+  select, input, button {    width: 100%;    padding: 0.6rem;    font-size: 0.95rem;    border: 1px solid var(--border);    border-radius: 6px;    box-sizing: border-box;    background: #fff;    color: var(--text-main);  }
+  .coord-inputs {    display: flex;    gap: 0.5rem;  }
+  button {    background-color: var(--accent);    color: white;    cursor: pointer;    font-weight: 600;    border: none;    transition: background-color 0.2s;    margin-top: 0.5rem;  }
+  button:hover {     background-color: #1d4ed8;   }
+  .status {    font-size: 0.85rem;    margin-top: 1rem;    color: var(--text-muted);    font-weight: 600;    padding: 0.75rem;    background: #f8fafc;    border-radius: 6px;    border: 1px solid var(--border);    text-align: center;  }
+  .table-wrapper {    overflow-x: auto;  }
+  table {    width: 100%;    border-collapse: collapse;    font-size: 0.9rem;    min-width: 800px;  }
+  th, td {    padding: 0.75rem;    text-align: left;    border-bottom: 1px solid var(--border);  }
+  th {    background: #f8fafc;    color: var(--text-muted);    font-weight: 600;    font-size: 0.8rem;    text-transform: uppercase;    letter-spacing: 0.5px;  }
+  tr:last-child td {    border-bottom: none;  }
+  tr:hover td {    background: #f1f5f9;  }
+  .temp-hot { color: #dc2626; font-weight: 700; }  .temp-cold { color: #2563eb; font-weight: 700; }  .temp-mild { color: #16a34a; font-weight: 700; }    .pop-high { color: #2563eb; font-weight: 700; }  .pop-low { color: #94a3b8; }
+  pre {    white-space: pre-wrap;    font-size: 0.85rem;    max-height: 350px;    overflow: auto;    background: #f8fafc;    padding: 1rem;    border-radius: 6px;    border: 1px solid var(--border);    color: var(--text-main);    line-height: 1.5;    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;  }
+  .sev-warn { background: #fee2e2; color: #dc2626; padding: 4px 8px; border-radius: 4px; border: 1px solid #fca5a5; font-weight: 700; font-size: 0.8rem; display: inline-block;}  .sev-watch { background: #ffedd5; color: #ea580c; padding: 4px 8px; border-radius: 4px; border: 1px solid #fdba74; font-weight: 700; font-size: 0.8rem; display: inline-block;}  .sev-adv { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 4px; border: 1px solid #7dd3fc; font-weight: 700; font-size: 0.8rem; display: inline-block;}
+  .radar-panorama {    background: #000;    padding: 6px;    border-radius: var(--radius);    box-shadow: 0 4px 12px rgba(0,0,0,0.15);    border: 1px solid var(--border);    margin-bottom: 1.5rem;    overflow: hidden;  }
+  .radar-panorama img {    width: 100%;    height: auto;    max-height: 600px;    object-fit: contain;    display: block;    margin: 0 auto;    border-radius: 6px;  }</style></head>
 <body>
-
-<header>
-  <h1>Texas Weather Decision Console</h1>
-  <div class="subtitle">Next-Gen Forecast • Alerts • PoP / RH Tracking • Radar Loops</div>
-</header>
-
-<div class="container">
-  
-  <div class="left-col">
-    <div class="panel" style="margin-bottom: 1.5rem;">
-      <h3>🎯 Target Parameters</h3>
-      
-      <div class="control-group">
-        <label for="preset">Regional Preset:</label>
-        <select id="preset" onchange="setPreset()">
-          <option value="30.5083,-97.6789|KEWX" selected>Round Rock (Default Base)</option>
-          <option value="30.2672,-97.7431|KEWX">Austin (Metro Center)</option>
-          <option value="30.6333,-97.6775|KEWX">Georgetown (I-35 North corridor)</option>
-          <option value="29.4241,-98.4936|KEWX">San Antonio (Bexar Operations)</option>
-          
-          <optgroup label="North / North East / I-35 Corridor">
-            <option value="32.7767,-96.7970|KFWS">Dallas</option>
-            <option value="32.7555,-97.3308|KFWS">Fort Worth</option>
-            <option value="33.0198,-96.6989|KFWS">Plano</option>
-            <option value="31.5493,-97.1467|KFWS">Waco</option>
-            <option value="31.0982,-97.3428|KFWS">Temple</option>
-            <option value="31.1171,-97.7278|KFWS">Killeen (Fort Cavazos area)</option>
-            <option value="33.9137,-98.4934|KFWS">Wichita Falls (Red River sector)</option>
-          </optgroup>
-
-          <optgroup label="East Texas / Piney Woods">
-            <option value="32.2713,-95.3008|KFWS">Tyler</option>
-            <option value="32.5007,-94.7405|KSHV">Longview</option>
-            <option value="33.4251,-94.0477|KSHV">Texarkana (Border Junction)</option>
-          </optgroup>
-
-          <optgroup label="Southeast / Upper Gulf Coast">
-            <option value="29.7604,-95.3698|KHGX">Houston</option>
-            <option value="30.1658,-95.4611|KHGX">The Woodlands</option>
-            <option value="29.3013,-94.7977|KHGX">Galveston Island</option>
-            <option value="30.0802,-94.1266|KHGX">Beaumont (Sabine Basin delta)</option>
-          </optgroup>
-
-          <optgroup label="Coastal Bend & Deep South Border">
-            <option value="27.8006,-97.3964|KCRP">Corpus Christi</option>
-            <option value="28.0606,-97.0325|KCRP">Port Aransas (Marine Inflow point)</option>
-            <option value="28.8053,-97.0036|KCRP">Victoria</option>
-            <option value="27.5036,-99.4892|KCRP">Laredo</option>
-            <option value="28.6785,-100.4923|KEWX">Eagle Pass</option>
-            <option value="26.2034,-98.2300|KBRO">McAllen</option>
-            <option value="26.1224,-97.6300|KBRO">Brownsville</option>
-          </optgroup>
-
-          <optgroup label="West / Permian Basin / Panhandle High Plains">
-            <option value="31.7619,-106.4850|KEPZ">El Paso (Franklin Mountain Basin)</option>
-            <option value="31.8457,-102.3676|KMAF">Midland</option>
-            <option value="31.4638,-100.4370|KSJT">San Angelo</option>
-            <option value="32.4487,-99.7331|KSJT">Abilene (The Big Country hub)</option>
-            <option value="33.5779,-101.8552|KLBB">Lubbock (Caprock base)</option>
-            <option value="35.2220,-101.8313|KAMA">Amarillo (High Plains nexus)</option>
-          </optgroup>
-
-          <optgroup label="Rugged Terrain & High-Risk Hydrology">
-            <option value="29.3627,-100.8968|KEWX">Del Rio (Serranías Trigger corridor)</option>
-            <option value="29.2498,-103.2502|KMAF">Big Bend National Park (Chisos Basin)</option>
-            <option value="29.9142,-102.2158|KMAF">Terlingua Ghost Town</option>
-            <option value="31.8954,-104.8211|KMAF">Guadalupe Mountains (Pine Springs High Peak)</option>
-            <option value="29.7525,-101.3533|KEWX">Devils River State Natural Area</option>
-            <option value="34.8400,-101.6661|KAMA">Palo Duro Canyon State Park</option>
-          </optgroup>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>Coordinates (Lat / Lon):</label>
-        <div class="coord-inputs">
-          <input id="lat" type="text" value="30.5083">
-          <input id="lon" type="text" value="-97.6789">
-        </div>
-      </div>
-      
-      <button onclick="loadAll()">Execute Pipeline Update</button>
-      
-      <div id="status" class="status">System Ready. Awaiting execution.</div>
-    </div>
-
-    <div class="panel">
-      <h3>📡 Base Reflectivity Loop</h3>
-      <div class="radar-container">
-        <img id="radarImg" src="https://radar.weather.gov/ridge/standard/KEWX_loop.gif" alt="Station Radar">
-      </div>
-    </div>
-  </div>
-
-  <div class="right-col">
-    
-    <div class="panel" style="margin-bottom: 1.5rem;">
-      <h3>⚡ Active Threats & Point Summary</h3>
-      <div id="summary" style="font-weight: 500; margin-bottom: 1rem;">Click Execute to analyze forecast matrix.</div>
-      <div id="alerts" style="border-top: 1px solid var(--border); padding-top: 1rem;">No data loaded.</div>
-    </div>
-
-    <div class="panel" style="margin-bottom: 1.5rem;">
-      <h3>📅 7-Day Matrix (14 Periods)</h3>
-      <div class="table-wrapper">
-        <table id="forecast">
-          <thead>
-            <tr>
-              <th style="width: 15%">Period</th>
-              <th style="width: 10%">Temp</th>
-              <th style="width: 10%">Rain %</th>
-              <th style="width: 10%">Humid</th>
-              <th style="width: 15%">Wind</th>
-              <th style="width: 40%">Forecast</th>
-            </tr>
-          </thead>
-          <tbody id="forecastBody">
-            <tr><td colspan="6" style="text-align:center; color:#94a3b8; font-style:italic;">Initialize pipeline to map grids...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3>📝 Area Forecast Discussion (AFD)</h3>
-      <pre id="afd">Awaiting execution trace...</pre>
-    </div>
-
-  </div>
-</div>
-
-<script>
-const apiHeaders = { "User-Agent": "TexasWeatherConsole/2.0 (local-weather-dashboard@domain.org)" };
-
-function setRadar(office){
-  document.getElementById("radarImg").src = `https://radar.weather.gov/ridge/standard/${office}_loop.gif`;
-}
-
-function setPreset() {
-  const v = document.getElementById("preset").value;
-  if (!v) return;
-
-  const [coords, office] = v.split("|");
-  const [lat, lon] = coords.split(",");
-
-  document.getElementById("lat").value = lat;
-  document.getElementById("lon").value = lon;
-
-  window._office = office;
-  loadAll();
-}
-
-async function loadAll() {
-  const lat = document.getElementById("lat").value;
-  const lon = document.getElementById("lon").value;
-  const statusElement = document.getElementById("status");
-  
-  statusElement.innerText = "Querying NWS Grid Endpoints...";
-  statusElement.style.color = "#ea580c";
-
-  try {
-    const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, { headers: apiHeaders });
-    if (!pointResponse.ok) throw new Error("Metadata response failed.");
-    const p = await pointResponse.json();
-
-    const forecastUrl = p.properties.forecast;
-    
-    let office = window._office;
-    if (!office) {
-      office = 'K' + p.properties.gridId; 
-    }
-
-    setRadar(office);
-    loadForecast(forecastUrl);
-    loadAlerts(lat, lon);
-    loadAFD(office.replace('K', '')); 
-
-    statusElement.innerHTML = `Connected: <strong>${p.properties.relativeLocation.properties.city}, ${p.properties.relativeLocation.properties.state}</strong> (${office})`;
-    statusElement.style.color = "#16a34a";
-    
-    window._office = null;
-
-  } catch (e) {
-    statusElement.innerText = "Network Error: Coordinate mapping rejected.";
-    statusElement.style.color = "#dc2626";
-  }
-}
-
-async function loadForecast(url) {
-  const forecastBody = document.getElementById("forecastBody");
-  try {
-    const r = await fetch(url, { headers: apiHeaders });
-    if (!r.ok) throw new Error("Grid stream error.");
-    const d = await r.json();
-
-    const p = d.properties.periods;
-    let html = "";
-
-    p.forEach(x => {
-      let tClass = "temp-mild";
-      if (x.temperature >= 85) tClass = "temp-hot";
-      if (x.temperature <= 50) tClass = "temp-cold";
-
-      let pop = x.probabilityOfPrecipitation?.value;
-      let popDisplay = `<span class="pop-low">--</span>`;
-      if (pop !== null && pop !== undefined) {
-        if (pop >= 20) {
-          popDisplay = `<span class="pop-high">💧 ${pop}%</span>`;
-        } else if (pop > 0) {
-          popDisplay = `<span style="color: #64748b;">${pop}%</span>`;
-        }
-      }
-
-      let rh = x.relativeHumidity?.value;
-      let rhDisplay = (rh !== null && rh !== undefined) ? `${rh}%` : `<span class="pop-low">--</span>`;
-
-      html += `<tr>
-        <td style="font-weight: 600; color: var(--text-main);">${x.name}</td>
-        <td><span class="${tClass}">${x.temperature}°${x.temperatureUnit}</span></td>
-        <td>${popDisplay}</td>
-        <td style="color: var(--text-muted);">${rhDisplay}</td>
-        <td style="font-size: 0.85rem; color: var(--text-muted);">${x.windDirection} ${x.windSpeed}</td>
-        <td style="font-size: 0.85rem; line-height: 1.4;">${x.shortForecast}</td>
-      </tr>`;
-    });
-
-    forecastBody.innerHTML = html;
-    buildSummary(p);
-  } catch(e) {
-    forecastBody.innerHTML = "<tr><td colspan='6' style='color:#dc2626; text-align:center;'>Failed to acquire forecast intervals.</td></tr>";
-  }
-}
-
-async function loadAlerts(lat, lon) {
-  const el = document.getElementById("alerts");
-  try {
-    const r = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`, { headers: apiHeaders });
-    const d = await r.json();
-    const f = d.features || [];
-
-    if (!f.length) {
-      el.innerHTML = "<span style='color:var(--text-muted); font-style:italic;'>No active warnings or advisories for this exact point.</span>";
-      return;
-    }
-
-    el.innerHTML = f.map(a => {
-      const p = a.properties;
-      const e = p.event.toLowerCase();
-
-      let cls = "sev-adv";
-      if (e.includes("warning")) cls = "sev-warn";
-      else if (e.includes("watch")) cls = "sev-watch";
-
-      return `
-        <div style="margin-bottom:0.8rem;">
-          <span class="${cls}">${p.event}</span>
-          <div style="font-size:0.85rem; color:var(--text-main); margin-top:6px; font-weight:500;">
-            ${p.headline || p.event}
-          </div>
-        </div>
-      `;
-    }).join("");
-
-  } catch(e) {
-    el.innerHTML = "<span style='color:#dc2626;'>Alert ingestion endpoint failure.</span>";
-  }
-}
-
-async function loadAFD(office) {
-  const el = document.getElementById("afd");
-  el.innerText = "Querying NWS product metadata catalogs...";
-  try {
-    let textOffice = office;
-    // Map NWS internal Office string variations correctly
-    if (office === "FWS") textOffice = "FWD"; 
-    if (office === "SJT") textOffice = "SJT";
-    
-    const r = await fetch(`https://api.weather.gov/products/types/AFD/locations/${textOffice}`, { headers: apiHeaders });
-    const d = await r.json();
-    const url = d?.["@graph"]?.[0]?.["@id"];
-    
-    if (!url) {
-      el.innerText = `No current Area Forecast Discussions filed for ${textOffice} forecast center.`;
-      return;
-    }
-
-    const t = await fetch(url, { headers: apiHeaders });
-    const j = await t.json();
-    el.innerText = j.productText || "Text block completely blank.";
-  } catch(e) {
-    el.innerText = "Error locating office discussion text vectors.";
-  }
-}
-
-function buildSummary(p) {
-  let heat = false, storm = false, wind = false, rain = false;
-
-  p.slice(0, 4).forEach(x => { 
-    const s = x.shortForecast.toLowerCase();
-    if (s.includes("thunder") || s.includes("storm")) storm = true;
-    if (x.probabilityOfPrecipitation?.value >= 30) rain = true;
-    if (s.includes("wind") || s.includes("breezy") || s.includes("gust")) wind = true;
-    if (x.temperature >= 95) heat = true;
-  });
-
-  let msgs = [];
-  if (heat) msgs.push("🌡️ High heat thresholds expected in next 48 hours.");
-  if (storm) msgs.push("⛈️ Convective thunderstorms in forecast matrix.");
-  else if (rain) msgs.push("☔ Rain chances exceed 30% in short-term.");
-  if (wind) msgs.push("💨 Elevated kinetic wind speeds or gusts identified.");
-
-  if (msgs.length === 0) msgs.push("✅ Normal baseline criteria. No severe structural hazards in short-term matrix.");
-  
-  document.getElementById("summary").innerHTML = msgs.join("<br>");
-}
-
+<header>  <h1>Texas Weather Decision Console</h1>  <div class="subtitle">Next-Gen Forecast • Alerts • PoP / RH Tracking • Radar Loops</div></header>
+<div class="container">  <!-- NEW: Full-Width Panoramic Radar Section -->  <div class="full-width">    <div class="radar-panorama">      <img id="radarImg" src="https://radar.weather.gov/ridge/standard/KEWX_loop.gif" alt="Panoramic Station Radar Loop">    </div>  </div>
+  <div class="left-col">    <div class="panel">      <h3>🎯 Target Parameters</h3>            <div class="control-group">        <label for="preset">Regional Preset:</label>        <select id="preset" onchange="setPreset()">          <option value="30.5083,-97.6789|KEWX" selected>Round Rock (Default Base)</option>          <option value="30.2672,-97.7431|KEWX">Austin (Metro Center)</option>          <option value="30.6333,-97.6775|KEWX">Georgetown (I-35 North corridor)</option>          <option value="29.4241,-98.4936|KEWX">San Antonio (Bexar Operations)</option>                    <optgroup label="North / North East / I-35 Corridor">            <option value="32.7767,-96.7970|KFWS">Dallas</option>            <option value="32.7555,-97.3308|KFWS">Fort Worth</option>            <option value="33.0198,-96.6989|KFWS">Plano</option>            <option value="31.5493,-97.1467|KFWS">Waco</option>            <option value="31.0982,-97.3428|KFWS">Temple</option>            <option value="31.1171,-97.7278|KFWS">Killeen (Fort Cavazos area)</option>            <option value="33.9137,-98.4934|KFWS">Wichita Falls (Red River sector)</option>          </optgroup>
+          <optgroup label="East Texas / Piney Woods">            <option value="32.2713,-95.3008|KFWS">Tyler</option>            <option value="32.5007,-94.7405|KSHV">Longview</option>            <option value="33.4251,-94.0477|KSHV">Texarkana (Border Junction)</option>          </optgroup>
+          <optgroup label="Southeast / Upper Gulf Coast">            <option value="29.7604,-95.3698|KHGX">Houston</option>            <option value="30.1658,-95.4611|KHGX">The Woodlands</option>            <option value="29.3013,-94.7977|KHGX">Galveston Island</option>            <option value="30.0802,-94.1266|KHGX">Beaumont (Sabine Basin delta)</option>          </optgroup>
+          <optgroup label="Coastal Bend & Deep South Border">            <option value="27.8339,-97.0611|KCRP">Port Aransas (Marine Inflow point)</option>            <option value="27.8006,-97.3964|KCRP">Corpus Christi</option>            <option value="28.8053,-97.0036|KCRP">Victoria</option>            <option value="27.5036,-99.4892|KCRP">Laredo</option>            <option value="28.6785,-100.4923|KEWX">Eagle Pass</option>            <option value="26.2034,-98.2300|KBRO">McAllen</option>            <option value="26.1224,-97.6300|KBRO">Brownsville</option>          </optgroup>
+          <optgroup label="West / Permian Basin / Panhandle High Plains">            <option value="31.7619,-106.4850|KEPZ">El Paso (Franklin Mountain Basin)</option>            <option value="31.8457,-102.3676|KMAF">Midland</option>            <option value="31.4638,-100.4370|KSJT">San Angelo</option>            <option value="32.4487,-99.7331|KSJT">Abilene (The Big Country hub)</option>            <option value="33.5779,-101.8552|KLBB">Lubbock (Caprock base)</option>            <option value="35.2220,-101.8313|KAMA">Amarillo (High Plains nexus)</option>          </optgroup>
+          <optgroup label="Rugged Terrain & High-Risk Hydrology">            <option value="29.3627,-100.8968|KEWX">Del Rio (Serranías Trigger corridor)</option>            <option value="29.2498,-103.2502|KMAF">Big Bend National Park (Chisos Basin)</option>            <option value="29.9142,-102.2158|KMAF">Terlingua Ghost Town</option>            <option value="31.8954,-104.8211|KMAF">Guadalupe Mountains (Pine Springs High Peak)</option>            <option value="29.7525,-101.3533|KEWX">Devils River State Natural Area</option>            <option value="34.8400,-101.6661|KAMA">Palo Duro Canyon State Park</option>          </optgroup>        </select>      </div>
+      <div class="control-group">        <label>Coordinates (Lat / Lon):</label>        <div class="coord-inputs">          <input id="lat" type="text" value="30.5083">          <input id="lon" type="text" value="-97.6789">        </div>      </div>            <button onclick="loadAll()">Execute Pipeline Update</button>            <div id="status" class="status">System Ready. Awaiting execution.</div>    </div>  </div>
+  <div class="right-col">        <div class="panel" style="margin-bottom: 1.5rem;">      <h3>⚡ Active Threats & Point Summary</h3>      <div id="summary" style="font-weight: 500; margin-bottom: 1rem;">Click Execute to analyze forecast matrix.</div>      <div id="alerts" style="border-top: 1px solid var(--border); padding-top: 1rem;">No data loaded.</div>    </div>
+    <div class="panel" style="margin-bottom: 1.5rem;">      <h3>📅 7-Day Matrix (14 Periods)</h3>      <div class="table-wrapper">        <table id="forecast">          <thead>            <tr>              <th style="width: 15%">Period</th>              <th style="width: 10%">Temp</th>              <th style="width: 10%">Rain %</th>              <th style="width: 10%">Humid</th>              <th style="width: 15%">Wind</th>              <th style="width: 40%">Forecast</th>            </tr>          </thead>          <tbody id="forecastBody">            <tr><td colspan="6" style="text-align:center; color:#94a3b8; font-style:italic;">Initialize pipeline to map grids...</td></tr>          </tbody>        </table>      </div>    </div>
+    <div class="panel">      <h3>📝 Area Forecast Discussion (AFD)</h3>      <pre id="afd">Awaiting execution trace...</pre>    </div>
+  </div></div>
+<script>const apiHeaders = { "User-Agent": "TexasWeatherConsole/2.0 (local-weather-dashboard@domain.org)" };
+function setRadar(office){  document.getElementById("radarImg").src = `https://radar.weather.gov/ridge/standard/${office}_loop.gif`;}
+function setPreset() {  const v = document.getElementById("preset").value;  if (!v) return;
+  const [coords, office] = v.split("|");  const [lat, lon] = coords.split(",");
+  document.getElementById("lat").value = lat;  document.getElementById("lon").value = lon;
+  window._office = office;  loadAll();}
+async function loadAll() {  const lat = document.getElementById("lat").value;  const lon = document.getElementById("lon").value;  const statusElement = document.getElementById("status");    statusElement.innerText = "Querying NWS Grid Endpoints...";  statusElement.style.color = "#ea580c";
+  try {    const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, { headers: apiHeaders });    if (!pointResponse.ok) throw new Error("Metadata response failed.");    const p = await pointResponse.json();
+    const forecastUrl = p.properties.forecast;        let office = window._office;    if (!office) {      office = 'K' + p.properties.gridId;     }
+    setRadar(office);    loadForecast(forecastUrl);    loadAlerts(lat, lon);    loadAFD(office.replace('K', '')); 
+    statusElement.innerHTML = `Connected: <strong>${p.properties.relativeLocation.properties.city}, ${p.properties.relativeLocation.properties.state}</strong> (${office})`;    statusElement.style.color = "#16a34a";        window._office = null;
+  } catch (e) {    statusElement.innerText = "Network Error: Coordinate mapping rejected.";    statusElement.style.color = "#dc2626";  }}
+async function loadForecast(url) {  const forecastBody = document.getElementById("forecastBody");  try {    const r = await fetch(url, { headers: apiHeaders });    if (!r.ok) throw new Error("Grid stream error.");    const d = await r.json();
+    const p = d.properties.periods;    let html = "";
+    p.forEach(x => {      let tClass = "temp-mild";      if (x.temperature >= 85) tClass = "temp-hot";      if (x.temperature <= 50) tClass = "temp-cold";
+      let pop = x.probabilityOfPrecipitation?.value;      let popDisplay = `<span class="pop-low">--</span>`;      if (pop !== null && pop !== undefined) {        if (pop >= 20) {          popDisplay = `<span class="pop-high">💧 ${pop}%</span>`;        } else if (pop > 0) {          popDisplay = `<span style="color: #64748b;">${pop}%</span>`;        }      }
+      let rh = x.relativeHumidity?.value;      let rhDisplay = (rh !== null && rh !== undefined) ? `${rh}%` : `<span class="pop-low">--</span>`;
+      html += `<tr>        <td style="font-weight: 600; color: var(--text-main);">${x.name}</td>        <td><span class="${tClass}">${x.temperature}°${x.temperatureUnit}</span></td>        <td>${popDisplay}</td>        <td style="color: var(--text-muted);">${rhDisplay}</td>        <td style="font-size: 0.85rem; color: var(--text-muted);">${x.windDirection} ${x.windSpeed}</td>        <td style="font-size: 0.85rem; line-height: 1.4;">${x.shortForecast}</td>      </tr>`;    });
+    forecastBody.innerHTML = html;    buildSummary(p);  } catch(e) {    forecastBody.innerHTML = "<tr><td colspan='6' style='color:#dc2626; text-align:center;'>Failed to acquire forecast intervals.</td></tr>";  }}
+async function loadAlerts(lat, lon) {  const el = document.getElementById("alerts");  try {    const r = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`, { headers: apiHeaders });    const d = await r.json();    const f = d.features || [];
+    if (!f.length) {      el.innerHTML = "<span style='color:var(--text-muted); font-style:italic;'>No active warnings or advisories for this exact point.</span>";      return;    }
+    el.innerHTML = f.map(a => {      const p = a.properties;      const e = p.event.toLowerCase();
+      let cls = "sev-adv";      if (e.includes("warning")) cls = "sev-warn";      else if (e.includes("watch")) cls = "sev-watch";
+      return `        <div style="margin-bottom:0.8rem;">          <span class="${cls}">${p.event}</span>          <div style="font-size:0.85rem; color:var(--text-main); margin-top:6px; font-weight:500;">            ${p.headline || p.event}          </div>        </div>      `;    }).join("");
+  } catch(e) {    el.innerHTML = "<span style='color:#dc2626;'>Alert ingestion endpoint failure.</span>";  }}
+async function loadAFD(office) {  const el = document.getElementById("afd");  el.innerText = "Querying NWS product metadata catalogs...";  try {    let textOffice = office;    if (office === "FWS") textOffice = "FWD";     if (office === "SJT") textOffice = "SJT";        const r = await fetch(`https://api.weather.gov/products/types/AFD/locations/${textOffice}`, { headers: apiHeaders });    const d = await r.json();    const url = d?.["@graph"]?.[0]?.["@id"];        if (!url) {      el.innerText = `No current Area Forecast Discussions filed for ${textOffice} forecast center.`;      return;    }
+    const t = await fetch(url, { headers: apiHeaders });    const j = await t.json();    el.innerText = j.productText || "Text block completely blank.";  } catch(e) {    el.innerText = "Error locating office discussion text vectors.";  }}
+function buildSummary(p) {  let heat = false, storm = false, wind = false, rain = false;
+  p.slice(0, 4).forEach(x => {     const s = x.shortForecast.toLowerCase();    if (s.includes("thunder") || s.includes("storm")) storm = true;    if (x.probabilityOfPrecipitation?.value >= 30) rain = true;    if (s.includes("wind") || s.includes("breezy") || s.includes("gust")) wind = true;    if (x.temperature >= 95) heat = true;  });
+  let msgs = [];  if (heat) msgs.push("🌡️ High heat thresholds expected in next 48 hours.");  if (storm) msgs.push("⛈️ Convective thunderstorms in forecast matrix.");  else if (rain) msgs.push("☔ Rain chances exceed 30% in short-term.");  if (wind) msgs.push("💨 Elevated kinetic wind speeds or gusts identified.");
+  if (msgs.length === 0) msgs.push("✅ Normal baseline criteria. No severe structural hazards in short-term matrix.");    document.getElementById("summary").innerHTML = msgs.join("<br>");}
+window.onload = loadAll;</script>
+</body></html>
 window.onload = loadAll;
 </script>
 
