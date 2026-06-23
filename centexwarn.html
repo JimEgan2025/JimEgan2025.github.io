@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Texas Weather Alert Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { margin: 0; font-size: 24px; }
+        .btn-refresh {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-refresh:hover { background-color: #2563eb; }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 25px 0 10px 0;
+            color: #1e3a8a;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 5px;
+        }
+        .alert-card {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 6px solid #94a3b8;
+        }
+        .severity-extreme { border-left-color: #dc2626; } /* Red */
+        .severity-severe { border-left-color: #f97316; }  /* Orange */
+        .severity-moderate { border-left-color: #eab308; }/* Yellow */
+        .severity-minor { border-left-color: #3b82f6; }   /* Blue */
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .alert-title { font-weight: bold; font-size: 18px; color: #111827; }
+        .alert-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #e5e7eb;
+        }
+        .badge-extreme { background-color: #ffeeee; color: #dc2626; }
+        .badge-severe { background-color: #fff7ed; color: #c2410c; }
+        
+        .alert-counties { font-size: 14px; color: #4b5563; font-weight: 500; margin-bottom: 8px; }
+        .alert-desc { font-size: 14px; color: #374151; white-space: pre-line; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 4px; }
+        .no-alerts { background: #f0fdf4; color: #166534; padding: 15px; border-radius: 6px; border: 1px solid #bbf7d0; font-weight: 500; }
+        .loading { font-style: italic; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Central Texas Alert Monitor</h1>
+            <div style="font-size: 12px; margin-top: 5px; opacity: 0.9;">Live NWS API Feed</div>
+        </div>
+        <button class="btn-refresh" onclick="loadAlerts()">🔄 Refresh Feed</button>
+    </header>
+
+    <div class="section-title">🚨 Williamson County Active Alerts</div>
+    <div id="wilco-alerts" class="loading">Loading live data...</div>
+
+    <div class="section-title">⚠️ Neighboring Central Texas Alerts</div>
+    <div id="central-tx-alerts" class="loading">Loading live data...</div>
+</div>
+
+<script>
+    // Mapping target UGC codes to County names
+    const CENTRAL_TX_ZONES = {
+        "TXZ173": "Williamson",
+        "TXZ192": "Travis",
+        "TXZ193": "Bastrop",
+        "TXZ172": "Coryell",
+        "TXZ171": "Llano",
+        "TXZ190": "Burnet",
+        "TXZ191": "Hays",
+        "TXZ158": "Milam",
+        "TXZ159": "Falls",
+        "TXZ157": "Bell"
+    };
+
+    async function loadAlerts() {
+        const wilcoDiv = document.getElementById('wilco-alerts');
+        const centralDiv = document.getElementById('central-tx-alerts');
+        
+        wilcoDiv.innerHTML = '<span class="loading">Fetching latest alerts...</span>';
+        centralDiv.innerHTML = '<span class="loading">Fetching latest alerts...</span>';
+
+        try {
+            // Fetch live active warnings from NWS for the state of Texas
+            const response = await fetch('https://api.weather.gov/alerts/active?area=TX');
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            const features = data.features || [];
+
+            let wilcoHTML = '';
+            let centralHTML = '';
+            let wilcoCount = 0;
+            let centralCount = 0;
+
+            features.forEach(alert => {
+                const props = alert.properties || {};
+                const ugcZones = props.geocode?.UGC || [];
+                
+                // See if any of our mapped Central Texas counties are in this alert
+                const matchedCounties = ugcZones
+                    .filter(zone => CENTRAL_TX_ZONES[zone])
+                    .map(zone => CENTRAL_TX_ZONES[zone]);
+
+                if (matchedCounties.length > 0) {
+                    const uniqueCounties = [...new Set(matchedCounties)].join(', ');
+                    const severity = (props.severity || 'minor').toLowerCase();
+                    const title = props.headline || 'Weather Alert';
+                    const description = props.description || 'No detailed description provided.';
+                    
+                    const cardHTML = `
+                        <div class="alert-card severity-${severity}">
+                            <div class="alert-header">
+                                <div class="alert-title">${title}</div>
+                                <span class="alert-badge badge-${severity}">${severity}</span>
+                            </div>
+                            <div class="alert-counties">📍 Impacted: ${uniqueCounties}</div>
+                            <div class="alert-desc">${description}</div>
+                        </div>
+                    `;
+
+                    // Check if Williamson County specifically is in the zone list
+                    if (ugcZones.includes('TXZ173')) {
+                        wilcoHTML += cardHTML;
+                        wilcoCount++;
+                    } else {
+                        centralHTML += cardHTML;
+                        centralCount++;
+                    }
+                }
+            });
+
+            wilcoDiv.innerHTML = wilcoCount > 0 ? wilcoHTML : '<div class="no-alerts">✅ No active alerts or warnings for Williamson County right now.</div>';
+            centralDiv.innerHTML = centralCount > 0 ? centralHTML : '<div class="no-alerts">✅ No active alerts for surrounding Central Texas counties.</div>';
+
+        } catch (error) {
+            console.error('Error:', error);
+            wilcoDiv.innerHTML = '<div style="color:red;">Failed to load live data. Please click Refresh to try again.</div>';
+            centralDiv.innerHTML = '<div style="color:red;">Failed to load live data.</div>';
+        }
+    }
+
+    // Automatically load when the page opens
+    window.onload = loadAlerts;
+</script>
+
+</body>
+</html>
