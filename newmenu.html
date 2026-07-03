@@ -81,14 +81,14 @@ body{
 
 .tab{
   width:100%;
-  padding:8px 10px;
+  padding:10px 12px;
   margin-bottom:3px;
   background:transparent;
   border:1px solid transparent;
   color:var(--text-dim);
   cursor:pointer;
   text-align:left;
-  font-size:12px;
+  font-size:15px;
 }
 
 .tab:hover{
@@ -184,9 +184,8 @@ body{
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/newspc.html','SPC Forecast')">SPC Forecast</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/texasdash','NWS Offices')">NWS Offices</button>
 
-<button class="tab" onclick="openTab(this,'https://www.weather.gov/erh/ghwo?wfo=ewx','EWX Hazard Outlook')">EWX Hazard Outlook</button>
-<button class="tab" onclick="openTab(this,'https://www.wpc.ncep.noaa.gov/sfc/usfntsfc21wbg.gif','WPC Surface Analysis')">WPC Surface Analysis</button>
 <button class="tab" onclick="openTab(this,'https://www.spc.noaa.gov/products/activity_loop.gif','SPC Activity Loop')">SPC Activity Loop</button>
+<button class="tab" onclick="openTab(this,'https://www.wpc.ncep.noaa.gov/sfc/newnamsfc.gif','WPC NAM Surface Forecast')">WPC NAM Surface Forecast</button>
 
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Alternate Dash</button>
@@ -214,7 +213,10 @@ body{
 
 <div class="group-label">Tropical</div>
 <button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button>
+<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropicalwatch.html','Tropical Watch')">Tropical Watch</button>
 <button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button>
+<button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/tafb/USA_12Z.gif','TAFB Surface Analysis')">TAFB Surface Analysis</button>
+<button class="tab" onclick="openTab(this,'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png','Global Tropical Hazards Outlook')">Global Tropical Hazards Outlook</button>
 
 </div>
 </div>
@@ -233,6 +235,7 @@ body{
 <div class="viewer">
   <div id="frameContainer">
     <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
+    <img id="imgView" style="display:none;width:100%;height:100%;object-fit:contain;background:black;" />
   </div>
 </div>
 
@@ -241,20 +244,47 @@ body{
 
 <script>
 
+function isImageUrl(url){
+  return /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(url);
+}
+
 function openTab(el,url,title){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('title').innerText = title;
-  document.getElementById('frame').src = url;
+
+  const iframe = document.getElementById('frame');
+  const img = document.getElementById('imgView');
+
+  if(isImageUrl(url)){
+    iframe.style.display = 'none';
+    iframe.src = 'about:blank';
+    img.style.display = 'block';
+    img.src = url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Date.now();
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+    iframe.style.display = 'block';
+    iframe.src = url;
+  }
 }
 
 function refresh(){
-  const f = document.getElementById('frame');
-  f.src = f.src;
+  const iframe = document.getElementById('frame');
+  const img = document.getElementById('imgView');
+  if(img.style.display !== 'none'){
+    const base = img.src.split('?')[0];
+    img.src = base + '?cachebust=' + Date.now();
+  } else {
+    iframe.src = iframe.src;
+  }
 }
 
 function popOut(){
-  window.open(document.getElementById('frame').src, '_blank');
+  const iframe = document.getElementById('frame');
+  const img = document.getElementById('imgView');
+  const url = img.style.display !== 'none' ? img.src : iframe.src;
+  window.open(url, '_blank');
 }
 
 function filterTabs(){
@@ -268,3 +298,4 @@ function filterTabs(){
 
 </body>
 </html>
+
