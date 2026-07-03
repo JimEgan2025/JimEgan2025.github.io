@@ -1,298 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Vizcaya AI Context Compiler v2</title>
-
-<style>
-:root {
-    --bg:#0f172a;
-    --card:#1e293b;
-    --text:#f1f5f9;
-    --border:#334155;
-    --primary:#3b82f6;
-    --danger:#ef4444;
-    --success:#22c55e;
-    --muted:#94a3b8;
-}
-
-body {
-    font-family: system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: 24px;
-    font-size: 24px;   /* BIGGER FONT */
-}
-
-.container {
-    max-width: 900px;
-    margin: auto;
-}
-
-h1 {
-    font-size: 24px;
-    margin-bottom: 16px;
-}
-
-.editor {
-    background: var(--card);
-    padding: 16px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    margin-bottom: 20px;
-}
-
-input, textarea, select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 8px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: #0b1220;
-    color: var(--text);
-    font-size: 16px;
-}
-
-textarea {
-    height: 140px;
-    font-family: monospace;
-}
-
-.row {
-    display: flex;
-    gap: 10px;
-}
-
-.row > div {
-    flex: 1;
-}
-
-button {
-    padding: 10px 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.primary { background: var(--primary); color: white; }
-.success { background: var(--success); color: white; }
-.danger { background: var(--danger); color: white; }
-.gray { background: #334155; color: white; }
-
-.segment {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.meta {
-    font-size: 14px;
-    color: var(--muted);
-}
-
-.toolbar {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-}
-
-</style>
-</head>
-
-<body>
-<div class="container">
-
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Vizcaya AI Context Compiler v2</title>
+<style>:root {    --bg:#0f172a;    --card:#1e293b;    --text:#f1f5f9;    --border:#334155;    --primary:#3b82f6;    --danger:#ef4444;    --success:#22c55e;    --muted:#94a3b8;}
+body {    font-family: system-ui, sans-serif;    background: var(--bg);    color: var(--text);    margin: 0;    padding: 24px;    font-size: 24px;   /* BIGGER FONT */}
+.container {    max-width: 900px;    margin: auto;}
+h1 {    font-size: 24px;    margin-bottom: 16px;}
+.editor {    background: var(--card);    padding: 16px;    border-radius: 10px;    border: 1px solid var(--border);    margin-bottom: 20px;}
+input, textarea, select {    width: 100%;    padding: 12px;    margin-top: 8px;    margin-bottom: 10px;    border-radius: 6px;    border: 1px solid var(--border);    background: #0b1220;    color: var(--text);    font-size: 16px;}
+textarea {    height: 140px;    font-family: monospace;}
+.row {    display: flex;    gap: 10px;}
+.row > div {    flex: 1;}
+button {    padding: 10px 14px;    border: none;    border-radius: 6px;    cursor: pointer;    font-weight: bold;    font-size: 14px;}
+.primary { background: var(--primary); color: white; }.success { background: var(--success); color: white; }.danger { background: var(--danger); color: white; }.gray { background: #334155; color: white; }
+.segment {    background: var(--card);    border: 1px solid var(--border);    padding: 10px;    border-radius: 8px;    margin-bottom: 8px;    display: flex;    justify-content: space-between;    align-items: center;}
+.meta {    font-size: 14px;    color: var(--muted);}
+.toolbar {    display: flex;    gap: 10px;    margin-top: 10px;    flex-wrap: wrap;}
+</style></head>
+<body><div class="container">
 <h1>Vizcaya AI Data Compiler v2</h1>
-
 <div class="editor">
-
-<label>Label</label>
-<input id="label" placeholder="Enter Label">
-
-<div class="row">
-<div>
-<label>Type</label>
-<select id="type">
-    <option value="USER_INPUT">User Input</option>
-    <option value="AUSTIN_AFD">Austin AFD</option>
-    <option value="TEXAS_AFDS">TEXAS AFDs</option>
-    <option value="WPC_FORECASTS">WPC Forecasts</option>
-    <option value="FORECAST">Jim's Forecast SheetsUser Input</option>
-    <option value="ATMOSPHERIC_IMAGE_BLOCK">Radar, Satellite, SPC, Surface Analysis</option>
-    <option value="STATION">Station Summary Data</option>  
-    <option value="RADAR">Radar Image</option>   
-    <option value="SATELLITE">Satellite Image</option>
-    <option value="SPC_WPC">SPC / WPC</option>
-    <option value="NHC_TROPICAL">NHC Tropical Discussion</option>
-    <option value="NWS_ALERTS">NWS Alerts</option>
-    <option value="MODEL_DATA">Model Data</option>
-    <option value="EXTREMES">Texas Extremes</option>
-    <option value="ALMANAC">Almanac</option>
-    <option value="DERIVED_ANALYSIS">Derived Analysis</option>
-</select>
-</div>
-
-<div>
-<label>Tags</label>
-<input id="tags" placeholder="comma separated (optional)">
-</div>
-</div>
-
-<label>Content</label>
-<textarea id="content" oninput="countChars()"></textarea>
-
+<label>Label</label><input id="label" placeholder="Enter Label">
+<div class="row"><div><label>Type</label><select id="type">    <option value="USER_INPUT">User Input</option>    <option value="AUSTIN_AFD">Austin AFD</option>    <option value="TEXAS_AFDS">TEXAS AFDs</option>    <option value="WPC_FORECASTS">WPC Forecasts</option>    <option value="FORECAST">Jim's Forecast SheetsUser Input</option>    <option value="ATMOSPHERIC_IMAGE_BLOCK">Radar, Satellite, SPC, Surface Analysis</option>    <option value="STATION">Station Summary Data</option>      <option value="RADAR">Radar Image</option>       <option value="SATELLITE">Satellite Image</option>    <option value="SPC_WPC">SPC / WPC</option>    <option value="NHC_TROPICAL">NHC Tropical Discussion</option>    <option value="NWS_ALERTS">NWS Alerts</option>    <option value="MODEL_DATA">Model Data</option>    <option value="EXTREMES">Texas Extremes</option>    <option value="ALMANAC">Almanac</option>    <option value="DERIVED_ANALYSIS">Derived Analysis</option></select></div>
+<div><label>Tags</label><input id="tags" placeholder="comma separated (optional)"></div></div>
+<label>Content</label><textarea id="content" oninput="countChars()"></textarea>
 <div class="meta" id="counter">0 characters</div>
-
-<div class="toolbar">
-<button class="primary" onclick="saveSegment()">Save Segment</button>
-<button class="gray" onclick="insertVisualTemplate()">Insert Visual Block Template</button>
-<button class="gray" onclick="clearEditor()">Clear</button>
+<div class="toolbar"><button class="primary" onclick="saveSegment()">Save Segment</button><button class="gray" onclick="insertVisualTemplate()">Insert Visual Block Template</button><button class="gray" onclick="clearEditor()">Clear</button></div>
 </div>
-
+<div class="editor"><h3>Saved Segments (<span id="count">0</span>)</h3><div id="list"></div>
+<div class="toolbar"><button class="primary" onclick="copyAll()">Copy All</button><button class="success" onclick="download()">Download TXT</button><button class="danger" onclick="wipe()">Wipe</button></div></div>
 </div>
-
-<div class="editor">
-<h3>Saved Segments (<span id="count">0</span>)</h3>
-<div id="list"></div>
-
-<div class="toolbar">
-<button class="primary" onclick="copyAll()">Copy All</button>
-<button class="success" onclick="download()">Download TXT</button>
-<button class="danger" onclick="wipe()">Wipe</button>
-</div>
-</div>
-
-</div>
-
 <script>
-
 let data = JSON.parse(localStorage.getItem("vizcaya_compiler_v2") || "[]");
-
-function now() {
-    return new Date().toISOString();
-}
-
-function countChars() {
-    document.getElementById("counter").innerText =
-        document.getElementById("content").value.length + " characters";
-}
-
-function save() {
-    localStorage.setItem("vizcaya_compiler_v2", JSON.stringify(data));
-}
-
-function saveSegment() {
-    let label = document.getElementById("label").value || "Untitled";
-    let type = document.getElementById("type").value;
-    let tags = document.getElementById("tags").value;
-    let content = document.getElementById("content").value;
+function now() {    return new Date().toISOString();}
+function countChars() {    document.getElementById("counter").innerText =        document.getElementById("content").value.length + " characters";}
+function save() {    localStorage.setItem("vizcaya_compiler_v2", JSON.stringify(data));}
+function saveSegment() {    let label = document.getElementById("label").value || "Untitled";    let type = document.getElementById("type").value;    let tags = document.getElementById("tags").value;    let content = document.getElementById("content").value;
 
     if (!content.trim()) return alert("Empty content");
-
-    data.push({
-        label,
-        type,
-        tags,
-        time: now(),
-        content
-    });
-
-    save();
-    render();
-    clearEditor();
-}
-
-function clearEditor() {
-    document.getElementById("label").value = "";
-    document.getElementById("tags").value = "";
-    document.getElementById("content").value = "";
-    countChars();
-}
-
-function insertVisualTemplate() {
-    document.getElementById("type").value = "ATMOSPHERIC_VISUAL_BLOCK";
-    document.getElementById("content").value =
-`SATELLITE:
-
+    data.push({        label,        type,        tags,        time: now(),        content    });
+    save();    render();    clearEditor();}
+function clearEditor() {    document.getElementById("label").value = "";    document.getElementById("tags").value = "";    document.getElementById("content").value = "";    countChars();}
+function insertVisualTemplate() {    document.getElementById("type").value = "ATMOSPHERIC_VISUAL_BLOCK";    document.getElementById("content").value =`SATELLITE:
 RADAR:
-
 SPC/WPC:
-
 SURFACE ANALYSIS:
-
 MODEL SIGNALS:
-
-NOTES:`;
-}
-
-function render() {
-    let list = document.getElementById("list");
-    list.innerHTML = "";
+NOTES:`;}
+function render() {    let list = document.getElementById("list");    list.innerHTML = "";
 
     document.getElementById("count").innerText = data.length;
+    data.forEach((d, i) => {        let div = document.createElement("div");        div.className = "segment";
 
-    data.forEach((d, i) => {
-        let div = document.createElement("div");
-        div.className = "segment";
+        div.innerHTML = `            <div>                <strong>${d.label}</strong><br>                <span class="meta">${d.type} | ${d.time}</span>            </div>            <button onclick="removeItem(${i})">Delete</button>        `;        list.appendChild(div);    });
+    save();}
+function removeItem(i) {    data.splice(i, 1);    render();}
+function getText() {    return data.map(d =>`[FILE: ${d.label}]TYPE: ${d.type}TIME: ${d.time}TAGS: ${d.tags}
 
-        div.innerHTML = `
-            <div>
-                <strong>${d.label}</strong><br>
-                <span class="meta">${d.type} | ${d.time}</span>
-            </div>
-            <button onclick="removeItem(${i})">Delete</button>
-        `;
-        list.appendChild(div);
-    });
+CONTENT:${d.content}---`).join("\n");}
+function copyAll() {    navigator.clipboard.writeText(getText());    alert("Copied");}
+function download() {    let blob = new Blob([getText()], {type:"text/plain"});    let a = document.createElement("a");    a.href = URL.createObjectURL(blob);    a.download = "vizcaya_ai_stack.txt";    a.click();}
+function wipe() {    if(confirm("Wipe everything?")) {        data = [];        render();    }}
 
-    save();
-}
-
-function removeItem(i) {
-    data.splice(i, 1);
-    render();
-}
-
-function getText() {
-    return data.map(d =>
-`[FILE: ${d.label}]
-TYPE: ${d.type}
-TIME: ${d.time}
-TAGS: ${d.tags}
-
-CONTENT:
-${d.content}
----
-`).join("\n");
-}
-
-function copyAll() {
-    navigator.clipboard.writeText(getText());
-    alert("Copied");
-}
-
-function download() {
-    let blob = new Blob([getText()], {type:"text/plain"});
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "vizcaya_ai_stack.txt";
-    a.click();
-}
-
-function wipe() {
-    if(confirm("Wipe everything?")) {
-        data = [];
-        render();
-    }
-}
+// Call render on initial load to show data saved in localStorage
+render(); 
+</script>
 </html>
