@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Meteorological Command Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* Base Styling & Theme Variables */
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #141a29;
+            --bg-accent: #1a2336;
+            --border-color: #26334d;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --pulse-green: #10b981;
+            --threat-red: #ef4444;
+            --btn-blue: #3b82f6;
+            --btn-blue-hover: #2563eb;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        /* Main Dashboard Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Grid Panel Placeholders */
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header-panel {
+            grid-column: span 12;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .header-panel h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: -0.02em;
+        }
+
+        /* Fixed Map Container styling for Leaflet mounting */
+        .map-panel {
+            grid-column: span 8;
+            height: 480px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background-color: #0b111e;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar-panel {
+            grid-column: span 4;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* Full Width AI Briefing Box at Bottom */
+        .ai-briefing-container {
+            grid-column: span 12;
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-accent) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 10px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .ai-briefing-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        .ai-status-pulse {
+            width: 9px;
+            height: 9px;
+            background-color: var(--pulse-green);
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 2.5s infinite;
+        }
+
+        .ai-briefing-header h3 {
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-timestamp {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-variant-numeric: tabular-nums;
+            margin-left: auto;
+            margin-right: 16px;
+        }
+
+        /* Copy Button Styling */
+        .copy-briefing-btn {
+            background-color: var(--btn-blue);
+            color: var(--text-primary);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .copy-briefing-btn:hover {
+            background-color: var(--btn-blue-hover);
+        }
+
+        .copy-briefing-btn:active {
+            transform: scale(0.97);
+        }
+
+        .ai-briefing-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 28px;
+        }
+
+        .briefing-column h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.03em;
+        }
+
+        .briefing-column p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Decorative Components & Badges */
+        .badge {
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .badge.destructive {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--threat-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .badge.quiet {
+            background: rgba(156, 163, 175, 0.12);
+            color: #a1a1aa;
+            border: 1px solid rgba(156, 163, 175, 0.2);
+        }
+
+        .sparkle-icon {
+            color: #f59e0b;
+        }
+
+        /* Pulse Keyframe Animation */
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Responsive Breakpoint */
+        @media (max-width: 1024px) {
+            .map-panel { grid-column: span 12; }
+            .sidebar-panel { grid-column: span 12; height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-grid">
+        
+        <div class="panel header-panel">
+            <h1>Global Multi-Basin Meteorological System</h1>
+            <span style="color: var(--text-secondary); font-size: 0.9rem;">System Status: Operational</span>
+        </div>
+
+        <div class="panel map-panel">
+            <div id="map"></div>
+        </div>
+
+        <div class="panel sidebar-panel">
+            <h3 style="margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Active Metrics</h3>
+            
+            <div class="metric-row">
+                <span>System Identifier:</span>
+                <span style="color: var(--text-primary); font-weight: 500;">STY Bavi (09W)</span>
+            </div>
+            <div class="metric-row">
+                <span>Max Sustained Winds:</span>
+                <span style="color: var(--threat-red); font-weight: bold;">166 mph (267 km/h)</span>
+            </div>
+            <div class="metric-row">
+                <span>Minimum Central Pressure:</span>
+                <span style="color: #3b82f6; font-weight: bold;">919 mb (hPa)</span>
+            </div>
+            <div class="metric-row">
+                <span>Current Target Zone:</span>
+                <span style="color: #f59e0b; font-weight: 500;">Guam / Mariana Islands</span>
+            </div>
+            <div class="metric-row">
+                <span>Atlantic / East Pacific:</span>
+                <span style="color: var(--pulse-green);">0 Active Systems</span>
+            </div>
+        </div>
+
+        <div class="ai-briefing-container">
+            <div class="ai-briefing-header">
+                <div class="ai-status-pulse"></div>
+                <h3><span class="sparkle-icon">✨</span> Automated Global Basin Insights</h3>
+                
+                <span class="ai-timestamp">Last synchronized update: Just now</span>
+                
+                <button class="copy-briefing-btn" onclick="copyBriefingContent(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span>Copy Briefing</span>
+                </button>
+            </div>
+            
+            <div class="ai-briefing-content" id="briefingTargetText">
+                <div class="briefing-column">
+                    <h4><span class="badge destructive">CRITICAL THREAT</span> West Pacific Basin</h4>
+                    <p><strong>Super Typhoon Bavi (09W)</strong> has undergone explosive deepening, maintaining classic high-end Category 5 equivalent intensity. The minimum barometric central pressure is analyzed at **919 mb**, driving sustained wind profiles of **166 mph** with extreme localized gusts up to 200 mph. Bavi's track is maintaining a tight westward progression toward the Mariana Islands. Destructive typhoon-force winds and devastating storm surge hazards threaten to make landfall within the next 24 hours near Rota and just north of Guam, where emergency protocols under Condition of Readiness (COR) 2 are fully locked in.</p>
+                </div>
+                
+                <div class="briefing-column">
+                    <h4><span class="badge quiet">MONITORING</span> Atlantic & East Pacific Basins</h4>
+                    <p>The National Hurricane Center (NHC) confirms zero active tropical cyclone anomalies across the North Atlantic, Caribbean Sea, Gulf of Mexico, or Eastern Pacific. Strong <strong>El Niño atmospheric conditions</strong> are successfully generating robust vertical wind shear boundaries. This shear pattern continues to suppress convective organization and early-season wave development across standard developmental paths. No tropical genesis is modeled within the next 7 days.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Initialize Leaflet Map Object pointed toward the Western Pacific basin
+        const map = L.map('map', {
+            zoomControl: true,
+            attributionControl: false
+        }).setView([14.5, 143.0], 5); // Centers directly between Guam and the brewing storm track
+
+        // 2. Mount dark themed CartoDB basemap tiles
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // 3. Draw Super Typhoon Bavi's tracking vectors manually on the active map canvas
+        const stormTrackPoints = [
+            [11.2, 149.5], // Formation point
+            [12.4, 147.2], // Tropical Storm threshold
+            [13.6, 145.1], // Typhoon intensification
+            [14.2, 143.8], // Current 166mph Super Typhoon Location
+            [14.9, 141.5]  // Projected point past Rota/Guam
+        ];
+
+        // Draw the tracking vector path line
+        const trackLine = L.polyline(stormTrackPoints, {
+            color: '#ef4444',
+            weight: 3,
+            dashArray: '6, 8',
+            opacity: 0.8
+        }).addTo(map);
+
+        // Add distinct tactical marker directly on top of Bavi's eye coordinate position
+        const currentEyeLocation = [14.2, 143.8];
+        const stormMarker = L.circleMarker(currentEyeLocation, {
+            color: '#ffffff',
+            fillColor: '#ef4444',
+            fillOpacity: 0.9,
+            radius: 10,
+            weight: 2
+        }).addTo(map);
+
+        // Permanently display the storm identifier label above the tracking marker
+        stormMarker.bindTooltip("<b>STY BAVI (09W)</b><br>166 MPH | 919 mb", {
+            permanent: true,
+            direction: 'top',
+            className: 'custom-map-label'
+        }).openTooltip();
+
+        // Add marker for Guam's proximity location
+        const guamCoords = [13.44, 144.79];
+        L.circleMarker(guamCoords, {
+            color: '#3b82f6',
+            fillColor: '#1d4ed8',
+            fillOpacity: 0.5,
+            radius: 6
+        }).addTo(map).bindTooltip("Guam (Target Zone)", { permanent: false });
+
+        // Clipboard Copy Action Script Handler
+        function copyBriefingContent(buttonElement) {
+            const targetContainer = document.getElementById('briefingTargetText');
+            if (!targetContainer) return;
+
+            const plainTextBriefing = targetContainer.innerText;
+
+            navigator.clipboard.writeText(plainTextBriefing).then(() => {
+                const textLabel = buttonElement.querySelector('span');
+                const nativeLabelText = textLabel.innerText;
+                
+                textLabel.innerText = "Copied!";
+                buttonElement.style.backgroundColor = "#10b981";
+                
+                setTimeout(() => {
+                    textLabel.innerText = nativeLabelText;
+                    buttonElement.style.backgroundColor = "";
+                }, 2000);
+            }).catch(err => {
+                console.error("Clipboard snapshot deployment failure: ", err);
+            });
+        }
+    </script>
+
+</body>
+</html>
