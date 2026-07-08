@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>    
+    <meta charset="UTF-8">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>Fail-Safe Tropical Cyclone Intercept Desk</title>    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />    
+    <style>        
+        :root {            
+            --bg-main: #0b0f19;            
+            --bg-card: #141a29;            
+            --bg-accent: #1a2336;            
+            --border-color: #26334d;            
+            --text-primary: #f3f4f6;            
+            --text-secondary: #9ca3af;            
+            --pulse-green: #10b981;            
+            --threat-red: #ef4444;            
+            --btn-blue: #3b82f6;            
+            --btn-blue-hover: #2563eb;        
+            --warn-orange: #f59e0b;
+        }        
+        body {            
+            background-color: var(--bg-main);            
+            color: var(--text-primary);            
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;            
+            margin: 0;            
+            padding: 24px;            
+            box-sizing: border-box;        
+        }        
+        .dashboard-grid {            
+            display: grid;            
+            grid-template-columns: repeat(12, 1fr);            
+            gap: 20px;            
+            max-width: 1600px;            
+            margin: 0 auto;        
+        }        
+        .panel {            
+            background-color: var(--bg-card);            
+            border: 1px solid var(--border-color);            
+            border-radius: 12px;            
+            padding: 20px;            
+            box-sizing: border-box;        
+        }        
+        .header-panel {            
+            grid-column: span 12;            
+            display: flex;            
+            justify-content: space-between;            
+            align-items: center;            
+            padding: 15px 20px;        
+        }        
+        .header-panel h1 {            
+            margin: 0;            
+            font-size: 1.4rem;            
+            letter-spacing: -0.02em;        
+        }        
+        .storm-selector {            
+            background-color: var(--bg-main);            
+            color: var(--text-primary);            
+            border: 1px solid var(--border-color);            
+            padding: 8px 14px;            
+            border-radius: 6px;            
+            cursor: pointer;            
+            font-weight: 600;        
+        }        
+        .map-panel {            
+            grid-column: span 8;            
+            height: 520px;            
+            padding: 0;            
+            overflow: hidden;            
+            border: 1px solid var(--border-color);            
+            border-radius: 12px;        
+        }        
+        #map {            
+            width: 100%;            
+            height: 100%;            
+            background-color: #0b111e;        
+        }        
+        .sidebar-panel {            
+            grid-column: span 4;            
+            height: 520px;            
+            display: flex;            
+            flex-direction: column;            
+            gap: 15px;            
+            overflow-y: auto;        
+        }        
+        .metric-row {            
+            display: flex;            
+            justify-content: space-between;            
+            border-bottom: 1px solid var(--border-color);            
+            padding-bottom: 8px;            
+            font-size: 0.95rem;        
+        }        
+        .metric-value {            
+            font-weight: 600;            
+            color: var(--text-primary);        
+        }        
+        .manual-controls {
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .control-btn {
+            background-color: var(--bg-accent);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 6px;
+            text-align: left;
+            transition: background 0.2s;
+        }
+        .control-btn:hover {
+            background-color: var(--border-color);
+        }
+        .ai-briefing-container {            
+            grid-column: span 12;            
+            background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-accent) 100%);            
+            border: 1px solid var(--border-color);            
+            border-radius: 12px;            
+            padding: 24px;        
+        }        
+        .briefing-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+        .ai-text-box {
+            width: 100%;
+            height: 160px;
+            background-color: #0b0f19;
+            color: #34d399; /* Target green terminal look for clear text readability */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: none;
+            box-sizing: border-box;
+        }
+        .copy-btn {
+            background-color: var(--btn-blue);
+            color: var(--text-primary);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: var(--btn-blue-hover);
+        }
+        .badge {            
+            font-size: 0.72rem;            
+            padding: 3px 8px;            
+            border-radius: 4px;            
+            font-weight: 700;            
+            text-transform: uppercase;        
+        }        
+        .badge.alert-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }        
+        .badge.alert-orange { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }        
+        .custom-map-label {            
+            background-color: var(--bg-card) !important;            
+            color: var(--text-primary) !important;            
+            border: 1px solid var(--border-color) !important;            
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;            
+            border-radius: 6px;            
+            padding: 4px 8px;        
+            font-size: 0.85rem;
+        }        
+        @media (max-width: 1024px) {            
+            .map-panel, .sidebar-panel { grid-column: span 12; height: auto; }        
+        }    
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-grid">        
+        <div class="panel header-panel">            
+            <div style="display: flex; flex-direction: column; gap: 4px;">                
+                <h1>Global Cyclone Tracking Console</h1>                
+                <span id="data-status" style="color: var(--warn-orange); font-size: 0.85rem;">Initializing system parameters...</span>            
+            </div>            
+            <select id="storm-selector-dropdown" class="storm-selector" onchange="switchStorm(this.value)">                
+                <option value="bavi">SUPER TYPHOON BAVI (Active)</option>            
+                <option value="invest1">AREA OF INTEREST (Invest 94W)</option>            
+                <option value="invest2">AREA OF INTEREST (Invest 95W)</option>            
+            </select>        
+        </div>        
+
+        <div class="panel map-panel">            
+            <div id="map"></div>        
+        </div>        
+
+        <div class="panel sidebar-panel">            
+            <h3 style="margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+                <span>System Metrics</span>                
+                <span id="threat-badge" class="badge alert-red">Cat 4/5 Primary Threat</span>            
+            </h3>            
+            <div class="metric-row"><span>System Name:</span><span id="m-name" class="metric-value">BAVI (09W)</span></div>            
+            <div class="metric-row"><span>Max Sustained Winds:</span><span id="m-wind" class="metric-value" style="color: var(--threat-red);">155 mph</span></div>            
+            <div class="metric-row"><span>Current Forward Speed:</span><span id="m-speed" class="metric-value">13 mph (21 km/h) West</span></div>            
+            <div class="metric-row"><span>Coordinates:</span><span id="m-coords" class="metric-value" style="color: #f59e0b;">17.10°N, 133.80°E</span></div>            
+            <div class="metric-row"><span>Basin Sector:</span><span id="m-basin" class="metric-value">Philippine Sea</span></div>            
+            
+            <div class="manual-controls">
+                <h4 style="margin: 0 0 10px 0; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Console Intercept Toggles</h4>
+                <button class="control-btn" onclick="switchStorm('bavi')">🎯 Focus: Super Typhoon Bavi (155 mph)</button>
+                <button class="control-btn" onclick="switchStorm('invest1')">🟡 Focus: Area of Interest 1 (Invest 94W)</button>
+                <button class="control-btn" onclick="switchStorm('invest2')">🟡 Focus: Area of Interest 2 (Invest 95W)</button>
+            </div>
+        </div>        
+
+        <div class="panel ai-briefing-container">            
+            <div class="briefing-header-row">
+                <h3 style="margin:0; font-size: 1.1rem;">
+                    🌐 Consolidated Basin Text Export (Ready for AI Prompting)
+                </h3>
+                <button class="copy-btn" onclick="copyBriefingText()">📋 Copy All Data</button>
+            </div>                
+            <textarea id="ai-all-in-one-box" class="ai-text-box" readonly></textarea>
+        </div>    
+    </div>    
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>    
+    <script>
+        let map;
+        let mapMarkerGroup;
+
+        const localStormDatabase = {
+            bavi: {
+                name: "SUPER TYPHOON BAVI (09W)",
+                lat: 17.10,
+                lon: 133.80,
+                wind: "155 mph",
+                speed: "13 mph (21 km/h) West",
+                basin: "Philippine Sea (Targeting Taiwan Corridor)",
+                alert: "Red",
+                badgeText: "Cat 4/5 Primary Threat",
+                desc: "Following a catastrophic Category 5 eyewall pass directly over the northern coast of Rota, Bavi is maintaining extreme high-end strength. The system is entering an active eyewall replacement cycle with 29-35 mph northeasterly vertical wind shear acting to temper further short-term rapid intensification. Strong radial core symmetry remains visible via satellite tracking fields as it pushes towards the Yaeyama Islands and the Taiwan coastal envelope."
+            },
+            invest1: {
+                name: "AREA OF INTEREST (Invest 94W)",
+                lat: 12.40,
+                lon: 144.20,
+                wind: "30 mph",
+                speed: "15 mph WNW",
+                basin: "East of Guam / Mariana Islands",
+                alert: "Orange",
+                badgeText: "Invest Status - Medium",
+                desc: "A sprawling tropical disturbance moving through the wake left by Bavi. Convective flare-ups are currently disorganized around a broad, elongated low-level cyclonic rotation base. Vertical wind shear remains favorable, allowing for potential consolidation over the next 48 to 72 hours."
+            },
+            invest2: {
+                name: "AREA OF INTEREST (Invest 95W)",
+                lat: 21.00,
+                lon: 128.50,
+                wind: "25 mph",
+                speed: "8 mph Slow Drift",
+                basin: "East China Sea Boundary",
+                alert: "Orange",
+                badgeText: "Invest Status - Low",
+                desc: "Disorganized thunderstorm clustering interacting heavily with a mid-latitude trough boundary. Strong upper-level northerly wind shear is stripping away moisture to the south, keeping the convective engines entirely unaligned from the superficial low-pressure base."
+            }
+        };
+
+        function initMap() {
+            map = L.map('map', { zoomControl: true, attributionControl: false }).setView([16.5, 134.0], 4);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+            mapMarkerGroup = L.layerGroup().addTo(map);
+            
+            renderAllAssetsOnMap();
+            switchStorm('bavi');
+            compileMasterBriefing();
+        }
+
+        function renderAllAssetsOnMap() {
+            Object.keys(localStormDatabase).forEach(key => {
+                const storm = localStormDatabase[key];
+                const isSevere = storm.alert === "Red";
+                
+                L.circleMarker([storm.lat, storm.lon], {
+                    color: '#ffffff',
+                    fillColor: isSevere ? '#ef4444' : '#f59e0b',
+                    fillOpacity: isSevere ? 0.25 : 0.15,
+                    radius: isSevere ? 35 : 20,
+                    weight: 1
+                }).addTo(mapMarkerGroup);
+
+                const centerDot = L.circleMarker([storm.lat, storm.lon], {
+                    color: '#ffffff',
+                    fillColor: isSevere ? '#ef4444' : '#f59e0b',
+                    fillOpacity: 1,
+                    radius: 5,
+                    weight: 1.5
+                }).addTo(mapMarkerGroup);
+
+                centerDot.bindTooltip(`<b>${storm.name}</b><br>Winds: ${storm.wind}`, {
+                    permanent: false, direction: 'top', className: 'custom-map-label'
+                });
+            });
+        }
+
+        function switchStorm(key) {
+            const storm = localStormDatabase[key];
+            if (!storm) return;
+
+            map.setView([storm.lat, storm.lon], key === 'bavi' ? 5 : 6);
+            document.getElementById('storm-selector-dropdown').value = key;
+
+            document.getElementById('m-name').innerText = storm.name;
+            document.getElementById('m-wind').innerText = storm.wind;
+            document.getElementById('m-speed').innerText = storm.speed;
+            document.getElementById('m-coords').innerText = `${storm.lat.toFixed(2)}°N, ${storm.lon.toFixed(2)}°E`;
+            document.getElementById('m-basin').innerText = storm.basin;
+
+            const badge = document.getElementById('threat-badge');
+            badge.innerText = storm.badgeText;
+            badge.className = `badge ${storm.alert === 'Red' ? 'alert-red' : 'alert-orange'}`;
+
+            document.getElementById('data-status').innerText = `Console tracking lock active on: ${storm.name}`;
+        }
+
+        // Loops through all entries in the data store and formats them into a single string
+        function compileMasterBriefing() {
+            let outputText = "=== WESTERN PACIFIC BASIN METEOROLOGICAL TELEMETRY EXPORT ===\n\n";
+            
+            Object.keys(localStormDatabase).forEach(key => {
+                const item = localStormDatabase[key];
+                outputText += `SYSTEM: ${item.name}\n`;
+                outputText += `Coordinates: ${item.lat.toFixed(2)}N, ${item.lon.toFixed(2)}E\n`;
+                outputText += `Max Sustained Winds: ${item.wind}\n`;
+                outputText += `Movement profile: ${item.speed}\n`;
+                outputText += `Current Location: ${item.basin}\n`;
+                outputText += `Threat Status: ${item.badgeText}\n`;
+                outputText += `Analysis: ${item.desc}\n`;
+                outputText += `------------------------------------------------------------\n\n`;
+            });
+            
+            outputText += "=== END OF LIVE METRICS EXPORT ===";
+            document.getElementById('ai-all-in-one-box').value = outputText;
+        }
+
+        function copyBriefingText() {
+            const textBox = document.getElementById('ai-all-in-one-box');
+            textBox.select();
+            textBox.setSelectionRange(0, 99999); // Mobile compliance constraint fallback
+            navigator.clipboard.writeText(textBox.value).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerText = "✅ Copied to Clipboard!";
+                setTimeout(() => btn.innerText = "📋 Copy All Data", 2500);
+            });
+        }
+
+        initMap();
+    </script>
+</body>
+</html>
