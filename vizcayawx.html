@@ -17,8 +17,8 @@
         table { width: 100%; border-collapse: collapse; min-width: 1300px; }
         thead th { background: #f1f5f9; color: var(--primary); padding: 18px 10px; text-transform: uppercase; font-size: 11px; font-weight: 900; border-bottom: 2px solid #e2e8f0; }
         td { padding: 22px 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
-        .condition-text { font-size: 20px; font-weight: 900; color: #1e293b; display: block; line-height: 1.1; margin-bottom: 4px; }
-        .condition-emoji { font-size: 24px; display: block; margin-bottom: 5px; }
+        .condition-text { font-size: 18px; font-weight: 900; color: #1e293b; display: block; line-height: 1.1; margin-top: 4px; }
+        .condition-emoji { font-size: 26px; display: block; line-height: 1.0; }
         .date-col { font-weight: 900; color: var(--primary); text-align: left !important; padding-left: 25px; border-right: 2px solid #f1f5f9; font-size: 21px; }
         .day-label { font-size: 13px; color: var(--text-muted); display: block; text-transform: uppercase; font-weight: 900; }
         .temp-forecast { font-size: 26px; font-weight: 900; display: block; }
@@ -63,7 +63,7 @@
         <!-- EXTENDED FORECAST -->
         <div class="section-title"><span>EXTENDED STRATEGIC FORECAST (DAYS 8-14)</span></div>
         <div class="table-wrapper">
-            <table><thead><tr><th>Date</th><th>Condition</th><th>Confidence</th><th>Forecast (H/L)</th><th>Rain Total</th><th>Humidity</th><th>UV</th><th>Wind Dominant</th></tr></thead><tbody id="extendedBody"></tbody></table>
+            <table><thead><tr><th>Date</th><th>Condition</th><th>Confidence</th><th>Forecast (H/L)</th><th>UV</th><th>Rain Total</th><th>Humidity</th><th>Wind Dominant</th></tr></thead><tbody id="extendedBody"></tbody></table>
         </div>
 
         <!-- 24-HOUR TACTICAL -->
@@ -84,6 +84,7 @@
 
 <script>
 function getCompass(deg) { const sectors = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]; return sectors[Math.round(deg / 22.5) % 16]; }
+
 function getNWSLabel(prob, cape, cloud) {
     if (prob > 50 && cape > 500) return "Showers And Thunderstorms Likely";
     if (prob > 25 && cape > 500) return "Chance Showers And Thunderstorms";
@@ -95,6 +96,17 @@ function getNWSLabel(prob, cape, cloud) {
     if (cloud < 75) return "Partly Cloudy";
     return "Mostly Cloudy";
 }
+
+function getConditionEmoji(label) {
+    const l = label.toLowerCase();
+    if (l.includes("thunderstorm") || l.includes("t-storm")) return "⛈️";
+    if (l.includes("shower") || l.includes("rain") || l.includes("likely")) return "🌧️";
+    if (l.includes("sunny") || l.includes("clear")) return "☀️";
+    if (l.includes("partly sunny") || l.includes("partly cloudy")) return "⛅";
+    if (l.includes("mostly cloudy") || l.includes("cloudy") || l.includes("overcast")) return "☁️";
+    return "🌡️";
+}
+
 function getConfidenceUI(dayIndex, prob, cape) {
     let score = 98 - (dayIndex * 6) - (prob > 40 ? 12 : 0) - (cape > 1200 ? 8 : 0);
     score = Math.max(score, 30);
@@ -102,65 +114,194 @@ function getConfidenceUI(dayIndex, prob, cape) {
     return `<div class="conf-box"><div class="conf-meter"><div class="conf-fill" style="width:${score}%; background:${color};"></div></div><span class="conf-text" style="color:${color}">${score}%</span></div>`;
 }
 
+function getHeatIndex(t, rh) {
+    if (t < 80) return t;
+    const hi = 0.5 * (t + 61.0 + ((t - 68.0) * 1.2) + (rh * 0.094));
+    return Math.round(hi);
+}
+
 async function loadDash() {
     try {
-        const almanac = await (await fetch('https://jimegan2025.github.io/almanac.json')).json();
-        const weather = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&hourly=temperature_2m,precipitation_probability,precipitation,relative_humidity_2m,cloud_cover,cape,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=16')).json();
+        const [almanacRes, weatherRes] = await Promise.all([
+            fetch('https://jimegan2025.github.io/almanac.json'),
+            fetch('https://api.open-meteo.com/v1/forecast?latitude=30.509747&longitude=-97.692116&hourly=temperature_2m,precipitation_probability,precipitation,relative_humidity_2m,cloud_cover,cape,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,rain_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=16&models=best_match,gfs_graphcast025')
+        ]);
+
+        if (!almanacRes.ok || !weatherRes.ok) throw new Error("Data retrieval failed.");
+        
+        const almanac = await almanacRes.json();
+        const weather = await weatherRes.json();
 
         document.getElementById("asOfTime").innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         const hourlyBody = document.getElementById("hourlyBody");
-        const currentHour = new Date().getHours();
-        const startH = weather.hourly.time.findIndex(t => t.includes(`T${currentHour.toString().padStart(2, '0')}:00`));
+        
+        const chicagoTimeStr = new Date().toLocaleString("sv-SE", { timeZone: "America/Chicago" }); 
+        const chicagoHourStr = chicagoTimeStr.substring(0, 13).replace(' ', 'T') + ':00';
+        
+        let startH = weather.hourly.time.indexOf(chicagoHourStr);
+        if (startH === -1) {
+            const currentHour = new Date().getHours();
+            startH = weather.hourly.time.findIndex(t => t.includes(`T${currentHour.toString().padStart(2, '0')}:00`));
+            if (startH === -1) startH = 0;
+        }
+
+        const h_time = weather.hourly.time;
+        const h_temp = weather.hourly.temperature_2m_best_match || weather.hourly.temperature_2m;
+        const h_temp_ai = weather.hourly.temperature_2m_gfs_graphcast025;
+        const h_rh = weather.hourly.relative_humidity_2m_best_match || weather.hourly.relative_humidity_2m;
+        const h_pop = weather.hourly.precipitation_probability_best_match || weather.hourly.precipitation_probability;
+        const h_precip = weather.hourly.precipitation_best_match || weather.hourly.precipitation;
+        const h_cloud = weather.hourly.cloud_cover_best_match || weather.hourly.cloud_cover;
+        const h_cape = weather.hourly.cape_best_match || weather.hourly.cape || [];
+        const h_wind_spd = weather.hourly.wind_speed_10m_best_match || weather.hourly.wind_speed_10m;
+        const h_wind_dir = weather.hourly.wind_direction_10m_best_match || weather.hourly.wind_direction_10m;
+
         for(let i = startH; i < startH + 24; i++) {
-            const hDate = new Date(weather.hourly.time[i]);
-            hourlyBody.innerHTML += `<tr>
+            if (i >= h_time.length) break;
+            const hDate = new Date(h_time[i]);
+            
+            const tempVal = h_temp[i];
+            const graphcastTempVal = h_temp_ai ? h_temp_ai[i] : null;
+            const humVal = h_rh[i];
+            const windDirVal = h_wind_dir[i];
+            const windSpdVal = h_wind_spd[i];
+            const precipProbVal = h_pop[i];
+            const precipVal = h_precip[i];
+            const capeVal = h_cape.length ? h_cape[i] : 0;
+            const cloudVal = h_cloud.length ? h_cloud[i] : 0;
+
+            const isPrecipSpike = precipVal >= 0.05;
+            const rowClass = isPrecipSpike ? ' class="precip-spike"' : '';
+
+            const heatIndexVal = getHeatIndex(tempVal, humVal);
+            let tempDisplay = `${Math.round(tempVal)}°`;
+
+            if (heatIndexVal >= Math.round(tempVal) + 3) {
+                tempDisplay += `<br><span style="font-size: 11px; color: #b91c1c; font-weight: 800;">FEELS: ${heatIndexVal}°</span>`;
+            }
+            if (graphcastTempVal !== null && graphcastTempVal !== undefined) {
+                tempDisplay += ` <span style="font-size: 13px; color: var(--accent); font-weight: 800;">(AI: ${Math.round(graphcastTempVal)}°)</span>`;
+            }
+
+            hourlyBody.innerHTML += `<tr${rowClass}>
                 <td style="font-weight:900;">${hDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                <td>${Math.round(weather.hourly.temperature_2m[i])}°</td>
-                <td>${weather.hourly.relative_humidity_2m[i]}%</td>
-                <td class="wind-dir">${getCompass(weather.hourly.wind_direction_10m[i])}</td>
-                <td>${Math.round(weather.hourly.wind_speed_10m[i])} mph</td>
-                <td>${weather.hourly.precipitation_probability[i]}%</td>
-                <td>${weather.hourly.precipitation[i].toFixed(2)}"</td>
-                <td>${getNWSLabel(weather.hourly.precipitation_probability[i], weather.hourly.cape[i], weather.hourly.cloud_cover[i])}</td>
+                <td>${tempDisplay}</td>
+                <td>${humVal}%</td>
+                <td class="wind-dir">${getCompass(windDirVal)}</td>
+                <td>${Math.round(windSpdVal)} mph</td>
+                <td>${precipProbVal}%</td>
+                <td>${precipVal.toFixed(2)}"</td>
+                <td>${getNWSLabel(precipProbVal, capeVal, cloudVal)}</td>
             </tr>`;
         }
 
+        const d_time = weather.daily.time;
+        const d_temp_max = weather.daily.temperature_2m_max_best_match || weather.daily.temperature_2m_max;
+        const d_temp_min = weather.daily.temperature_2m_min_best_match || weather.daily.temperature_2m_min;
+        const d_pop_max = weather.daily.precipitation_probability_max_best_match || weather.daily.precipitation_probability_max;
+        const d_rain_sum = weather.daily.rain_sum_best_match || weather.daily.rain_sum;
+        const d_wind_spd_max = weather.daily.wind_speed_10m_max_best_match || weather.daily.wind_speed_10m_max;
+        const d_wind_gust_max = weather.daily.wind_gusts_10m_max_best_match || weather.daily.wind_gusts_10m_max;
+        const d_wind_dir_dom = weather.daily.wind_direction_10m_dominant_best_match || weather.daily.wind_direction_10m_dominant;
+        const d_uv_max = weather.daily.uv_index_max_best_match || weather.daily.uv_index_max;
+
         let stats = { rain:0, tSum:0, nSum:0, records:0 };
-        weather.daily.time.forEach((dateStr, i) => {
+        
+        d_time.forEach((dateStr, i) => {
             if (i >= 14) return;
             const mmdd = dateStr.slice(5);
             const h = almanac[mmdd] || { avgH:75, avgL:55, recH:100, recHY:'?', recL:32, recLY:'?' };
-            const tH = weather.daily.temperature_2m_max[i];
-            const tL = weather.daily.temperature_2m_min[i];
-            const prob = weather.daily.precipitation_probability_max[i];
+            
+            const tH = d_temp_max[i];
+            const tL = d_temp_min[i];
+            const prob = d_pop_max[i];
+            const rainSum = d_rain_sum[i];
+            const windSpeedMax = d_wind_spd_max[i];
+            const windGustMax = d_wind_gust_max[i];
+            const windDirDominant = d_wind_dir_dom[i];
+            const uvMax = d_uv_max[i];
+
             const dayStart = i * 24;
-            const dayCape = Math.max(...weather.hourly.cape.slice(dayStart, dayStart + 24));
-            const avgHum = Math.round(weather.hourly.relative_humidity_2m.slice(dayStart, dayStart + 24).reduce((a,b)=>a+b,0) / 24);
-            const cond = getNWSLabel(prob, dayCape, Math.round(weather.hourly.cloud_cover.slice(dayStart, dayStart + 24).reduce((a,b)=>a+b,0)/24));
+
+            const dayCapeArray = h_cape.slice ? h_cape.slice(dayStart, dayStart + 24) : [];
+            const dayCape = dayCapeArray.length ? Math.max(...dayCapeArray) : 0;
+
+            const dayRhArray = h_rh.slice ? h_rh.slice(dayStart, dayStart + 24) : [];
+            const avgHum = dayRhArray.length ? Math.round(dayRhArray.reduce((a,b)=>a+b,0) / 24) : 0;
+
+            const dayCloudArray = h_cloud.slice ? h_cloud.slice(dayStart, dayStart + 24) : [];
+            const avgCloud = dayCloudArray.length ? Math.round(dayCloudArray.reduce((a,b)=>a+b,0)/24) : 50;
+
+            const cond = getNWSLabel(prob, dayCape, avgCloud);
+
+            const [yr, mo, dy] = dateStr.split('-');
+            const dayOfWeek = new Date(yr, mo - 1, dy).toLocaleDateString('en-US', { weekday: 'short' });
+
+            const isPrecipSpike = rainSum >= 0.25;
+            const rowClass = isPrecipSpike ? ' class="precip-spike"' : '';
+
+            const nearRecordHigh = tH >= (Number(h.recH) - 2);
+            const nearRecordLow = tL <= (Number(h.recL) + 2);
+            const heavyRain = rainSum >= 1.0;
+            if (nearRecordHigh || nearRecordLow || heavyRain) {
+                stats.records++;
+            }
+
+            const isWindy = windSpeedMax >= 15 || windGustMax >= 25;
+            const windColor = isWindy ? '#ea580c' : 'inherit';
+            const windWeight = isWindy ? '900' : 'normal';
 
             const rowData = `
-                <td class="date-col"><span class="day-label">${new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}</span>${mmdd}</td>
-                <td><span class="condition-text">${cond}</span></td>
+                <td class="date-col"><span class="day-label">${dayOfWeek}</span>${mmdd}</td>
+                <td>
+                    <span class="condition-emoji">${getConditionEmoji(cond)}</span>
+                    <span class="condition-text">${cond}</span>
+                </td>
                 <td>${getConfidenceUI(i, prob, dayCape)}</td>
                 <td><span class="temp-forecast"><span class="temp-high">${Math.round(tH)}°</span> / <span class="temp-low">${Math.round(tL)}°</span></span><span class="temp-norm-label">NORM: ${h.avgH}° / ${h.avgL}°</span></td>
-                ${i < 7 ? `<td class="history-box"><div style="color:#b91c1c;">REC: ${h.recH}°</div><div style="color:#1d4ed8;">REC: ${h.recL}°</div></td>` : `<td>${weather.daily.uv_index_max[i]}</td>`}
-                <td><strong style="font-size:18px;">${weather.daily.rain_sum[i].toFixed(2)}"</strong></td>
+                ${i < 7 ? 
+                    `<td class="history-box">
+                        <div style="color:#b91c1c; font-size: 14px; font-weight: 800;">REC: ${h.recH}° <span style="font-size:11px; color:#64748b; font-weight:700;">(${h.recHY})</span></div>
+                        <div style="color:#1d4ed8; font-size: 14px; font-weight: 800;">REC: ${h.recL}° <span style="font-size:11px; color:#64748b; font-weight:700;">(${h.recLY})</span></div>
+                     </td>` : 
+                    `<td><span style="font-weight: 900; font-size: 18px;">${Math.round(uvMax)}</span></td>`}
+                <td>
+                    <strong style="font-size:18px;">${rainSum.toFixed(2)}"</strong>
+                    <br>
+                    <span style="font-size: 11px; color: #0284c7; font-weight: 800; text-transform: uppercase;">${Math.round(prob)}% Chance</span>
+                </td>
                 <td style="font-weight:800; color:#0369a1;">${avgHum}%</td>
-                <td>${i < 7 ? `<span style="font-weight:900;">${Math.round(weather.daily.wind_speed_10m_max[i])}</span> <span class="wind-dir">${getCompass(weather.daily.wind_direction_10m_dominant[i])}</span>` : getCompass(weather.daily.wind_direction_10m_dominant[i])}</td>
+                <td style="color: ${windColor}; font-weight: ${windWeight};">
+                    ${i < 7 ? 
+                        `<span style="font-weight:900;">${Math.round(windSpeedMax)}</span> <span class="wind-dir">${getCompass(windDirDominant)}</span><br><span style="font-size: 11px; color: ${isWindy ? '#ea580c' : '#64748b'}; font-weight: 800;">GUST: ${Math.round(windGustMax)} mph</span>` : 
+                        getCompass(windDirDominant)}
+                </td>
             `;
-            if (i < 7) document.getElementById("dailyBody").innerHTML += `<tr>${rowData}</tr>`;
-            else document.getElementById("extendedBody").innerHTML += `<tr>${rowData}</tr>`;
-            stats.rain += weather.daily.rain_sum[i]; stats.tSum += (tH + tL) / 2; stats.nSum += (Number(h.avgH) + Number(h.avgL)) / 2;
+
+            if (i < 7) {
+                document.getElementById("dailyBody").innerHTML += `<tr${rowClass}>${rowData}</tr>`;
+            } else {
+                document.getElementById("extendedBody").innerHTML += `<tr${rowClass}>${rowData}</tr>`;
+            }
+
+            stats.rain += rainSum; 
+            stats.tSum += (tH + tL) / 2; 
+            stats.nSum += (Number(h.avgH) + Number(h.avgL)) / 2;
         });
 
         document.getElementById("status").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
         document.getElementById("sumRain").innerText = `${stats.rain.toFixed(2)}"`;
+        document.getElementById("recordCount").innerText = stats.records;
+
         const diff = (stats.tSum - stats.nSum) / 14;
         document.getElementById("sumTemp").innerText = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}°F`;
-    } catch (err) { document.getElementById("status").innerHTML = `<span style="color:red">ERROR: ${err.message}</span>`; }
+    } catch (err) { 
+        document.getElementById("status").innerHTML = `<span style="color:red">ERROR: ${err.message}</span>`; 
+    }
 }
+
 setInterval(() => { document.getElementById("currentDateTime").innerText = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }); }, 1000);
 loadDash();
 </script>
