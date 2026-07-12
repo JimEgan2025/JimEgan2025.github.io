@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Weather Consensus Board</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Consolas, Monaco, "Courier New", monospace, -apple-system, sans-serif;
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            padding: 25px 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1450px;
+            width: 100%;
+        }
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: -0.5px;
+        }
+        p {
+            color: #64748b;
+            font-size: 13px;
+        }
+        .controls-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        input {
+            background-color: #111827;
+            border: 1px solid #1e293b;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .time-badge {
+            background-color: #1e293b;
+            color: #38bdf8;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* Tables & Layout */
+        .section-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #e2e8f0;
+            margin-bottom: 12px;
+            margin-top: 35px;
+            border-left: 4px solid #38bdf8;
+            padding-left: 10px;
+            text-transform: uppercase;
+        }
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+        
+        .table-container {
+            background-color: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 13px;
+            min-width: 1300px; /* Force spreadsheet spacing */
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid #1e293b;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #1f2937;
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        /* Row Highlighting */
+        tr:hover {
+            background-color: #1f2937;
+        }
+        tr.today {
+            background-color: #1e293b;
+            border-left: 3px solid #38bdf8;
+        }
+
+        /* Alignments */
+        td.date-col {
+            text-align: left;
+            font-weight: bold;
+            color: #f1f5f9;
+        }
+        
+        /* Calculated Columns */
+        .calc-col {
+            background-color: rgba(56, 189, 248, 0.03);
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* Ground Truth highlighted column */
+        .gt-col {
+            background-color: rgba(16, 185, 129, 0.04);
+            color: #10b981;
+            font-weight: bold;
+        }
+        th.gt-header {
+            background-color: #064e3b;
+            color: #34d399;
+        }
+        
+        /* Summary Row elements (This Week, Next Week, Total) */
+        .summary-row {
+            background-color: #1f2937 !important;
+            font-weight: bold;
+            color: #f1f5f9;
+        }
+        .summary-row td {
+            border-top: 2px solid #38bdf8;
+        }
+        .summary-row .calc-col {
+            background-color: rgba(56, 189, 248, 0.08);
+            color: #38bdf8;
+        }
+        .summary-row .gt-col {
+            background-color: rgba(16, 185, 129, 0.08);
+            color: #10b981;
+        }
+        .pending-text {
+            color: #64748b;
+            font-style: italic;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>Vizcaya Weather Consensus</h1>
+                <p>Georgetown, TX (30.587, -97.641) — Consolidated Multi-Model Spreadsheet Dashboard</p>
+            </div>
+            <div class="controls-row">
+                <!-- VC API Key Input Box pre-populated with your verified key -->
+                <input type="text" id="vcKeyInput" value="556ZX74XKT3VBMGFNX626Q9JJ" placeholder="Paste VC API Key" style="width: 180px;">
+                <button onclick="fetchWeatherModels()">Sync Boards</button>
+                <div class="time-badge" id="live-time">12:30:00 PM</div>
+            </div>
+        </header>
+
+        <!-- 1. TEMPERATURES & MODEL VARIANCES TABLE -->
+        <div class="section-title">High/ Low Temperatures - Model Variances</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left; width: 8%;">Date</th>
+                        <th style="width: 5%;">Day</th>
+                        <th class="gt-header" style="width: 12%;">Visual Crossing (GT)</th>
+                        <th style="width: 11%;">European ECMWF-IFS</th>
+                        <th style="width: 11%;">European ECMWF-AIFS</th>
+                        <th style="width: 11%;">US - Global GFS</th>
+                        <th style="width: 11%;">US - Numerical Blend (NBM)</th>
+                        <th style="width: 11%;">GEM Canada</th>
+                        <th style="width: 11%;">Graphcast Experimental AI</th>
+                        <th style="width: 6%;" class="calc-col">Rain Prob Avg</th>
+                        <th style="width: 6%;" class="calc-col">Rain Amt Avg</th>
+                        <th style="width: 9%;" class="calc-col">Rain Range</th>
+                        <th style="width: 9%;" class="calc-col">Average Temp</th>
+                    </tr>
+                </thead>
+                <tbody id="temp-tbody">
+                    <tr><td colspan="13" style="padding: 30px; color: #64748b;">Fetching model variances...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. APPARENT TEMPERATURE AGREEMENT SPREADSHEET -->
+        <div class="section-title">Apparent Temperatures (Feels Like / Heat Index / Wind Chill °F)</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left; width: 8%;">Date</th>
+                        <th style="width: 5%;">Day</th>
+                        <th class="gt-header">Visual Crossing (GT)</th>
+                        <th>ECMWF IFS</th>
+                        <th>ECMWF-AIFS</th>
+                        <th>NAM</th>
+                        <th>RDPS (Reg)</th>
+                        <th>NOAA (NBM)</th>
+                        <th>DWD ICON (German)</th>
+                        <th>Graphcast</th>
+                        <th>GEM Canada</th>
+                        <th>SREF</th>
+                        <th>GFS</th>
+                        <th>GDPS (Global)</th>
+                        <th class="calc-col">Prob</th>
+                        <th class="calc-col">Average</th>
+                        <th class="calc-col">Min</th>
+                        <th class="calc-col">Max</th>
+                        <th class="calc-col">Range</th>
+                    </tr>
+                </thead>
+                <tbody id="apparent-tbody">
+                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching apparent temperatures...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. WIND SPEED & GUST AGREEMENT SPREADSHEET -->
+        <div class="section-title">Winds & Gusts (Sustained / Max Gusts mph)</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left; width: 8%;">Date</th>
+                        <th style="width: 5%;">Day</th>
+                        <th class="gt-header">Visual Crossing (GT)</th>
+                        <th>ECMWF IFS</th>
+                        <th>ECMWF-AIFS</th>
+                        <th>NAM</th>
+                        <th>RDPS (Reg)</th>
+                        <th>NOAA (NBM)</th>
+                        <th>DWD ICON (German)</th>
+                        <th>Graphcast</th>
+                        <th>GEM Canada</th>
+                        <th>SREF</th>
+                        <th>GFS</th>
+                        <th>GDPS (Global)</th>
+                        <th class="calc-col">Prob</th>
+                        <th class="calc-col">Average</th>
+                        <th class="calc-col">Min</th>
+                        <th class="calc-col">Max</th>
+                        <th class="calc-col">Range</th>
+                    </tr>
+                </thead>
+                <tbody id="wind-tbody">
+                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching wind forecasts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. PRECIPITATION ACCUMULATION SPREADSHEET -->
+        <div class="section-title">Precip Amount (Rain Forecasts)</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: left; width: 8%;">Date</th>
+                        <th style="width: 5%;">Day</th>
+                        <th class="gt-header">Visual Crossing (GT)</th>
+                        <th>ECMWF IFS</th>
+                        <th>ECMWF-AIFS</th>
+                        <th>NAM</th>
+                        <th>RDPS (Reg)</th>
+                        <th>NOAA (NBM)</th>
+                        <th>DWD ICON (German)</th>
+                        <th>Graphcast</th>
+                        <th>GEM Canada</th>
+                        <th>SREF</th>
+                        <th>GFS</th>
+                        <th>GDPS (Global)</th>
+                        <th class="calc-col">Prob</th>
+                        <th class="calc-col">Average</th>
+                        <th class="calc-col">Min</th>
+                        <th class="calc-col">Max</th>
+                        <th class="calc-col">Range</th>
+                    </tr>
+                </thead>
+                <tbody id="precip-tbody">
+                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching rain models...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Exact station coordinates for Georgetown, TX
+        const lat = 30.5871;
+        const lon = -97.641;
+
+        const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const modelKeywords = {
+            "ecmwf_ifs025": "ecmwf_ifs025",
+            "ecmwf_aifs025_single": "aifs",
+            "gfs_seamless": "gfs_seamless",
+            "ncep_nbm_conus": "ncep_nbm_conus",
+            "gem_seamless": "gem_seamless",
+            "gfs_graphcast025": "graphcast",
+            "ncep_nam_conus": "ncep_nam_conus",
+            "gem_regional": "gem_regional",
+            "gem_global": "gem_global",
+            "icon_seamless": "icon_seamless"
+        };
+
+        async function fetchWeatherModels() {
+            try {
+                const vcKey = document.getElementById('vcKeyInput').value.trim();
+
+                // Query 1: Fetch all standard daily & hourly Open-Meteo models
+                const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs025,ecmwf_aifs025_single,gfs_seamless,ncep_nbm_conus,gem_seamless,gfs_graphcast025,ncep_nam_conus,gem_regional,gem_global,icon_seamless&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=15`;
+                const omResponse = await fetch(openMeteoUrl);
+                const omData = await omResponse.json();
+                if (omData.error) throw new Error(omData.reason);
+
+                // Query 2: Fetch Visual Crossing using pre-populated key
+                let vcData = null;
+                if (vcKey) {
+                    try {
+                        const vcUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${lat},${lon}?unitGroup=us&key=${vcKey}&contentType=json`;
+                        const vcResponse = await fetch(vcUrl);
+                        vcData = await vcResponse.json();
+                    } catch (e) {
+                        console.warn("Visual Crossing failed to fetch: ", e);
+                    }
+                }
+
+                renderDashboard(omData, vcData);
+
+            } catch (error) {
+                const errHTML = `<tr><td colspan="19" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                document.getElementById("temp-tbody").innerHTML = errHTML;
+                document.getElementById("apparent-tbody").innerHTML = errHTML;
+                document.getElementById("wind-tbody").innerHTML = errHTML;
+                document.getElementById("precip-tbody").innerHTML = errHTML;
+            }
+        }
+
+        // Robust hourly aggregator supporting experimental AI models
+        function aggregateHourlyForDate(hourly, modelName, dateStr) {
+            if (!hourly) return null;
+            const keys = Object.keys(hourly);
+            const keyword = modelKeywords[modelName] || modelName;
+
+            const tempKey = keys.find(k => k.startsWith('temperature_2m') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const appKey = keys.find(k => k.startsWith('apparent_temperature') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const precipKey = keys.find(k => k.startsWith('precipitation') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const windKey = keys.find(k => k.startsWith('wind_speed_10m') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const gustKey = keys.find(k => k.startsWith('wind_gusts_10m') && k.toLowerCase().includes(keyword.toLowerCase()));
+
+            const temps = [];
+            const apps = [];
+            const winds = [];
+            const gusts = [];
+            let precipSum = 0;
+            let hasPrecipData = false;
+
+            for (let j = 0; j < hourly.time.length; j++) {
+                if (hourly.time[j].startsWith(dateStr)) {
+                    if (tempKey && hourly[tempKey] && hourly[tempKey][j] !== null && hourly[tempKey][j] !== undefined) {
+                        temps.push(hourly[tempKey][j]);
+                    }
+                    if (appKey && hourly[appKey] && hourly[appKey][j] !== null && hourly[appKey][j] !== undefined) {
+                        apps.push(hourly[appKey][j]);
+                    }
+                    if (precipKey && hourly[precipKey] && hourly[precipKey][j] !== null && hourly[precipKey][j] !== undefined) {
+                        precipSum += hourly[precipKey][j];
+                        hasPrecipData = true;
+                    }
+                    if (windKey && hourly[windKey] && hourly[windKey][j] !== null && hourly[windKey][j] !== undefined) {
+                        winds.push(hourly[windKey][j]);
+                    }
+                    if (gustKey && hourly[gustKey] && hourly[gustKey][j] !== null && hourly[gustKey][j] !== undefined) {
+                        gusts.push(hourly[gustKey][j]);
+                    }
+                }
+            }
+
+            if (temps.length === 0 && apps.length === 0 && winds.length === 0 && !hasPrecipData) return null;
+
+            return {
+                maxTemp: temps.length > 0 ? Math.max(...temps) : null,
+                minTemp: temps.length > 0 ? Math.min(...temps) : null,
+                maxApp: apps.length > 0 ? Math.max(...apps) : null,
+                minApp: apps.length > 0 ? Math.min(...apps) : null,
+                precipSum: hasPrecipData ? precipSum : null,
+                maxWind: winds.length > 0 ? Math.max(...winds) : null,
+                maxGust: gusts.length > 0 ? Math.max(...gusts) : null
+            };
+        }
+
+        function renderDashboard(omData, vcData) {
+            const daily = omData.daily;
+            const hourly = omData.hourly;
+            const keys = Object.keys(daily);
+            
+            const findKey = (prefix, modelName) => {
+                const keyword = modelKeywords[modelName] || modelName;
+                const matchedKey = keys.find(k => k.startsWith(prefix) && k.toLowerCase().includes(keyword.toLowerCase()));
+                return matchedKey ? daily[matchedKey] : null;
+            };
+
+            const models = [
+                "ecmwf_ifs025",         // Index 0: ECMWF IFS
+                "ecmwf_aifs025_single", // Index 1: ECMWF AIFS
+                "gfs_seamless",         // Index 2: US GFS
+                "ncep_nbm_conus",       // Index 3: NBM NOAA
+                "gem_seamless",         // Index 4: GEM Canada
+                "gfs_graphcast025",     // Index 5: GraphCast AI
+                "ncep_nam_conus",       // Index 6: NAM
+                "gem_regional",         // Index 7: RDPS Regional
+                "gem_global",           // Index 8: GDPS Global Canada
+                "icon_seamless"         // Index 9: ICON German Global
+            ];
+
+            const datasets = {
+                times: daily.time,
+                tempMax: models.map(m => findKey("temperature_2m_max", m)),
+                tempMin: models.map(m => findKey("temperature_2m_min", m)),
+                appMax: models.map(m => findKey("apparent_temperature_max", m)),
+                appMin: models.map(m => findKey("apparent_temperature_min", m)),
+                precip: models.map(m => findKey("precipitation_sum", m)),
+                prob: models.map(m => findKey("precipitation_probability_max", m)),
+                windMax: models.map(m => findKey("wind_speed_10m_max", m)),
+                windGust: models.map(m => findKey("wind_gusts_10m_max", m))
+            };
+
+            const getVal = (dataset, mIndex, dayIndex, dateStr) => {
+                const arr = dataset[mIndex];
+
+                if (arr && arr[dayIndex] !== null && arr[dayIndex] !== undefined) {
+                    return arr[dayIndex];
+                }
+
+                const model = models[mIndex];
+                if (model === "gfs_graphcast025") {
+                    const aggregated = aggregateHourlyForDate(hourly, model, dateStr);
+                    if (aggregated) {
+                        if (dataset === datasets.tempMax) return aggregated.maxTemp;
+                        if (dataset === datasets.tempMin) return aggregated.minTemp;
+                        if (dataset === datasets.appMax) return aggregated.maxApp;
+                        if (dataset === datasets.appMin) return aggregated.minApp;
+                        if (dataset === datasets.precip) return aggregated.precipSum;
+                        if (dataset === datasets.windMax) return aggregated.maxWind;
+                        if (dataset === datasets.windGust) return aggregated.maxGust;
+                    }
+                }
+                return null;
+            };
+
+            let tempHTML = "";
+            let apparentHTML = "";
+            let windHTML = "";
+            let precipHTML = "";
+
+            const rainColumnsMapping = [0, 1, 6, 7, 3, 9, 5, 4, null, 2, 8]; 
+            
+            const weeklySum = {
+                rainThisWeek: Array(11).fill(0), rainNextWeek: Array(11).fill(0), rainTotal: Array(11).fill(0),
+                appMaxThisWeek: Array(11).fill(null).map(() => []), appMaxNextWeek: Array(11).fill(null).map(() => []), appMaxTotal: Array(11).fill(null).map(() => []),
+                appMinThisWeek: Array(11).fill(null).map(() => []), appMinNextWeek: Array(11).fill(null).map(() => []), appMinTotal: Array(11).fill(null).map(() => []),
+                windThisWeek: Array(11).fill(null).map(() => []), windNextWeek: Array(11).fill(null).map(() => []), windTotal: Array(11).fill(null).map(() => []),
+                gustThisWeek: Array(11).fill(null).map(() => []), gustNextWeek: Array(11).fill(null).map(() => []), gustTotal: Array(11).fill(null).map(() => []),
+                // VC values tracking
+                vcRainThis: 0, vcRainNext: 0, vcRainTotal: 0,
+                vcAppMaxThis: [], vcAppMaxNext: [], vcAppMaxTotal: [],
+                vcAppMinThis: [], vcAppMinNext: [], vcAppMinTotal: [],
+                vcWindThis: [], vcWindNext: [], vcWindTotal: [],
+                vcGustThis: [], vcGustNext: [], vcGustTotal: [],
+                // Summary trackers
+                probThisWeek: [], probNextWeek: [], probTotal: [],
+                avgThisWeek: [], avgNextWeek: [], avgTotal: [],
+                minThisWeek: [], minNextWeek: [], minTotal: [],
+                maxThisWeek: [], maxNextWeek: [], maxTotal: []
+            };
+
+            const daysToShow = Math.min(15, datasets.times.length);
+
+            for (let i = 0; i < daysToShow; i++) {
+                const dateStr = datasets.times[i];
+                const dateObj = new Date(dateStr + "T00:00:00");
+                const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
+                const dayNum = dateObj.getDate();
+                const dayLabel = daysOfWeek[dateObj.getDay()];
+                const formattedDate = `${dayNum}-${month}`;
+
+                let todayClass = i === 0 ? "class='today'" : "";
+
+                // Retrieve Visual Crossing metrics for this specific day
+                let vcDay = (vcData && vcData.days && vcData.days[i]) ? vcData.days[i] : null;
+                
+                let vcTempStr = `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+                let vcAppStr = `<td><span class="pending-text">[No Key]</span></td>`;
+                let vcWindStr = `<td><span class="pending-text">[No Key]</span></td>`;
+                let vcPrecipStr = `<td><span class="pending-text">[No Key]</span></td>`;
+
+                if (vcDay) {
+                    vcTempStr = `<td class="gt-col">${Math.round(vcDay.tempmax)}/ ${Math.round(vcDay.tempmin)}</td>`;
+                    vcAppStr = `<td class="gt-col">${Math.round(vcDay.feelslikemax)}/ ${Math.round(vcDay.feelslikemin)}</td>`;
+                    vcWindStr = `<td class="gt-col">${Math.round(vcDay.windspeed)}/ G${Math.round(vcDay.windgust)}</td>`;
+                    vcPrecipStr = `<td class="gt-col">${vcDay.precip.toFixed(3)}</td>`;
+
+                    // Accumulate VC values for weekly sums
+                    if (i < 7) {
+                        weeklySum.vcRainThis += vcDay.precip;
+                        weeklySum.vcAppMaxThis.push(vcDay.feelslikemax);
+                        weeklySum.vcAppMinThis.push(vcDay.feelslikemin);
+                        weeklySum.vcWindThis.push(vcDay.windspeed);
+                        weeklySum.vcGustThis.push(vcDay.windgust);
+                    } else if (i < 14) {
+                        weeklySum.vcRainNext += vcDay.precip;
+                        weeklySum.vcAppMaxNext.push(vcDay.feelslikemax);
+                        weeklySum.vcAppMinNext.push(vcDay.feelslikemin);
+                        weeklySum.vcWindNext.push(vcDay.windspeed);
+                        weeklySum.vcGustNext.push(vcDay.windgust);
+                    }
+                    if (i < 14) {
+                        weeklySum.vcRainTotal += vcDay.precip;
+                        weeklySum.vcAppMaxTotal.push(vcDay.feelslikemax);
+                        weeklySum.vcAppMinTotal.push(vcDay.feelslikemin);
+                        weeklySum.vcWindTotal.push(vcDay.windspeed);
+                        weeklySum.vcGustTotal.push(vcDay.windgust);
+                    }
+                }
+
+                // Gather active precipitation data for daily statistic metrics (from models)
+                const activeRains = [];
+                rainColumnsMapping.forEach(mIdx => {
+                    if (mIdx !== null) {
+                        const r = getVal(datasets.precip, mIdx, i, dateStr);
+                        if (r !== null) activeRains.push(r);
+                    }
+                });
+
+                const avgRain = activeRains.length > 0 ? (activeRains.reduce((a, b) => a + b, 0) / activeRains.length) : 0;
+                const minRain = activeRains.length > 0 ? Math.min(...activeRains) : 0;
+                const maxRain = activeRains.length > 0 ? Math.max(...activeRains) : 0;
+
+                // Probability Lookup (NBM is index 3, GFS seamless is index 2 fallback)
+                let rainProb = getVal(datasets.prob, 3, i, dateStr);
+                if (rainProb === null) rainProb = getVal(datasets.prob, 2, i, dateStr) || 0;
+
+                // Track sums & arrays for weekly calculators
+                rainColumnsMapping.forEach((mIdx, colIdx) => {
+                    if (mIdx !== null) {
+                        const val = getVal(datasets.precip, mIdx, i, dateStr);
+                        const appMax = getVal(datasets.appMax, mIdx, i, dateStr);
+                        const appMin = getVal(datasets.appMin, mIdx, i, dateStr);
+                        const wind = getVal(datasets.windMax, mIdx, i, dateStr);
+                        const gust = getVal(datasets.windGust, mIdx, i, dateStr);
+
+                        if (val !== null) {
+                            if (i < 7) weeklySum.rainThisWeek[colIdx] += val;
+                            else if (i < 14) weeklySum.rainNextWeek[colIdx] += val;
+                            weeklySum.rainTotal[colIdx] += val;
+                        }
+                        if (appMax !== null && appMin !== null) {
+                            if (i < 7) {
+                                weeklySum.appMaxThisWeek[colIdx].push(appMax);
+                                weeklySum.appMinThisWeek[colIdx].push(appMin);
+                            } else if (i < 14) {
+                                weeklySum.appMaxNextWeek[colIdx].push(appMax);
+                                weeklySum.appMinNextWeek[colIdx].push(appMin);
+                            }
+                            weeklySum.appMaxTotal[colIdx].push(appMax);
+                            weeklySum.appMinTotal[colIdx].push(appMin);
+                        }
+                        if (wind !== null && gust !== null) {
+                            if (i < 7) {
+                                weeklySum.windThisWeek[colIdx].push(wind);
+                                weeklySum.gustThisWeek[colIdx].push(gust);
+                            } else if (i < 14) {
+                                weeklySum.windNextWeek[colIdx].push(wind);
+                                weeklySum.gustNextWeek[colIdx].push(gust);
+                            }
+                            weeklySum.windTotal[colIdx].push(wind);
+                            weeklySum.gustTotal[colIdx].push(gust);
+                        }
+                    }
+                });
+
+                if (i < 7) {
+                    weeklySum.probThisWeek.push(rainProb);
+                    weeklySum.avgThisWeek.push(avgRain);
+                    weeklySum.minThisWeek.push(minRain);
+                    weeklySum.maxThisWeek.push(maxRain);
+                } else if (i < 14) {
+                    weeklySum.probNextWeek.push(rainProb);
+                    weeklySum.avgNextWeek.push(avgRain);
+                    weeklySum.minNextWeek.push(minRain);
+                    weeklySum.maxNextWeek.push(maxRain);
+                }
+                if (i < 14) {
+                    weeklySum.probTotal.push(rainProb);
+                    weeklySum.avgTotal.push(avgRain);
+                    weeklySum.minTotal.push(minRain);
+                    weeklySum.maxTotal.push(maxRain);
+                }
+
+                // ==========================================
+                // TABLE 1: HIGH / LOW TEMPERATURES & VARIANCES
+                // ==========================================
+                const activeHighs = [];
+                const activeLows = [];
+                let tCells = "";
+
+                // Load first 6 models for temperature comparison columns
+                for (let m = 0; m < 6; m++) {
+                    const hi = getVal(datasets.tempMax, m, i, dateStr);
+                    const lo = getVal(datasets.tempMin, m, i, dateStr);
+                    if (hi !== null && lo !== null) {
+                        activeHighs.push(hi);
+                        activeLows.push(lo);
+                        tCells += `<td>${Math.round(hi)}/ ${Math.round(lo)}</td>`;
+                    } else {
+                        const label = models[m] === "gfs_graphcast025" ? "Pending" : "";
+                        tCells += `<td><span class="pending-text">[${label || 'No Run'}]</span></td>`;
+                    }
+                }
+
+                const avgHigh = activeHighs.length > 0 ? (activeHighs.reduce((a, b) => a + b, 0) / activeHighs.length) : 0;
+                const avgLow = activeLows.length > 0 ? (activeLows.reduce((a, b) => a + b, 0) / activeLows.length) : 0;
+
+                tempHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${dayLabel}</td>
+                        ${vcTempStr}
+                        ${tCells}
+                        <td class="calc-col">${rainProb}%</td>
+                        <td class="calc-col">${avgRain.toFixed(2)}</td>
+                        <td class="calc-col">${minRain.toFixed(2)} - ${maxRain.toFixed(2)} in</td>
+                        <td class="calc-col">${Math.round(avgHigh)}/ ${Math.round(avgLow)}°</td>
+                    </tr>
+                `;
+
+                // ==========================================
+                // TABLE 2: APPARENT TEMPERATURE AGREEMENT SPREADSHEET (Feels Like)
+                // ==========================================
+                const activeAppsMax = [];
+                const activeAppsMin = [];
+                let appCells = "";
+
+                rainColumnsMapping.forEach(mIdx => {
+                    if (mIdx !== null) {
+                        const hi = getVal(datasets.appMax, mIdx, i, dateStr);
+                        const lo = getVal(datasets.appMin, mIdx, i, dateStr);
+                        if (hi !== null && lo !== null) {
+                            activeAppsMax.push(hi);
+                            activeAppsMin.push(lo);
+                            appCells += `<td>${Math.round(hi)}/ ${Math.round(lo)}</td>`;
+                        } else {
+                            const label = models[mIdx] === "gfs_graphcast025" ? "Pending" : "";
+                            appCells += `<td><span class="pending-text">[${label || 'No Run'}]</span></td>`;
+                        }
+                    } else {
+                        appCells += `<td><span class="pending-text">[No Run]</span></td>`; // SREF placeholder
+                    }
+                });
+
+                const avgAppHigh = activeAppsMax.length > 0 ? (activeAppsMax.reduce((a, b) => a + b, 0) / activeAppsMax.length) : 0;
+                const avgAppLow = activeAppsMin.length > 0 ? (activeAppsMin.reduce((a, b) => a + b, 0) / activeAppsMin.length) : 0;
+                const minAppLow = activeAppsMin.length > 0 ? Math.min(...activeAppsMin) : 0;
+                const maxAppHigh = activeAppsMax.length > 0 ? Math.max(...activeAppsMax) : 0;
+
+                apparentHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcAppStr}
+                        ${appCells}
+                        <td class="calc-col">${rainProb}%</td>
+                        <td class="calc-col">${Math.round(avgAppHigh)}/ ${Math.round(avgAppLow)}°</td>
+                        <td class="calc-col">${Math.round(minAppLow)}°</td>
+                        <td class="calc-col">${Math.round(maxAppHigh)}°</td>
+                        <td class="calc-col">${Math.round(minAppLow)} - ${Math.round(maxAppHigh)}°F</td>
+                    </tr>
+                `;
+
+                // ==========================================
+                // TABLE 3: WIND SPEEDS & GUSTS SPREADSHEET
+                // ==========================================
+                const activeWinds = [];
+                const activeGusts = [];
+                let windCells = "";
+
+                rainColumnsMapping.forEach(mIdx => {
+                    if (mIdx !== null) {
+                        const ws = getVal(datasets.windMax, mIdx, i, dateStr);
+                        const wg = getVal(datasets.windGust, mIdx, i, dateStr);
+                        if (ws !== null && wg !== null) {
+                            activeWinds.push(ws);
+                            activeGusts.push(wg);
+                            windCells += `<td>${Math.round(ws)}/ G${Math.round(wg)}</td>`;
+                        } else {
+                            const label = models[mIdx] === "gfs_graphcast025" ? "Pending" : "";
+                            windCells += `<td><span class="pending-text">[${label || 'No Run'}]</span></td>`;
+                        }
+                    } else {
+                        windCells += `<td><span class="pending-text">[No Run]</span></td>`; // SREF placeholder
+                    }
+                });
+
+                const avgWindSpeed = activeWinds.length > 0 ? (activeWinds.reduce((a, b) => a + b, 0) / activeWinds.length) : 0;
+                const avgWindGust = activeGusts.length > 0 ? (activeGusts.reduce((a, b) => a + b, 0) / activeGusts.length) : 0;
+                const minWindSpeed = activeWinds.length > 0 ? Math.min(...activeWinds) : 0;
+                const maxWindGust = activeGusts.length > 0 ? Math.max(...activeGusts) : 0;
+
+                windHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcWindStr}
+                        ${windCells}
+                        <td class="calc-col">${rainProb}%</td>
+                        <td class="calc-col">${Math.round(avgWindSpeed)}/ G${Math.round(avgWindGust)}</td>
+                        <td class="calc-col">${Math.round(minWindSpeed)}</td>
+                        <td class="calc-col">${Math.round(maxWindGust)}</td>
+                        <td class="calc-col">${Math.round(minWindSpeed)} - ${Math.round(maxWindGust)} mph</td>
+                    </tr>
+                `;
+
+                // ==========================================
+                // TABLE 4: PRECIPITATION ACCUMULATION SPREADSHEET
+                // ==========================================
+                let rCells = "";
+                rainColumnsMapping.forEach(mIdx => {
+                    if (mIdx !== null) {
+                        const val = getVal(datasets.precip, mIdx, i, dateStr);
+                        if (val !== null) {
+                            rCells += `<td>${val.toFixed(3)}</td>`;
+                        } else {
+                            const label = models[mIdx] === "gfs_graphcast025" ? "Pending" : "";
+                            rCells += `<td><span class="pending-text">[${label || 'No Run'}]</span></td>`;
+                        }
+                    } else {
+                        rCells += `<td><span class="pending-text">[No Run]</span></td>`; // SREF blank column
+                    }
+                });
+
+                precipHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcPrecipStr}
+                        ${rCells}
+                        <td class="calc-col">${rainProb}%</td>
+                        <td class="calc-col">${avgRain.toFixed(2)}</td>
+                        <td class="calc-col">${minRain.toFixed(2)}</td>
+                        <td class="calc-col">${maxRain.toFixed(2)}</td>
+                        <td class="calc-col">${minRain.toFixed(2)} - ${maxRain.toFixed(2)} in</td>
+                    </tr>
+                `;
+            }
+
+            // Calculations for Weekly Averages and Boundaries
+            const sumArray = (arr) => arr.reduce((a, b) => a + b, 0);
+            const avgArray = (arr) => arr.length > 0 ? sumArray(arr) / arr.length : 0;
+            
+            const calcProbAvgThis = Math.round(sumArray(weeklySum.probThisWeek) / weeklySum.probThisWeek.length);
+            const calcProbAvgNext = Math.round(sumArray(weeklySum.probNextWeek) / weeklySum.probNextWeek.length);
+            const calcProbAvgTot = Math.round(sumArray(weeklySum.probTotal) / weeklySum.probTotal.length);
+
+            // ------------------------------------------
+            // Construct Summary Rows: Apparent Temp Table
+            // ------------------------------------------
+            const buildAppSummaryRow = (label, maxArr, minMinArr, maxMaxArr, vcMax, vcMin) => {
+                let cells = "";
+                rainColumnsMapping.forEach((mIdx, colIdx) => {
+                    if (mIdx !== null) {
+                        const hi = avgArray(maxArr[colIdx]);
+                        const lo = avgArray(minMinArr[colIdx]);
+                        cells += `<td>${hi > 0 && lo > 0 ? Math.round(hi) + "/ " + Math.round(lo) : "0/ 0"}</td>`;
+                    } else {
+                        cells += `<td></td>`;
+                    }
+                });
+
+                const labelMax = avgArray(maxMaxArr);
+                const labelMin = avgArray(minMinArr.flat());
+                const labelAvgMax = avgArray(maxArr.flat());
+
+                const vcAvgMax = avgArray(vcMax);
+                const vcAvgMin = avgArray(vcMin);
+                const vcCell = (vcAvgMax > 0 && vcAvgMin > 0) ? `<td class="gt-col">${Math.round(vcAvgMax)}/ ${Math.round(vcAvgMin)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        ${cells}
+                        <td class="calc-col">${calcProbAvgThis}%</td>
+                        <td class="calc-col">${Math.round(labelAvgMax)}/ ${Math.round(labelMin)}°</td>
+                        <td class="calc-col">${Math.round(labelMin)}°</td>
+                        <td class="calc-col">${Math.round(labelMax)}°</td>
+                        <td class="calc-col">${Math.round(labelMin)} - ${Math.round(labelMax)}°F</td>
+                    </tr>
+                `;
+            };
+
+            const appThisWeek = buildAppSummaryRow("This Week", weeklySum.appMaxThisWeek, weeklySum.appMinThisWeek, weeklySum.appMaxThisWeek.flat(), weeklySum.vcAppMaxThis, weeklySum.vcAppMinThis);
+            const appNextWeek = buildAppSummaryRow("Next Week", weeklySum.appMaxNextWeek, weeklySum.appMinNextWeek, weeklySum.appMaxNextWeek.flat(), weeklySum.vcAppMaxNext, weeklySum.vcAppMinNext);
+            const appTotal = buildAppSummaryRow("Total", weeklySum.appMaxTotal, weeklySum.appMinTotal, weeklySum.appMaxTotal.flat(), weeklySum.vcAppMaxTotal, weeklySum.vcAppMinTotal);
+            document.getElementById("apparent-tbody").innerHTML = apparentHTML + appThisWeek + appNextWeek + appTotal;
+
+            // ------------------------------------------
+            // Construct Summary Rows: Wind Table
+            // ------------------------------------------
+            const buildWindSummaryRow = (label, speedArr, gustArr, maxMaxArr, vcSpeed, vcGust) => {
+                let cells = "";
+                rainColumnsMapping.forEach((mIdx, colIdx) => {
+                    if (mIdx !== null) {
+                        const sp = avgArray(speedArr[colIdx]);
+                        const gt = avgArray(gustArr[colIdx]);
+                        cells += `<td>${sp > 0 && gt > 0 ? Math.round(sp) + "/ G" + Math.round(gt) : "0/ G0"}</td>`;
+                    } else {
+                        cells += `<td></td>`;
+                    }
+                });
+
+                const labelSp = avgArray(speedArr.flat());
+                const labelGt = avgArray(gustArr.flat());
+                const maxGt = gustArr.flat().length > 0 ? Math.max(...gustArr.flat()) : 0;
+                const minSp = speedArr.flat().length > 0 ? Math.min(...speedArr.flat()) : 0;
+
+                const vcAvgSp = avgArray(vcSpeed);
+                const vcAvgGt = avgArray(vcGust);
+                const vcCell = (vcAvgSp > 0 && vcAvgGt > 0) ? `<td class="gt-col">${Math.round(vcAvgSp)}/ G${Math.round(vcAvgGt)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        ${cells}
+                        <td class="calc-col">${calcProbAvgThis}%</td>
+                        <td class="calc-col">${Math.round(labelSp)}/ G${Math.round(labelGt)}</td>
+                        <td class="calc-col">${Math.round(minSp)}</td>
+                        <td class="calc-col">${Math.round(maxGt)}</td>
+                        <td class="calc-col">${Math.round(minSp)} - ${Math.round(maxGt)} mph</td>
+                    </tr>
+                `;
+            };
+
+            const windThisWeek = buildWindSummaryRow("This Week", weeklySum.windThisWeek, weeklySum.gustThisWeek, weeklySum.gustThisWeek, weeklySum.vcWindThis, weeklySum.vcGustThis);
+            const windNextWeek = buildWindSummaryRow("Next Week", weeklySum.windNextWeek, weeklySum.gustNextWeek, weeklySum.gustNextWeek, weeklySum.vcWindNext, weeklySum.vcGustNext);
+            const windTotal = buildWindSummaryRow("Total", weeklySum.windTotal, weeklySum.gustTotal, weeklySum.gustTotal, weeklySum.vcWindTotal, weeklySum.vcGustTotal);
+            document.getElementById("wind-tbody").innerHTML = windHTML + windThisWeek + windNextWeek + windTotal;
+
+            // ------------------------------------------
+            // Construct Summary Rows: Precipitation Table
+            // ------------------------------------------
+            const calcAvgRainThis = sumArray(weeklySum.avgThisWeek);
+            const calcAvgRainNext = sumArray(weeklySum.avgNextWeek);
+            const calcAvgRainTot = sumArray(weeklySum.avgTotal);
+
+            const calcMinThis = sumArray(weeklySum.minThisWeek);
+            const calcMinNext = sumArray(weeklySum.minNextWeek);
+            const calcMinTot = sumArray(weeklySum.minTotal);
+
+            const calcMaxThis = sumArray(weeklySum.maxThisWeek);
+            const calcMaxNext = sumArray(weeklySum.maxNextWeek);
+            const calcMaxTot = sumArray(weeklySum.maxTotal);
+
+            const buildRainSummaryRow = (label, colSums, prob, avg, min, max, vcSum) => {
+                let cells = "";
+                colSums.forEach((val, idx) => {
+                    cells += `<td>${val > 0 ? val.toFixed(3) : "0.000"}</td>`;
+                });
+                const vcCell = vcSum > 0 ? `<td class="gt-col">${vcSum.toFixed(3)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        ${cells}
+                        <td class="calc-col">${prob}%</td>
+                        <td class="calc-col">${avg.toFixed(2)}</td>
+                        <td class="calc-col">${min.toFixed(2)}</td>
+                        <td class="calc-col">${max.toFixed(2)}</td>
+                        <td class="calc-col">${min.toFixed(2)} - ${max.toFixed(2)} in</td>
+                    </tr>
+                `;
+            };
+
+            const thisWeekRow = buildRainSummaryRow("This Week", weeklySum.rainThisWeek, calcProbAvgThis, calcAvgRainThis, calcMinThis, calcMaxThis, weeklySum.vcRainThis);
+            const nextWeekRow = buildRainSummaryRow("Next Week", weeklySum.rainNextWeek, calcProbAvgNext, calcAvgRainNext, calcMinNext, calcMaxNext, weeklySum.vcRainNext);
+            const totalRow = buildRainSummaryRow("Total", weeklySum.rainTotal, calcProbAvgTot, calcAvgRainTot, calcMinTot, calcMaxTot, weeklySum.vcRainTotal);
+
+            document.getElementById("temp-tbody").innerHTML = tempHTML;
+            document.getElementById("precip-tbody").innerHTML = precipHTML + thisWeekRow + nextWeekRow + totalRow;
+        }
+
+        // Run fetch on load
+        fetchWeatherModels();
+    </script>
+</body>
+</html>
