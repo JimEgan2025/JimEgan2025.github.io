@@ -7,54 +7,108 @@
 
 <style>
 :root {
-  --bg:#e6f0ff;
-  --card:#ffffff;
-  --text:#102a43;
-  --accent:#005a9e;
-  --muted:#5c6c80;
-  --border:#b3c7e6;
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --border: #334155;
+  --danger-bg: #450a0a;
+  --danger-border: #991b1b;
+  --danger-text: #fecaca;
 }
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:radial-gradient(circle at top,#f5fbff 0,#e6f0ff 40%,#d4e2ff 100%);
-  color:var(--text);
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #1e293b 0, #0f172a 100%);
+  color: var(--text);
+  padding-bottom: 30px;
 }
-main{max-width:900px;margin:auto;padding:.75rem;}
-header{
-  text-align:center;
-  padding:.75rem;
-  border-radius:.75rem;
-  background:linear-gradient(135deg,#005a9e,#2196f3,#64b5f6);
-  color:#fff;
-  box-shadow:0 3px 8px rgba(0,0,0,.2);
+main { max-width: 650px; margin: auto; padding: .75rem; }
+header {
+  text-align: center;
+  padding: 1.25rem .75rem;
+  border-radius: .75rem;
+  background: linear-gradient(135deg, #1e3a8a, #1e40af, #3b82f6);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
-section{
-  background:var(--card);
-  margin:.75rem 0;
-  padding:.75rem;
-  border-radius:.6rem;
-  border:1px solid var(--border);
-  box-shadow:0 2px 5px rgba(0,0,0,.12);
+header h1 { font-size: 1.6rem; font-weight: bold; margin-bottom: 5px; }
+#liveDateTime { font-size: 0.9rem; color: #bfdbfe; font-weight: bold; }
+
+section {
+  background: var(--card);
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: .75rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2);
 }
-h2{margin:.3rem 0;color:var(--accent);}
-.section-tagline{font-size:.85rem;color:var(--muted);margin-bottom:.4rem;}
-.embed-wrapper img, iframe{
-  width:100%;
-  border-radius:.5rem;
+h2 { margin: 0 0 .2rem 0; color: var(--accent); font-size: 1.25rem; }
+.section-tagline { font-size: .8rem; color: var(--text-muted); margin-bottom: .8rem; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+
+.embed-wrapper img, iframe {
+  width: 100%;
+  border-radius: .5rem;
+  display: block;
 }
-.alert-box{
-  background:#ffe8e8;
-  border-left:5px solid #c62828;
-  padding:.5rem;
-  margin-bottom:.5rem;
-  border-radius:.4rem;
+.alert-box {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-left: 5px solid var(--danger-border);
+  padding: .75rem;
+  margin-bottom: .5rem;
+  border-radius: .4rem;
+  color: var(--danger-text);
+  font-size: 13px;
+  line-height: 1.4;
 }
-.footer-note{
-  font-size:.85rem;
-  text-align:center;
-  color:var(--muted);
-  margin-top:1rem;
+.alert-box strong {
+  font-size: 14px;
+}
+
+/* Mobile Optimized Daily Forecast list */
+.forecast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.forecast-item:last-child {
+  border-bottom: none;
+}
+.fc-day-info {
+  text-align: left;
+  width: 30%;
+}
+.fc-day-name {
+  font-weight: bold;
+  font-size: 15px;
+}
+.fc-day-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.fc-icon {
+  font-size: 26px;
+  width: 20%;
+  text-align: center;
+}
+.fc-metrics {
+  text-align: right;
+  width: 50%;
+  font-size: 13px;
+}
+.fc-high { font-weight: bold; color: #ffffff; }
+.fc-low { color: var(--text-muted); }
+.fc-rain { color: var(--accent); font-size: 11px; font-weight: bold; margin-top: 2px; }
+
+.footer-note {
+  font-size: .8rem;
+  text-align: center;
+  color: var(--text-muted);
+  margin-top: 1.5rem;
 }
 </style>
 </head>
@@ -63,90 +117,98 @@ h2{margin:.3rem 0;color:var(--accent);}
 <main>
 
 <header>
-<h1>Vizcaya Community Mobile Weather</h1>
-<div id="liveDateTime"></div>
-<div>Georgetown, Texas</div>
+  <h1>Vizcaya Mobile Weather</h1>
+  <div id="liveDateTime"></div>
+  <div style="font-size: 0.85rem; text-transform: uppercase; margin-top: 4px; font-weight: bold;">Georgetown, Texas</div>
 </header>
 
 <!-- ALERTS -->
 <section>
-<h2>Local NWS Alerts</h2>
-<div class="section-tagline">Williamson County watches & warnings</div>
-<div id="alerts">Loading alerts...</div>
+  <h2>Local NWS Alerts</h2>
+  <div class="section-tagline">Williamson County watches & warnings</div>
+  <div id="alerts">Loading alerts...</div>
 </section>
 
 <!-- STATION -->
 <section>
-<h2>Live Vizcaya Weather Station</h2>
-<div class="section-tagline">Powered by WeatherLink</div>
-
-<iframe
-src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/wide"
-height="500"
-frameborder="0"
-scrolling="no">
-</iframe>
-
+  <h2>Live Vizcaya Weather Station</h2>
+  <div class="section-tagline">Powered by WeatherLink</div>
+  <iframe
+    src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"
+    height="500"
+    style="border: none;">
+  </iframe>
 </section>
 
 <!-- FORECAST -->
 <section>
-<h2>7-Day Forecast</h2>
-<div class="section-tagline">Official forecast from NWS Austin/San Antonio</div>
-<div id="forecast">Loading forecast...</div>
+  <h2>7-Day Consensus Forecast</h2>
+  <div class="section-tagline">Consensus Models (High/Low & Rain Prob)</div>
+  <div id="forecast">Loading forecast...</div>
 </section>
 
 <!-- RADAR -->
 <section>
-<h2>Central Texas Radar Loop</h2>
-<div class="embed-wrapper">
-<img id="radarImg"
-src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif"
-alt="KGRK Radar Loop">
-</div>
+  <h2>Central Texas Radar Loop</h2>
+  <div class="section-tagline">KGRK Fort Hood Radar loop</div>
+  <div class="embed-wrapper">
+    <img id="radarImg"
+         src="https://radar.weather.gov/ridge/standard/KGRK_loop.gif"
+         alt="KGRK Radar Loop">
+  </div>
 </section>
 
 <!-- SATELLITE -->
 <section>
-<h2>Southern Plains Satellite</h2>
-<div class="embed-wrapper">
-<img id="satImg"
-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg"
-alt="Southern Plains Satellite">
-</div>
+  <h2>Southern Plains Satellite</h2>
+  <div class="section-tagline">GOES-19 Lightning loops</div>
+  <div class="embed-wrapper">
+    <img id="satImg"
+         src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg"
+         alt="Southern Plains Satellite">
+  </div>
 </section>
 
 <!-- WPC -->
 <section>
-<h2>WPC National Forecast Charts</h2>
+  <h2>WPC National Forecast Charts</h2>
+  <div class="section-tagline">NWS Weather Prediction Center Guidance</div>
 
-<div class="embed-wrapper">
-<h3>Day 1</h3>
-<img id="wpc1"
-src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png">
-</div>
+  <div class="embed-wrapper" style="margin-bottom: 15px;">
+    <h3 style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">DAY 1</h3>
+    <img id="wpc1" src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png">
+  </div>
 
-<div class="embed-wrapper">
-<h3>Day 2</h3>
-<img id="wpc2"
-src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png">
-</div>
+  <div class="embed-wrapper" style="margin-bottom: 15px;">
+    <h3 style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">DAY 2</h3>
+    <img id="wpc2" src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png">
+  </div>
 
-<div class="embed-wrapper">
-<h3>Day 3</h3>
-<img id="wpc3"
-src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png">
-</div>
-
+  <div class="embed-wrapper">
+    <h3 style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">DAY 3</h3>
+    <img id="wpc3" src="https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png">
+  </div>
 </section>
 
 <div class="footer-note">
-Data & imagery © NWS, NOAA, WPC, NESDIS STAR
+  Data & imagery © NWS, NOAA, WPC, NESDIS STAR
 </div>
 
 </main>
 
 <script>
+const lat = 30.5871;
+const lon = -97.641;
+const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// WMO weather code dictionary
+const wmoCodes = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+  45: "🌫️", 48: "🌫️", 51: "🌦️", 53: "🌦️",
+  55: "🌦️", 61: "🌧️", 63: "🌧️", 65: "🌧️",
+  71: "❄️", 73: "❄️", 75: "❄️", 80: "🌧️",
+  81: "🌧️", 82: "⛈️", 95: "⛈️", 96: "⛈️", 99: "⛈️"
+};
 
 // ======================
 // LIVE CLOCK
@@ -159,71 +221,102 @@ function updateClock(){
     now.toLocaleTimeString("en-US",{hour:'2-digit',minute:'2-digit'});
 }
 updateClock();
-setInterval(updateClock,60000);
+setInterval(updateClock, 60000);
 
 // ======================
-// NWS FORECAST
+// CONSENSUS FORECAST (OPEN-METEO)
 // ======================
-const lat=30.6333;
-const lon=-97.6772;
-
 async function loadForecast(){
   try{
-    const p=await fetch(`https://api.weather.gov/points/${lat},${lon}`,{cache:"no-store"});
-    const pdata=await p.json();
-    const f=await fetch(pdata.properties.forecast,{cache:"no-store"});
-    const fdata=await f.json();
-    const periods=fdata.properties.periods.slice(0,7);
-    let html="";
-    periods.forEach(p=>{
-      html+=`<div style="margin-bottom:.5rem;"><strong>${p.name}:</strong> ${p.detailedForecast}</div>`;
-    });
-    document.getElementById("forecast").innerHTML=html;
-  }catch(e){
-    document.getElementById("forecast").innerText="Forecast unavailable.";
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America/Chicago&forecast_days=8`);
+    const data = await response.json();
+    if (data.error) throw new Error(data.reason);
+
+    const daily = data.daily;
+    let html = "";
+    
+    // Render Days 1 to 7 (Skip Today because it is already almost over)
+    for(let i = 1; i < daily.time.length; i++) {
+      const dateStr = daily.time[i];
+      const dateObj = new Date(dateStr + 'T00:00:00');
+      const dayName = daysOfWeek[dateObj.getDay()];
+      const month = dateObj.toLocaleDateString('en-US', { month: 'short' });
+      const dayNum = dateObj.getDate();
+
+      const maxTemp = Math.round(daily.temperature_2m_max[i]);
+      const minTemp = Math.round(daily.temperature_2m_min[i]);
+      const code = daily.weather_code[i];
+      const pop = daily.precipitation_probability_max[i];
+
+      const icon = wmoCodes[code] || "☁️";
+
+      html += `
+        <div class="forecast-item">
+          <div class="fc-day-info">
+            <span class="fc-day-name">${i === 1 ? "Tomorrow" : dayName}</span><br>
+            <span class="fc-day-date">${month} ${dayNum}</span>
+          </div>
+          <div class="fc-icon">${icon}</div>
+          <div class="fc-metrics">
+            <span class="fc-high">${maxTemp}°</span> <span class="fc-low">/ ${minTemp}°</span>
+            <div class="fc-rain">☔ ${pop}% Chance</div>
+          </div>
+        </div>
+      `;
+    }
+    document.getElementById("forecast").innerHTML = html;
+  } catch(e) {
+    document.getElementById("forecast").innerText = "Forecast currently unavailable.";
   }
 }
 loadForecast();
-setInterval(loadForecast,1800000);
+setInterval(loadForecast, 1800000);
 
 // ======================
-// NWS ALERTS
+// NWS ALERTS (Williamson County - TXZ173)
 // ======================
 async function loadAlerts(){
   try{
-    const res=await fetch(`https://api.weather.gov/alerts/active?zone=TXZ171`,{cache:"no-store"});
-    const data=await res.json();
-    if(data.features.length===0){
-      document.getElementById("alerts").innerHTML="No active alerts.";
+    // Corrected zone to TXZ173 (Williamson County) from TXZ171 (Llano County)
+    const res = await fetch(`https://api.weather.gov/alerts/active?zone=TXZ173`, {cache:"no-store"});
+    const data = await res.json();
+    if(data.features.length === 0){
+      document.getElementById("alerts").innerHTML = "<div style='color: var(--text-muted); font-size: 13px;'>🟢 No active alerts.</div>";
       return;
     }
-    let html="";
+    let html = "";
     data.features.forEach(a=>{
-      html+=`<div class="alert-box"><strong>${a.properties.headline}</strong><br>${a.properties.description}</div>`;
+      html += `
+        <div class="alert-box">
+          <strong>🚨 ${a.properties.event}</strong><br>
+          <span style="font-size: 11px; display: block; margin: 3px 0; font-weight: bold; color: #ef4444;">${a.properties.headline}</span>
+          <p style="margin-top: 5px; font-family: monospace; font-size: 11px;">${a.properties.description}</p>
+        </div>
+      `;
     });
-    document.getElementById("alerts").innerHTML=html;
-  }catch(e){
-    document.getElementById("alerts").innerText="Alert data unavailable.";
+    document.getElementById("alerts").innerHTML = html;
+  } catch(e) {
+    document.getElementById("alerts").innerText = "Alert data currently unavailable.";
   }
 }
 loadAlerts();
-setInterval(loadAlerts,600000);
+setInterval(loadAlerts, 600000);
 
 // ======================
 // FORCE IMAGE REFRESH
 // ======================
 setInterval(()=>{
-  document.getElementById("radarImg").src=
-    "https://radar.weather.gov/ridge/standard/KGRK_loop.gif?"+Date.now();
-  document.getElementById("satImg").src=
-    "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg?"+Date.now();
-  document.getElementById("wpc1").src=
-    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png?"+Date.now();
-  document.getElementById("wpc2").src=
-    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png?"+Date.now();
-  document.getElementById("wpc3").src=
-    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png?"+Date.now();
-},300000);
+  document.getElementById("radarImg").src =
+    "https://radar.weather.gov/ridge/standard/KGRK_loop.gif?" + Date.now();
+  document.getElementById("satImg").src =
+    "https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg?" + Date.now();
+  document.getElementById("wpc1").src =
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad1.png?" + Date.now();
+  document.getElementById("wpc2").src =
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad2.png?" + Date.now();
+  document.getElementById("wpc3").src =
+    "https://www.wpc.ncep.noaa.gov/NationalForecastChart/staticmaps/noaad3.png?" + Date.now();
+}, 300000);
 
 </script>
 
