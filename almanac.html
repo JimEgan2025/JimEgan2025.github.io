@@ -3,66 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Almanac | Round Rock, TX</title>
+    <title>Vizcaya Climate Almanac — Master Console</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; }
-        .search-container { background: #ecf0f1; padding: 20px; border-radius: 10px; margin-bottom: 25px; }
-        select { padding: 10px; border-radius: 5px; border: 1px solid #bdc3c7; font-size: 16px; margin: 5px; width: 80px; }
-        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .data-point { background: #fff; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-        .label { display: block; font-size: 11px; color: #95a5a6; text-transform: uppercase; font-weight: bold; }
-        .value { font-size: 18px; font-weight: bold; color: #2c3e50; }
-        .full-width { grid-column: span 2; background: #e8f4fd; }
-        #status { font-size: 12px; margin-bottom: 10px; padding: 8px; border-radius: 5px; }
-        .err-msg { background: #fdedec; color: #a93226; border: 1px solid #fadbd8; }
-        .ok-msg { background: #e9f7ef; color: #1d8348; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.85em; }
-        th { background: #3498db; color: white; padding: 8px; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
+        :root { 
+            --bg: #0f0f0f; 
+            --card: #1a1a1a; 
+            --accent: #d4a017; 
+            --blue: #38bdf8; 
+            --text: #e2e8f0; 
+            --dim: #888; 
+            --border: #2d3748;
+        }
+        body { 
+            font-family: Consolas, Monaco, "Courier New", monospace, -apple-system, sans-serif;
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 30px 15px; 
+            display: flex; 
+            justify-content: center; 
+        }
+        .container { 
+            width: 100%; 
+            max-width: 1000px; 
+        }
+        
+        /* Dashboard Header */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--border); 
+            padding-bottom: 15px; 
+            margin-bottom: 20px; 
+        }
+        h1 { 
+            margin: 0; 
+            font-size: 1.5rem; 
+            color: var(--blue); 
+            font-weight: 700;
+        }
+
+        /* Mode Toggle Tabs */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .tab-btn {
+            background-color: #222;
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            color: #fff;
+            border-color: #4a5568;
+        }
+        .tab-btn.active {
+            background-color: var(--blue);
+            color: #0f172a;
+            border-color: var(--blue);
+        }
+
+        /* Selector Controls */
+        .controls-container {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        select { 
+            background: #222; 
+            color: #fff; 
+            border: 1px solid #444; 
+            padding: 8px 12px; 
+            font-size: 14px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            outline: none;
+        }
+        
+        /* Grid Layouts */
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px;
+        }
+        .card { 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
+        }
+        .card.temp { border-top: 4px solid var(--accent); }
+        .card.rain { border-top: 4px solid var(--blue); }
+        .card h3 { 
+            margin: 0 0 10px 0; 
+            font-size: 0.8rem; 
+            color: var(--dim); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        .big-val { 
+            font-size: 2.2rem; 
+            font-weight: bold; 
+            margin-bottom: 10px; 
+            color: #fff; 
+        }
+        .big-val span { 
+            font-size: 1rem; 
+            color: var(--dim); 
+            font-weight: normal; 
+        }
+        .row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 6px 0; 
+            border-top: 1px solid #2a2a2a; 
+            font-size: 0.85rem; 
+        }
+        .label { color: var(--dim); }
+        .val { font-weight: bold; color: #ff9999; }
+        .yr { color: #555; font-size: 0.7rem; margin-left: 4px; }
+
+        /* Today / Daily Lookup Specials */
+        .full-width {
+            grid-column: span 1;
+        }
+        @media (min-width: 768px) {
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        /* Outlook Table (Program 2) */
+        .table-container {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 13px; 
+            text-align: center;
+        }
+        th { 
+            background: #1f2937; 
+            color: var(--blue); 
+            padding: 10px; 
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        td { 
+            padding: 10px; 
+            border-bottom: 1px solid var(--border); 
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Indicator classes */
+        #status { 
+            font-size: 11px; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
+        .err-msg { background: #7f1d1d; color: #fecaca; }
+        .ok-msg { background: #064e3b; color: #a7f3d0; }
+
+        /* AI Briefing Button */
+        .ai-btn {
+            background-color: #064e3b; 
+            color: #a7f3d0; 
+            border: 1px solid #10b981; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: background 0.2s;
+            outline: none;
+        }
+        .ai-btn:hover {
+            background-color: #047857;
+        }
+        .pending-text {
+            color: #64748b;
+            font-style: italic;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Vizcaya Almanac</h1>
-    <div id="status">Connecting...</div>
+<div class="container">
+    <header>
+        <div>
+            <h1 id="displayTitle">Vizcaya Climate Almanac</h1>
+            <div style="font-size: 0.8rem; color: #666;">Consolidated Daily & Monthly Records</div>
+        </div>
+        <div id="status" class="err-msg">Connecting...</div>
+    </header>
 
-    <div class="search-container">
-        <select id="monthSelect" onchange="updateUI()">
-            <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
-            <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
-            <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
-            <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+    <!-- Tab Toggles -->
+    <div class="tab-container">
+        <button id="tab-daily" class="tab-btn active" onclick="switchTab('daily')">Daily Lookup & Outlook</button>
+        <button id="tab-monthly" class="tab-btn" onclick="switchTab('monthly')">Monthly & Annual Summary</button>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="controls-container">
+        <!-- Monthly Selector (Tab 2) -->
+        <select id="monthSelect" onchange="updateMonthlyUI()" style="display: none;">
+            <option value="01_january">January</option>
+            <option value="02_february">February</option>
+            <option value="03_march">March</option>
+            <option value="04_april">April</option>
+            <option value="05_may">May</option>
+            <option value="06_june">June</option>
+            <option value="07_july">July</option>
+            <option value="08_august">August</option>
+            <option value="09_september">September</option>
+            <option value="10_october">October</option>
+            <option value="11_november">November</option>
+            <option value="12_december">December</option>
+            <option value="annual">Annual Summary</option>
         </select>
-        <select id="daySelect" onchange="updateUI()"></select>
+
+        <!-- Daily Selectors (Tab 1) -->
+        <div id="dailySelectors" style="display: flex; gap: 10px; align-items: center;">
+            <label style="font-size: 13px; color: var(--dim); font-weight: bold;">Lookup Date:</label>
+            <select id="lookupMonth" onchange="updateDailyUI()">
+                <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+                <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+                <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
+                <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+            </select>
+            <select id="lookupDay" onchange="updateDailyUI()"></select>
+        </div>
     </div>
 
-    <h2 id="dateHeader">---</h2>
+    <!-- Active View Grid -->
+    <div id="statsGrid" class="stats-grid"></div>
 
-    <div class="results-grid">
-        <div class="data-point"><span class="label">Record High</span><span id="recHigh" class="value">--</span></div>
-        <div class="data-point"><span class="label">Record Low</span><span id="recLow" class="value">--</span></div>
-        <div class="data-point"><span class="label">Average High</span><span id="avgHigh" class="value">--</span></div>
-        <div class="data-point"><span class="label">Average Low</span><span id="avgLow" class="value">--</span></div>
-        <div class="data-point full-width"><span class="label">Precipitation Norm</span><span id="precip" class="value">--</span></div>
+    <!-- Rolling 14-Day Outlook Table (Active in Tab 1) -->
+    <div id="outlookContainer" class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding-left: 20px;">Forecast Date</th>
+                    <th>Record High</th>
+                    <th>Record Low</th>
+                    <th>Normal High/Low</th>
+                </tr>
+            </thead>
+            <tbody id="next14Body"></tbody>
+        </table>
     </div>
 
-    <table id="outlookTable">
-        <thead><tr><th>Date</th><th>Rec H</th><th>Rec L</th><th>Avg H/L</th></tr></thead>
-        <tbody id="next14Body"></tbody>
-    </table>
+    <!-- AI TACTICAL BRIEFING CONTAINER (NEW) -->
+    <div class="section-title" style="margin-top: 35px; border-left-color: #10b981;">🤖 AI Tactical Briefing Generator</div>
+    <div class="table-container" style="padding: 15px; background-color: var(--card);">
+        <p style="font-size: 11px; color: var(--dim); margin-bottom: 8px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Compiled plain-text context for LLMs (Click box or button to copy)</p>
+        <textarea id="aiBriefingText" readonly style="width: 100%; height: 160px; background-color: #090d16; color: #38bdf8; border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; resize: none; overflow-y: scroll; outline: none; margin-bottom: 8px;" onclick="this.select()"></textarea>
+        <div style="text-align: right;">
+            <button class="ai-btn" onclick="copyBriefingToClipboard()">📋 Copy Climate Context for AI</button>
+        </div>
+    </div>
+
 </div>
 
 <script>
     const JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
     let almanacData = null;
+    let currentTab = 'daily';
 
-    // Fill Day Dropdown
-    const dSelect = document.getElementById('daySelect');
+    // Populate the Day selector dropdown dynamically
+    const dSelect = document.getElementById('lookupDay');
     for(let i=1; i<=31; i++) {
         let val = String(i).padStart(2, '0');
         dSelect.innerHTML += `<option value="${val}">${i}</option>`;
+    }
+
+    // Hardcoded Monthly/Annual Dataset (Program 1)
+    const climateData = {
+        "01_january": {
+            "average_temp": { "mean": 48.9, "record_max_avg": 59.0, "record_max_year": 1952, "record_min_avg": 40.0, "record_min_year": 1930 },
+            "average_high": { "mean": 60.6, "record_max": 72.0, "record_max_year": 1923, "record_min": 49.0, "record_min_year": 1979 },
+            "average_low":  { "mean": 37.1, "record_max": 48.0, "record_max_year": 1952, "record_min": 25.0, "record_min_year": 1918 },
+            "rainfall":     { "mean": 2.11, "record_wettest": 10.10, "record_wettest_year": 1968, "record_driest": 0.00, "record_driest_year": 1971 }
+        },
+        "02_february": {
+            "average_temp": { "mean": 52.4, "record_max_avg": 61.0, "record_max_year": 2017, "record_min_avg": 41.0, "record_min_year": 1899 },
+            "average_high": { "mean": 64.4, "record_max": 75.0, "record_max_year": 1976, "record_min": 53.0, "record_min_year": 1899 },
+            "average_low":  { "mean": 40.3, "record_max": 52.0, "record_max_year": 1957, "record_min": 29.0, "record_min_year": 1899 },
+            "rainfall":     { "mean": 2.29, "record_wettest": 8.68, "record_wettest_year": 1992, "record_driest": 0.01, "record_driest_year": 1916 }
+        },
+        "03_march": {
+            "average_temp": { "mean": 60.0, "record_max_avg": 71.0, "record_max_year": 1907, "record_min_avg": 49.0, "record_min_year": 1915 },
+            "average_high": { "mean": 72.3, "record_max": 84.0, "record_max_year": 1907, "record_min": 60.0, "record_min_year": 1915 },
+            "average_low":  { "mean": 47.7, "record_max": 58.0, "record_max_year": 1907, "record_min": 37.0, "record_min_year": 2014 },
+            "rainfall":     { "mean": 2.33, "record_wettest": 7.16, "record_wettest_year": 2001, "record_driest": 0.00, "record_driest_year": 1904 }
+        },
+        "04_april": {
+            "average_temp": { "mean": 67.3, "record_max_avg": 75.0, "record_max_year": 1925, "record_min_avg": 61.0, "record_min_year": 1997 },
+            "average_high": { "mean": 79.1, "record_max": 88.0, "record_max_year": 1925, "record_min": 70.0, "record_min_year": 1997 },
+            "average_low":  { "mean": 55.4, "record_max": 65.0, "record_max_year": 1967, "record_min": 49.0, "record_min_year": 2018 },
+            "rainfall":     { "mean": 3.37, "record_wettest": 11.58, "record_wettest_year": 1997, "record_driest": 0.13, "record_driest_year": 2012 }
+        },
+        "05_may": {
+            "average_temp": { "mean": 74.5, "record_max_avg": 79.6, "record_max_year": 2022, "record_min_avg": 67.0, "record_min_year": 2016 },
+            "average_high": { "mean": 85.5, "record_max": 97.9, "record_max_year": 2022, "record_min": 79.0, "record_min_year": 1907 },
+            "average_low":  { "mean": 63.6, "record_max": 70.0, "record_max_year": 1902, "record_min": 54.0, "record_min_year": 2016 },
+            "rainfall":     { "mean": 4.39, "record_wettest": 14.83, "record_wettest_year": 2015, "record_driest": 0.69, "record_driest_year": 1960 }
+        },
+        "06_june": {
+            "average_temp": { "mean": 81.1, "record_max_avg": 87.0, "record_max_year": 1925, "record_min_avg": 74.0, "record_min_year": 1995 },
+            "average_high": { "mean": 92.1, "record_max": 100.0, "record_max_year": 1925, "record_min": 86.0, "record_min_year": 1983 },
+            "average_low":  { "mean": 69.9, "record_max": 74.1, "record_max_year": 2024, "record_min": 59.0, "record_min_year": 1995 },
+            "rainfall":     { "mean": 3.31, "record_wettest": 10.93, "record_wettest_year": 1919, "record_driest": 0.00, "record_driest_year": 1967 }
+        },
+        "07_july": {
+            "average_temp": { "mean": 84.0, "record_max_avg": 89.0, "record_max_year": 2011, "record_min_avg": 79.0, "record_min_year": 2007 },
+            "average_high": { "mean": 95.7, "record_max": 102.0, "record_max_year": 1978, "record_min": 88.0, "record_min_year": 2004 },
+            "average_low":  { "mean": 72.3, "record_max": 77.2, "record_max_year": 2022, "record_min": 69.0, "record_min_year": 2004 },
+            "rainfall":     { "mean": 2.06, "record_wettest": 10.49, "record_wettest_year": 2007, "record_driest": 0.00, "record_driest_year": 1913 }
+        },
+        "08_august": {
+            "average_temp": { "mean": 84.3, "record_max_avg": 90.0, "record_max_year": 2011, "record_min_avg": 77.0, "record_min_year": 2004 },
+            "average_high": { "mean": 96.6, "record_max": 104.0, "record_max_year": 2011, "record_min": 88.0, "record_min_year": 2004 },
+            "average_low":  { "mean": 72.1, "record_max": 77.0, "record_max_year": 2011, "record_min": 66.0, "record_min_year": 2004 },
+            "rainfall":     { "mean": 2.05, "record_wettest": 14.00, "record_wettest_year": 2016, "record_driest": 0.00, "record_driest_year": 1902 }
+        },
+        "09_september": {
+            "average_temp": { "mean": 78.7, "record_max_avg": 84.3, "record_max_year": 2023, "record_min_avg": 73.0, "record_min_year": 1974 },
+            "average_high": { "mean": 90.5, "record_max": 98.0, "record_max_year": 1977, "record_min": 84.0, "record_min_year": 1974 },
+            "average_low":  { "mean": 66.8, "record_max": 73.3, "record_max_year": 2023, "record_min": 58.0, "record_min_year": 1979 },
+            "rainfall":     { "mean": 3.54, "record_wettest": 17.75, "record_wettest_year": 2010, "record_driest": 0.02, "record_driest_year": 2011 }
+        },
+        "10_october": {
+            "average_temp": { "mean": 69.3, "record_max_avg": 76.0, "record_max_year": 1976, "record_min_avg": 61.0, "record_min_year": 1976 },
+            "average_high": { "mean": 81.9, "record_max": 90.0, "record_max_year": 1934, "record_min": 73.0, "record_min_year": 1976 },
+            "average_low":  { "mean": 56.6, "record_max": 65.0, "record_max_year": 2004, "record_min": 47.0, "record_min_year": 1917 },
+            "rainfall":     { "mean": 3.43, "record_wettest": 11.66, "record_wettest_year": 2010, "record_driest": 0.00, "record_driest_year": 2009 }
+        },
+        "11_november": {
+            "average_temp": { "mean": 58.5, "record_max_avg": 68.0, "record_max_year": 1927, "record_min_avg": 51.0, "record_min_year": 1959 },
+            "average_high": { "mean": 70.4, "record_max": 80.0, "record_max_year": 1927, "record_min": 62.0, "record_min_year": 1993 },
+            "average_low":  { "mean": 46.5, "record_max": 56.0, "record_max_year": 1927, "record_min": 38.0, "record_min_year": 1911 },
+            "rainfall":     { "mean": 2.61, "record_wettest": 11.42, "record_wettest_year": 1902, "record_driest": 0.00, "record_driest_year": 1903 }
+        },
+        "12_december": {
+            "average_temp": { "mean": 50.7, "record_max_avg": 61.0, "record_max_year": 2021, "record_min_avg": 40.0, "record_min_year": 1989 },
+            "average_high": { "mean": 62.2, "record_max": 74.0, "record_max_year": 1933, "record_min": 49.0, "record_min_year": 1914 },
+            "average_low":  { "mean": 39.3, "record_max": 57.5, "record_max_year": 2024, "record_min": 28.0, "record_min_year": 1989 },
+            "rainfall":     { "mean": 2.52, "record_wettest": 14.87, "record_wettest_year": 1913, "record_driest": 0.01, "record_driest_year": 1950 }
+        },
+        "annual": {
+            "average_temp": { "mean": 67.5, "record_max_avg": 70.6, "record_max_year": 1933, "record_min_avg": 63.6, "record_min_year": 1983 },
+            "average_high": { "mean": 79.2, "record_max": 83.1, "record_max_year": 1933, "record_min": 75.9, "record_min_year": 1983 },
+            "average_low":  { "mean": 55.6, "record_max": 60.9, "record_max_year": 2023, "record_min": 51.5, "record_min_year": 1983 },
+            "rainfall":     { "mean": 34.02, "record_wettest": 60.03, "record_wettest_year": 1919, "record_driest": 13.23, "record_driest_year": 1917 }
+        }
+    };
+
+    // Tab Switcher Controller
+    function switchTab(tabId) {
+        currentTab = tabId;
+        
+        // Update tab buttons
+        document.getElementById('tab-daily').classList.toggle('active', tabId === 'daily');
+        document.getElementById('tab-monthly').classList.toggle('active', tabId === 'monthly');
+
+        // Update selector displays
+        document.getElementById('dailySelectors').style.display = tabId === 'daily' ? 'flex' : 'none';
+        document.getElementById('monthSelect').style.display = tabId === 'monthly' ? 'block' : 'none';
+
+        // Update main table container display
+        document.getElementById('outlookContainer').style.display = tabId === 'daily' ? 'block' : 'none';
+
+        // Redraw output based on view
+        if (tabId === 'daily') {
+            updateDailyUI();
+        } else {
+            updateMonthlyUI();
+        }
     }
 
     async function loadData() {
@@ -75,43 +423,68 @@
             }
 
             almanacData = await response.json();
-            statusDiv.innerText = "Data Loaded Successfully";
+            statusDiv.innerText = "ALMANAC INSTANCES LOADED";
             statusDiv.className = "ok-msg";
 
+            // Auto-detect and populate current date
             const today = new Date();
-            document.getElementById('monthSelect').value = String(today.getMonth() + 1).padStart(2, '0');
-            document.getElementById('daySelect').value = String(today.getDate()).padStart(2, '0');
+            document.getElementById('lookupMonth').value = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('lookupDay').value = String(today.getDate()).padStart(2, '0');
             
-            updateUI();
+            // Set default tab on load to Daily
+            switchTab('daily');
+
         } catch (err) {
-            statusDiv.innerHTML = `<b>Error:</b> ${err.message}<br><small>Ensure file is at JimEgan2025.github.io/almanac.json</small>`;
+            statusDiv.innerHTML = `<b>Error:</b> ${err.message}<br><small>Failed to fetch daily almanac JSON.</small>`;
             statusDiv.className = "err-msg";
         }
     }
 
-    function updateUI() {
+    // --- VIEW 1: DAILY LOOKUP & 14-DAY OUTLOOK ---
+    function updateDailyUI() {
         if (!almanacData) return;
 
-        const mm = document.getElementById('monthSelect').value;
-        const dd = document.getElementById('daySelect').value;
+        const mm = document.getElementById('lookupMonth').value;
+        const dd = document.getElementById('lookupDay').value;
         const key = `${mm}-${dd}`;
         const data = almanacData[key];
 
+        const grid = document.getElementById('statsGrid');
+        document.getElementById('displayTitle').innerText = `DAILY RECORDS: ${mm}/${dd}`;
+
         if (data) {
-            document.getElementById('dateHeader').innerText = `${mm}/${dd}`;
-            document.getElementById('recHigh').innerText = `${data.recH}° (${data.recHY})`;
-            document.getElementById('recLow').innerText = `${data.recL}° (${data.recLY})`;
-            document.getElementById('avgHigh').innerText = `${data.avgH}°`;
-            document.getElementById('avgLow').innerText = `${data.avgL}°`;
-            document.getElementById('precip').innerText = `${data.accP}"`;
+            grid.innerHTML = `
+                <div class="card temp">
+                    <h3>Record High</h3>
+                    <div class="big-val">${data.recH}<span>°F</span></div>
+                    <div class="row" style="border: none;"><span class="label">Observed Year</span><span class="val">${data.recHY}</span></div>
+                </div>
+                <div class="card temp">
+                    <h3>Record Low</h3>
+                    <div class="big-val" style="color:#60a5fa">${data.recL}<span>°F</span></div>
+                    <div class="row" style="border: none;"><span class="label">Observed Year</span><span class="val" style="color:#93c5fd">${data.recLY}</span></div>
+                </div>
+                <div class="card temp">
+                    <h3>Daily Normals</h3>
+                    <div class="big-val">${data.avgH}<span>°F</span></div>
+                    <div class="row"><span class="label">Normal Low</span><span class="val" style="color:#cbd5e1">${data.avgL}°F</span></div>
+                </div>
+                <div class="card rain">
+                    <h3>Precipitation YTD</h3>
+                    <div class="big-val">${data.accP}<span>"</span></div>
+                    <div class="row" style="border: none;"><span class="label">YTD Normal Accumulation</span></div>
+                </div>
+            `;
             
-            buildTable(mm, dd);
+            buildOutlookTable(mm, dd);
+            updateAIBriefing(); // Sync the AI text box on daily changes
         }
     }
 
-    function buildTable(m, d) {
+    function buildOutlookTable(m, d) {
         const tbody = document.getElementById('next14Body');
         tbody.innerHTML = '';
+        
         let current = new Date(2024, parseInt(m)-1, parseInt(d));
 
         for (let i = 0; i < 14; i++) {
@@ -121,16 +494,115 @@
 
             if (dayData) {
                 tbody.innerHTML += `<tr>
-                    <td>${current.toLocaleString('default', { month: 'short', day: 'numeric' })}</td>
-                    <td>${dayData.recH}°</td><td>${dayData.recL}°</td>
-                    <td>${dayData.avgH}°/${dayData.avgL}°</td>
+                    <td style="text-align: left; padding-left: 20px; font-weight: bold; color: var(--blue);">
+                        ${current.toLocaleString('default', { month: 'short', day: 'numeric' })}
+                    </td>
+                    <td style="font-weight: bold; color: #fff;">${dayData.recH}° <span style="font-size: 11px; color: var(--dim);">(${dayData.recHY})</span></td>
+                    <td style="font-weight: bold; color: #60a5fa;">${dayData.recL}° <span style="font-size: 11px; color: var(--dim);">(${dayData.recLY})</span></td>
+                    <td style="font-weight: bold; color: #cbd5e1;">${dayData.avgH}° / ${dayData.avgL}°</td>
                 </tr>`;
             }
             current.setDate(current.getDate() + 1);
         }
     }
 
+    // --- VIEW 2: MONTHLY & ANNUAL SUMMARY ---
+    function updateMonthlyUI() {
+        const key = document.getElementById('monthSelect').value;
+        const d = climateData[key];
+        const grid = document.getElementById('statsGrid');
+        
+        document.getElementById('displayTitle').innerText = (key === 'annual') ? "ANNUAL CLIMATE SUMMARY" : key.split('_')[1].toUpperCase() + " CLIMATE RECORDS";
+
+        grid.innerHTML = `
+            <div class="card temp">
+                <h3>Average Temperature</h3>
+                <div class="big-val">${d.average_temp.mean}<span>°F</span></div>
+                <div class="row"><span class="label">Record High Avg</span><span><span class="val">${d.average_temp.record_max_avg}°</span><span class="yr">${d.average_temp.record_max_year}</span></span></div>
+                <div class="row"><span class="label">Record Low Avg</span><span><span class="val" style="color:#60a5fa">${d.average_temp.record_min_avg}°</span><span class="yr">${d.average_temp.record_min_year}</span></span></div>
+            </div>
+            <div class="card temp">
+                <h3>Average Highs</h3>
+                <div class="big-val">${d.average_high.mean}<span>°F</span></div>
+                <div class="row"><span class="label">Extreme High</span><span><span class="val">${d.average_high.record_max}°</span><span class="yr">${d.average_high.record_max_year}</span></span></div>
+                <div class="row"><span class="label">Lowest High</span><span><span class="val" style="color:#60a5fa">${d.average_high.record_min}°</span><span class="yr">${d.average_high.record_min_year}</span></span></div>
+            </div>
+            <div class="card temp">
+                <h3>Average Lows</h3>
+                <div class="big-val">${d.average_low.mean}<span>°F</span></div>
+                <div class="row"><span class="label">Highest Low</span><span><span class="val">${d.average_low.record_max}°</span><span class="yr">${d.average_low.record_max_year}</span></span></div>
+                <div class="row"><span class="label">Extreme Low</span><span><span class="val" style="color:#60a5fa">${d.average_low.record_min}°</span><span class="yr">${d.average_low.record_min_year}</span></span></div>
+            </div>
+            <div class="card rain">
+                <h3>Average Rainfall</h3>
+                <div class="big-val">${d.rainfall.mean}<span>"</span></div>
+                <div class="row"><span class="label">Wettest</span><span><span class="val" style="color:#34d399">${d.rainfall.record_wettest}"</span><span class="yr">${d.rainfall.record_wettest_year}</span></span></div>
+                <div class="row"><span class="label">Driest</span><span><span class="val" style="color:#fbbf24">${d.rainfall.record_driest}"</span><span class="yr">${d.rainfall.record_driest_year}</span></span></div>
+            </div>
+        `;
+
+        updateAIBriefing(); // Sync the AI text box on monthly changes
+    }
+
+    // --- AI BRIEFING COMPILER & CLIPBOARD SYSTEM ---
+    function updateAIBriefing() {
+        if (!almanacData) return;
+
+        // Get daily metrics from active daily selectors (synced date)
+        const mm = document.getElementById('lookupMonth').value;
+        const dd = document.getElementById('lookupDay').value;
+        const dailyKey = `${mm}-${dd}`;
+        const dRec = almanacData[dailyKey];
+
+        // Map corresponding month name from selection list
+        const monthNames = [
+            "01_january", "02_february", "03_march", "04_april", "05_may", "06_june",
+            "07_july", "08_august", "09_september", "10_october", "11_november", "12_december"
+        ];
+        const monthlyKey = monthNames[parseInt(mm) - 1];
+        const mRec = climateData[monthlyKey];
+
+        if (!dRec || !mRec) return;
+
+        const monthNameString = monthlyKey.split('_')[1].toUpperCase();
+
+        // Standardized plain-text context block for direct ingestion into AI systems
+        const briefingText = `[VIZCAYA CLIMATE ALMANAC BRIEFING]
+Target Date: ${mm}/${dd} (${monthNameString})
+
+-- DAILY CLIMATE DATA (${mm}/${dd}) --
+Daily Record High : ${dRec.recH}°F (${dRec.recHY})
+Daily Record Low  : ${dRec.recL}°F (${dRec.recLY})
+Daily Normal High : ${dRec.avgH}°F
+Daily Normal Low  : ${dRec.avgL}°F
+YTD Normal Rain   : ${dRec.accP}"
+
+-- MONTHLY CLIMATE DATA (${monthNameString}) --
+Average Temp      : ${mRec.average_temp.mean}°F (Record Max Avg: ${mRec.average_temp.record_max_avg}°F in ${mRec.average_temp.record_max_year} | Record Min Avg: ${mRec.average_temp.record_min_avg}°F in ${mRec.average_temp.record_min_year})
+Average Highs     : ${mRec.average_high.mean}°F (Extreme High: ${mRec.average_high.record_max}°F in ${mRec.average_high.record_max_year} | Lowest High: ${mRec.average_high.record_min}°F in ${mRec.average_high.record_min_year})
+Average Lows      : ${mRec.average_low.mean}°F (Highest Low: ${mRec.average_low.record_max}°F in ${mRec.average_low.record_max_year} | Extreme Low: ${mRec.average_low.record_min}°F in ${mRec.average_low.record_min_year})
+Average Rainfall  : ${mRec.rainfall.mean}" (Wettest Month: ${mRec.rainfall.record_wettest}" in ${mRec.rainfall.record_wettest_year} | Driest Month: ${mRec.rainfall.record_driest}" in ${mRec.rainfall.record_driest_year})`;
+
+        document.getElementById("aiBriefingText").value = briefingText;
+    }
+
+    function copyBriefingToClipboard() {
+        const txtArea = document.getElementById("aiBriefingText");
+        if (txtArea) {
+            txtArea.select();
+            navigator.clipboard.writeText(txtArea.value);
+            alert("Vizcaya climate context copied to clipboard!");
+        }
+    }
+
+    // Auto-detect month on load for fallback setting
+    const monthList = ["01_january","02_february","03_march","04_april","05_may","06_june","07_july","08_august","09_september","10_october","11_november","12_december"];
+    const currentMonth = monthList[new Date().getMonth()];
+    document.getElementById('monthSelect').value = currentMonth;
+
+    // Run fetch on load
     loadData();
 </script>
+
 </body>
 </html>
