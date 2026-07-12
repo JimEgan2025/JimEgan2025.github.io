@@ -3,291 +3,680 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Command Center</title>
+    <title>Vizcaya Today's Nowcast Command</title>
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --card-bg: #ffffff;
-            --accent-blue: #2563eb;
-            --accent-red: #ef4444;
-            --text-main: #1e293b;
+            --primary: #1e3a8a;
+            --bg: #090d16;
+            --card: #111827;
+            --border: #1e293b;
+            --text-main: #f8fafc;
             --text-muted: #64748b;
+            --accent: #38bdf8;
+            --success: #10b981;
+            --danger: #ef4444;
         }
-
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { 
-            font-family: 'Arial Black', sans-serif; 
-            background: var(--bg-dark); 
-            color: #fff;
-            padding: 20px;
+        body {
+            font-family: Consolas, Monaco, "Courier New", monospace, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 30px 15px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1350px;
+            width: 100%;
+        }
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            font-size: 26px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 13px;
         }
 
-        .dashboard-container {
-            width: 1300px;
-            background: var(--card-bg);
-            border-radius: 28px;
-            overflow: hidden;
-            color: var(--text-main);
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
-            border: 2px solid #334155;
+        /* Dynamic Summary Banner */
+        .summary-banner {
+            background-color: #1e293b;
+            border-left: 5px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            color: white; padding: 25px; text-align: center; border-bottom: 8px solid #3b82f6;
-        }
-        .header h1 { font-size: 48px; text-transform: uppercase; letter-spacing: 2px; }
-        .header p { font-size: 18px; font-family: Arial; font-weight: bold; color: #bfdbfe; text-transform: uppercase; margin-top: 5px; }
-
-        .main-layout {
+        /* Side-by-Side Map Grid (Radar & Satellite) */
+        .map-grid {
             display: grid;
-            grid-template-columns: 600px 1fr;
-            padding: 30px;
-            gap: 35px;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        @media (min-width: 1024px) {
+            .map-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .map-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            height: 400px;
+        }
+        .map-card iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
-        /* LEFT PANEL */
-        .left-panel { display: flex; flex-direction: column; gap: 20px; }
-        .station-embed {
-            width: 600px; height: 500px; border-radius: 20px; overflow: hidden; border: 3px solid #e2e8f0;
+        /* WeatherLink Hardware Iframe Wrapper */
+        .hardware-container {
+            background-color: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 30px;
+            height: 490px;
         }
-        iframe { width: 100%; height: 100%; border: none; }
-
-        .progression-bar {
-            background: #f8fafc; padding: 25px; border-radius: 20px; border: 2px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center;
+        .hardware-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
         }
-        .daypart-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 900; margin-bottom: 5px; }
-        .daypart-icon { font-size: 52px; margin: 5px 0; }
-        .daypart-status { font-size: 16px; font-weight: 900; text-transform: uppercase; color: var(--accent-blue); }
 
-        /* RIGHT PANEL */
-        .right-panel { display: flex; flex-direction: column; gap: 15px; }
-
-        .comp-table { width: 100%; }
-        .comp-row {
-            display: grid; grid-template-columns: 1.2fr 1fr 1fr; padding: 15px 0; border-bottom: 3px solid #f1f5f9; align-items: center;
+        /* Top Grid layout */
+        .nowcast-header-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
         }
-        .comp-header { font-size: 14px; color: var(--text-muted); text-transform: uppercase; font-weight: 900; }
-        .comp-val { font-size: 42px; font-weight: 900; }
-        .comp-label { font-size: 18px; color: #1e293b; text-transform: uppercase; }
-        .diff-val { font-size: 28px; font-weight: 900; }
-
-        .departure-tag { padding: 15px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-        .hotter { background: #fee2e2; color: #b91c1c; border: 2px solid #fca5a5; }
-        .colder { background: #dbeafe; color: #1d4ed8; border: 2px solid #93c5fd; }
-
-        /* CLIMATE CARDS */
-        .climate-card {
-            padding: 20px; border-radius: 20px; border: 3px solid #e2e8f0;
+        .header-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .hist-temp-card { background: #fff7ed; border-color: #ffedd5; text-align: center; }
-        .rain-tracker-card { background: #eff6ff; border-color: #bfdbfe; text-align: center; }
-
-        .card-label { font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; }
-        
-        /* UNIFIED CLIMATE GRID */
-        .unified-climate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .climate-column { background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #fed7aa; }
-        .climate-sub-label { font-size: 12px; color: #9a3412; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #ffedd5; padding-bottom: 5px; }
-        
-        .val-block { margin-bottom: 10px; }
-        .val-block span { font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase; }
-        .val-block b { font-size: 38px; color: #1e293b; line-height: 1; }
-        .val-block .yr { font-size: 14px; color: #ea580c; font-weight: bold; }
-
-        .rain-val { font-size: 64px; color: #1d4ed8; font-weight: 900; line-height: 1; }
-        .rain-sub { font-size: 14px; color: #64748b; font-weight: bold; margin-top: 5px; }
-
-        /* 5-DAY GRID */
-        .forecast-5day { display: grid; grid-template-columns: repeat(5, 1fr); background: #f1f5f9; gap: 2px; border-top: 4px solid #cbd5e1; }
-        .day-card { background: #fff; padding: 25px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .fc-name { font-size: 22px; color: var(--accent-blue); font-weight: 900; text-transform: uppercase; }
-        .fc-icon { font-size: 50px; margin: 8px 0; }
-        .fc-temps { font-size: 26px; font-weight: 900; }
-        .fc-rain { font-size: 16px; color: #3b82f6; font-weight: 900; margin-top: 5px; }
-
-        /* FOOTER STRIP */
-        .climate-strip {
-            background: #1e293b; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; color: white;
+        .card-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
         }
-        .stat-box span { font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
-        .stat-box b { font-size: 32px; color: #fff; line-height: 1; }
+        .card-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        .card-subtext {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .record-high { color: #f87171; font-weight: bold; }
+        .record-low { color: #60a5fa; font-weight: bold; }
 
-        #status { font-size: 32px; color: #3b82f6; text-align: center; padding-top: 100px; }
+        /* Table Styling */
+        .section-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #e2e8f0;
+            margin-bottom: 15px;
+            margin-top: 35px;
+            text-transform: uppercase;
+            border-left: 4px solid var(--accent);
+            padding-left: 10px;
+        }
+        .table-container {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 13px;
+            min-width: 900px;
+        }
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background-color: #1f2937;
+            color: #9ca3af;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .time-col {
+            font-weight: bold;
+            text-align: left !important;
+            padding-left: 20px;
+            color: var(--accent);
+        }
+        .condition-emoji {
+            font-size: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+        .condition-text {
+            font-weight: bold;
+            color: #cbd5e1;
+        }
+        .precip-spike {
+            background-color: rgba(56, 189, 248, 0.03);
+        }
+        .regional-col {
+            font-weight: bold;
+            text-align: left !important;
+            padding-left: 20px;
+            color: #ffffff;
+        }
+        .pending-text {
+            color: #64748b;
+            font-style: italic;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
 
-<div id="status">📡 OPTIMIZING COMMAND CENTER...</div>
+    <div class="container">
+        <header>
+            <h1>Today's Nowcast Command</h1>
+            <p>Georgetown, TX (30.587, -97.641) — Real-Time Gridded loop & county Alerts</p>
+        </header>
 
-<div class="dashboard-container" id="dashboard" style="display:none;">
-    <div class="header">
-        <h1>VIZCAYA COMMAND CENTER</h1>
-        <p id="current-date">LIVE PINPOINT DATA • ROUND ROCK, TX</p>
-    </div>
+        <div id="status" style="text-align: center; color: var(--text-muted);">📡 Ingesting weather instruments, regional loops, and climate almanac...</div>
 
-    <div class="main-layout">
-        <!-- LEFT PANEL -->
-        <div class="left-panel">
-            <div class="station-embed">
-                <iframe id="station-frame" src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"></iframe>
-            </div>
+        <main id="nowcast-content" style="display: none;">
             
-            <div class="progression-bar">
-                <div class="daypart"><div class="daypart-label">Morning</div><div class="daypart-icon" id="icon-am">--</div><div class="daypart-status" id="desc-am">--</div></div>
-                <div class="daypart"><div class="daypart-label">Afternoon</div><div class="daypart-icon" id="icon-pm">--</div><div class="daypart-status" id="desc-pm">--</div></div>
-                <div class="daypart"><div class="daypart-label">Evening</div><div class="daypart-icon" id="icon-eve">--</div><div class="daypart-status" id="desc-eve">--</div></div>
+            <!-- DYNAMIC SUMMARY BANNER -->
+            <div class="summary-banner" id="nowcast-summary">
+                Generating outlook summary...
             </div>
-        </div>
 
-        <!-- RIGHT PANEL -->
-        <div class="right-panel">
-            <div class="comp-table">
-                <div class="comp-row" style="border-bottom: 3px solid #1e3a8a;">
-                    <div class="comp-header">TODAY'S METRIC</div><div class="comp-header">EXPECTED</div><div class="comp-header">VS. NORMAL</div>
+            <!-- LIVE NWS ALERTS PANEL (WILLIAMSON COUNTY) -->
+            <div class="section-title">🚨 Active NWS Alerts (Williamson County / TXZ173)</div>
+            <div id="nws-alerts-container" style="margin-bottom: 30px;">
+                <p style="color: var(--text-muted); font-size: 13px;">Checking NOAA active alerts...</p>
+            </div>
+
+            <!-- LIVE TACTICAL GRIP CENTER (RADAR & SATELLITE LOOPS) -->
+            <div class="section-title">🛰️ Gridded Observation Center (GOES-16 & NEXRAD Radar)</div>
+            <div class="map-grid">
+                <!-- PANEL A: GOES-16 Infrared/Visible Satellite Loop -->
+                <div class="map-card">
+                    <iframe src="https://embed.windy.com/embed2.html?lat=30.5871&lon=-97.641&zoom=6&level=surface&overlay=satellite&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=30.5871&detailLon=-97.641&metricWind=default&metricTemp=default"></iframe>
                 </div>
-                <div class="comp-row"><div class="comp-label">Day High</div><div class="comp-val" id="fore-high">--°</div><div class="diff-val" id="diff-high">--°</div></div>
-                <div class="comp-row"><div class="comp-label">Day Low</div><div class="comp-val" id="fore-low">--°</div><div class="diff-val" id="diff-low">--°</div></div>
-            </div>
-
-            <div id="departure-msg" class="departure-tag">ANALYZING...</div>
-
-            <!-- UNIFIED CLIMATE BOX -->
-            <div class="climate-card hist-temp-card">
-                <div class="card-label" style="color:#9a3412;">Historical Climate Normals & Records</div>
-                <div class="unified-climate-grid">
-                    <div class="climate-column">
-                        <div class="climate-sub-label">High Side</div>
-                        <div class="val-block"><span>NORMAL</span><b id="hist-high-card">--°</b></div>
-                        <div class="val-block"><span>RECORD</span><b id="rec-high">--°</b><div class="yr" id="rec-high-yr"></div></div>
-                    </div>
-                    <div class="climate-column">
-                        <div class="climate-sub-label">Low Side</div>
-                        <div class="val-block"><span>NORMAL</span><b id="hist-low-card">--°</b></div>
-                        <div class="val-block"><span>RECORD</span><b id="rec-low">--°</b><div class="yr" id="rec-low-yr"></div></div>
-                    </div>
+                <!-- PANEL B: NEXRAD Radar Loop (100-Mile Reflectivity) -->
+                <div class="map-card">
+                    <iframe src="https://embed.windy.com/embed2.html?lat=30.5871&lon=-97.641&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=30.5871&detailLon=-97.641&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
                 </div>
             </div>
 
-            <div class="climate-card rain-tracker-card">
-                <div class="card-label" style="color:#1e40af;">Historical Rainfall YTD Normal</div>
-                <div class="rain-val" id="hist-rain-ytd">--.--"</div>
-                <div class="rain-sub">Compare to station's "Yearly Rain"</div>
+            <!-- LIVE HARDWARE INSTRUMENT LOOP (WEATHERLINK PWS) -->
+            <div class="section-title">📡 Live Backyard Hardware Loop (WeatherLink PWS)</div>
+            <div class="hardware-container">
+                <iframe src="https://www.weatherlink.com/embeddablePage/show/9bbf4c3bf5064d48aeb400f026712926/fullscreen"></iframe>
             </div>
-        </div>
+
+            <!-- REGIONAL TACTICAL MONITOR -->
+            <div class="section-title">🛰️ Live Regional Tactical Monitor (Surrounding Communities)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding-left: 20px; width: 20%;">Location</th>
+                            <th style="width: 15%;">Observed Temp</th>
+                            <th style="width: 15%;">Feels Like</th>
+                            <th style="width: 15%;">Humidity</th>
+                            <th style="width: 15%;">Wind Vector</th>
+                            <th style="text-align: left; padding-left: 20px; width: 20%;">Current Condition</th>
+                        </tr>
+                    </thead>
+                    <tbody id="regional-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CLIMATE ALIGNMENT CARDS -->
+            <div class="section-title">📊 Climate Alignment & Forecast Expectations</div>
+            <div class="nowcast-header-grid">
+                
+                <!-- 1. LIVE OBSERVATIONS -->
+                <div class="header-card">
+                    <div>
+                        <div class="card-title">Live Observations</div>
+                        <div class="card-value" id="live-temp">--°F</div>
+                    </div>
+                    <div class="card-subtext">
+                        Feels Like: <strong id="live-heat-index" style="color: #f87171;">--°F</strong> | 
+                        Humidity: <strong id="live-humidity" style="color: #fff;">--%</strong>
+                    </div>
+                </div>
+
+                <!-- 2. CLIMATE ALIGNMENT -->
+                <div class="header-card">
+                    <div>
+                        <div class="card-title">Climate Normals (Today)</div>
+                        <div class="card-value" id="normal-temps">--/ --°</div>
+                    </div>
+                    <div class="card-subtext">
+                        Normal High/Low for today's date
+                    </div>
+                </div>
+
+                <!-- 3. CLIMATE RECORDS -->
+                <div class="header-card">
+                    <div>
+                        <div class="card-title">130-Yr Climate Records</div>
+                        <div style="font-size: 18px; line-height: 1.3;">
+                            <span class="record-high">REC HIGH: <span id="record-high-val">--°</span></span> <span style="font-size: 11px; color: var(--text-muted);" id="record-high-year">(--)</span><br>
+                            <span class="record-low">REC LOW:  <span id="record-low-val">--°</span></span> <span style="font-size: 11px; color: var(--text-muted);" id="record-low-year">(--)</span>
+                        </div>
+                    </div>
+                    <div class="card-subtext" style="margin-top: 5px;">
+                        Extreme historical bounds
+                    </div>
+                </div>
+
+                <!-- 4. PEAK HEAT INDEX EXPECTED -->
+                <div class="header-card">
+                    <div>
+                        <div class="card-title">Peak Apparent Temp (Today)</div>
+                        <div class="card-value" id="peak-heat-index" style="color: #f87171;">--°F</div>
+                    </div>
+                    <div class="card-subtext">
+                        Maximum expected Heat Index for the rest of today
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- HOURLY TIMELINE FOR THE REST OF TODAY -->
+            <div class="section-title">🕒 Today's Remaining Hourly Outlook</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding-left: 20px; width: 12%;">Time</th>
+                            <th style="width: 15%;">Temperature</th>
+                            <th style="width: 12%;">Humidity</th>
+                            <th style="width: 15%;">Wind / Gusts</th>
+                            <th style="width: 12%;">Rain Prob</th>
+                            <th style="width: 12%;">Rain Vol</th>
+                            <th style="text-align: left; width: 22%;">Condition</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hourly-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
     </div>
 
-    <div class="forecast-5day" id="grid-5day"></div>
+    <script>
+        // Surrounding Cities Coordinate Matrix
+        const lats = [30.5871, 30.2672, 30.5097, 30.5063, 30.5788, 30.5708];
+        const lons = [-97.641, -97.7431, -97.6921, -97.8303, -97.8531, -97.4172];
+        const cityNames = ["Georgetown (HOO)", "Austin (ATX)", "Round Rock", "Cedar Park", "Leander", "Taylor"];
 
-    <div class="climate-strip">
-        <div class="stat-box"><span>Rain Risk Today</span><b id="rain-prob">--%</b></div>
-        <div class="stat-box"><span>Expected Peak Gust</span><b id="peak-wind">-- MPH</b></div>
-    </div>
-</div>
+        const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-<script>
-    const LAT = 30.509, LON = -97.692;
-    const ALMANAC_URL = 'https://JimEgan2025.github.io/almanac.json';
-    const FORECAST_URL = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,wind_gusts_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=7`;
+        function getCompass(deg) { 
+            const sectors = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]; 
+            return sectors[Math.round(deg / 22.5) % 16]; 
+        }
 
-    function getWeatherUI(code) {
-        const mapping = { 0: {icon:'☀️',desc:'Sunny'}, 1:{icon:'🌤️',desc:'M. Clear'}, 2:{icon:'⛅',desc:'P. Cloudy'}, 3:{icon:'☁️',desc:'Cloudy'}, 45:{icon:'🌫️',desc:'Foggy'}, 51:{icon:'🌦️',desc:'Drizzle'}, 61:{icon:'🌧️',desc:'Rain'}, 63:{icon:'🌧️',desc:'Rain'}, 80:{icon:'🌦️',desc:'Showers'}, 95:{icon:'⛈️',desc:'Storms'}};
-        return mapping[code] || {icon:'☁️',desc:'Cloudy'};
-    }
+        function getNWSLabel(prob, cape, cloud) {
+            if (prob > 50 && cape > 500) return "Showers And Thunderstorms Likely";
+            if (prob > 25 && cape > 500) return "Chance Showers And Thunderstorms";
+            if (prob > 15 && cape > 250) return "Slight Chance Showers And T-Storms";
+            if (prob > 40) return "Rain Likely";
+            if (prob > 15) return "Chance of Rain";
+            if (cloud < 25) return "Sunny";
+            if (cloud < 50) return "Partly Sunny";
+            if (cloud < 75) return "Partly Cloudy";
+            return "Mostly Cloudy";
+        }
 
-    async function refreshDashboard() {
-        try {
-            const [fRes, almRes] = await Promise.all([ 
-                fetch(FORECAST_URL + "&t=" + new Date().getTime()),
-                fetch(ALMANAC_URL + "?t=" + new Date().getTime()) 
-            ]);
-            const fore = await fRes.json();
-            const alm = await almRes.json();
+        function getConditionEmoji(label) {
+            const l = label.toLowerCase();
+            if (l.includes("thunderstorm") || l.includes("t-storm")) return "⛈️";
+            if (l.includes("shower") || l.includes("rain") || l.includes("likely")) return "🌧️";
+            if (l.includes("sunny") || l.includes("clear")) return "☀️";
+            if (l.includes("partly sunny") || l.includes("partly cloudy")) return "⛅";
+            if (l.includes("mostly cloudy") || l.includes("cloudy") || l.includes("overcast")) return "☁️";
+            return "🌡️";
+        }
+
+        // Official NOAA NWS Rothfusz Regression Equation
+        function getHeatIndex(t, rh) {
+            if (t < 80) return t;
+
+            // 1. Preliminary simple calculation
+            let hi = 0.5 * (t + 61.0 + ((t - 68.0) * 1.2) + (rh * 0.094));
             
-            document.getElementById('status').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
+            // 2. Apply full Rothfusz regression if simple calculation is 80°F or higher
+            if (hi >= 80) {
+                hi = -42.379 + 2.04901523*t + 10.14333127*rh - 0.22475541*t*rh 
+                     - 0.00683783*t*t - 0.05481717*rh*rh + 0.00122874*t*t*rh 
+                     + 0.00085282*t*rh*rh - 0.00000199*t*t*rh*rh;
 
-            const t = new Date();
-            const mm = String(t.getMonth() + 1).padStart(2, '0');
-            const dd = String(t.getDate()).padStart(2, '0');
-            const dateKey = `${mm}-${dd}`;
-            const a = alm[dateKey] || {};
-
-            // 1. REFRESH IFRAME
-            const frame = document.getElementById('station-frame');
-            frame.src = frame.src.split('?')[0] + '?cache=' + t.getTime();
-
-            // 2. DATA BINDING
-            document.getElementById('hist-rain-ytd').innerText = (a.accP || "0.00") + '"';
-
-            const fHigh = Math.round(fore.daily.temperature_2m_max[0]);
-            const fLow = Math.round(fore.daily.temperature_2m_min[0]);
-            const hHigh = parseInt(a.avgH) || 0;
-            const hLow = parseInt(a.avgL) || 0;
-
-            document.getElementById('fore-high').innerText = fHigh + "°";
-            document.getElementById('fore-low').innerText = fLow + "°";
-            
-            // Calculate and display differences
-            const diffH = fHigh - hHigh;
-            const diffL = fLow - hLow;
-            document.getElementById('diff-high').innerText = (diffH > 0 ? "+" : "") + diffH + "°";
-            document.getElementById('diff-high').style.color = diffH > 0 ? "#ef4444" : "#2563eb";
-            document.getElementById('diff-low').innerText = (diffL > 0 ? "+" : "") + diffL + "°";
-            document.getElementById('diff-low').style.color = diffL > 0 ? "#ef4444" : "#2563eb";
-            
-            // Historical Box
-            document.getElementById('hist-high-card').innerText = hHigh + "°";
-            document.getElementById('hist-low-card').innerText = hLow + "°";
-
-            // Records & Years
-            document.getElementById('rec-high').innerText = (a.recH || "--") + "°";
-            document.getElementById('rec-high-yr').innerText = a.recHY ? `(${a.recHY})` : "";
-            document.getElementById('rec-low').innerText = (a.recL || "--") + "°";
-            document.getElementById('rec-low-yr').innerText = a.recLY ? `(${a.recLY})` : "";
-
-            const diffMean = Math.round((fHigh+fLow)/2) - Math.round((hHigh+hLow)/2);
-            const depEl = document.getElementById('departure-msg');
-            if (diffMean > 0) { depEl.className="departure-tag hotter"; depEl.innerText=`🔥 TODAY IS ${diffMean}° ABOVE NORMAL`; }
-            else if (diffMean < 0) { depEl.className="departure-tag colder"; depEl.innerText=`❄️ TODAY IS ${Math.abs(diffMean)}° BELOW NORMAL`; }
-            else { depEl.innerText=`✅ TODAY IS ON PACE WITH NORMAL`; depEl.style.background="#f1f5f9"; }
-
-            // Dayparts
-            const hourly = fore.hourly.weather_code;
-            const getBlock = (codes) => {
-                const severities = codes.map(c => c === 95 ? 3 : (c >= 51 ? 2 : (c >= 1 ? 1 : 0)));
-                return codes[severities.indexOf(Math.max(...severities))];
-            };
-            document.getElementById('icon-am').innerText = getWeatherUI(getBlock(hourly.slice(7, 12))).icon;
-            document.getElementById('desc-am').innerText = getWeatherUI(getBlock(hourly.slice(7, 12))).desc;
-            document.getElementById('icon-pm').innerText = getWeatherUI(getBlock(hourly.slice(12, 18))).icon;
-            document.getElementById('desc-pm').innerText = getWeatherUI(getBlock(hourly.slice(12, 18))).desc;
-            document.getElementById('icon-eve').innerText = getWeatherUI(getBlock(hourly.slice(18, 24))).icon;
-            document.getElementById('desc-eve').innerText = getWeatherUI(getBlock(hourly.slice(18, 24))).desc;
-
-            // 5-Day
-            const grid = document.getElementById('grid-5day');
-            grid.innerHTML = '';
-            for(let i=1; i<=5; i++) {
-                const dateObj = new Date(fore.daily.time[i] + 'T00:00:00');
-                const ui = getWeatherUI(fore.daily.weather_code[i]);
-                grid.innerHTML += `<div class="day-card"><div class="fc-name">${dateObj.toLocaleDateString('en-US',{weekday:'short'})}</div><div class="fc-icon">${ui.icon}</div><div class="fc-temps">${Math.round(fore.daily.temperature_2m_max[i])}° / ${Math.round(fore.daily.temperature_2m_min[i])}°</div><div class="fc-rain">☔ ${fore.daily.precipitation_probability_max[i]}%</div></div>`;
+                // NWS Adjustment 1: Dry heat correction
+                if (rh < 13 && t >= 80 && t <= 112) {
+                    const adj = ((13 - rh) / 4) * Math.sqrt((17 - Math.abs(t - 95)) / 17);
+                    hi -= adj;
+                }
+                // NWS Adjustment 2: High humidity dampness correction
+                else if (rh > 85 && t >= 80 && t <= 87) {
+                    const adj = ((rh - 85) / 10) * ((87 - t) / 5);
+                    hi += adj;
+                }
             }
 
-            document.getElementById('rain-prob').innerText = fore.daily.precipitation_probability_max[0] + "%";
-            document.getElementById('peak-wind').innerText = Math.round(fore.daily.wind_gusts_10m_max[0]) + " MPH";
-            document.getElementById('current-date').innerText = t.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase();
+            return Math.round(hi);
+        }
 
-        } catch (e) { console.error(e); }
-    }
+        // Standard WMO Weather Code interpreter (for current conditions)
+        function getWeatherUI(code) {
+            const mapping = { 
+                0: {icon:'☀️',desc:'Sunny'}, 1:{icon:'🌤️',desc:'Mainly Clear'}, 2:{icon:'⛅',desc:'Partly Cloudy'}, 
+                3:{icon:'☁️',desc:'Mostly Cloudy'}, 45:{icon:'🌫️',desc:'Foggy'}, 51:{icon:'🌦️',desc:'Drizzle'}, 
+                61:{icon:'🌧️',desc:'Rain'}, 63:{icon:'🌧️',desc:'Rain'}, 80:{icon:'🌦️',desc:'Showers'}, 95:{icon:'⛈️',desc:'Thunderstorms'}
+            };
+            return mapping[code] || {icon:'☁️',desc:'Mostly Cloudy'};
+        }
 
-    refreshDashboard();
-    setInterval(refreshDashboard, 15 * 60 * 1000);
-</script>
+        // Active NWS Alerts Fetcher for Williamson County (TXZ173) with clipboard integrations
+        async function fetchNWSAlerts() {
+            try {
+                const response = await fetch('https://api.weather.gov/alerts/active/zone/TXZ173');
+                const data = await response.json();
+                
+                const alertContainer = document.getElementById("nws-alerts-container");
+                
+                if (data.features && data.features.length > 0) {
+                    let alertHTML = "";
+                    data.features.forEach((feature, idx) => {
+                        const props = feature.properties;
+                        
+                        // Combine description and instructions cleanly
+                        const rawTextBody = `${props.event}\n\n${props.description}\n\nINSTRUCTIONS:\n${props.instruction || 'Monitor local media for updates.'}`;
 
+                        alertHTML += `
+                            <div style="background-color: #7f1d1d; border: 1px solid #ef4444; border-radius: 8px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                                <strong style="color: #fca5a5; font-size: 14px; text-transform: uppercase;">🚨 ${props.event}</strong>
+                                <p style="font-size: 12px; color: #fecaca; margin-top: 5px; margin-bottom: 10px; line-height: 1.3; font-weight: bold;">${props.headline}</p>
+                                
+                                <!-- Scrollable text area containing the full official raw NWS text bulletin -->
+                                <textarea id="alert-text-${idx}" readonly style="width: 100%; height: 130px; background-color: #450a0a; color: #fecaca; border: 1px solid #991b1b; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 11px; resize: none; overflow-y: scroll; outline: none; margin-bottom: 5px;" onclick="this.select()">${rawTextBody}</textarea>
+                                
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                                    <span style="font-size: 10px; color: #f87171;">Severity: ${props.severity} | Urgency: ${props.urgency}</span>
+                                    
+                                    <!-- One-click Copy Button for social media broadcasts -->
+                                    <button onclick="copyAlertToClipboard(${idx})" style="background-color: #991b1b; color: #fecaca; border: 1px solid #ef4444; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; transition: background 0.2s;">📋 Copy Official NWS Text</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    alertContainer.innerHTML = alertHTML;
+                } else {
+                    alertContainer.innerHTML = `
+                        <div style="background-color: #064e3b; border: 1px solid #10b981; border-radius: 8px; padding: 12px; text-align: center; color: #a7f3d0; font-weight: bold; font-size: 13px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            🟢 NO ACTIVE NWS ALERTS FOR WILLIAMSON COUNTY
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                console.warn("Failed to fetch NWS alerts: ", e);
+                document.getElementById("nws-alerts-container").innerHTML = `<div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; text-align: center; color: #64748b; font-style: italic; font-size: 11px;">NWS Alerts currently offline</div>`;
+            }
+        }
+
+        // Clipboard function handles instant copying for Facebook broadcasts
+        function copyAlertToClipboard(idx) {
+            const txtArea = document.getElementById(`alert-text-${idx}`);
+            if (txtArea) {
+                txtArea.select();
+                navigator.clipboard.writeText(txtArea.value);
+                alert("Copied full NWS bulletin to clipboard!");
+            }
+        }
+
+        async function fetchNowcast() {
+            try {
+                // Fetch NWS Alerts, Almanac, and multi-coordinate weather arrays in parallel
+                const [almanacRes, weatherRes] = await Promise.all([
+                    fetch('https://jimegan2025.github.io/almanac.json'),
+                    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats.join(',')}&longitude=${lons.join(',')}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,cloud_cover,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago`),
+                    fetchNWSAlerts() // Run county alerts loop in parallel
+                ]);
+
+                if (!almanacRes.ok || !weatherRes.ok) throw new Error("Connection to data servers failed.");
+
+                const almanac = await almanacRes.json();
+                const weather = await weatherRes.json();
+
+                // Handle both single and multi-coordinate payloads
+                const dataArray = Array.isArray(weather) ? weather : [weather];
+
+                renderNowcast(dataArray, almanac);
+
+            } catch (error) {
+                document.getElementById("status").innerHTML = `<span style="color: #ef4444;">Error loading nowcast data: ${error.message}</span>`;
+            }
+        }
+
+        function renderNowcast(dataArray, almanac) {
+            // Main focus (Index 0: Georgetown) drives header, almanac, and hourly loop
+            const mainData = dataArray[0];
+            const current = mainData.current;
+            const hourly = mainData.hourly;
+
+            const chicagoTimeStr = new Date().toLocaleString("sv-SE", { timeZone: "America/Chicago" }); 
+            const todayDateStr = chicagoTimeStr.substring(0, 10); // YYYY-MM-DD
+            const mmdd = todayDateStr.slice(5); // MM-DD
+
+            // --- 1. POPULATE LIVE SURFACE OBSERVATIONS & RE-INTEGRATED DATA CARD ---
+            const obsTemp = Math.round(current.temperature_2m);
+            const obsHum = current.relative_humidity_2m;
+            document.getElementById("live-temp").innerText = `${obsTemp}°F`;
+            document.getElementById("live-humidity").innerText = `${obsHum}%`;
+            document.getElementById("live-heat-index").innerText = `${getHeatIndex(obsTemp, obsHum)}°F`;
+
+            // --- 2. POPULATE HISTORICAL CLIMATE ALMANAC DATA ---
+            const h = almanac[mmdd] || { avgH: 96, avgL: 72, recH: 108, recHY: "2022", recL: 70, recLY: "1912" };
+            
+            document.getElementById("normal-temps").innerText = `${h.avgH}°/ ${h.avgL}°`;
+            document.getElementById("record-high-val").innerText = `${h.recH}°`;
+            document.getElementById("record-high-year").innerText = `(${h.recHY})`;
+            document.getElementById("record-low-val").innerText = `${h.recL}°`;
+            document.getElementById("record-low-year").innerText = `(${h.recLY})`;
+
+            // --- 3. POPULATE LIVE REGIONAL TACTICAL MONITOR ---
+            let regionalHTML = "";
+            dataArray.forEach((cityData, index) => {
+                const cCur = cityData.current;
+                const cTemp = Math.round(cCur.temperature_2m);
+                const cHum = cCur.relative_humidity_2m;
+                const cFeels = getHeatIndex(cTemp, cHum);
+                const cWindSpd = Math.round(cCur.wind_speed_10m);
+                const cWindDir = getCompass(cCur.wind_direction_10m);
+                const cUI = getWeatherUI(cCur.weather_code);
+
+                const feelsLikeText = cFeels >= cTemp + 3 ? `${cFeels}°F` : `--`;
+
+                regionalHTML += `
+                    <tr>
+                        <td class="regional-col">${cityNames[index]}</td>
+                        <td style="font-weight: bold;">${cTemp}°F</td>
+                        <td style="color: #f87171; font-weight: bold;">${feelsLikeText}</td>
+                        <td>${cHum}%</td>
+                        <td>${cWindSpd} mph <span style="font-size: 11px; color: var(--accent); font-weight: bold;">${cWindDir}</span></td>
+                        <td style="text-align: left; padding-left: 20px;">
+                            <span class="condition-emoji">${cUI.icon}</span>
+                            <span class="condition-text" style="font-size: 12px;">${cUI.desc}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById("regional-tbody").innerHTML = regionalHTML;
+
+            // --- 4. ALIGN AND POPULATE TODAY'S REMAINING HOURS ---
+            const currentHourISO = chicagoTimeStr.substring(0, 13).replace(' ', 'T') + ':00';
+            const lastHourOfTodayISO = `${todayDateStr}T23:00`;
+
+            const currentDateObj = new Date(currentHourISO);
+
+            let startIndex = hourly.time.findIndex(t => {
+                const stepDateObj = new Date(t);
+                return Math.abs(currentDateObj - stepDateObj) < 1800000;
+            });
+
+            if (startIndex === -1) startIndex = 0;
+
+            let endIndex = hourly.time.findIndex(t => {
+                const stepDateObj = new Date(t);
+                const targetDateObj = new Date(lastHourOfTodayISO);
+                return Math.abs(targetDateObj - stepDateObj) < 1800000;
+            });
+
+            if (endIndex === -1) {
+                endIndex = Math.min(startIndex + 12, hourly.time.length - 1);
+            }
+
+            const h_temp = hourly.temperature_2m_best_match || hourly.temperature_2m;
+            const h_rh = hourly.relative_humidity_2m_best_match || hourly.relative_humidity_2m;
+            const h_pop = hourly.precipitation_probability_best_match || hourly.precipitation_probability;
+            const h_precip = hourly.precipitation_best_match || hourly.precipitation;
+            const h_cloud = hourly.cloud_cover_best_match || hourly.cloud_cover;
+            const h_cape = hourly.cape_best_match || hourly.cape || [];
+            const h_wind_spd = hourly.wind_speed_10m_best_match || hourly.wind_speed_10m;
+            const h_wind_dir = hourly.wind_direction_10m_best_match || hourly.wind_direction_10m;
+            const h_wind_gust = hourly.wind_gusts_10m_best_match || hourly.wind_gusts_10m;
+
+            let tbodyHTML = "";
+            
+            let minPop = 100;
+            let maxPop = 0;
+            let peakHeatIndex = -999;
+            const conditionCounts = {};
+
+            for (let i = startIndex; i <= endIndex; i++) {
+                const hourISO = hourly.time[i];
+                const hDate = new Date(hourISO);
+                const timeLabel = hDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const temp = h_temp[i];
+                const rh = h_rh[i];
+                const pop = h_pop[i];
+                const rain = h_precip[i];
+                const cloud = h_cloud[i];
+                const cape = h_cape.length ? h_cape[i] : 0;
+                const windSpd = h_wind_spd[i];
+                const windDir = h_wind_dir[i];
+                const windGust = h_wind_gust[i];
+
+                const isPrecipSpike = rain >= 0.05;
+                const rowClass = isPrecipSpike ? ' class="precip-spike"' : '';
+
+                const feelsLikeVal = getHeatIndex(temp, rh);
+                if (feelsLikeVal > peakHeatIndex) {
+                    peakHeatIndex = feelsLikeVal;
+                }
+
+                let tempDisplay = `${Math.round(temp)}°F`;
+                if (feelsLikeVal >= Math.round(temp) + 3) {
+                    tempDisplay += ` <span style="font-size: 11px; color: #f87171; font-weight: bold;">(Feels ${feelsLikeVal}°)</span>`;
+                }
+
+                const nwsLabel = getNWSLabel(pop, cape, cloud);
+                const emoji = getConditionEmoji(nwsLabel);
+
+                if (pop < minPop) minPop = pop;
+                if (pop > maxPop) maxPop = pop;
+                conditionCounts[nwsLabel] = (conditionCounts[nwsLabel] || 0) + 1;
+
+                tbodyHTML += `
+                    <tr${rowClass}>
+                        <td class="time-col">${timeLabel}</td>
+                        <td>${tempDisplay}</td>
+                        <td>${rh}%</td>
+                        <td>${Math.round(windSpd)} ${getCompass(windDir)} <span style="font-size: 11px; color: var(--text-muted);">/ G${Math.round(windGust)}</span></td>
+                        <td>${pop}%</td>
+                        <td>${rain.toFixed(2)}"</td>
+                        <td style="text-align: left;">
+                            <span class="condition-emoji">${emoji}</span>
+                            <span class="condition-text">${nwsLabel}</span>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            let dominantCondition = "Mostly Cloudy";
+            let maxCount = 0;
+            for (const cond in conditionCounts) {
+                if (conditionCounts[cond] > maxCount) {
+                    dominantCondition = cond;
+                    maxCount = conditionCounts[cond];
+                }
+            }
+
+            document.getElementById("peak-heat-index").innerText = `${peakHeatIndex}°F`;
+
+            const summaryEmoji = getConditionEmoji(dominantCondition);
+            const summaryText = `${summaryEmoji} ${dominantCondition} with a ${minPop}-${maxPop}% chance of rain for the rest of today.`;
+            document.getElementById("nowcast-summary").innerHTML = summaryText;
+
+            document.getElementById("hourly-tbody").innerHTML = tbodyHTML;
+            document.getElementById("status").style.display = "none";
+            document.getElementById("nowcast-content").style.display = "block";
+        }
+
+        // Run fetch on load
+        fetchNowcast();
+    </script>
 </body>
 </html>
