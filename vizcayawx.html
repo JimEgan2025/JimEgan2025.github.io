@@ -209,7 +209,9 @@ async function loadDash() {
         let stats = { rain:0, tSum:0, nSum:0, records:0 };
         
         d_time.forEach((dateStr, i) => {
-            if (i >= 14) return;
+            if (i === 0) return; // Skip today's outlook
+            if (i >= 15) return; // Limit total forecast indices to 14 days ahead (Indices 1 to 14)
+            
             const mmdd = dateStr.slice(5);
             const h = almanac[mmdd] || { avgH:75, avgL:55, recH:100, recHY:'?', recL:32, recLY:'?' };
             
@@ -260,7 +262,7 @@ async function loadDash() {
                 </td>
                 <td>${getConfidenceUI(i, prob, dayCape)}</td>
                 <td><span class="temp-forecast"><span class="temp-high">${Math.round(tH)}°</span> / <span class="temp-low">${Math.round(tL)}°</span></span><span class="temp-norm-label">NORM: ${h.avgH}° / ${h.avgL}°</span></td>
-                ${i < 7 ? 
+                ${i <= 7 ? 
                     `<td class="history-box">
                         <div style="color:#b91c1c; font-size: 14px; font-weight: 800;">REC: ${h.recH}° <span style="font-size:11px; color:#64748b; font-weight:700;">(${h.recHY})</span></div>
                         <div style="color:#1d4ed8; font-size: 14px; font-weight: 800;">REC: ${h.recL}° <span style="font-size:11px; color:#64748b; font-weight:700;">(${h.recLY})</span></div>
@@ -273,13 +275,13 @@ async function loadDash() {
                 </td>
                 <td style="font-weight:800; color:#0369a1;">${avgHum}%</td>
                 <td style="color: ${windColor}; font-weight: ${windWeight};">
-                    ${i < 7 ? 
+                    ${i <= 7 ? 
                         `<span style="font-weight:900;">${Math.round(windSpeedMax)}</span> <span class="wind-dir">${getCompass(windDirDominant)}</span><br><span style="font-size: 11px; color: ${isWindy ? '#ea580c' : '#64748b'}; font-weight: 800;">GUST: ${Math.round(windGustMax)} mph</span>` : 
                         getCompass(windDirDominant)}
                 </td>
             `;
 
-            if (i < 7) {
+            if (i <= 7) {
                 document.getElementById("dailyBody").innerHTML += `<tr${rowClass}>${rowData}</tr>`;
             } else {
                 document.getElementById("extendedBody").innerHTML += `<tr${rowClass}>${rowData}</tr>`;
