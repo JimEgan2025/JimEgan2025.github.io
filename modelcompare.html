@@ -19,11 +19,15 @@
             justify-content: center;
         }
         .container {
-            max-width: 1450px;
             width: 100%;
+            max-width: 1100px; /* Comfortable reading width for the summary page */
+            transition: max-width 0.15s ease-in-out;
+        }
+        .container.full-width {
+            max-width: 100% !important; /* Expands to full screen width for the detailed page */
         }
         header {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #1e293b;
             display: flex;
@@ -80,6 +84,35 @@
             font-weight: bold;
         }
 
+        /* View Switching Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 12px;
+        }
+        .nav-btn {
+            background-color: #111827;
+            color: #9ca3af;
+            border: 1px solid #1e293b;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover {
+            color: #fff;
+            background-color: #1f2937;
+        }
+        .nav-btn.active {
+            background-color: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+
         /* Tables & Layout */
         .section-title {
             font-size: 15px;
@@ -109,7 +142,20 @@
             border-collapse: collapse;
             text-align: center;
             font-size: 13px;
-            min-width: 1300px; /* Force spreadsheet spacing */
+        }
+
+        /* Detailed View Specific constraint to preserve alignment */
+        #detailed-view table {
+            min-width: 1300px;
+        }
+
+        /* Summary View Specific increases readability */
+        #summary-view table {
+            font-size: 15px;
+            min-width: 100%;
+        }
+        #summary-view th, #summary-view td {
+            padding: 12px 14px;
         }
 
         th, td {
@@ -123,6 +169,9 @@
             font-weight: 600;
             font-size: 11px;
             text-transform: uppercase;
+        }
+        #summary-view th {
+            font-size: 12px;
         }
         
         /* Row Highlighting */
@@ -181,11 +230,42 @@
             font-style: italic;
             font-size: 11px;
         }
+
+        /* AI Coprocessor Elements */
+        .report-container {
+            background-color: #111827;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 30px;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .report-box {
+            width: 100%;
+            height: 250px;
+            background-color: #0b0f19;
+            border: 1px solid #1e293b;
+            color: #38bdf8;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 13px;
+            padding: 12px;
+            border-radius: 4px;
+            resize: vertical;
+            outline: none;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="main-container">
         <header>
             <div>
                 <h1>Vizcaya Weather Consensus</h1>
@@ -199,130 +279,239 @@
             </div>
         </header>
 
-        <!-- 1. TEMPERATURES & MODEL VARIANCES TABLE -->
-        <div class="section-title">High/ Low Temperatures - Model Variances</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: left; width: 8%;">Date</th>
-                        <th style="width: 5%;">Day</th>
-                        <th class="gt-header" style="width: 12%;">Visual Crossing (GT)</th>
-                        <th style="width: 11%;">European ECMWF-IFS</th>
-                        <th style="width: 11%;">European ECMWF-AIFS</th>
-                        <th style="width: 11%;">US - Global GFS</th>
-                        <th style="width: 11%;">US - Numerical Blend (NBM)</th>
-                        <th style="width: 11%;">GEM Canada</th>
-                        <th style="width: 11%;">Graphcast Experimental AI</th>
-                        <th style="width: 6%;" class="calc-col">Rain Prob Avg</th>
-                        <th style="width: 6%;" class="calc-col">Rain Amt Avg</th>
-                        <th style="width: 9%;" class="calc-col">Rain Range</th>
-                        <th style="width: 9%;" class="calc-col">Average Temp</th>
-                    </tr>
-                </thead>
-                <tbody id="temp-tbody">
-                    <tr><td colspan="13" style="padding: 30px; color: #64748b;">Fetching model variances...</td></tr>
-                </tbody>
-            </table>
+        <!-- Dynamic View Selector -->
+        <div class="nav-tabs">
+            <button id="btn-summary" class="nav-btn active" onclick="switchView('summary')">Consensus Summary</button>
+            <button id="btn-detailed" class="nav-btn" onclick="switchView('detailed')">Full Model Details (Full Width)</button>
         </div>
 
-        <!-- 2. APPARENT TEMPERATURE AGREEMENT SPREADSHEET -->
-        <div class="section-title">Apparent Temperatures (Feels Like / Heat Index / Wind Chill °F)</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: left; width: 8%;">Date</th>
-                        <th style="width: 5%;">Day</th>
-                        <th class="gt-header">Visual Crossing (GT)</th>
-                        <th>ECMWF IFS</th>
-                        <th>ECMWF-AIFS</th>
-                        <th>NAM</th>
-                        <th>RDPS (Reg)</th>
-                        <th>NOAA (NBM)</th>
-                        <th>DWD ICON (German)</th>
-                        <th>Graphcast</th>
-                        <th>GEM Canada</th>
-                        <th>SREF</th>
-                        <th>GFS</th>
-                        <th>GDPS (Global)</th>
-                        <th class="calc-col">Prob</th>
-                        <th class="calc-col">Average</th>
-                        <th class="calc-col">Min</th>
-                        <th class="calc-col">Max</th>
-                        <th class="calc-col">Range</th>
-                    </tr>
-                </thead>
-                <tbody id="apparent-tbody">
-                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching apparent temperatures...</td></tr>
-                </tbody>
-            </table>
+        <!-- ========================================================= -->
+        <!-- VIEW A: CONSENSUS SUMMARY PAGE (Simplified & Spacious)      -->
+        <!-- ========================================================= -->
+        <div id="summary-view">
+            <!-- 1. Temperature Summary Table -->
+            <div class="section-title">High/ Low Temperatures (Consensus Summary)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="gt-header" style="width: 20%;">Visual Crossing (GT)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Temp</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Temp Range</th>
+                            <th style="width: 10%;" class="calc-col">Rain Prob</th>
+                            <th style="width: 10%;" class="calc-col">Rain Avg</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-temp-tbody">
+                        <tr><td colspan="7" style="padding: 30px; color: #64748b;">Fetching summary data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 2. Apparent Temperature Summary Table -->
+            <div class="section-title">Apparent Temperatures (Feels Like Summary)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="gt-header" style="width: 20%;">Visual Crossing (GT)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Apparent</th>
+                            <th style="width: 25%;" class="calc-col">Consensus Feels Like Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-apparent-tbody">
+                        <tr><td colspan="6" style="padding: 30px; color: #64748b;">Fetching summary data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 3. Wind speed & Gust Summary Table -->
+            <div class="section-title">Winds & Gusts Summary</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="gt-header" style="width: 20%;">Visual Crossing (GT)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Wind / Gust</th>
+                            <th style="width: 25%;" class="calc-col">Peak Wind Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-wind-tbody">
+                        <tr><td colspan="6" style="padding: 30px; color: #64748b;">Fetching summary data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4. Precipitation summary Table -->
+            <div class="section-title">Precip Amount Summary</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="gt-header" style="width: 20%;">Visual Crossing (GT)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Rain</th>
+                            <th style="width: 25%;" class="calc-col">Rain Spread Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-precip-tbody">
+                        <tr><td colspan="6" style="padding: 30px; color: #64748b;">Fetching summary data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- 3. WIND SPEED & GUST AGREEMENT SPREADSHEET -->
-        <div class="section-title">Winds & Gusts (Sustained / Max Gusts mph)</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: left; width: 8%;">Date</th>
-                        <th style="width: 5%;">Day</th>
-                        <th class="gt-header">Visual Crossing (GT)</th>
-                        <th>ECMWF IFS</th>
-                        <th>ECMWF-AIFS</th>
-                        <th>NAM</th>
-                        <th>RDPS (Reg)</th>
-                        <th>NOAA (NBM)</th>
-                        <th>DWD ICON (German)</th>
-                        <th>Graphcast</th>
-                        <th>GEM Canada</th>
-                        <th>SREF</th>
-                        <th>GFS</th>
-                        <th>GDPS (Global)</th>
-                        <th class="calc-col">Prob</th>
-                        <th class="calc-col">Average</th>
-                        <th class="calc-col">Min</th>
-                        <th class="calc-col">Max</th>
-                        <th class="calc-col">Range</th>
-                    </tr>
-                </thead>
-                <tbody id="wind-tbody">
-                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching wind forecasts...</td></tr>
-                </tbody>
-            </table>
+        <!-- ========================================================= -->
+        <!-- VIEW B: DETAILED MODEL PAGE (Original Wide Spreadsheets)   -->
+        <!-- ========================================================= -->
+        <div id="detailed-view" style="display: none;">
+            <!-- 1. TEMPERATURES & MODEL VARIANCES TABLE -->
+            <div class="section-title">High/ Low Temperatures - Model Variances</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="gt-header" style="width: 12%;">Visual Crossing (GT)</th>
+                            <th style="width: 11%;">European ECMWF-IFS</th>
+                            <th style="width: 11%;">European ECMWF-AIFS</th>
+                            <th style="width: 11%;">US - Global GFS</th>
+                            <th style="width: 11%;">US - Numerical Blend (NBM)</th>
+                            <th style="width: 11%;">GEM Canada</th>
+                            <th style="width: 11%;">Graphcast Experimental AI</th>
+                            <th style="width: 6%;" class="calc-col">Rain Prob Avg</th>
+                            <th style="width: 6%;" class="calc-col">Rain Amt Avg</th>
+                            <th style="width: 9%;" class="calc-col">Rain Range</th>
+                            <th style="width: 9%;" class="calc-col">Average Temp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="temp-tbody">
+                        <tr><td colspan="13" style="padding: 30px; color: #64748b;">Fetching model variances...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 2. APPARENT TEMPERATURE AGREEMENT SPREADSHEET -->
+            <div class="section-title">Apparent Temperatures (Feels Like / Heat Index / Wind Chill °F)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="gt-header">Visual Crossing (GT)</th>
+                            <th>ECMWF IFS</th>
+                            <th>ECMWF-AIFS</th>
+                            <th>NAM</th>
+                            <th>RDPS (Reg)</th>
+                            <th>NOAA (NBM)</th>
+                            <th>DWD ICON (German)</th>
+                            <th>Graphcast</th>
+                            <th>GEM Canada</th>
+                            <th>SREF</th>
+                            <th>GFS</th>
+                            <th>GDPS (Global)</th>
+                            <th class="calc-col">Prob</th>
+                            <th class="calc-col">Average</th>
+                            <th class="calc-col">Min</th>
+                            <th class="calc-col">Max</th>
+                            <th class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apparent-tbody">
+                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching apparent temperatures...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 3. WIND SPEED & GUST AGREEMENT SPREADSHEET -->
+            <div class="section-title">Winds & Gusts (Sustained / Max Gusts mph)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="gt-header">Visual Crossing (GT)</th>
+                            <th>ECMWF IFS</th>
+                            <th>ECMWF-AIFS</th>
+                            <th>NAM</th>
+                            <th>RDPS (Reg)</th>
+                            <th>NOAA (NBM)</th>
+                            <th>DWD ICON (German)</th>
+                            <th>Graphcast</th>
+                            <th>GEM Canada</th>
+                            <th>SREF</th>
+                            <th>GFS</th>
+                            <th>GDPS (Global)</th>
+                            <th class="calc-col">Prob</th>
+                            <th class="calc-col">Average</th>
+                            <th class="calc-col">Min</th>
+                            <th class="calc-col">Max</th>
+                            <th class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wind-tbody">
+                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching wind forecasts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4. PRECIPITATION ACCUMULATION SPREADSHEET -->
+            <div class="section-title">Precip Amount (Rain Forecasts)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="gt-header">Visual Crossing (GT)</th>
+                            <th>ECMWF IFS</th>
+                            <th>ECMWF-AIFS</th>
+                            <th>NAM</th>
+                            <th>RDPS (Reg)</th>
+                            <th>NOAA (NBM)</th>
+                            <th>DWD ICON (German)</th>
+                            <th>Graphcast</th>
+                            <th>GEM Canada</th>
+                            <th>SREF</th>
+                            <th>GFS</th>
+                            <th>GDPS (Global)</th>
+                            <th class="calc-col">Prob</th>
+                            <th class="calc-col">Average</th>
+                            <th class="calc-col">Min</th>
+                            <th class="calc-col">Max</th>
+                            <th class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="precip-tbody">
+                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching rain models...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- 4. PRECIPITATION ACCUMULATION SPREADSHEET -->
-        <div class="section-title">Precip Amount (Rain Forecasts)</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: left; width: 8%;">Date</th>
-                        <th style="width: 5%;">Day</th>
-                        <th class="gt-header">Visual Crossing (GT)</th>
-                        <th>ECMWF IFS</th>
-                        <th>ECMWF-AIFS</th>
-                        <th>NAM</th>
-                        <th>RDPS (Reg)</th>
-                        <th>NOAA (NBM)</th>
-                        <th>DWD ICON (German)</th>
-                        <th>Graphcast</th>
-                        <th>GEM Canada</th>
-                        <th>SREF</th>
-                        <th>GFS</th>
-                        <th>GDPS (Global)</th>
-                        <th class="calc-col">Prob</th>
-                        <th class="calc-col">Average</th>
-                        <th class="calc-col">Min</th>
-                        <th class="calc-col">Max</th>
-                        <th class="calc-col">Range</th>
-                    </tr>
-                </thead>
-                <tbody id="precip-tbody">
-                    <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching rain models...</td></tr>
-                </tbody>
-            </table>
+        <!-- ========================================================= -->
+        <!-- 5. AI FORECAST COPROCESSOR PANEL (Nightly Report Helper)   -->
+        <!-- ========================================================= -->
+        <div class="section-title">AI Forecast Coprocessor (7-Day Nightly Report Pack)</div>
+        <div class="report-container">
+            <div class="report-header">
+                <p>Formatted raw consensus data. Copy and paste this directly into your favorite LLM chat to draft clean regional forecast summaries.</p>
+                <button id="copy-report-btn" onclick="copyAIPrompt()">Copy to Clipboard</button>
+            </div>
+            <textarea id="ai-report-box" class="report-box" readonly placeholder="Synchronize model data to compile report package..."></textarea>
         </div>
     </div>
 
@@ -339,6 +528,54 @@
         }
         setInterval(updateClock, 1000);
         updateClock();
+
+        // Allow pressing Enter key inside the API Key input to run calculations
+        document.getElementById("vcKeyInput").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                fetchWeatherModels();
+            }
+        });
+
+        // Toggle Views and adjust page width dynamics
+        function switchView(view) {
+            const container = document.getElementById('main-container');
+            const summaryTab = document.getElementById('btn-summary');
+            const detailedTab = document.getElementById('btn-detailed');
+            const summaryView = document.getElementById('summary-view');
+            const detailedView = document.getElementById('detailed-view');
+
+            if (view === 'detailed') {
+                summaryView.style.display = 'none';
+                detailedView.style.display = 'block';
+                container.classList.add('full-width');
+                summaryTab.classList.remove('active');
+                detailedTab.classList.add('active');
+            } else {
+                summaryView.style.display = 'block';
+                detailedView.style.display = 'none';
+                container.classList.remove('full-width');
+                summaryTab.classList.add('active');
+                detailedTab.classList.remove('active');
+            }
+        }
+
+        // Copy generated AI markdown to clipboard
+        function copyAIPrompt() {
+            const reportBox = document.getElementById("ai-report-box");
+            reportBox.select();
+            reportBox.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(reportBox.value);
+
+            const btn = document.getElementById("copy-report-btn");
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.backgroundColor = "#10b981"; // Momentary Emerald Green
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "#2563eb";
+            }, 2000);
+        }
 
         const modelKeywords = {
             "ecmwf_ifs025": "ecmwf_ifs025",
@@ -379,10 +616,16 @@
 
             } catch (error) {
                 const errHTML = `<tr><td colspan="19" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                // Clear both Summary and Detailed view indicators during fail
                 document.getElementById("temp-tbody").innerHTML = errHTML;
                 document.getElementById("apparent-tbody").innerHTML = errHTML;
                 document.getElementById("wind-tbody").innerHTML = errHTML;
                 document.getElementById("precip-tbody").innerHTML = errHTML;
+
+                document.getElementById("summary-temp-tbody").innerHTML = errHTML;
+                document.getElementById("summary-apparent-tbody").innerHTML = errHTML;
+                document.getElementById("summary-wind-tbody").innerHTML = errHTML;
+                document.getElementById("summary-precip-tbody").innerHTML = errHTML;
             }
         }
 
@@ -483,17 +726,16 @@
                 }
 
                 const model = models[mIndex];
-                if (model === "gfs_graphcast025") {
-                    const aggregated = aggregateHourlyForDate(hourly, model, dateStr);
-                    if (aggregated) {
-                        if (dataset === datasets.tempMax) return aggregated.maxTemp;
-                        if (dataset === datasets.tempMin) return aggregated.minTemp;
-                        if (dataset === datasets.appMax) return aggregated.maxApp;
-                        if (dataset === datasets.appMin) return aggregated.minApp;
-                        if (dataset === datasets.precip) return aggregated.precipSum;
-                        if (dataset === datasets.windMax) return aggregated.maxWind;
-                        if (dataset === datasets.windGust) return aggregated.maxGust;
-                    }
+                // Generalized hourly data fallback if the daily metric is null for any model
+                const aggregated = aggregateHourlyForDate(hourly, model, dateStr);
+                if (aggregated) {
+                    if (dataset === datasets.tempMax) return aggregated.maxTemp;
+                    if (dataset === datasets.tempMin) return aggregated.minTemp;
+                    if (dataset === datasets.appMax) return aggregated.maxApp;
+                    if (dataset === datasets.appMin) return aggregated.minApp;
+                    if (dataset === datasets.precip) return aggregated.precipSum;
+                    if (dataset === datasets.windMax) return aggregated.maxWind;
+                    if (dataset === datasets.windGust) return aggregated.maxGust;
                 }
                 return null;
             };
@@ -502,6 +744,17 @@
             let apparentHTML = "";
             let windHTML = "";
             let precipHTML = "";
+
+            // Summary View Accumulators
+            let summaryTempHTML = "";
+            let summaryAppHTML = "";
+            let summaryWindHTML = "";
+            let summaryPrecipHTML = "";
+
+            // AI Markdown Prompt Accumulator
+            let aiPromptText = `=== VIZCAYA MULTI-MODEL CONSENSUS 7-DAY FORECAST DATA ===\n`;
+            aiPromptText += `Location: Georgetown, TX (30.587, -97.641)\n`;
+            aiPromptText += `Generated on: ${new Date().toLocaleString()}\n\n`;
 
             const rainColumnsMapping = [0, 1, 6, 7, 3, 9, 5, 4, null, 2, 8]; 
             
@@ -544,11 +797,15 @@
                 let vcWindStr = `<td><span class="pending-text">[No Key]</span></td>`;
                 let vcPrecipStr = `<td><span class="pending-text">[No Key]</span></td>`;
 
+                let vcRawReportStr = "[No Ground Truth API Key available]";
+
                 if (vcDay) {
                     vcTempStr = `<td class="gt-col">${Math.round(vcDay.tempmax)}/ ${Math.round(vcDay.tempmin)}</td>`;
                     vcAppStr = `<td class="gt-col">${Math.round(vcDay.feelslikemax)}/ ${Math.round(vcDay.feelslikemin)}</td>`;
                     vcWindStr = `<td class="gt-col">${Math.round(vcDay.windspeed)}/ G${Math.round(vcDay.windgust)}</td>`;
                     vcPrecipStr = `<td class="gt-col">${vcDay.precip.toFixed(3)}</td>`;
+
+                    vcRawReportStr = `${Math.round(vcDay.tempmax)}/${Math.round(vcDay.tempmin)}°F, Apparent Max: ${Math.round(vcDay.feelslikemax)}°F, Wind: ${Math.round(vcDay.windspeed)} mph (Gusts G${Math.round(vcDay.windgust)} mph), Rain: ${vcDay.precip.toFixed(3)} in`;
 
                     // Accumulate VC values for weekly sums
                     if (i < 7) {
@@ -684,6 +941,19 @@
                     </tr>
                 `;
 
+                // Simplified View Generation: Temps
+                summaryTempHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${dayLabel}</td>
+                        ${vcTempStr}
+                        <td class="calc-col">${Math.round(avgHigh)}/ ${Math.round(avgLow)}°</td>
+                        <td class="calc-col">${Math.round(avgLow)} - ${Math.round(avgHigh)}°F</td>
+                        <td class="calc-col">${rainProb}%</td>
+                        <td class="calc-col">${avgRain.toFixed(2)} in</td>
+                    </tr>
+                `;
+
                 // ==========================================
                 // TABLE 2: APPARENT TEMPERATURE AGREEMENT SPREADSHEET (Feels Like)
                 // ==========================================
@@ -724,6 +994,18 @@
                         <td class="calc-col">${Math.round(minAppLow)}°</td>
                         <td class="calc-col">${Math.round(maxAppHigh)}°</td>
                         <td class="calc-col">${Math.round(minAppLow)} - ${Math.round(maxAppHigh)}°F</td>
+                    </tr>
+                `;
+
+                // Simplified View Generation: Apparent Temp
+                summaryAppHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcAppStr}
+                        <td class="calc-col">${Math.round(avgAppHigh)}/ ${Math.round(avgAppLow)}°</td>
+                        <td class="calc-col">${Math.round(minAppLow)} - ${Math.round(maxAppHigh)}°F</td>
+                        <td class="calc-col">${rainProb}%</td>
                     </tr>
                 `;
 
@@ -770,6 +1052,18 @@
                     </tr>
                 `;
 
+                // Simplified View Generation: Wind speeds
+                summaryWindHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcWindStr}
+                        <td class="calc-col">${Math.round(avgWindSpeed)}/ G${Math.round(avgWindGust)}</td>
+                        <td class="calc-col">${Math.round(minWindSpeed)} - ${Math.round(maxWindGust)} mph</td>
+                        <td class="calc-col">${rainProb}%</td>
+                    </tr>
+                `;
+
                 // ==========================================
                 // TABLE 4: PRECIPITATION ACCUMULATION SPREADSHEET
                 // ==========================================
@@ -801,6 +1095,28 @@
                         <td class="calc-col">${minRain.toFixed(2)} - ${maxRain.toFixed(2)} in</td>
                     </tr>
                 `;
+
+                // Simplified View Generation: Precip Accumulations
+                summaryPrecipHTML += `
+                    <tr ${todayClass}>
+                        <td class="date-col">${formattedDate}</td>
+                        <td>${i === 0 ? "Today" : dayLabel}</td>
+                        ${vcPrecipStr}
+                        <td class="calc-col">${avgRain.toFixed(2)} in</td>
+                        <td class="calc-col">${minRain.toFixed(2)} - ${maxRain.toFixed(2)} in</td>
+                        <td class="calc-col">${rainProb}%</td>
+                    </tr>
+                `;
+
+                // Compile AI text blocks for first 7 days
+                if (i < 7) {
+                    aiPromptText += `[${dayLabel}, ${formattedDate}]\n`;
+                    aiPromptText += `  - Ground Truth (VC): ${vcRawReportStr}\n`;
+                    aiPromptText += `  - Consensus Avg Temp: ${Math.round(avgHigh)}/${Math.round(avgLow)}°F (Model Low/High extremes: ${Math.round(minAppLow)}-${Math.round(maxAppHigh)}°F)\n`;
+                    aiPromptText += `  - Consensus Avg Feels Like: Max ${Math.round(avgAppHigh)}°F, Min ${Math.round(avgAppLow)}°F\n`;
+                    aiPromptText += `  - Consensus Winds: Avg Sustained ${Math.round(avgWindSpeed)} mph, Gusts Avg G${Math.round(avgWindGust)} mph\n`;
+                    aiPromptText += `  - Consensus Rain Risk: Probability ${rainProb}%, Expected Amount ${avgRain.toFixed(3)} in (Spread Range: ${minRain.toFixed(2)}-${maxRain.toFixed(2)} in)\n\n`;
+                }
             }
 
             // Calculations for Weekly Averages and Boundaries
@@ -814,7 +1130,7 @@
             // ------------------------------------------
             // Construct Summary Rows: Apparent Temp Table
             // ------------------------------------------
-            const buildAppSummaryRow = (label, maxArr, minMinArr, maxMaxArr, vcMax, vcMin) => {
+            const buildAppSummaryRow = (label, maxArr, minMinArr, maxMaxArr, vcMax, vcMin, prob) => {
                 let cells = "";
                 rainColumnsMapping.forEach((mIdx, colIdx) => {
                     if (mIdx !== null) {
@@ -839,7 +1155,7 @@
                         <td class="date-col" colspan="2">${label}</td>
                         ${vcCell}
                         ${cells}
-                        <td class="calc-col">${calcProbAvgThis}%</td>
+                        <td class="calc-col">${prob}%</td>
                         <td class="calc-col">${Math.round(labelAvgMax)}/ ${Math.round(labelMin)}°</td>
                         <td class="calc-col">${Math.round(labelMin)}°</td>
                         <td class="calc-col">${Math.round(labelMax)}°</td>
@@ -848,15 +1164,42 @@
                 `;
             };
 
-            const appThisWeek = buildAppSummaryRow("This Week", weeklySum.appMaxThisWeek, weeklySum.appMinThisWeek, weeklySum.appMaxThisWeek.flat(), weeklySum.vcAppMaxThis, weeklySum.vcAppMinThis);
-            const appNextWeek = buildAppSummaryRow("Next Week", weeklySum.appMaxNextWeek, weeklySum.appMinNextWeek, weeklySum.appMaxNextWeek.flat(), weeklySum.vcAppMaxNext, weeklySum.vcAppMinNext);
-            const appTotal = buildAppSummaryRow("Total", weeklySum.appMaxTotal, weeklySum.appMinTotal, weeklySum.appMaxTotal.flat(), weeklySum.vcAppMaxTotal, weeklySum.vcAppMinTotal);
+            const buildSimpleAppSummaryRow = (label, maxArr, minMinArr, maxMaxArr, vcMax, vcMin, prob) => {
+                const labelMax = avgArray(maxMaxArr);
+                const labelMin = avgArray(minMinArr.flat());
+                const labelAvgMax = avgArray(maxArr.flat());
+
+                const vcAvgMax = avgArray(vcMax);
+                const vcAvgMin = avgArray(vcMin);
+                const vcCell = (vcAvgMax > 0 && vcAvgMin > 0) ? `<td class="gt-col">${Math.round(vcAvgMax)}/ ${Math.round(vcAvgMin)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        <td class="calc-col">${Math.round(labelAvgMax)}/ ${Math.round(labelMin)}°</td>
+                        <td class="calc-col">${Math.round(labelMin)} - ${Math.round(labelMax)}°F</td>
+                        <td class="calc-col">${prob}%</td>
+                    </tr>
+                `;
+            }
+
+            // Populate Detailed Apparent Summary Rows
+            const appThisWeek = buildAppSummaryRow("This Week", weeklySum.appMaxThisWeek, weeklySum.appMinThisWeek, weeklySum.appMaxThisWeek.flat(), weeklySum.vcAppMaxThis, weeklySum.vcAppMinThis, calcProbAvgThis);
+            const appNextWeek = buildAppSummaryRow("Next Week", weeklySum.appMaxNextWeek, weeklySum.appMinNextWeek, weeklySum.appMaxNextWeek.flat(), weeklySum.vcAppMaxNext, weeklySum.vcAppMinNext, calcProbAvgNext);
+            const appTotal = buildAppSummaryRow("Total", weeklySum.appMaxTotal, weeklySum.appMinTotal, weeklySum.appMaxTotal.flat(), weeklySum.vcAppMaxTotal, weeklySum.vcAppMinTotal, calcProbAvgTot);
             document.getElementById("apparent-tbody").innerHTML = apparentHTML + appThisWeek + appNextWeek + appTotal;
+
+            // Populate Simplified Apparent Summary Rows
+            const simAppThisWeek = buildSimpleAppSummaryRow("This Week", weeklySum.appMaxThisWeek, weeklySum.appMinThisWeek, weeklySum.appMaxThisWeek.flat(), weeklySum.vcAppMaxThis, weeklySum.vcAppMinThis, calcProbAvgThis);
+            const simAppNextWeek = buildSimpleAppSummaryRow("Next Week", weeklySum.appMaxNextWeek, weeklySum.appMinNextWeek, weeklySum.appMaxNextWeek.flat(), weeklySum.vcAppMaxNext, weeklySum.vcAppMinNext, calcProbAvgNext);
+            const simAppTotal = buildSimpleAppSummaryRow("Total", weeklySum.appMaxTotal, weeklySum.appMinTotal, weeklySum.appMaxTotal.flat(), weeklySum.vcAppMaxTotal, weeklySum.vcAppMinTotal, calcProbAvgTot);
+            document.getElementById("summary-apparent-tbody").innerHTML = summaryAppHTML + simAppThisWeek + simAppNextWeek + simAppTotal;
 
             // ------------------------------------------
             // Construct Summary Rows: Wind Table
             // ------------------------------------------
-            const buildWindSummaryRow = (label, speedArr, gustArr, maxMaxArr, vcSpeed, vcGust) => {
+            const buildWindSummaryRow = (label, speedArr, gustArr, vcSpeed, vcGust, prob) => {
                 let cells = "";
                 rainColumnsMapping.forEach((mIdx, colIdx) => {
                     if (mIdx !== null) {
@@ -882,7 +1225,7 @@
                         <td class="date-col" colspan="2">${label}</td>
                         ${vcCell}
                         ${cells}
-                        <td class="calc-col">${calcProbAvgThis}%</td>
+                        <td class="calc-col">${prob}%</td>
                         <td class="calc-col">${Math.round(labelSp)}/ G${Math.round(labelGt)}</td>
                         <td class="calc-col">${Math.round(minSp)}</td>
                         <td class="calc-col">${Math.round(maxGt)}</td>
@@ -891,10 +1234,38 @@
                 `;
             };
 
-            const windThisWeek = buildWindSummaryRow("This Week", weeklySum.windThisWeek, weeklySum.gustThisWeek, weeklySum.gustThisWeek, weeklySum.vcWindThis, weeklySum.vcGustThis);
-            const windNextWeek = buildWindSummaryRow("Next Week", weeklySum.windNextWeek, weeklySum.gustNextWeek, weeklySum.gustNextWeek, weeklySum.vcWindNext, weeklySum.vcGustNext);
-            const windTotal = buildWindSummaryRow("Total", weeklySum.windTotal, weeklySum.gustTotal, weeklySum.gustTotal, weeklySum.vcWindTotal, weeklySum.vcGustTotal);
+            const buildSimpleWindSummaryRow = (label, speedArr, gustArr, vcSpeed, vcGust, prob) => {
+                const labelSp = avgArray(speedArr.flat());
+                const labelGt = avgArray(gustArr.flat());
+                const maxGt = gustArr.flat().length > 0 ? Math.max(...gustArr.flat()) : 0;
+                const minSp = speedArr.flat().length > 0 ? Math.min(...speedArr.flat()) : 0;
+
+                const vcAvgSp = avgArray(vcSpeed);
+                const vcAvgGt = avgArray(vcGust);
+                const vcCell = (vcAvgSp > 0 && vcAvgGt > 0) ? `<td class="gt-col">${Math.round(vcAvgSp)}/ G${Math.round(vcAvgGt)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        <td class="calc-col">${Math.round(labelSp)}/ G${Math.round(labelGt)}</td>
+                        <td class="calc-col">${Math.round(minSp)} - ${Math.round(maxGt)} mph</td>
+                        <td class="calc-col">${prob}%</td>
+                    </tr>
+                `;
+            }
+
+            // Populate Detailed Wind Summary Rows
+            const windThisWeek = buildWindSummaryRow("This Week", weeklySum.windThisWeek, weeklySum.gustThisWeek, weeklySum.vcWindThis, weeklySum.vcGustThis, calcProbAvgThis);
+            const windNextWeek = buildWindSummaryRow("Next Week", weeklySum.windNextWeek, weeklySum.gustNextWeek, weeklySum.vcWindNext, weeklySum.vcGustNext, calcProbAvgNext);
+            const windTotal = buildWindSummaryRow("Total", weeklySum.windTotal, weeklySum.gustTotal, weeklySum.vcWindTotal, weeklySum.vcGustTotal, calcProbAvgTot);
             document.getElementById("wind-tbody").innerHTML = windHTML + windThisWeek + windNextWeek + windTotal;
+
+            // Populate Simplified Wind Summary Rows
+            const simWindThisWeek = buildSimpleWindSummaryRow("This Week", weeklySum.windThisWeek, weeklySum.gustThisWeek, weeklySum.vcWindThis, weeklySum.vcGustThis, calcProbAvgThis);
+            const simWindNextWeek = buildSimpleWindSummaryRow("Next Week", weeklySum.windNextWeek, weeklySum.gustNextWeek, weeklySum.vcWindNext, weeklySum.vcGustNext, calcProbAvgNext);
+            const simWindTotal = buildSimpleWindSummaryRow("Total", weeklySum.windTotal, weeklySum.gustTotal, weeklySum.vcWindTotal, weeklySum.vcGustTotal, calcProbAvgTot);
+            document.getElementById("summary-wind-tbody").innerHTML = summaryWindHTML + simWindThisWeek + simWindNextWeek + simWindTotal;
 
             // ------------------------------------------
             // Construct Summary Rows: Precipitation Table
@@ -931,12 +1302,78 @@
                 `;
             };
 
+            const buildSimpleRainSummaryRow = (label, prob, avg, min, max, vcSum) => {
+                const vcCell = vcSum > 0 ? `<td class="gt-col">${vcSum.toFixed(3)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        <td class="calc-col">${avg.toFixed(2)} in</td>
+                        <td class="calc-col">${min.toFixed(2)} - ${max.toFixed(2)} in</td>
+                        <td class="calc-col">${prob}%</td>
+                    </tr>
+                `;
+            }
+
+            // Populate Detailed Precipitation Summary Rows
             const thisWeekRow = buildRainSummaryRow("This Week", weeklySum.rainThisWeek, calcProbAvgThis, calcAvgRainThis, calcMinThis, calcMaxThis, weeklySum.vcRainThis);
             const nextWeekRow = buildRainSummaryRow("Next Week", weeklySum.rainNextWeek, calcProbAvgNext, calcAvgRainNext, calcMinNext, calcMaxNext, weeklySum.vcRainNext);
             const totalRow = buildRainSummaryRow("Total", weeklySum.rainTotal, calcProbAvgTot, calcAvgRainTot, calcMinTot, calcMaxTot, weeklySum.vcRainTotal);
-
-            document.getElementById("temp-tbody").innerHTML = tempHTML;
             document.getElementById("precip-tbody").innerHTML = precipHTML + thisWeekRow + nextWeekRow + totalRow;
+
+            // Populate Simplified Precipitation Summary Rows
+            const simPrecipThisWeek = buildSimpleRainSummaryRow("This Week", calcProbAvgThis, calcAvgRainThis, calcMinThis, calcMaxThis, weeklySum.vcRainThis);
+            const simPrecipNextWeek = buildSimpleRainSummaryRow("Next Week", calcProbAvgNext, calcAvgRainNext, calcMinNext, calcMaxNext, weeklySum.vcRainNext);
+            const simPrecipTotal = buildSimpleRainSummaryRow("Total", calcProbAvgTot, calcAvgRainTot, calcMinTot, calcMaxTot, weeklySum.vcRainTotal);
+            document.getElementById("summary-precip-tbody").innerHTML = summaryPrecipHTML + simPrecipThisWeek + simPrecipNextWeek + simPrecipTotal;
+
+            // ------------------------------------------
+            // Populate High/Low Temperature Summary Data
+            // ------------------------------------------
+            document.getElementById("temp-tbody").innerHTML = tempHTML;
+
+            const buildSimpleTempSummaryRow = (label, prob, avgHi, avgLo, maxHi, minLo, vcMax, vcMin) => {
+                const vcAvgMax = avgArray(vcMax);
+                const vcAvgMin = avgArray(vcMin);
+                const vcCell = (vcAvgMax > 0 && vcAvgMin > 0) ? `<td class="gt-col">${Math.round(vcAvgMax)}/ ${Math.round(vcAvgMin)}</td>` : `<td class="gt-col"><span class="pending-text">[No Key]</span></td>`;
+
+                return `
+                    <tr class="summary-row">
+                        <td class="date-col" colspan="2">${label}</td>
+                        ${vcCell}
+                        <td class="calc-col">${Math.round(avgHi)}/ ${Math.round(avgLo)}°</td>
+                        <td class="calc-col">${Math.round(minLo)} - ${Math.round(maxHi)}°F</td>
+                        <td class="calc-col">${prob}%</td>
+                        <td class="calc-col">${avgArray(weeklySum.avgThisWeek).toFixed(2)} in</td>
+                    </tr>
+                `;
+            }
+
+            // Quick extraction of general daily High/Low extremes for simplified weekly bounds
+            const allHighs = datasets.tempMax.flat().filter(v => v !== null);
+            const allLows = datasets.tempMin.flat().filter(v => v !== null);
+            const avgWeeklyHigh = avgArray(allHighs);
+            const avgWeeklyLow = avgArray(allLows);
+            const maxWeeklyHigh = allHighs.length > 0 ? Math.max(...allHighs) : 0;
+            const minWeeklyLow = allLows.length > 0 ? Math.min(...allLows) : 0;
+
+            const simTempThisWeek = buildSimpleTempSummaryRow("This Week", calcProbAvgThis, avgWeeklyHigh, avgWeeklyLow, maxWeeklyHigh, minWeeklyLow, weeklySum.vcAppMaxThis, weeklySum.vcAppMinThis);
+            const simTempNextWeek = buildSimpleTempSummaryRow("Next Week", calcProbAvgNext, avgWeeklyHigh, avgWeeklyLow, maxWeeklyHigh, minWeeklyLow, weeklySum.vcAppMaxNext, weeklySum.vcAppMinNext);
+            const simTempTotal = buildSimpleTempSummaryRow("Total", calcProbAvgTot, avgWeeklyHigh, avgWeeklyLow, maxWeeklyHigh, minWeeklyLow, weeklySum.vcAppMaxTotal, weeklySum.vcAppMinTotal);
+
+            document.getElementById("summary-temp-tbody").innerHTML = summaryTempHTML + simTempThisWeek + simTempNextWeek + simTempTotal;
+
+            // ------------------------------------------
+            // Finalize AI Coprocessor Summary Prompts
+            // ------------------------------------------
+            aiPromptText += `=== 7-DAY ACCUMULATED CONSENSUS SUMMARY ===\n`;
+            aiPromptText += `  - Total Consensus Expected Rain: ${sumArray(weeklySum.avgThisWeek).toFixed(3)} in\n`;
+            aiPromptText += `  - Total Ground Truth Expected Rain: ${weeklySum.vcRainThis.toFixed(3)} in\n`;
+            aiPromptText += `  - Average Weekly rain Probability: ${calcProbAvgThis}%\n`;
+            aiPromptText += `  - Consensus Apparent Temperature Range: ${Math.round(minWeeklyLow)} to ${Math.round(maxWeeklyHigh)}°F\n`;
+            aiPromptText += `\n[Instructions for AI]: Draft a friendly, precise, and organized nightly weather report for community residents based on this multi-model consensus forecast. Focus on highlighting major agreement trends (e.g. general heat levels, wind behaviors) and explicitly point out notable disagreements between the Visual Crossing Ground Truth (GT) metrics and the rest of the consensus average models.`;
+
+            document.getElementById("ai-report-box").value = aiPromptText;
         }
 
         // Run fetch on load
