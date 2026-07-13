@@ -1,65 +1,355 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Vizcaya AI Context Compiler v2</title>
-<style>:root {    --bg:#0f172a;    --card:#1e293b;    --text:#f1f5f9;    --border:#334155;    --primary:#3b82f6;    --danger:#ef4444;    --success:#22c55e;    --muted:#94a3b8;}
-body {    font-family: system-ui, sans-serif;    background: var(--bg);    color: var(--text);    margin: 0;    padding: 24px;    font-size: 24px;   /* BIGGER FONT */}
-.container {    max-width: 900px;    margin: auto;}
-h1 {    font-size: 24px;    margin-bottom: 16px;}
-.editor {    background: var(--card);    padding: 16px;    border-radius: 10px;    border: 1px solid var(--border);    margin-bottom: 20px;}
-input, textarea, select {    width: 100%;    padding: 12px;    margin-top: 8px;    margin-bottom: 10px;    border-radius: 6px;    border: 1px solid var(--border);    background: #0b1220;    color: var(--text);    font-size: 16px;}
-textarea {    height: 140px;    font-family: monospace;}
-.row {    display: flex;    gap: 10px;}
-.row > div {    flex: 1;}
-button {    padding: 10px 14px;    border: none;    border-radius: 6px;    cursor: pointer;    font-weight: bold;    font-size: 14px;}
-.primary { background: var(--primary); color: white; }.success { background: var(--success); color: white; }.danger { background: var(--danger); color: white; }.gray { background: #334155; color: white; }
-.segment {    background: var(--card);    border: 1px solid var(--border);    padding: 10px;    border-radius: 8px;    margin-bottom: 8px;    display: flex;    justify-content: space-between;    align-items: center;}
-.meta {    font-size: 14px;    color: var(--muted);}
-.toolbar {    display: flex;    gap: 10px;    margin-top: 10px;    flex-wrap: wrap;}
-</style></head>
-<body><div class="container">
-<h1>Vizcaya AI Data Compiler v2</h1>
-<div class="editor">
-<label>Label</label><input id="label" placeholder="Enter Label">
-<div class="row"><div><label>Type</label><select id="type">    <option value="USER_INPUT">User Input</option>    <option value="AUSTIN_AFD">Austin AFD</option>    <option value="TEXAS_AFDS">TEXAS AFDs</option>    <option value="WPC_FORECASTS">WPC Forecasts</option>    <option value="FORECAST">Jim's Forecast SheetsUser Input</option>    <option value="ATMOSPHERIC_IMAGE_BLOCK">Radar, Satellite, SPC, Surface Analysis</option>    <option value="STATION">Station Summary Data</option>      <option value="RADAR">Radar Image</option>       <option value="SATELLITE">Satellite Image</option>    <option value="SPC_WPC">SPC / WPC</option>    <option value="NHC_TROPICAL">NHC Tropical Discussion</option>    <option value="NWS_ALERTS">NWS Alerts</option>    <option value="MODEL_DATA">Model Data</option>    <option value="EXTREMES">Texas Extremes</option>    <option value="ALMANAC">Almanac</option>    <option value="DERIVED_ANALYSIS">Derived Analysis</option></select></div>
-<div><label>Tags</label><input id="tags" placeholder="comma separated (optional)"></div></div>
-<label>Content</label><textarea id="content" oninput="countChars()"></textarea>
-<div class="meta" id="counter">0 characters</div>
-<div class="toolbar"><button class="primary" onclick="saveSegment()">Save Segment</button><button class="gray" onclick="insertVisualTemplate()">Insert Visual Block Template</button><button class="gray" onclick="clearEditor()">Clear</button></div>
-</div>
-<div class="editor"><h3>Saved Segments (<span id="count">0</span>)</h3><div id="list"></div>
-<div class="toolbar"><button class="primary" onclick="copyAll()">Copy All</button><button class="success" onclick="download()">Download TXT</button><button class="danger" onclick="wipe()">Wipe</button></div></div>
-</div>
-<script>
-let data = JSON.parse(localStorage.getItem("vizcaya_compiler_v2") || "[]");
-function now() {    return new Date().toISOString();}
-function countChars() {    document.getElementById("counter").innerText =        document.getElementById("content").value.length + " characters";}
-function save() {    localStorage.setItem("vizcaya_compiler_v2", JSON.stringify(data));}
-function saveSegment() {    let label = document.getElementById("label").value || "Untitled";    let type = document.getElementById("type").value;    let tags = document.getElementById("tags").value;    let content = document.getElementById("content").value;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vizcaya AI Context Compiler v2.4</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --border: #334155;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --muted: #94a3b8;
+        }
+        body {
+            font-family: system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+            font-size: 24px; /* BIGGER FONT */
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .editor {
+            background: var(--card);
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #0b1220;
+            color: var(--text);
+            font-size: 16px;
+        }
+        textarea {
+            height: 140px;
+            font-family: monospace;
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+        .row > div {
+            flex: 1;
+        }
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .primary { background: var(--primary); color: white; }
+        .primary:hover { background: #2563eb; }
+        .success { background: var(--success); color: white; }
+        .success:hover { background: #16a34a; }
+        .danger { background: var(--danger); color: white; }
+        .danger:hover { background: #dc2626; }
+        .gray { background: #334155; color: white; }
+        .gray:hover { background: #475569; }
+        
+        .segment {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .meta {
+            font-size: 14px;
+            color: var(--muted);
+        }
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .sort-toggle-text {
+            color: var(--primary);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        .edit-badge {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vizcaya AI Data Compiler v2.4</h1>
+        
+        <div class="editor">
+            <!-- Edit Mode Indicator -->
+            <div id="edit-badge" class="edit-badge">
+                <span>Currently Editing: <strong id="edit-label-text">Untitled</strong></span>
+                <button class="danger" style="padding: 2px 6px; font-size: 11px;" onclick="cancelEdit()">Cancel Edit</button>
+            </div>
 
-    if (!content.trim()) return alert("Empty content");
-    data.push({        label,        type,        tags,        time: now(),        content    });
-    save();    render();    clearEditor();}
-function clearEditor() {    document.getElementById("label").value = "";    document.getElementById("tags").value = "";    document.getElementById("content").value = "";    countChars();}
-function insertVisualTemplate() {    document.getElementById("type").value = "ATMOSPHERIC_VISUAL_BLOCK";    document.getElementById("content").value =`SATELLITE:
-RADAR:
-SPC/WPC:
-SURFACE ANALYSIS:
-MODEL SIGNALS:
-NOTES:`;}
-function render() {    let list = document.getElementById("list");    list.innerHTML = "";
+            <!-- Side-by-Side Label and Type fields -->
+            <div class="row">
+                <div>
+                    <label>Label</label>
+                    <input id="label" placeholder="Enter Label">
+                </div>
+                <div>
+                    <label>Type</label>
+                    <select id="type">
+                        <!-- Alphabetized Option List -->
+                        <option value="ALMANAC">Almanac</option>
+                        <option value="AUSTIN_AFD">Austin AFD</option>
+                        <option value="ATMOSPHERIC_IMAGE_BLOCK">Atmospheric Image Block (Radar, Sat, etc.)</option>
+                        <option value="DERIVED_ANALYSIS">Derived Analysis</option>
+                        <option value="FORECAST">Jim's Forecast Sheets</option>
+                        <option value="MODEL_DATA">Model Data</option>
+                        <option value="NHC_TROPICAL">NHC Tropical Discussion</option>
+                        <option value="NWS_ALERTS">NWS Alerts</option>
+                        <option value="RADAR">Radar Image</option>
+                        <option value="SATELLITE">Satellite Image</option>
+                        <option value="SPC_WPC">SPC / WPC</option>
+                        <option value="STATION">Station Summary Data</option>
+                        <option value="EXTREMES">Texas Extremes</option>
+                        <option value="TEXAS_AFDS">TEXAS AFDs</option>
+                        <option value="USER_INPUT">User Input</option>
+                        <option value="WPC_FORECASTS">WPC Forecasts</option>
+                    </select>
+                </div>
+            </div>
 
-    document.getElementById("count").innerText = data.length;
-    data.forEach((d, i) => {        let div = document.createElement("div");        div.className = "segment";
+            <label style="display: block; margin-top: 10px;">Content</label>
+            <textarea id="content" oninput="countChars()"></textarea>
+            <div class="meta" id="counter">0 characters</div>
+            <div class="toolbar">
+                <button class="primary" id="save-btn" onclick="saveSegment()">Save Segment</button>
+                <button class="gray" onclick="clearEditor()">Clear</button>
+            </div>
+        </div>
+        
+        <div class="editor">
+            <h3>
+                Saved Segments (<span id="count">0</span>)
+                <span class="sort-toggle-text" id="sort-toggle" onclick="toggleSort()">Sort: Alphabetical</span>
+            </h3>
+            <div id="list"></div>
+            <div class="toolbar">
+                <button class="primary" onclick="copyAll()">Copy All</button>
+                <button class="success" onclick="download()">Download TXT</button>
+                <button class="danger" onclick="wipe()">Wipe</button>
+            </div>
+        </div>
+    </div>
 
-        div.innerHTML = `            <div>                <strong>${d.label}</strong><br>                <span class="meta">${d.type} | ${d.time}</span>            </div>            <button onclick="removeItem(${i})">Delete</button>        `;        list.appendChild(div);    });
-    save();}
-function removeItem(i) {    data.splice(i, 1);    render();}
-function getText() {    return data.map(d =>`[FILE: ${d.label}]TYPE: ${d.type}TIME: ${d.time}TAGS: ${d.tags}
+    <script>
+        let data = JSON.parse(localStorage.getItem("vizcaya_compiler_v2") || "[]");
+        let editIndex = null; // Tracks active index when in Edit/Recall mode
+        let currentSort = localStorage.getItem("vizcaya_compiler_sort") || "alphabetical"; // alphabetical vs chronological
 
-CONTENT:${d.content}---`).join("\n");}
-function copyAll() {    navigator.clipboard.writeText(getText());    alert("Copied");}
-function download() {    let blob = new Blob([getText()], {type:"text/plain"});    let a = document.createElement("a");    a.href = URL.createObjectURL(blob);    a.download = "vizcaya_ai_stack.txt";    a.click();}
-function wipe() {    if(confirm("Wipe everything?")) {        data = [];        render();    }}
+        function now() {
+            return new Date().toISOString();
+        }
 
-// Call render on initial load to show data saved in localStorage
-render(); 
-</script>
+        function countChars() {
+            document.getElementById("counter").innerText =
+                document.getElementById("content").value.length + " characters";
+        }
+
+        function save() {
+            localStorage.setItem("vizcaya_compiler_v2", JSON.stringify(data));
+            localStorage.setItem("vizcaya_compiler_sort", currentSort);
+        }
+
+        function toggleSort() {
+            currentSort = (currentSort === "alphabetical") ? "chronological" : "alphabetical";
+            save();
+            render();
+        }
+
+        function saveSegment() {
+            let label = document.getElementById("label").value || "Untitled";
+            let type = document.getElementById("type").value;
+            let content = document.getElementById("content").value;
+
+            if (!content.trim()) return alert("Empty content");
+
+            if (editIndex === null) {
+                // Creation Mode
+                data.push({
+                    label,
+                    type,
+                    time: now(),
+                    content
+                });
+            } else {
+                // Edit/Update Mode
+                data[editIndex] = {
+                    label,
+                    type,
+                    time: data[editIndex].time, // Retain original creation timestamp
+                    content
+                };
+                editIndex = null;
+                document.getElementById("save-btn").innerText = "Save Segment";
+                document.getElementById("edit-badge").style.display = "none";
+            }
+
+            save();
+            render();
+            clearEditor();
+        }
+
+        function recallItem(index) {
+            editIndex = index;
+            let item = data[index];
+
+            document.getElementById("label").value = item.label;
+            document.getElementById("type").value = item.type;
+            document.getElementById("content").value = item.content;
+
+            // Update UI elements to reflect Edit Mode
+            document.getElementById("save-btn").innerText = "Update Segment";
+            document.getElementById("edit-label-text").innerText = item.label;
+            document.getElementById("edit-badge").style.display = "flex";
+            countChars();
+
+            // Scroll up to editor smoothly
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editIndex = null;
+            document.getElementById("save-btn").innerText = "Save Segment";
+            document.getElementById("edit-badge").style.display = "none";
+            clearEditor();
+        }
+
+        function clearEditor() {
+            document.getElementById("label").value = "";
+            document.getElementById("content").value = "";
+            countChars();
+        }
+
+        function render() {
+            let list = document.getElementById("list");
+            list.innerHTML = "";
+
+            document.getElementById("count").innerText = data.length;
+            document.getElementById("sort-toggle").innerText = `Sort: ${currentSort === "alphabetical" ? "Alphabetical" : "Chronological"}`;
+
+            // Create a mapped array preserving original data indexes
+            let renderList = data.map((d, i) => ({ ...d, originalIndex: i }));
+
+            if (currentSort === "alphabetical") {
+                renderList.sort((a, b) => a.label.localeCompare(b.label));
+            }
+
+            renderList.forEach((d) => {
+                let div = document.createElement("div");
+                div.className = "segment";
+
+                div.innerHTML = `
+                    <div>
+                        <strong>${d.label}</strong><br>
+                        <span class="meta">${d.type} | ${d.time}</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="primary" style="padding: 6px 12px; font-size: 12px;" onclick="recallItem(${d.originalIndex})">Recall</button>
+                        <button class="danger" style="padding: 6px 12px; font-size: 12px;" onclick="removeItem(${d.originalIndex})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            save();
+        }
+
+        function removeItem(index) {
+            // If the item currently being edited is deleted, exit edit mode safely
+            if (editIndex === index) {
+                cancelEdit();
+            } else if (editIndex !== null && editIndex > index) {
+                // Adjust active edit tracker index if preceding items are pruned
+                editIndex--;
+            }
+            
+            data.splice(index, 1);
+            render();
+        }
+
+        function getText() {
+            return data.map(d => `[FILE: ${d.label}]\nTYPE: ${d.type}\nTIME: ${d.time}\n\nCONTENT:\n${d.content}\n---`).join("\n\n");
+        }
+
+        function copyAll() {
+            if (data.length === 0) return alert("No segments saved yet");
+            navigator.clipboard.writeText(getText());
+            alert("Copied compiled data stack to clipboard.");
+        }
+
+        function download() {
+            if (data.length === 0) return alert("No segments saved yet");
+            let blob = new Blob([getText()], {type:"text/plain"});
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "vizcaya_ai_stack.txt";
+            a.click();
+        }
+
+        function wipe() {
+            if (confirm("Wipe everything?")) {
+                data = [];
+                editIndex = null;
+                document.getElementById("save-btn").innerText = "Save Segment";
+                document.getElementById("edit-badge").style.display = "none";
+                clearEditor();
+                render();
+            }
+        }
+
+        // Initialize display
+        render(); 
+    </script>
+</body>
 </html>
