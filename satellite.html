@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOES-East Satellite Monitor</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --accent-color: #007acc;
+            --border-color: #444;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Control Panel */
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        select, button {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus, button:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #005999;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        #status {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: #aaa;
+            margin-left: auto;
+        }
+
+        /* Image Display Area */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background-color: #121212;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-container {
+            width: 100%;
+            height: calc(100% - 30px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: none; 
+        }
+
+        /* Error Debugger Output */
+        #debug-log {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #ff6b6b;
+            margin-top: 10px;
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border-left-color: var(--accent-color);
+            animation: spin 1s linear infinite;
+            position: absolute;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="control-group">
+            <label for="region">Region:</label>
+            <select id="region" onchange="loadSatelliteImage()">
+                <option value="conus">Continental US (CONUS)</option>
+                <option value="sp">South Central US (Southern Plains)</option>
+                <option value="ga">Gulf of Mexico (Gulf of America)</option>
+                <option value="se">Southeast US (East Gulf / FL)</option>
+                <option value="car">Caribbean</option>
+                <option value="taw">Tropical Atlantic</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="band">Layer:</label>
+            <select id="band" onchange="loadSatelliteImage()">
+                <option value="GEOCOLOR">GeoColor (True Color / Night IR)</option>
+                <option value="EXTENT3">GLM Lightning Density (Lightning Mapper)</option>
+                <option value="13">Clean Infrared (Band 13)</option>
+                <option value="08">Upper Water Vapor (Band 8)</option>
+                <option value="02">Red Visible (Band 2 - Day Only)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="resolution">Quality:</label>
+            <select id="resolution" onchange="loadSatelliteImage()">
+                <option value="med" selected>Medium</option>
+                <option value="low">Low</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+
+        <button onclick="loadSatelliteImage()">Refresh</button>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
+            <label for="auto-refresh">Auto-refresh (5m)</label>
+        </div>
+
+        <div id="status">Initializing...</div>
+    </header>
+
+    <main>
+        <div class="spinner" id="spinner"></div>
+        <div class="image-container">
+            <img id="satellite-img" alt="GOES Satellite Imagery" onload="onImageLoad()" onerror="onImageError()">
+        </div>
+        <div id="debug-log"></div>
+    </main>
+
+    <script>
+        // Mapping of regional resolution variables to handle variable sizes
+        const regions = {
+            conus: { 
+                type: "CONUS", 
+                code: "", 
+                res: { low: "625x375", med: "1250x750", high: "2500x1500" } 
+            },
+            sp: { 
+                type: "SECTOR", 
+                code: "sp", 
+                res: { low: "600x600", med: "1200x1200", high: "2400x2400" } 
+            },
+            ga: { 
+                type: "SECTOR", 
+                code: "ga", 
+                res: { low: "500x500", med: "1000x1000", high: "2000x2000" } 
+            }, 
+            se: { 
+                type: "SECTOR", 
+                code: "se", 
+                res: { low: "600x600", med: "1200x1200", high: "2400x2400" } 
+            },
+            car: { 
+                type: "SECTOR", 
+                code: "car", 
+                res: { low: "500x500", med: "1000x1000", high: "2000x2000" } 
+            },
+            taw: { 
+                type: "SECTOR", 
+                code: "taw", 
+                res: { low: "900x540", med: "900x540", high: "1800x1080" } 
+            }
+        };
+
+        let refreshInterval = null;
+
+        function loadSatelliteImage() {
+            const regionKey = document.getElementById('region').value;
+            const bandCode = document.getElementById('band').value;
+            const resKey = document.getElementById('resolution').value;
+            const imgElement = document.getElementById('satellite-img');
+            const spinner = document.getElementById('spinner');
+            const statusText = document.getElementById('status');
+            const debugLog = document.getElementById('debug-log');
+
+            const region = regions[regionKey];
+            const resolution = region.res[resKey];
+            
+            let instrument = "ABI";
+            let bandFolder = bandCode;
+
+            if (bandCode === "EXTENT3") {
+                instrument = "GLM";
+            }
+
+            let baseUrl = "";
+            if (region.type === "CONUS") {
+                baseUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/${instrument}/CONUS/${bandFolder}/${resolution}.jpg`;
+            } else {
+                baseUrl = `https://cdn.star.nesdis.noaa.gov/GOES19/${instrument}/SECTOR/${region.code}/${bandFolder}/${resolution}.jpg`;
+            }
+
+            // Append a unique timestamp query string to bypass browser cache
+            const cacheBusterUrl = `${baseUrl}?t=${new Date().getTime()}`;
+
+            statusText.textContent = "Loading image...";
+            spinner.style.display = "block";
+            imgElement.style.display = "none";
+            imgElement.src = cacheBusterUrl;
+        }
+
+        function onImageLoad() {
+            document.getElementById('spinner').style.display = "none";
+            document.getElementById('satellite-img').style.display = "block";
+            document.getElementById('debug-log').textContent = "";
+            
+            const timeString = new Date().toLocaleTimeString();
+            document.getElementById('status').textContent = `Last loaded: ${timeString}`;
+        }
+
+        function onImageError() {
+            const imgElement = document.getElementById('satellite-img');
+            document.getElementById('spinner').style.display = "none";
+            document.getElementById('status').textContent = "Failed to load imagery.";
+            
+            // Print the failing URL to help diagnose
+            document.getElementById('debug-log').textContent = `Failing URL: ${imgElement.src}`;
+        }
+
+        function toggleAutoRefresh() {
+            const checkbox = document.getElementById('auto-refresh');
+            if (checkbox.checked) {
+                refreshInterval = setInterval(loadSatelliteImage, 300000);
+            } else {
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                }
+            }
+        }
+
+        window.onload = function() {
+            loadSatelliteImage();
+        };
+    </script>
+</body>
+</html>
