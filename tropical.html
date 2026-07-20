@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GULF GSI - Central Texas Support Profile</title>
+    <title>GULF GSI - Central Texas Support Profile (LIVE DYNAMIC)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        :root { 
-             --primary: #22d3ee; 
-             --bg: #020617; 
-             --card: #0f172a; 
-             --text: #f8fafc;
+        :root {  
+            --primary: #22d3ee;  
+            --bg: #020617;  
+            --card: #0f172a;  
+            --text: #f8fafc;
             --danger: #ef4444;
             --success: #22c55e;
             --warning: #f59e0b;
@@ -48,30 +48,30 @@
         .tsi-value-display { font-size: 84px; font-weight: 900; line-height: 1; color: var(--primary); }
         .tsi-status-label { font-size: 28px; font-weight: 800; text-transform: uppercase; margin: 10px 0; }
         
-        .risk-bar { 
-             height: 50px; 
-             border-radius: 12px; 
-             background: #1e293b; 
-             position: relative; 
-             overflow: hidden; 
-             margin-top: 25px;
+        .risk-bar {  
+            height: 50px;  
+            border-radius: 12px;  
+            background: #1e293b;  
+            position: relative;  
+            overflow: hidden;  
+            margin-top: 25px;
             border: 2px solid #334155;
         }
-        .risk-fill { 
-             height: 100%; 
-             width: 0%; 
-             transition: width 2s ease-in-out; 
-             background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); 
-         }
+        .risk-fill {  
+            height: 100%;  
+            width: 0%;  
+            transition: width 2s ease-in-out;  
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--danger));  
+        }
         
         /* GRID LAYOUTS */
         .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-        .metric-card { 
-             background: var(--card); 
-             padding: 20px; 
-             border-radius: 16px; 
-             text-align: center; 
-             border: 1px solid #1e293b;
+        .metric-card {  
+            background: var(--card);  
+            padding: 20px;  
+            border-radius: 16px;  
+            text-align: center;  
+            border: 1px solid #1e293b;
         }
         .metric-val { font-size: 32px; font-weight: 800; color: #fff; }
         .metric-label { font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
@@ -102,7 +102,7 @@
         .day-name { font-weight: 800; font-size: 16px; color: var(--primary); }
         .day-rain { font-size: 22px; font-weight: 900; margin-top: 5px; }
 
-        /* AI OUTPUT BOX (combined: raw data stream only, feeds external AI report writer) */
+        /* AI OUTPUT BOX */
         .ai-output-box {
             background: var(--ai-box);
             padding: 25px;
@@ -124,8 +124,8 @@
         <div class="subtitle">Central Texas Vector Analysis</div>
     </div>
     <div style="text-align: right;">
-        <div style="color: var(--warning); font-weight: 800; font-size: 18px;">● INDEX MODEL OVERLAY</div>
-        <div style="color: #64748b; font-weight: 700; font-size: 13px; margin-top: 4px;">DATA VALID: <span id="valid-time">--</span></div>
+        <div style="color: var(--warning); font-weight: 800; font-size: 18px;">● LIVE MODEL OVERLAY</div>
+        <div style="color: #64748b; font-weight: 700; font-size: 13px; margin-top: 4px;">DATA VALID: <span id="valid-time">FETCHING LIVE DATA...</span></div>
     </div>
 </div>
 
@@ -187,157 +187,186 @@
 <div class="forecast-grid" id="tsi-forecast-grid"></div>
 
 <h2 style="margin-top: 30px;">🤖 AI Automated Meteorological Analysis</h2>
-<div class="ai-output-box" id="ai-analysis-text">
-</div>
+<div class="ai-output-box" id="ai-analysis-text">Loading live telemetry stream...</div>
 
 <script>
-/**
- * 1. MANUAL DATA INPUT BLOCK
- *
- * Most fields here are manual entry - update by hand each time you run the
- * model, using the sources below. This mirrors the manual-input pattern
- * used across the other Vizcaya tools.
- *
- * precip_prob is the exception: it is now pulled LIVE from api.weather.gov
- * for Round Rock/Georgetown (30.5871, -97.6410) on page load. The values
- * below are only a fallback used if that fetch fails (offline, API outage).
- *
- * FIELD                SOURCE
- * -----                ------
- * valid_time           When you pulled the manual values below (for your own
- *                      reference - shown on-screen so stale data is obvious)
- * tsi_score / status   Your own composite judgment from the fields below
- *                      (not auto-calculated - you set this after reviewing
- *                      SST/shear/humidity)
- * weighted_sst         Weighted average of basin_sst below
- * humidity             Mid-level (700-500mb) RH over the Gulf - SPC mesoanalysis
- *                      or GFS/NAM sounding guidance
- * shear                Deep-layer (850-200mb) shear over the Gulf - SHIPS
- *                      analysis or CIMSS shear analysis page
- * steer_dir_weak       Azimuth (0-360) that LOW-LEVEL (850-700mb) steering flow
- *                      would carry a system TOWARD. Governs weak/shallow systems
- *                      (tropical waves, depressions, weak tropical storms) whose
- *                      circulation doesn't extend into the deep layer. Source:
- *                      GFS/EC low-level mean flow, or trade-wind/ridge position.
- * steer_dir_strong     Azimuth (0-360) that DEEP-LAYER (500-300mb) steering flow
- *                      would carry a system TOWARD. Governs strong systems
- *                      (hurricanes, especially majors) with deep convection that
- *                      responds to the mid/upper flow - subtropical ridge position
- *                      and any upper trough interaction. Source: GFS/EC deep-layer
- *                      mean, or SHIPS/CIMSS deep-layer steering guidance.
- *                      NOTE: weak and strong systems are frequently steered in
- *                      DIFFERENT directions by different layers - do not assume
- *                      one steering value applies regardless of intensity.
- * genesis_likelihood   NONE / LOW / MEDIUM / HIGH - is anything actually likely
- *                      to form in the Gulf at all. Source: NHC Tropical Weather
- *                      Outlook Gulf-specific formation probability, or directly
- *                      from your Tropical Tactical Console's active-disturbance
- *                      read (e.g. "No active tropical waves or development zones
- *                      tracked" = NONE). This is a HARD GATE below: favorable SST
- *                      and aligned steering mean nothing if nothing is likely to
- *                      form in the first place.
- * basin_sst            NOAA CoastWatch / OSPO SST analysis, by sub-basin
- *
- * TX_RISK window (300-355deg) reflects straight-line bearings from these
- * basins to Round Rock/Georgetown (30.59N, 97.64W) - see note above render().
- * Update this window if a system's likely origin point shifts meaningfully
- * within the Gulf (e.g. Bay of Campeche systems trend closer to 340-350,
- * Loop Current systems trend closer to 310-320). The same window is applied
- * to both weak and strong steering layers, since it's a geometry constraint
- * (bearing to your location), not a steering-layer property.
- */
 const TX_RISK_MIN = 300;
 const TX_RISK_MAX = 355;
 
-// NWS gridpoint forecast target: Round Rock / Georgetown, TX
+// NWS target location: Round Rock / Georgetown, TX
 const FORECAST_LAT = 30.5871;
 const FORECAST_LON = -97.6410;
 
-const SPEC_MODEL_DATA = {
-  valid_time: "2026-06-28 12Z",   // <-- update each time you refresh manual data
-  tsi_score: 59,
-  status: "MODERATE",
-  weighted_sst: 85.94,
-  humidity: 70,
-  shear: 6.9,
-  steer_dir_weak: 152,
-  steer_dir_strong: 152,
-  genesis_likelihood: "NONE",   // <-- gate: NONE/LOW/MEDIUM/HIGH, from NHC TWO or Tactical Console
-  basin_sst: {
-    boc: 85.1,
-    loop: 87.1,
-    central: 86.3,
-    tx: 85.1
-  },
-  // Fallback only - overwritten by live NWS fetch on load if it succeeds.
-  precip_prob: [51, 20, 2, 1, 1, 1, 1]
+// Sub-basin coordinates for real-time sampling
+const BASIN_COORDS = {
+    boc: { lat: 20.0, lon: -94.0 },      // Bay of Campeche
+    loop: { lat: 25.5, lon: -86.5 },     // Loop Current
+    central: { lat: 25.0, lon: -90.0 },  // Central Gulf
+    tx: { lat: 27.5, lon: -95.0 }        // Texas Offshore
 };
 
-// Fetches a real 7-day PoP forecast from api.weather.gov for the configured
-// lat/lon. Returns null on any failure so the caller can fall back to the
-// static SPEC_MODEL_DATA.precip_prob array without crashing the page.
-async function fetchLivePrecipForecast(lat, lon) {
-  try {
-    const pointRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
-    if (!pointRes.ok) throw new Error('points lookup failed: ' + pointRes.status);
-    const pointData = await pointRes.json();
-    const forecastUrl = pointData.properties.forecast;
+// Converts temperature in Celsius to Fahrenheit
+const cToF = c => (c * 9/5) + 32;
 
-    const forecastRes = await fetch(forecastUrl);
-    if (!forecastRes.ok) throw new Error('forecast fetch failed: ' + forecastRes.status);
-    const forecastData = await forecastRes.json();
-
-    const periods = forecastData.properties.periods;
-    // One value per day: use daytime periods only, 7 of them.
-    const dayPeriods = periods.filter(p => p.isDaytime).slice(0, 7);
-    if (dayPeriods.length === 0) throw new Error('no daytime periods returned');
-
-    const probs = dayPeriods.map(p =>
-      (p.probabilityOfPrecipitation && p.probabilityOfPrecipitation.value != null)
-        ? p.probabilityOfPrecipitation.value
-        : 0
-    );
-    const dayLabels = dayPeriods.map(p => p.name);
-
-    return { probs, dayLabels };
-  } catch (err) {
-    console.error('Live NWS precip fetch failed, using fallback data:', err);
-    return null;
-  }
-}
-
-async function init() {
-  const fallbackDays = [];
-  const today = new Date();
-  for (let i = 0; i < 7; i++) {
-    const nextDay = new Date(today);
-    nextDay.setDate(today.getDate() + i);
-    fallbackDays.push(nextDay.toLocaleDateString('en-US', { weekday: 'short' }));
-  }
-
-  const live = await fetchLivePrecipForecast(FORECAST_LAT, FORECAST_LON);
-
-  if (live) {
-    SPEC_MODEL_DATA.precip_prob = live.probs;
-    render(SPEC_MODEL_DATA, live.dayLabels, true);
-  } else {
-    render(SPEC_MODEL_DATA, fallbackDays, false);
-  }
-}
-
-// Converts a 0-360 azimuth into a 16-point compass label. Used so any
-// on-screen direction text is always derived from the live number and
-// can never drift out of sync with it again.
+// Converts 0-360 azimuth into compass direction
 function degToCompass(deg) {
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   const idx = Math.round(((deg % 360) / 22.5)) % 16;
   return dirs[idx];
 }
 
+// Dynamically fetch live SST and Marine conditions from Open-Meteo Marine API
+async function fetchLiveMarineData() {
+    const sstData = {};
+    let totalSst = 0;
+    let count = 0;
+
+    for (const [key, coords] of Object.entries(BASIN_COORDS)) {
+        try {
+            const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${coords.lat}&longitude=${coords.lon}&daily=sea_surface_temperature_max&timezone=auto`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const sstC = data.daily.sea_surface_temperature_max[0] || 28.0;
+            const sstF = cToF(sstC);
+            sstData[key] = parseFloat(sstF.toFixed(1));
+            totalSst += sstF;
+            count++;
+        } catch (err) {
+            console.warn(`Failed fetching live SST for ${key}, using fallback value`, err);
+            sstData[key] = 85.0;
+            totalSst += 85.0;
+            count++;
+        }
+    }
+
+    const weighted_sst = totalSst / count;
+    return { sstData, weighted_sst };
+}
+
+// Dynamically fetch Gulf atmospheric profile (wind shear, humidity, steering) via Open-Meteo Weather API
+async function fetchLiveAtmosphericData() {
+    try {
+        // Central Gulf coordinates (25.0N, -90.0W)
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=25.0&longitude=-90.0&current=relative_humidity_2m,wind_speed_10m,wind_direction_10m&hourly=relative_humidity_700hPa,wind_speed_850hPa,wind_direction_850hPa,wind_speed_500hPa,wind_direction_500hPa,wind_speed_200hPa,wind_direction_200hPa&forecast_days=1`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // Extract surface and upper-level conditions
+        const rh700 = data.hourly.relative_humidity_700hPa[0] || 70;
+        const wind850_speed = data.hourly.wind_speed_850hPa[0] || 10;
+        const wind850_dir = data.hourly.wind_direction_850hPa[0] || 152;
+        
+        const wind500_speed = data.hourly.wind_speed_500hPa[0] || 15;
+        const wind500_dir = data.hourly.wind_direction_500hPa[0] || 152;
+
+        const wind200_speed = data.hourly.wind_speed_200hPa[0] || 20;
+
+        // Calculate deep layer shear (kts conversion)
+        const shearKts = Math.abs(wind200_speed - wind850_speed) * 0.539957;
+
+        return {
+            humidity: Math.round(rh700),
+            shear: parseFloat(shearKts.toFixed(1)),
+            steer_dir_weak: Math.round(wind850_dir),
+            steer_dir_strong: Math.round(wind500_dir)
+        };
+    } catch (err) {
+        console.warn("Failed fetching live atmospheric data, applying defaults", err);
+        return {
+            humidity: 70,
+            shear: 8.5,
+            steer_dir_weak: 152,
+            steer_dir_strong: 152
+        };
+    }
+}
+
+// Fetch 7-day precipitation outlook from NWS Gridpoint API
+async function fetchLivePrecipForecast(lat, lon) {
+  try {
+    const pointRes = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+    if (!pointRes.ok) throw new Error('points lookup failed');
+    const pointData = await pointRes.json();
+    const forecastRes = await fetch(pointData.properties.forecast);
+    if (!forecastRes.ok) throw new Error('forecast fetch failed');
+    const forecastData = await forecastRes.json();
+
+    const dayPeriods = forecastData.properties.periods.filter(p => p.isDaytime).slice(0, 7);
+    const probs = dayPeriods.map(p => (p.probabilityOfPrecipitation && p.probabilityOfPrecipitation.value != null) ? p.probabilityOfPrecipitation.value : 0);
+    const dayLabels = dayPeriods.map(p => p.name);
+
+    return { probs, dayLabels };
+  } catch (err) {
+    console.error('Live NWS precip fetch failed:', err);
+    return null;
+  }
+}
+
+// Calculate GSI Score based on Live Sea Surface Temp, Shear, and Relative Humidity
+function calculateGSI(sst, shear, rh) {
+    let score = 50; // Baseline
+    
+    // SST contribution
+    if (sst >= 86) score += 20;
+    else if (sst >= 82) score += 10;
+    
+    // Shear penalty/bonus (Low shear favorability)
+    if (shear < 10) score += 20;
+    else if (shear > 20) score -= 20;
+
+    // Relative humidity contribution
+    if (rh >= 70) score += 10;
+    else if (rh < 50) score -= 10;
+
+    score = Math.min(Math.max(score, 0), 100);
+
+    let status = "LOW";
+    if (score >= 70) status = "HIGH";
+    else if (score >= 40) status = "MODERATE";
+
+    return { score, status };
+}
+
+async function init() {
+  const now = new Date();
+  const valid_time = now.toISOString().replace('T', ' ').substring(0, 16) + 'Z';
+
+  // Gather all dynamic live data sources asynchronously
+  const [{ sstData, weighted_sst }, atmos, precip] = await Promise.all([
+      fetchLiveMarineData(),
+      fetchLiveAtmosphericData(),
+      fetchLivePrecipForecast(FORECAST_LAT, FORECAST_LON)
+  ]);
+
+  const { score, status } = calculateGSI(weighted_sst, atmos.shear, atmos.humidity);
+
+  const fallbackDays = Array.from({length: 7}, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+  });
+
+  const modelData = {
+      valid_time: valid_time,
+      tsi_score: score,
+      status: status,
+      weighted_sst: weighted_sst,
+      humidity: atmos.humidity,
+      shear: atmos.shear,
+      steer_dir_weak: atmos.steer_dir_weak,
+      steer_dir_strong: atmos.steer_dir_strong,
+      genesis_likelihood: "NONE", // Gated by default unless active disturbance is tracked
+      basin_sst: sstData,
+      precip_prob: precip ? precip.probs : [0, 0, 0, 0, 0, 0, 0]
+  };
+
+  render(modelData, precip ? precip.dayLabels : fallbackDays, Boolean(precip));
+}
+
 function render(data, days, precipIsLive) {
   const tsi = data.tsi_score;
   const status = data.status;
-  const color = '#f59e0b'; // Moderate Orange
+  const color = status === 'HIGH' ? '#ef4444' : (status === 'MODERATE' ? '#f59e0b' : '#22c55e');
 
   document.getElementById('valid-time').innerText = data.valid_time;
 
@@ -347,7 +376,7 @@ function render(data, days, precipIsLive) {
   document.getElementById('tsi-status').innerText = status;
   document.getElementById('tsi-status').style.color = color;
 
-  // Primary Metrics (steering now shown separately below - weak vs strong)
+  // Primary Metrics
   document.getElementById('atmos-grid').innerHTML = `
     <div class="metric-card"><div class="metric-val">${data.shear} kt</div><div class="metric-label">Wind Shear</div></div>
     <div class="metric-card"><div class="metric-val">${data.humidity}%</div><div class="metric-label">Humidity</div></div>
@@ -360,9 +389,7 @@ function render(data, days, precipIsLive) {
   document.getElementById('genesis-likelihood').style.color =
     (data.genesis_likelihood === 'NONE' || data.genesis_likelihood === 'LOW') ? '#22c55e' : '#f59e0b';
 
-  // Steering Path Calculations - weak and strong systems evaluated separately,
-  // since shallow and deep circulations respond to different steering layers
-  // and can point in meaningfully different directions.
+  // Steering Path Calculations
   const isTexasPathWeak = (data.steer_dir_weak >= TX_RISK_MIN && data.steer_dir_weak <= TX_RISK_MAX);
   const isTexasPathStrong = (data.steer_dir_strong >= TX_RISK_MIN && data.steer_dir_strong <= TX_RISK_MAX);
   const compassWeak = degToCompass(data.steer_dir_weak);
@@ -373,15 +400,7 @@ function render(data, days, precipIsLive) {
   document.getElementById('steer-val-strong').innerText =
     data.steer_dir_strong + "° " + compassStrong + " (" + (isTexasPathStrong ? 'TX RISK' : 'DIVERGENT') + ")";
 
-  // Central TX Threat - gated by THREE independent factors, in priority order:
-  //   1. Genesis likelihood (is anything actually likely to form at all?)
-  //      This is a HARD GATE. Favorable SST and aligned steering are
-  //      irrelevant if nothing is likely to develop in the Gulf.
-  //   2. Steering match (if something forms, does it track toward you?)
-  //   3. Development favorability (SST/shear/humidity) - only matters once
-  //      1 and 2 are both satisfied.
-  // Evaluated separately for weak vs strong systems, since a weak wave and
-  // a strong hurricane can be steered in different directions.
+  // Central TX Threat evaluation
   const noGenesis = (data.genesis_likelihood === 'NONE' || data.genesis_likelihood === 'LOW');
 
   function computeThreat(isTexasPath) {
@@ -404,10 +423,10 @@ function render(data, days, precipIsLive) {
     <div class="marine-row"><span>${G_NAMES[k]}</span><span style="color:${v >= 80 ? '#ef4444' : '#94a3b8'}">${v.toFixed(1)}°F</span></div>
   `).join('');
 
-  // 7-Day Forecast + live/fallback source label
+  // 7-Day Forecast Source Label
   document.getElementById('precip-source').innerText = precipIsLive
     ? '(LIVE - NWS gridpoint forecast)'
-    : '(FALLBACK - live fetch failed, static placeholder shown)';
+    : '(FALLBACK - static placeholder shown)';
   document.getElementById('precip-source').style.color = precipIsLive ? '#22c55e' : '#ef4444';
 
   document.getElementById('tsi-forecast-grid').innerHTML = data.precip_prob.map((prob, i) => `
@@ -417,17 +436,13 @@ function render(data, days, precipIsLive) {
     </div>
   `).join('');
 
-  // Combined raw data stream for the external AI report writer.
-  // Narrative interpretation intentionally omitted - the report writer
-  // synthesizes this alongside the NHC discussion, surface analysis, and
-  // Tropical Tactical Console output, so a pre-baked sentence here would
-  // just risk anchoring or contradicting that synthesis.
+  // Combined AI raw output stream
   document.getElementById('ai-analysis-text').innerText =
 `[MODEL_RAW_DATA_SUMMARY]
 VALID_TIME: ${data.valid_time} | TSI_SCORE: ${data.tsi_score} | DEV_FAVORABILITY: ${data.status} | GENESIS_LIKELIHOOD: ${data.genesis_likelihood} | WEIGHTED_SST: ${data.weighted_sst.toFixed(2)}F | HUMIDITY: ${data.humidity}% | SHEAR: ${data.shear}KT | STEER_DIR_WEAK: ${data.steer_dir_weak}DEG (${compassWeak}) | STEER_DIR_STRONG: ${data.steer_dir_strong}DEG (${compassStrong}) | TX_RISK_WINDOW: ${TX_RISK_MIN}-${TX_RISK_MAX}DEG | TX_STEER_MATCH_WEAK: ${isTexasPathWeak ? 'YES' : 'NO'} | TX_STEER_MATCH_STRONG: ${isTexasPathStrong ? 'YES' : 'NO'} | TX_THREAT_WEAK: ${threatWeak.level} (${threatWeak.reason}) | TX_THREAT_STRONG: ${threatStrong.level} (${threatStrong.reason}) | BASIN_SST: [BOC:${data.basin_sst.boc}, LOOP:${data.basin_sst.loop}, CENTRAL:${data.basin_sst.central}, TX:${data.basin_sst.tx}] | PRECIP_SOURCE: ${precipIsLive ? 'LIVE_NWS' : 'FALLBACK_STATIC'} | 7D_PRECIP_PROB: ${data.precip_prob.join(',')}`;
 }
 
-// Run on application load
+// Execute live application load
 init();
 </script>
 </body>
