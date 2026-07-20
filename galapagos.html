@@ -1,187 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sony & Galaxy S25 Ultra: Interactive Galápagos Field Map</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: #0b1116; }
-        #sidebar { width: 400px; background: #1c2833; color: white; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); z-index: 1001; }
-        .sidebar-header { padding: 15px; background: #17202a; border-bottom: 3px solid #f1c40f; text-align: center; }
-        .section { padding: 15px; border-bottom: 1px solid #2c3e50; }
-        h3 { margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #f1c40f; letter-spacing: 2px; }
-        
-        #location-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; background: #17202a; }
-        .location-item { padding: 15px; border-bottom: 1px solid #2c3e50; cursor: pointer; transition: 0.3s; }
-        .location-item:hover { background: #2c3e50; }
-        .item-name { font-weight: bold; font-size: 15px; color: #f1c40f; }
-        
-        .fly-btn { 
-            background: #3498db; color: white; border: none; border-radius: 4px; 
-            padding: 8px; width: 100%; margin-top: 8px; cursor: pointer; font-weight: bold; 
-            text-transform: uppercase; font-size: 10px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celebrity Flora Master B2B Expedition Map (2027)</title>
 
-        #map { flex-grow: 1; }
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
-        /* Popup Styling */
-        .leaflet-popup-content-wrapper { background: #1c2833; color: white; border-radius: 8px; border: 1px solid #34495e; }
-        .leaflet-popup-tip { background: #1c2833; }
-        .popup-title { font-weight: bold; color: #f1c40f; border-bottom: 1px solid #34495e; margin-bottom: 10px; padding-bottom: 5px; display: block; }
-        
-        .susan-tag { background: #8e44ad; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; display: inline-block; margin-right: 5px; }
-        .jim-tag { background: #d35400; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; display: inline-block; margin-right: 5px; }
-        .galaxy-tag { background: #27ae60; color: white; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; display: inline-block; margin-right: 5px; }
-        
-        .advice-text { font-size: 12px; line-height: 1.4; margin-bottom: 8px; color: #ecf0f1; }
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex; flex-direction: column; height: 100vh;
+      background-color: #0f172a; color: #f8fafc;
+    }
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      padding: 10px 18px; border-bottom: 1px solid #334155;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .title-area h1 { font-size: 1.15rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    .title-area p { font-size: 0.78rem; color: #94a3b8; }
+    
+    .climate-bar {
+      display: flex; gap: 14px; background: #1e293b; padding: 6px 12px;
+      border-radius: 8px; border: 1px solid #334155; font-size: 0.8rem; align-items: center;
+    }
+    .climate-item { display: flex; align-items: center; gap: 5px; }
+    .climate-item i { color: #f59e0b; }
+    .climate-item span.label { color: #94a3b8; }
+    .climate-item span.val { font-weight: 600; color: #f1f5f9; }
 
-        /* Map Legend */
-        .map-legend {
-            position: absolute; bottom: 20px; right: 20px; background: rgba(28, 40, 51, 0.9);
-            padding: 10px; border-radius: 8px; border: 1px solid #34495e; z-index: 1000; color: white; font-size: 11px;
-        }
-        .legend-item { display: flex; align-items: center; margin-bottom: 5px; }
-        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-    </style>
+    #main-container { display: flex; flex: 1; position: relative; overflow: hidden; }
+    #map { flex: 1; height: 100%; z-index: 1; }
+    
+    #sidebar {
+      width: 370px; background: #1e293b; border-left: 1px solid #334155;
+      overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; z-index: 2;
+    }
+    .card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; }
+    .card h3 { font-size: 0.9rem; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+    .route-legend { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; color: #cbd5e1; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-line { width: 24px; height: 4px; border-radius: 2px; }
+
+    /* Filter Buttons */
+    .filter-group { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+    .filter-btn {
+      flex: 1; padding: 6px 4px; font-size: 0.72rem; background: #1e293b; border: 1px solid #475569;
+      color: #cbd5e1; border-radius: 6px; cursor: pointer; text-align: center; font-weight: 600; min-width: 70px;
+    }
+    .filter-btn.active { background: #0284c7; color: white; border-color: #38bdf8; }
+
+    .site-list-item {
+      padding: 8px 10px; margin-bottom: 6px; background: #1e293b; border-radius: 6px;
+      cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between;
+      align-items: center; font-size: 0.82rem; border-left: 3px solid transparent;
+    }
+    .site-list-item:hover { background: #334155; border-left-color: #38bdf8; }
+    .site-date-tag { font-size: 0.72rem; color: #f59e0b; font-weight: 600; display: block; }
+    
+    .site-leg-badge { font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-align: center; }
+    .badge-quito { background: #10b981; color: #fff; }
+    .badge-baltra { background: #f59e0b; color: #000; }
+    .badge-outer { background: #0284c7; color: #fff; }
+    .badge-inner { background: #a855f7; color: #fff; }
+
+    /* Custom Unique Numbered Pin Styling */
+    .custom-pin-node {
+      color: white; font-weight: bold; font-size: 11px; display: flex;
+      align-items: center; justify-content: center; border-radius: 50%;
+      border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.7);
+    }
+
+    /* Popups */
+    .leaflet-popup-content-wrapper { background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 4px; border: 1px solid #475569; }
+    .leaflet-popup-tip { background: #1e293b; }
+    .popup-content h4 { color: #38bdf8; font-size: 0.95rem; margin-bottom: 4px; }
+    .popup-content p { font-size: 0.8rem; color: #cbd5e1; margin-bottom: 6px; line-height: 1.3; }
+    .popup-meta { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 0.75rem; background: #0f172a; padding: 8px; border-radius: 6px; }
+    .popup-meta-item { display: flex; align-items: center; gap: 6px; color: #94a3b8; }
+    .popup-meta-item strong { color: #e2e8f0; }
+
+    @media (max-width: 768px) {
+      #main-container { flex-direction: column-reverse; }
+      #sidebar { width: 100%; height: 220px; }
+    }
+  </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="sidebar-header">
-            <h2 style="margin:0; font-size: 18px;">SONY & GALAXY MAP</h2>
-            <span style="font-size: 10px; color: #bdc3c7;">10-Day PDF Itinerary Guide</span>
-        </div>
-
-        <div class="section">
-            <h3>Expedition Itinerary</h3>
-            <span style="font-size: 11px; color: #95a5a6;">Click a site to fly the map and open the gear tips.</span>
-        </div>
-
-        <ul id="location-list"></ul>
+  <header>
+    <div class="title-area">
+      <h1><i class="fa-solid fa-ship"></i> Celebrity Flora Master B2B Expedition (Sep 17 – Oct 3, 2027)</h1>
+      <p>Quito Pre-Tour & 14-Night Master Sequential Schedule</p>
     </div>
 
-    <div id="map">
-        <div class="map-legend">
-            <div style="font-weight:bold; margin-bottom: 5px; color:#f1c40f;">GEAR LEGEND</div>
-            <div class="legend-item"><span class="dot" style="background:#8e44ad;"></span> Susan: Sony 200-600mm</div>
-            <div class="legend-item"><span class="dot" style="background:#d35400;"></span> Jim: Sony a6600 / Lumix</div>
-            <div class="legend-item"><span class="dot" style="background:#27ae60;"></span> Both: Galaxy S25 Ultra</div>
-        </div>
+    <div class="climate-bar">
+      <div class="climate-item" title="Equatorial Daylight">
+        <i class="fa-solid fa-sun"></i>
+        <span class="label">Sun:</span>
+        <span class="val">05:50 AM – 06:00 PM ECT</span>
+      </div>
+      <div class="climate-item" title="Air Temperature">
+        <i class="fa-solid fa-temperature-half" style="color: #f97316;"></i>
+        <span class="label">Air:</span>
+        <span class="val">75°F</span>
+      </div>
+      <div class="climate-item" title="Sea Temperature">
+        <i class="fa-solid fa-water" style="color: #0ea5e9;"></i>
+        <span class="label">Sea:</span>
+        <span class="val">68–72°F</span>
+      </div>
     </div>
+  </header>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <div id="main-container">
+    <div id="map"></div>
 
-    <script>
-        const map = L.map('map', {zoomControl: false}).setView([-0.39, -90.45], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.control.zoom({ position: 'topright' }).addTo(map);
+    <aside id="sidebar">
+      <div class="card">
+        <h3><i class="fa-solid fa-route"></i> Route Map Legend</h3>
+        <div class="route-legend">
+          <div class="legend-item"><div class="legend-line" style="background:#0284c7;"></div> <span><strong>Leg 1 (Stops 3–15):</strong> Outer Loop Sequence</span></div>
+          <div class="legend-item"><div class="legend-line" style="background:#a855f7;"></div> <span><strong>Leg 2 (Stops 16–29):</strong> Inner Loop Sequence</span></div>
+          <div class="legend-item"><div class="legend-line" style="background:#10b981;"></div> <span><strong>Pre-Cruise (Stops 1–2):</strong> Quito Mainland</span></div>
+        </div>
+      </div>
 
-        const itinerary = [
-            { 
-                name: "North Seymour", lat: -0.395, lon: -90.285, zoom: 15,
-                advice: `
-                    <span class="popup-title">NORTH SEYMOUR SHOOTING GUIDE</span>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 200-600mm: Focus on Frigatebird throat pouches. Bird Eye-AF is a must.</div>
-                    <div class="advice-text"><span class='jim-tag'>LUMIX</span> ZS200: Use 24mm wide for the silvery forest landscape.</div>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> Portrait Mode: Ideal for Land Iguanas at 3x zoom.</div>
-                `
-            },
-            { 
-                name: "Isabela (Western Loop)", lat: -0.015, lon: -91.330, zoom: 13,
-                advice: `
-                    <span class="popup-title">ISABELA OPEN WATER GUIDE</span>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 200-600mm: Scan for Whale Breaches and Mola Mola.</div>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> 4K/60 Video: Use 'Super Steady' for bow-riding dolphins.</div>
-                `
-            },
-            { 
-                name: "Fernandina (Punta Espinosa)", lat: -0.265, lon: -91.447, zoom: 15,
-                advice: `
-                    <span class="popup-title">FERNANDINA VOLCANIC GUIDE</span>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> 0.6x Ultrawide: Best tool for the vast lava fields.</div>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 70-300mm: Close portraits of Flightless Cormorant turquoise eyes.</div>
-                    <div class="advice-text"><span class='jim-tag'>SONY</span> a6600: Macro textures of 'Pahoehoe' lava rope patterns.</div>
-                `
-            },
-            { 
-                name: "Española (Gardner Bay)", lat: -1.350, lon: -89.650, zoom: 15,
-                advice: `
-                    <span class="popup-title">ESPAÑOLA WILDLIFE GUIDE</span>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 200-600mm: Albatross take-offs. Shutter speed: 1/2500.</div>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> 100x Space Zoom: Spot Albatross on cliffs from the shore.</div>
-                    <div class="advice-text"><span class='jim-tag'>SONY</span> a6600: 'Christmas' Iguanas (Red/Green) colorful portraits.</div>
-                `
-            },
-            { 
-                name: "Santa Cruz (Highlands)", lat: -0.650, lon: -90.350, zoom: 14,
-                advice: `
-                    <span class="popup-title">SANTA CRUZ HIGHLANDS GUIDE</span>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 70-300mm: Tortoise shells in the mist. Use F8 for detail.</div>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> 8K Video: A slow cinematic pan of the tortoises grazing.</div>
-                `
-            },
-            { 
-                name: "Bartolomé (Pinnacle Rock)", lat: -0.283, lon: -90.548, zoom: 15,
-                advice: `
-                    <span class="popup-title">BARTOLOMÉ SUMMIT GUIDE</span>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> Expert RAW: At the summit, use this for the best sky/ocean HDR.</div>
-                    <div class="advice-text"><span class='jim-tag'>LUMIX</span> ZS200: Use 24mm for the classic Pinnacle Rock vista.</div>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 70-300mm: Find Penguins on the waterline rocks below.</div>
-                `
-            },
-            { 
-                name: "Genovesa (Prince Philip's Steps)", lat: 0.330, lon: -89.945, zoom: 15,
-                advice: `
-                    <span class="popup-title">GENOVESA BIRD ISLAND GUIDE</span>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> Slo-Mo Video: Capture the petrel swarms in slow motion.</div>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 70-300mm: Red-footed boobies nesting in shrubs at eye-level.</div>
-                    <div class="advice-text"><span class='jim-tag'>LUMIX</span> ZS200: Zoom 360mm to see sharks from the cliff edge.</div>
-                `
-            },
-            { 
-                name: "San Cristobal (Kicker Rock)", lat: -0.730, lon: -89.500, zoom: 14,
-                advice: `
-                    <span class="popup-title">KICKER ROCK NAVIGATOR</span>
-                    <div class="advice-text"><span class='susan-tag'>SONY</span> 200-600mm: Frigatebirds circling the 500ft split peak.</div>
-                    <div class="advice-text"><span class='jim-tag'>LUMIX</span> ZS200: Vertical pano of the entire rock formation.</div>
-                    <div class="advice-text"><span class='galaxy-tag'>S25U</span> Portrait Mode: Use 3x zoom for Sea Lions huddling in the mid-town beach.</div>
-                `
-            }
-        ];
+      <div class="card">
+        <h3><i class="fa-solid fa-filter"></i> Filter Itinerary Loop</h3>
+        <div class="filter-group">
+          <div class="filter-btn active" onclick="filterLeg('all')">All Stops</div>
+          <div class="filter-btn" onclick="filterLeg('quito')">Quito</div>
+          <div class="filter-btn" onclick="filterLeg('outer')">Outer Loop</div>
+          <div class="filter-btn" onclick="filterLeg('inner')">Inner Loop</div>
+        </div>
+        <div id="site-list"></div>
+      </div>
+    </aside>
+  </div>
 
-        const markers = [];
-        const list = document.getElementById('location-list');
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-        itinerary.forEach((site, index) => {
-            // Create the Marker
-            const marker = L.marker([site.lat, site.lon]).addTo(map)
-                .bindPopup(site.advice, { maxWidth: 300 });
-            
-            markers.push(marker);
+  <script>
+    const map = L.map('map').setView([-0.6, -90.6], 8);
 
-            // Create Sidebar Item
-            const li = document.createElement('li');
-            li.className = 'location-item';
-            li.innerHTML = `
-                <div class="item-name">${index + 1}. ${site.name}</div>
-                <button class="fly-btn" onclick="openSite(${index})">Sync Map & View Power Tips</button>
-            `;
-            list.appendChild(li);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri',
+      maxZoom: 12, minZoom: 5
+    }).addTo(map);
+
+    // Continuous sequential stops based on confirmed booking itineraries
+    const visitorSites = [
+      // PRE-CRUISE QUITO (Stops 1-2)
+      { loop: 'quito', step: 1, date: "Sep 17 (Fri)", time: "3:00 PM Check-In", name: "Quito Arrival (JW Marriott)", lat: -0.180, lng: -78.467, desc: "Transfer from airport to JW Marriott Quito Hotel." },
+      { loop: 'quito', step: 2, date: "Sep 18 (Sat)", time: "Full Day", name: "Quito City Center & Intinan Museum", lat: -0.002, lng: -78.455, desc: "Guided tour of historic Quito and Intiñan Equator Museum." },
+
+      // LEG 1: OUTER LOOP (Stops 3-15)
+      { loop: 'outer', step: 3, date: "Sep 19 (Sun)", time: "Departs 2:00 PM", name: "Baltra Island Embarkation", lat: -0.437, lng: -90.266, desc: "Flight from Quito to Baltra; tender transfer to board Celebrity Flora." },
+      { loop: 'outer', step: 4, date: "Sep 20 (Mon)", time: "8:00 AM – 11:30 AM", name: "Gardner Bay (Española)", lat: -1.350, lng: -89.650, desc: "White coral beach, sea lion colonies & turquoise water snorkeling." },
+      { loop: 'outer', step: 5, date: "Sep 20 (Mon)", time: "3:00 PM – 6:00 PM", name: "Suarez Point (Española)", lat: -1.374, lng: -89.742, desc: "Cliffside walk, blowhole, waved albatross & Nazca boobies." },
+      { loop: 'outer', step: 6, date: "Sep 21 (Tue)", time: "8:00 AM – 11:30 AM", name: "Cormorant Point (Floreana)", lat: -1.222, lng: -90.428, desc: "Flamingo lagoon and olivine beach walk." },
+      { loop: 'outer', step: 7, date: "Sep 21 (Tue)", time: "3:00 PM – 6:00 PM", name: "Bahia Post Office (Floreana)", lat: -1.240, lng: -90.450, desc: "Historic wooden barrel mail exchange & beach landing." },
+      { loop: 'outer', step: 8, date: "Sep 22 (Wed)", time: "8:00 AM – 11:30 AM", name: "Moreno Point (Isabela)", lat: -0.403, lng: -91.318, desc: "Pahoehoe lava fields & brackish tide pool oasis." },
+      { loop: 'outer', step: 9, date: "Sep 22 (Wed)", time: "3:00 PM – 6:00 PM", name: "Urvina Bay (Isabela)", lat: -0.410, lng: -91.220, desc: "Uplifted coral reef floor, land iguanas & giant tortoises." },
+      { loop: 'outer', step: 10, date: "Sep 23 (Thu)", time: "8:00 AM – 11:30 AM", name: "Espinoza Point (Fernandina)", lat: -0.268, lng: -91.448, desc: "Marine iguana mega-colonies & flightless cormorants." },
+      { loop: 'outer', step: 11, date: "Sep 23 (Thu)", time: "3:00 PM – 6:00 PM", name: "Vicente Roca Point (Isabela)", lat: -0.050, lng: -91.550, desc: "Panga ride along high sea cliffs & rich marine life." },
+      { loop: 'outer', step: 12, date: "Sep 24 (Fri)", time: "8:00 AM – 11:30 AM", name: "South Plaza (Santa Cruz)", lat: -0.584, lng: -90.166, desc: "Prickly pear cacti, land iguanas & red Sesuvium vegetation." },
+      { loop: 'outer', step: 13, date: "Sep 24 (Fri)", time: "1:00 PM – 2:00 PM", name: "Daphne Island", lat: -0.422, lng: -90.372, desc: "Scenic afternoon circumnavigation of volcanic tuff cone." },
+      { loop: 'outer', step: 14, date: "Sep 24 (Fri)", time: "3:00 PM – 6:00 PM", name: "Dragon Hill (Santa Cruz)", lat: -0.570, lng: -90.480, desc: "Land iguana nesting sanctuary & flamingo lagoon." },
+      { loop: 'outer', step: 15, date: "Sep 25 (Sat)", time: "8:00 AM – 6:00 PM", name: "Puerto Ayora (Santa Cruz)", lat: -0.743, lng: -90.312, desc: "Charles Darwin Research Station & Santa Cruz Highlands." },
+
+      // LEG 2: INNER LOOP (Stops 16-29)
+      { loop: 'inner', step: 16, date: "Sep 26 (Sun)", time: "7:00 AM – 2:00 PM", name: "Baltra Island (Turnaround)", lat: -0.437, lng: -90.266, desc: "Turnaround day for Back-to-Back sailing; embark Inner Loop at 2:00 PM." },
+      { loop: 'inner', step: 17, date: "Sep 27 (Mon)", time: "8:00 AM – 11:30 AM", name: "Egas Port (Santiago)", lat: -0.243, lng: -90.861, desc: "Black volcanic grottos & Galapagos fur seals." },
+      { loop: 'inner', step: 18, date: "Sep 27 (Mon)", time: "3:00 PM – 6:00 PM", name: "Rabida Island", lat: -0.410, lng: -90.710, desc: "Dark red volcanic sand beach & marine bird colonies." },
+      { loop: 'inner', step: 19, date: "Sep 28 (Tue)", time: "8:00 AM – 11:30 AM", name: "Elizabeth Bay (Isabela)", lat: -0.597, lng: -91.074, desc: "Zodiac tour through quiet red mangrove estuaries." },
+      { loop: 'inner', step: 20, date: "Sep 28 (Tue)", time: "3:00 PM – 6:00 PM", name: "Tagus Cove (Isabela)", lat: -0.640, lng: -91.380, desc: "Historic pirate anchorage & hike to Darwin Crater Lake." },
+      { loop: 'inner', step: 21, date: "Sep 29 (Wed)", time: "8:00 AM – 11:30 AM", name: "Sullivan Bay (Santiago)", lat: -0.283, lng: -90.550, desc: "Walking on fresh, rope-like pahoehoe lava fields." },
+      { loop: 'inner', step: 22, date: "Sep 29 (Wed)", time: "3:00 PM – 6:00 PM", name: "Bartolome Island", lat: -0.280, lng: -90.553, desc: "Pinnacle Rock viewpoint climb & snorkeling with penguins." },
+      { loop: 'inner', step: 23, date: "Sep 30 (Thu)", time: "8:00 AM – 11:30 AM", name: "Las Bachas (Santa Cruz)", lat: -0.395, lng: -90.283, desc: "White beach landing & green sea turtle nesting grounds." },
+      { loop: 'inner', step: 24, date: "Sep 30 (Thu)", time: "1:00 PM – 2:00 PM", name: "Daphne Island", lat: -0.422, lng: -90.372, desc: "Secondary scenic circumnavigation." },
+      { loop: 'inner', step: 25, date: "Sep 30 (Thu)", time: "3:00 PM – 6:00 PM", name: "North Seymour Island", lat: -0.390, lng: -90.280, desc: "Frigatebird nesting colonies & Blue-footed Booby courtship dances." },
+      { loop: 'inner', step: 26, date: "Oct 01 (Fri)", time: "8:00 AM – 11:30 AM", name: "Puerto Baquerizo (San Cristóbal)", lat: -0.900, lng: -89.610, desc: "Capital town stop, harbor front & sea lion nursery." },
+      { loop: 'inner', step: 27, date: "Oct 01 (Fri)", time: "3:00 PM – 6:00 PM", name: "Punta Pitt (San Cristóbal)", lat: -0.713, lng: -89.248, desc: "Dramatic tuff cliff hike; nesting site for all 3 booby species." },
+      { loop: 'inner', step: 28, date: "Oct 02 (Sat)", time: "8:00 AM – 6:00 PM", name: "Puerto Ayora (Santa Cruz)", lat: -0.620, lng: -90.380, desc: "Secondary Santa Cruz Highlands & town excursion." },
+      { loop: 'inner', step: 29, date: "Oct 03 (Sun)", time: "7:00 AM Disembark", name: "Baltra Island Final Disembarkation", lat: -0.437, lng: -90.266, desc: "Final disembarkation, transfer to Baltra airport, flight to Quito." }
+    ];
+
+    let markers = [];
+    let polylines = [];
+
+    function renderSites(filter) {
+      // Clear existing markers & lines
+      markers.forEach(m => map.removeLayer(m));
+      polylines.forEach(p => map.removeLayer(p));
+      markers = [];
+      polylines = [];
+
+      const listContainer = document.getElementById('site-list');
+      listContainer.innerHTML = '';
+
+      // Draw Polyline Routes
+      const drawPolyline = (loopName, color) => {
+        const coords = visitorSites
+          .filter(site => site.loop === loopName)
+          .sort((a, b) => a.step - b.step)
+          .map(site => [site.lat, site.lng]);
+
+        if (coords.length > 1) {
+          const polyline = L.polyline(coords, {
+            color: color,
+            weight: 3,
+            opacity: 0.85,
+            dashArray: '6, 8'
+          }).addTo(map);
+          polylines.push(polyline);
+        }
+      };
+
+      if (filter === 'all' || filter === 'outer') drawPolyline('outer', '#0284c7');
+      if (filter === 'all' || filter === 'inner') drawPolyline('inner', '#a855f7');
+      if (filter === 'all' || filter === 'quito') drawPolyline('quito', '#10b981');
+
+      // Add Map Pins
+      visitorSites.forEach((site) => {
+        if (filter !== 'all' && site.loop !== filter) return;
+
+        let color = site.loop === 'quito' ? "#10b981" :
+                    site.name.includes("Baltra") ? "#f59e0b" :
+                    site.loop === 'outer' ? "#0284c7" : "#a855f7";
+
+        const icon = L.divIcon({
+          className: 'custom-pin',
+          html: `<div class="custom-pin-node" style="background-color: ${color}; width: 24px; height: 24px;">${site.step}</div>`,
+          iconSize: [24, 24], iconAnchor: [12, 12]
         });
 
-        function openSite(index) {
-            const site = itinerary[index];
-            const marker = markers[index];
+        const marker = L.marker([site.lat, site.lng], { icon }).addTo(map);
 
-            // Fly to location
-            map.flyTo([site.lat, site.lon], site.zoom, { animate: true, duration: 3 });
-            
-            // Delay popup until flight is almost finished
-            setTimeout(() => {
-                marker.openPopup();
-            }, 2500);
-        }
-    </script>
+        const popupHtml = `
+          <div class="popup-content">
+            <span style="font-size:0.75rem; font-weight:bold; color:#f59e0b;">Stop ${site.step} • ${site.date} (${site.time})</span>
+            <h4>${site.name}</h4>
+            <p>${site.desc}</p>
+          </div>
+        `;
+        marker.bindPopup(popupHtml);
+        markers.push(marker);
+
+        // Populate Sidebar
+        const item = document.createElement('div');
+        item.className = 'site-list-item';
+        
+        let badgeClass = site.loop === 'quito' ? 'badge-quito' :
+                         site.name.includes("Baltra") ? 'badge-baltra' :
+                         site.loop === 'outer' ? 'badge-outer' : 'badge-inner';
+
+        let badgeLabel = site.loop === 'quito' ? 'Quito' :
+                         site.name.includes("Baltra") ? 'Baltra' :
+                         site.loop === 'outer' ? 'Outer' : 'Inner';
+
+        item.innerHTML = `
+          <div>
+            <span class="site-date-tag">${site.date} • ${site.time}</span>
+            <strong>Stop ${site.step}: ${site.name}</strong>
+          </div>
+          <span class="site-leg-badge ${badgeClass}">${badgeLabel}</span>
+        `;
+        item.onclick = () => {
+          map.flyTo([site.lat, site.lng], site.loop === 'quito' ? 11 : 9, { duration: 1 });
+          marker.openPopup();
+        };
+        listContainer.appendChild(item);
+      });
+    }
+
+    function filterLeg(leg) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderSites(leg);
+    }
+
+    renderSites('all');
+  </script>
 </body>
 </html>
