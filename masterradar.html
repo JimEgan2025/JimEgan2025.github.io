@@ -12,7 +12,6 @@
             --accent-color: #39b54a; /* Radar green */
             --border-color: #2d3741;
         }
-
         body {
             margin: 0;
             padding: 0;
@@ -24,30 +23,26 @@
             height: 100vh;
             overflow: hidden;
         }
-
         /* Control Panel */
         header {
             background-color: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
-            padding: 10px 20px;
+            padding: 8px 15px;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             z-index: 10;
         }
-
         .control-group {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
         label {
             font-size: 0.9rem;
             font-weight: 500;
         }
-
         select, button {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -58,18 +53,15 @@
             outline: none;
             cursor: pointer;
         }
-
         select:focus, button:focus {
             border-color: var(--accent-color);
         }
-
         select:disabled {
             background-color: #252e37;
             color: #637381;
             cursor: not-allowed;
             border-color: #252e37;
         }
-
         button {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
@@ -77,25 +69,21 @@
             font-weight: bold;
             transition: background 0.2s;
         }
-
         button:hover {
             background-color: #2fa13e;
         }
-
         .checkbox-group {
             display: flex;
             align-items: center;
             gap: 5px;
             font-size: 0.9rem;
         }
-
         #status {
             font-size: 0.85rem;
             font-style: italic;
             color: #8a9ba8;
             margin-left: auto;
         }
-
         /* Image Display Area */
         main {
             flex: 1;
@@ -103,40 +91,50 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 5px;
             background-color: #0b0d10;
-            overflow: hidden;
+            overflow: auto;
             position: relative;
         }
-
         .image-container {
             width: 100%;
-            height: calc(100% - 40px);
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: auto;
         }
-
         img {
-            max-width: 100%;
-            max-height: 100%;
+            width: 98vw;
+            height: 92vh;
+            max-width: none;
+            max-height: none;
             object-fit: contain;
             border-radius: 4px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             border: 1px solid var(--border-color);
             display: none; 
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+        
+        /* Targeted fix to prevent the CONUS-LARGE mosaic from looking vertically stretched */
+        img[src*="CONUS-LARGE"] {
+            height: auto !important;
+            max-height: 90vh !important;
+            width: auto !important;
+            max-width: 95vw !important;
         }
 
         #debug-log {
             font-family: monospace;
             font-size: 0.8rem;
             color: #ff6b6b;
-            margin-top: 8px;
+            margin-top: 4px;
             text-align: center;
             width: 100%;
             line-height: 1.4;
         }
-
         /* Loading Spinner */
         .spinner {
             border: 4px solid rgba(255,255,255,0.05);
@@ -147,7 +145,6 @@
             animation: spin 1s linear infinite;
             position: absolute;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -155,30 +152,25 @@
     </style>
 </head>
 <body>
-
     <header>
         <div class="control-group">
             <label for="region">Radar Source & Site:</label>
             <select id="region" onchange="onRegionChange()">
-                <optgroup label="UW-Madison AOS Tempest Composites">
-                    <option value="tempest_sp" selected>Texas & Southern Plains (sp3comp)</option>
-                    <option value="tempest_se">Florida & Southeast US (se3comp)</option>
-                    <option value="tempest_us">US National Composite (us3comp)</option>
+                <optgroup label="Weather Underground National Loops">
+                    <option value="wu_us" selected>US National Composite (WU)</option>
+                    <option value="wu_sat">US Satellite & Radar Overlay (WU)</option>
                 </optgroup>
-                <optgroup label="IEM Real-Time Radar & NWS Warning Overlays (Static)">
+                <optgroup label="NWS Live Regional Loops (Active Mosaics)">
+                    <option value="se">Southeast US / Florida (NWS Loop)</option>
+                    <option value="sp">Texas & Southern Plains (NWS Loop)</option>
+                    <option value="smv">Central Gulf Coast (NWS Loop)</option>
+                    <option value="conus_large">Continental US National View (NWS)</option>
+                </optgroup>
+                <optgroup label="IEM Real-Time Radar & NWS Warning Overlays">
                     <option value="iem_sp">Texas & Southern Plains + Warnings</option>
                     <option value="iem_se">Florida & Southeast US + Warnings</option>
                     <option value="iem_gm">Gulf of Mexico + Warnings</option>
                     <option value="iem_conus">US National View + Warnings</option>
-                </optgroup>
-                <optgroup label="Broad Views & Satellite Overlay">
-                    <option value="conus_large">Continental US (NWS CONUS)</option>
-                    <option value="wu_sat">US Satellite & Radar Overlay (WU ussat)</option>
-                </optgroup>
-                <optgroup label="NWS Regional Weather Mosaics">
-                    <option value="sp">Texas & Southern Plains (SOUTHPLAINS)</option>
-                    <option value="smv">Central Gulf Coast (SOUTHMISSVLY)</option>
-                    <option value="se">Florida & Southeast US (SOUTHEAST)</option>
                 </optgroup>
                 <optgroup label="Texas & Louisiana Radar Stations">
                     <option value="KBRO">Brownsville, TX (KBRO)</option>
@@ -201,7 +193,6 @@
                 </optgroup>
             </select>
         </div>
-
         <div class="control-group">
             <label for="mode">Format:</label>
             <select id="mode" onchange="loadRadarImage()">
@@ -209,22 +200,17 @@
                 <option value="static">Static (Latest Frame)</option>
             </select>
         </div>
-
         <button onclick="loadRadarImage()">Refresh</button>
-
         <div class="checkbox-group">
             <input type="checkbox" id="cache-bust" checked>
             <label for="cache-bust">Bypass Cache</label>
         </div>
-
         <div class="checkbox-group">
             <input type="checkbox" id="auto-refresh" onchange="toggleAutoRefresh()">
             <label for="auto-refresh">Auto-refresh (2m)</label>
         </div>
-
         <div id="status">Initializing...</div>
     </header>
-
     <main>
         <div class="spinner" id="spinner"></div>
         <div class="image-container">
@@ -232,30 +218,21 @@
         </div>
         <div id="debug-log"></div>
     </main>
-
     <script>
         const regions = {
-            // UW-Madison AOS Tempest Composites
-            tempest_sp:  { source: "TEMPEST", file: "sp3comp" },
-            tempest_se:  { source: "TEMPEST", file: "se3comp" },
-            tempest_us:  { source: "TEMPEST", file: "us3comp" },
-
-            // Iowa Environmental Mesonet (IEM) real-time warning overlays (bounding boxes configured for targets)
-            iem_sp:      { source: "IEM", bbox: "-107,25,-93,37", width: 1000, height: 800 },
-            iem_se:      { source: "IEM", bbox: "-91,24,-79,32", width: 1100, height: 800 },
-            iem_gm:      { source: "IEM", bbox: "-98,18,-80,31", width: 1100, height: 800 },
-            iem_conus:   { source: "IEM", sector: "conus", width: 1200, height: 800 },
-
-            // Weather Underground (WU) Composites
+            wu_us:       { source: "WU", file: "conus" },
             wu_sat:      { source: "WU", file: "ussat" },
 
-            // NWS Regional Mosaics
-            conus_large: { source: "NWS", file: "CONUS-LARGE" },
+            se:          { source: "NWS", file: "SOUTHEAST" },
             sp:          { source: "NWS", file: "SOUTHPLAINS" },
             smv:         { source: "NWS", file: "SOUTHMISSVLY" },
-            se:          { source: "NWS", file: "SOUTHEAST" },
+            conus_large: { source: "NWS", file: "CONUS-LARGE" },
 
-            // Individual NEXRAD local radars along the Gulf and Florida
+            iem_sp:      { source: "IEM", bbox: "-107,25,-93,37", width: 1500, height: 1200 },
+            iem_se:      { source: "IEM", bbox: "-91,24,-79,32", width: 1500, height: 1200 },
+            iem_gm:      { source: "IEM", bbox: "-98,18,-80,31", width: 1500, height: 1200 },
+            iem_conus:   { source: "IEM", sector: "conus", width: 1800, height: 1200 },
+
             KBRO:        { source: "NWS", file: "KBRO" },
             KCRP:        { source: "NWS", file: "KCRP" },
             KHGX:        { source: "NWS", file: "KHGX" },
@@ -283,7 +260,6 @@
             loadRadarImage();
         }
 
-        // Standardize format controls depending on capabilities of source
         function handleUIControls() {
             const regionKey = document.getElementById('region').value;
             const region = regions[regionKey];
@@ -311,32 +287,23 @@
             const region = regions[regionKey];
             let baseUrl = "";
 
-            if (region.source === "TEMPEST") {
-                if (modeKey === "loop") {
-                    baseUrl = `https://tempest.aos.wisc.edu/radar/${region.file}.gif`;
-                } else {
-                    baseUrl = `https://tempest.aos.wisc.edu/radar/${region.file}20.gif`;
-                }
+            if (region.source === "WU") {
+                baseUrl = `https://s.w-x.co/staticmaps/wu/wu/radsum1200_cur/${region.file}/animate.png`;
             } else if (region.source === "IEM") {
-                // Construct dynamic WMS RadMap parameters to layer radar, watches, counties, and warning polygons
                 const layers = ["nexrad", "sbw", "county_warnings", "watches", "uscounties"];
                 const layerParams = layers.map(l => `layers[]=${l}`).join("&");
-                
                 baseUrl = `https://mesonet.agron.iastate.edu/GIS/radmap.php?${layerParams}&width=${region.width}&height=${region.height}`;
-                
+
                 if (region.sector) {
                     baseUrl += `&sector=${region.sector}`;
                 } else if (region.bbox) {
                     baseUrl += `&bbox=${region.bbox}`;
                 }
-            } else if (region.source === "WU") {
-                baseUrl = `https://s.w-x.co/staticmaps/wu/wu/radsum1200_cur/${region.file}/animate.png`;
             } else {
                 const mode = modes[modeKey];
                 baseUrl = `https://radar.weather.gov/ridge/standard/${region.file}${mode.suffix}`;
             }
-            
-            // Handle query string separator depending on if baseUrl already contains parameter elements
+
             const separator = baseUrl.includes('?') ? '&' : '?';
             const cacheBusterUrl = bypassCache ? `${baseUrl}${separator}t=${new Date().getTime()}` : baseUrl;
 
@@ -350,7 +317,7 @@
             document.getElementById('spinner').style.display = "none";
             document.getElementById('radar-img').style.display = "block";
             document.getElementById('debug-log').innerHTML = "";
-            
+
             const timeString = new Date().toLocaleTimeString();
             document.getElementById('status').textContent = `Last fetched: ${timeString}`;
         }
@@ -360,11 +327,10 @@
             const regionKey = document.getElementById('region').value;
             const region = regions[regionKey];
             const modeKey = document.getElementById('mode').value;
-            
+
             document.getElementById('spinner').style.display = "none";
-            
-            // Fallback: If loop mode fails on standard feeds, attempt to load the static version
-            if ((region.source === "NWS" || region.source === "TEMPEST") && modeKey === "loop") {
+
+            if (region.source === "NWS" && modeKey === "loop") {
                 document.getElementById('status').textContent = "Loop offline. Attempting static snapshot...";
                 document.getElementById('mode').value = "static";
                 setTimeout(loadRadarImage, 500); 
