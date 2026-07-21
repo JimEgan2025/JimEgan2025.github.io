@@ -12,7 +12,7 @@
         .source-banner {
             background: #0f172a;
             color: #94a3b8;
-            font-size: 13px;
+            font-size: 10px;
             text-align: center;
             padding: 12px;
             text-transform: uppercase;
@@ -25,26 +25,26 @@
         .container { max-width:1700px; margin:30px auto; background:white; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.08); overflow:hidden; }
         .header { background:#1e3a8a; color:white; padding:35px 25px; text-align:center; }
         .header h1 { font-size:2.5em; margin-bottom:8px; }
-        .header p { font-size:1.1em; opacity: 0.9; }
+        .header p { font-size:1.2em; opacity: 0.9; }
         
         .table-wrapper { overflow-x:auto; padding:20px; }
-        .table-title { background:#334155; color:white; padding:16px 24px; font-weight:700; font-size:1.3em; border-radius:8px 8px 0 0; margin-top:25px; }
+        .table-title { background:#334155; color:white; padding:18px 24px; font-weight:700; font-size:2.3em; border-radius:8px 8px 0 0; margin-top:25px; }
         
-        table { width:100%; border-collapse:collapse; font-size:15px; margin-bottom:25px; min-width:1200px; table-layout:fixed; }
+        table { width:100%; border-collapse:collapse; font-size:18px; margin-bottom:25px; min-width:1200px; table-layout:fixed; }
         th { background:#1e3a8a; color:white; padding:16px 10px; font-weight:600; text-align:center; border:1px solid #162e70; }
         td { padding:14px 10px; border:1px solid #e2e8f0; text-align:center; vertical-align:middle; line-height:1.5; }
         
-        .param-name { text-align:left; font-weight:700; background:#f8fafc; width:220px; padding-left:20px; color:#1e3a8a; border-left:6px solid #1e3a8a; font-size:16px; }
-        .param-label { font-size:11.5px; color:#64748b; font-weight:500; display:block; text-transform:uppercase; margin-top:4px; letter-spacing: 0.5px; }
+        .param-name { text-align:left; font-weight:700; background:#f8fafc; width:220px; padding-left:20px; color:#1e3a8a; border-left:6px solid #1e3a8a; font-size:18px; }
+        .param-label { font-size:14.5px; color:#64748b; font-weight:500; display:block; text-transform:uppercase; margin-top:4px; letter-spacing: 0.5px; }
         
         .day-col { font-weight:800; color:white; font-size:16px; letter-spacing: 0.5px; }
         .date-col { font-size:13px; color:rgba(255,255,255,0.9); margin-top: 2px; }
         .high-temp { color:#b91c1c; font-weight:800; font-size:18px; }
         .low-temp { color:#1d4ed8; font-weight:800; font-size:18px; }
         
-        .rec-h { color:#991b1b; font-weight:700; font-size:14px; }
-        .rec-l { color:#1e40af; font-weight:700; font-size:14px; }
-        .rec-yr { font-size:11px; color:#64748b; font-weight: normal; }
+        .rec-h { color:#991b1b; font-weight:700; font-size:18px; }
+        .rec-l { color:#1e40af; font-weight:700; font-size:18px; }
+        .rec-yr { font-size:14px; color:#64748b; font-weight: normal; }
         
         .gust-high { color:#dc2626; font-weight:800; }
         .wind-dir { color:#1e3a8a; font-weight:800; font-size: 16px; }
@@ -60,17 +60,13 @@
     Forecast Engine: <span>Visual Crossing GFS</span> &nbsp;&nbsp;|&nbsp;&nbsp; Archive Authority: <span>Jim's 130-Year VC Records</span>
 </div>
 
-<div class="container">
-    <div class="header">
-        <h1>Vizcaya Command Strategic Outlook</h1>
-        <p id="updateTime">Syncing with Jim's Local Archive...</p>
-    </div>
+
 
     <div id="status">📡 STANDBY: INTERROGATING VISUAL CROSSING SERVERS...</div>
     
     <div id="mainContent" style="display:none;">
         <div class="table-wrapper">
-            <div class="table-title">7-Day Local Forecast (VC Authority)</div>
+            <div class="table-title">Vizcaya 7-Day Local Forecast</div>
             <table id="table1">
                 <thead><tr id="head1"></tr></thead>
                 <tbody id="body1"></tbody>
@@ -116,7 +112,7 @@
         const rowConfigs = [
             {name:"Conditions", label:"Sky / Emoji", getData:i => {
                 const ui = getWeatherUI(days[i].icon || "");
-                return `<span style="font-size:1.8em">${ui.icon}</span><br><b>${ui.desc}</b>`;
+                return `<span style="font-size:2.8em">${ui.icon}</span><br><b>${ui.desc}</b>`;
             }},
             {name:"Temperatures", label:"High / Low (°F)", getData:i => 
                 `<span class="high-temp">${Math.round(days[i].tempmax)}°</span> / <span class="low-temp">${Math.round(days[i].tempmin)}°</span>`
