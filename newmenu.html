@@ -1,51 +1,382 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Weather Ops Center | Pro</title>
-<style>:root {  --bg-dark: #0a0f18;  --bg-sidebar: #111827;  --bg-card: #1f2937;  --accent: #38bdf8;  --text-main: #f3f4f6;  --text-dim: #9ca3af;  --border: #374151;}
-*{  margin:0;  padding:0;  box-sizing:border-box;}
-body{  font-family:'Segoe UI',Roboto,Arial;  background:var(--bg-dark);  color:var(--text-main);  height:100vh;  overflow:hidden;}
-.dashboard{  display:flex;  height:100vh;  width:100vw;}
-/* SIDEBAR */.sidebar{  width:280px;  background:var(--bg-sidebar);  border-right:1px solid var(--border);  display:flex;  flex-direction:column;}
-.header-area{  padding:15px;  border-bottom:1px solid var(--border);}
-.header{  font-weight:800;  color:var(--accent);  text-align:center;  font-size:16px;  letter-spacing:2px;}
-.search-box{  width:100%;  padding:8px;  background:var(--bg-dark);  border:1px solid var(--border);  color:white;}
-.tabs{  flex:1;  overflow-y:auto;  padding:12px;}
-.group-label{  font-size:14px;  color:var(--accent);  margin:18px 0 6px;  font-weight:bold;}
-.tab{  width:100%;  padding:10px 12px;  margin-bottom:3px;  background:transparent;  border:1px solid transparent;  color:var(--text-dim);  cursor:pointer;  text-align:left;  font-size:15px;}
-.tab:hover{  background:var(--bg-card);  color:white;}
-.tab.active{  background:var(--accent);  color:black;  font-weight:bold;}
-/* MAIN */.main{  flex:1;  display:flex;  flex-direction:column;}
-.topbar{  height:60px;  background:var(--bg-sidebar);  border-bottom:1px solid var(--border);  display:flex;  align-items:center;  justify-content:space-between;  padding:0 15px;}
-.btn{  background:var(--bg-card);  border:1px solid var(--border);  color:white;  padding:6px 10px;  font-size:11px;  cursor:pointer;}
-.btn:hover{  border-color:var(--accent);}
-/* VIEWER */.viewer{  flex:1;  position:relative;  background:black;  overflow:hidden; /* prevents overflow bleed */}
-/* FIXED IFRAME CONTAINER */#frameContainer{  width:100%;  height:100%;  position:relative;  overflow:hidden;}
-/* ✅ KEY FIX: NO 100vw ANYWHERE */#frame{  width:100%;  height:100%;  border:none;  position:absolute;  top:0;  left:0;}</style></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Ops Center | Pro</title>
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f18;
+      --bg-sidebar: #111827;
+      --bg-card: #1f2937;
+      --accent: #38bdf8;
+      --text-main: #f3f4f6;
+      --text-dim: #9ca3af;
+      --border: #374151;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Arial;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .dashboard {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-area {
+      padding: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header {
+      font-weight: 800;
+      color: var(--accent);
+      text-align: center;
+      font-size: 16px;
+      letter-spacing: 2px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: white;
+      margin-top: 10px;
+    }
+
+    .tabs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .group-label {
+      font-size: 14px;
+      color: var(--accent);
+      margin: 18px 0 6px;
+      font-weight: bold;
+    }
+
+    .tab {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 3px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      text-align: left;
+      font-size: 15px;
+    }
+
+    .tab:hover {
+      background: var(--bg-card);
+      color: white;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: black;
+      font-weight: bold;
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 60px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+    }
+    
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    #asOfTime {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 6px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+    }
+
+    /* VIEWER */
+    .viewer {
+      flex: 1;
+      position: relative;
+      background: black;
+      overflow: hidden;
+    }
+
+    #frameContainer {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      /* Animation for smooth zooming */
+      transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+  </style>
+</head>
 <body>
+
 <div class="dashboard">
-<!-- SIDEBAR --><div class="sidebar">
-<div class="header-area">  <div class="header">WEATHER OPS CENTER</div>  <input class="search-box" id="tabSearch" onkeyup="filterTabs()" placeholder="Search..."></div>
-<div class="tabs">
-<div class="group-label">Core Operations</div><button class="tab active" onclick="openTab(this,'https://jimegan2025.github.io/index.html','Home')">Home</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/command.html','Command')">Command</button><button class="tab" onclick="openTab(this,'https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary','Station Summary')">Station Summary</button>
-<div class="group-label">Forecasts</div><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/vizcayawx.html','Lead Forecast')">Lead Forecast</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/newspc.html','SPC Forecast')">SPC Forecast</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/texasdash','NWS Offices')">NWS Offices</button>
-<button class="tab" onclick="openTab(this,'https://www.spc.noaa.gov/products/activity_loop.gif','SPC Activity Loop')">SPC Activity Loop</button><button class="tab" onclick="openTab(this,'https://www.wpc.ncep.noaa.gov/sfc/newnamsfc.gif','WPC NAM Surface Forecast')">WPC NAM Surface Forecast</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/nowcast.html','NowCast')">NowCast</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rev_dash.html','Rev Dash')">Alternate Dash</button>
-<div class="group-label">Radar & Severe</div><button class="tab" onclick="openTab(this,'https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669','Baron Radar')">Baron Radar</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/masterrad.html','Master Radar')">Master Radar</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/sky.html','NWS Radar')">NWS Radar</button>
-<button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/txradar.html','TX Radar')">TX Radar</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/risk.html','Risk')">Risk</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/alerts.html','Alerts')">Alerts</button>
-<div class="group-label">Atmospheric Profile</div><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/newoverhead.html','Overhead')">Overhead</button>
-<div class="group-label">Almanac & Records</div><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/almanac.html','Almanac')">Almanac</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/annualalmanac.html','Annual Almanac')">Annual Almanac</button>
-<div class="group-label">Metrics</div><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/textemps.html','Temps')">Temps</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/muggyMeter.html','Muggy Meter')">Muggy Meter</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/rainMeter.html','Rain Meter')">Rain Meter</button>
-<div class="group-label">Tropical</div><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropical.html','Tropical')">Tropical</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/region.html','Region')">Region</button><button class="tab" onclick="openTab(this,'https://jimegan2025.github.io/tropicalwatch.html','Tropical Watch')">Tropical Watch</button><button class="tab" onclick="openTab(this,'https://www.nhc.noaa.gov/text/MIATWDAT.shtml','NHC Discussion')">NHC Discussion</button><button class="tab" onclick="openTab(this,'https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png','Global Tropical Hazards Outlook')">Global Tropical Hazards Outlook</button>
-</div></div>
-<!-- MAIN --><div class="main">
-<div class="topbar">  <div id="title">Home</div>  <div>    <button class="btn" onclick="refresh()">Refresh</button>    <button class="btn" onclick="popOut()">Pop Out</button>  </div></div>
-<div class="viewer">  <div id="frameContainer">    <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>    <img id="imgView" style="display:none;width:100%;height:100%;object-fit:contain;background:black;" />  </div></div>
-</div></div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="header-area">
+      <div class="header">WEATHER OPS CENTER</div>
+      <input class="search-box" id="tabSearch" placeholder="Search...">
+    </div>
+    
+    <div class="tabs">
+      <div class="group-label">Core Operations</div>
+      <button class="tab active" data-url="https://jimegan2025.github.io/index.html" data-title="Home">Home</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/command.html" data-title="Command">Command</button>
+      <button class="tab" data-url="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" data-title="Station Summary">Station Summary</button>
+
+      <div class="group-label">Forecasts</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/next14.html" data-title="Main Forecast">Main Forecast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newspc.html" data-title="SPC Forecast">SPC Forecast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/texasdash" data-title="NWS Offices">NWS Offices</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/modelcompare.html" data-title="Model Comparisons">Model Comparisons</button>
+      <button class="tab" data-url="https://www.spc.noaa.gov/products/activity_loop.gif" data-title="SPC Activity Loop">SPC Activity Loop</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/nowcast.html" data-title="NowCast">NowCast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/vizcayawx.html" data-title="Alternate Forecast">Alternate Forecast</button>
+
+      <div class="group-label">Radar & Severe</div>
+      <button class="tab" data-url="https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669" data-title="Baron Radar">Baron Radar</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/masterrad.html" data-title="Master Radar">Master Radar</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/sky.html" data-title="NWS Radar">NWS Radar</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/txradar.html" data-title="TX Radar">TX Radar</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/textravel.html" data-title="Texas Travel">Texas Travel</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/risk.html" data-title="Risk">Risk</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/alerts.html" data-title="Alerts">Alerts</button>
+
+      <div class="group-label">Atmospheric Profile</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead">Overhead</button>
+
+      <div class="group-label">Almanac & Records</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/almanac.html" data-title="Almanac">Almanac</button>
+
+      <div class="group-label">Metrics</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Temps">Temps</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/muggyMeter.html" data-title="Muggy Meter">Muggy Meter</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/rainMeter.html" data-title="Rain Meter">Rain Meter</button>
+
+      <div class="group-label">Tropical</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/tropical.html" data-title="Tropical">Tropical</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/tropicalwatch.html" data-title="Tropical Watch">Tropical Watch</button>
+      <button class="tab" data-url="https://www.nhc.noaa.gov/text/MIATWDAT.shtml" data-title="NHC Discussion">NHC Discussion</button>
+      <button class="tab" data-url="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png" data-title="Global Tropical Hazards Outlook">Global Tropical Hazards Outlook</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div id="title">Home</div>
+        <div id="asOfTime"></div>
+      </div>
+      <div>
+        <button class="btn" id="btnFit">Fit (100%)</button>
+        <button class="btn" id="btnRefresh">Refresh</button>
+        <button class="btn" id="btnPopOut">Pop Out</button>
+      </div>
+    </div>
+    
+    <div class="viewer">
+      <div id="frameContainer">
+        <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
+        <img id="imgView" style="display:none;width:100%;height:100%;object-fit:contain;background:black;" />
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-function isImageUrl(url){  return /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(url);}
-function openTab(el,url,title){  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));  el.classList.add('active');  document.getElementById('title').innerText = title;
-  const iframe = document.getElementById('frame');  const img = document.getElementById('imgView');
-  if(isImageUrl(url)){    iframe.style.display = 'none';    iframe.src = 'about:blank';    img.style.display = 'block';    img.src = url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Date.now();  } else {    img.style.display = 'none';    img.src = '';    iframe.style.display = 'block';    iframe.src = url;  }}
-function refresh(){  const iframe = document.getElementById('frame');  const img = document.getElementById('imgView');  if(img.style.display !== 'none'){    const base = img.src.split('?')[0];    img.src = base + '?cachebust=' + Date.now();  } else {    iframe.src = iframe.src;  }}
-function popOut(){  const iframe = document.getElementById('frame');  const img = document.getElementById('imgView');  const url = img.style.display !== 'none' ? img.src : iframe.src;  window.open(url, '_blank');}
-function filterTabs(){  let v = document.getElementById('tabSearch').value.toLowerCase();  document.querySelectorAll('.tab').forEach(t=>{    t.style.display = t.innerText.toLowerCase().includes(v) ? 'block' : 'none';  });}
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- Global State ---
+    let currentScale = 1;
+
+    // --- Utility Functions ---
+    function updateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('asOfTime').innerText = 'As of: ' + timeString;
+    }
+
+    function isImageUrl(url) {
+      const cleanUrl = url.split('?')[0].toLowerCase();
+      return cleanUrl.endsWith('.png') || 
+             cleanUrl.endsWith('.jpg') || 
+             cleanUrl.endsWith('.jpeg') || 
+             cleanUrl.endsWith('.gif') || 
+             cleanUrl.endsWith('.webp') || 
+             cleanUrl.endsWith('.svg');
+    }
+
+    function refresh() {
+      const iframe = document.getElementById('frame');
+      const img = document.getElementById('imgView');
+      
+      if (img.style.display !== 'none') {
+        const base = img.src.split('?')[0];
+        img.src = base + '?cachebust=' + Date.now();
+      } else {
+        iframe.src = iframe.src;
+      }
+      updateTime();
+    }
+
+    function popOut() {
+      const iframe = document.getElementById('frame');
+      const img = document.getElementById('imgView');
+      const url = img.style.display !== 'none' ? img.src : iframe.src;
+      window.open(url, '_blank');
+    }
+
+    function filterTabs() {
+      let v = document.getElementById('tabSearch').value.toLowerCase();
+      document.querySelectorAll('.tab').forEach(t => {
+        t.style.display = t.innerText.toLowerCase().includes(v) ? 'block' : 'none';
+      });
+    }
+
+    // Applies CSS scale to the iframe so large pages fit in the window
+    function applyZoom(scale) {
+      const frame = document.getElementById('frame');
+      const btnFit = document.getElementById('btnFit');
+      currentScale = scale;
+
+      if (scale === 1) {
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.transform = 'none';
+        btnFit.innerText = 'Fit (100%)';
+      } else {
+        const inverseScale = 100 / scale; 
+        frame.style.width = inverseScale + '%';
+        frame.style.height = inverseScale + '%';
+        frame.style.transform = `scale(${scale})`;
+        frame.style.transformOrigin = 'top left';
+        btnFit.innerText = `Fit (${scale * 100}%)`;
+      }
+    }
+
+    function toggleFit() {
+      if (currentScale === 1) {
+        applyZoom(0.75); // 75% zoom
+      } else if (currentScale === 0.75) {
+        applyZoom(0.5);  // 50% zoom
+      } else {
+        applyZoom(1);    // Back to normal
+      }
+    }
+
+    // --- Event Listeners ---
+    
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const url = this.getAttribute('data-url');
+        const title = this.getAttribute('data-title');
+
+        // Update active class
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Update Title
+        document.getElementById('title').innerText = title;
+
+        // Reset Zoom on new tab
+        applyZoom(1);
+
+        // Route to Image or Iframe
+        const iframe = document.getElementById('frame');
+        const img = document.getElementById('imgView');
+
+        if (isImageUrl(url)) {
+          iframe.style.display = 'none';
+          iframe.src = 'about:blank';
+          img.style.display = 'block';
+          img.src = url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Date.now();
+        } else {
+          img.style.display = 'none';
+          img.src = '';
+          iframe.style.display = 'block';
+          iframe.src = url;
+        }
+        
+        updateTime();
+      });
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', refresh);
+    document.getElementById('btnPopOut').addEventListener('click', popOut);
+    document.getElementById('btnFit').addEventListener('click', toggleFit);
+    document.getElementById('tabSearch').addEventListener('keyup', filterTabs);
+
+    // --- Initialization ---
+    updateTime();
+    setInterval(refresh, 300000); // 5 minutes
+  });
 </script>
-</body></html>
+
+</body>
+</html>
