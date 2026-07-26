@@ -3,92 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizcaya Pro Weather | Unlimited Edition</title>
+    <title>Vizcaya Pro Weather | Final Almanac Suite</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        
-        /* NEW SOURCE BANNER */
-        .source-banner {
-            background: #0f172a;
-            color: #94a3b8;
-            font-size: 10px;
-            text-align: center;
-            padding: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 800;
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 5000;
-            border-bottom: 2px solid #3b82f6;
+        /* ================= BASE STYLES ================= */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
         }
-        .source-banner span { color: #f8fafc; }
+        
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: #f0f2f5; 
+            color: #111827; 
+            line-height: 1.5; 
+            padding-top: 100px; 
+        }
 
-        /* Adjusted padding-top to account for banner (35px) + header (100px) */
-        body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:#f0f2f5; color:#111827; line-height:1.5; padding-top: 135px; }
+        /* ================= FIXED HEADER ================= */
+        .header { 
+            background: #1e3a8a; 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            position: fixed; 
+            top: 0; 
+            width: 100%; 
+            height: 100px; 
+            z-index: 4000; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5); 
+        }
         
-        .header { background:#1e3a8a; color:white; padding:15px; text-align:center; position: fixed; top: 35px; width: 100%; height: 100px; z-index: 4000; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
-        .header h1 { font-size: 2.5em; letter-spacing: 1px; font-weight: 800; }
+        .header h1 { 
+            font-size: 2.5em; 
+            letter-spacing: 1px; 
+            font-weight: 800; 
+        }
         
-        .container { max-width: 2000px; margin: 0 auto; padding: 0 15px; }
+        .header p { 
+            font-size: 1.3em; 
+            opacity: 0.9; 
+        }
+
+        .container { 
+            max-width: 1950px; 
+            margin: 0 auto; 
+            padding: 0 15px; 
+        }
+
+        /* ================= STICKY DAY SEPARATOR ================= */
+        .day-separator td { 
+            background: #1e293b !important; 
+            color: #ffffff; 
+            padding: 25px; 
+            position: sticky; 
+            top: 100px; 
+            z-index: 3000; 
+            border-bottom: 6px solid #facc15; 
+            text-align: left; 
+        }
         
-        /* Adjusted Sticky positions for new offset */
-        .day-separator td { background: #1e293b !important; color: #ffffff; padding: 25px; position: sticky; top: 135px; z-index: 3000; border-bottom: 6px solid #facc15; text-align: left; }
-        thead th { background: #334155; color: white; padding: 15px 5px; font-size: 16px; text-transform: uppercase; position: sticky; top: 135px; z-index: 3500; text-align: center; border-right: 1px solid #4b5563;}
+        .day-label { 
+            font-size: 28px; 
+            font-weight: 900; 
+            display: block; 
+            color: #facc15; 
+            margin-bottom: 10px; 
+        }
         
-        .day-label { font-size: 28px; font-weight: 900; display: block; color: #facc15; margin-bottom: 10px; }
-        .day-summary-grid { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .forecast-box { flex: 1.5; font-size: 22px; }
-        .almanac-box { flex: 1.5; text-align: right; border-left: 3px solid #4b5563; padding-left: 30px; font-size: 19px; color: #e2e8f0; line-height: 1.4; }
-        .summary-val { color: #ffffff; font-weight: 900; font-size: 1.2em; margin-right: 20px; }
-        .almanac-val { color: #fbbf24; font-weight: 800; }
+        .day-summary-grid { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%; 
+        }
         
-        tr { border-bottom: 2px solid #cbd5e1; }
-        td { padding: 20px 5px; font-size: 22px; vertical-align: middle; border-right: 1px solid #e2e8f0; text-align: center; background: white; font-weight: 700; }
+        .forecast-box { 
+            flex: 1.5; 
+            font-size: 22px; 
+        }
         
-        .warn-heat { background: #ea580c !important; color: white !important; }    
-        .warn-freeze { background: #3b82f6 !important; color: white !important; }  
+        .almanac-box { 
+            flex: 1.5; 
+            text-align: right; 
+            border-left: 3px solid #4b5563; 
+            padding-left: 30px; 
+            font-size: 18px; 
+            color: #e2e8f0; 
+            line-height: 1.4; 
+        }
+        
+        .summary-val { 
+            color: #ffffff; 
+            font-weight: 900; 
+            font-size: 1.2em; 
+            margin-right: 20px; 
+        }
+        
+        .almanac-val { 
+            color: #fbbf24; 
+            font-weight: 800; 
+        }
+        
+        .anomaly-badge { 
+            padding: 4px 12px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: 900; 
+            color: white; 
+            margin-left: 15px; 
+            vertical-align: middle; 
+        }
+
+        /* ================= DATA ROWS & TABLES ================= */
+        tr { 
+            border-bottom: 2px solid #cbd5e1; 
+        }
+        
+        td { 
+            padding: 20px 5px; 
+            font-size: 22px; 
+            vertical-align: middle; 
+            border-right: 1px solid #e2e8f0; 
+            text-align: center; 
+            background: white; 
+            font-weight: 700; 
+        }
+
+        thead th { 
+            background: #334155; 
+            color: white; 
+            padding: 15px 5px; 
+            font-size: 16px; 
+            text-transform: uppercase; 
+            position: sticky; 
+            top: 100px; 
+            z-index: 3500; 
+            text-align: center; 
+        }
+
+        /* ================= WARNING & STATE CLASSES ================= */
+        .warn-heat { background: #ea580c !important; color: white !important; }
+        .warn-freeze { background: #3b82f6 !important; color: white !important; }
         .is-now td { border-top: 8px solid #f59e0b; border-bottom: 8px solid #f59e0b; background: #fffbeb !important; }
         .is-night td { background-color: #f8fafc; color: #94a3b8; }
-        .sunrise-row td { background: #fef3c7 !important; color: #92400e !important; font-size: 20px !important; font-weight: 900; }
-        .sunset-row td { background: #e0e7ff !important; color: #1e3a8a !important; font-size: 20px !important; font-weight: 900; }
-        #topBtn { position: fixed; bottom: 30px; right: 30px; z-index: 5000; background: #1e3a8a; color: white; border: none; width: 80px; height: 80px; border-radius: 50%; cursor: pointer; font-size: 40px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .sunrise-row td { background: #fef3c7 !important; color: #92400e !important; font-size: 20px !important; font-weight: 900; text-align: left !important; padding-left: 30px !important; }
+        .sunset-row td { background: #e0e7ff !important; color: #1e3a8a !important; font-size: 20px !important; font-weight: 900; text-align: left !important; padding-left: 30px !important; }
+
+        #status { 
+            text-align: center; 
+            padding: 150px; 
+            font-size: 32px; 
+            font-weight: bold; 
+            color: #1e3a8a; 
+        }
+        
+        #topBtn { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            z-index: 5000; 
+            background: #1e3a8a; 
+            color: white; 
+            border: none; 
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            font-size: 40px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
+            display: none; 
+        }
     </style>
 </head>
 <body>
 
-<!-- DATA SOURCE BANNER -->
-<div class="source-banner">
-    Meteorological Feed: <span>Open-Meteo GFS Core</span> &nbsp;&nbsp;|&nbsp;&nbsp; Climatology Feed: <span>Jim's 130-Year Local Records</span>
-</div>
-
 <button id="topBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">▲</button>
 
 <div class="header">
-    <h1>Vizcaya Pro Weather & Almanac</h1>
-    <p id="updateTime">360-Hour Meteorological Suite (Unlimited Engine)</p>
+    <h1>Vizcaya Pro Weather &amp; Almanac</h1>
+    <p id="updateTime">360-Hour Meteorological Intelligence Suite</p>
 </div>
 
 <div class="container">
-    <div id="status" style="text-align:center; padding:150px; font-size: 32px; font-weight: bold; color: #1e3a8a;">📡 Fetching Open-Meteo Data...</div>
+    <div id="status">📡 Synchronizing Climatological Data...</div>
     <div id="mainContent" style="display:none;" class="table-container">
         <table style="width: 100%; border-collapse: collapse; table-layout: fixed; background: white; border: 4px solid #1f2937;">
             <thead>
                 <tr>
-                    <th style="width:140px;">Time</th>
-                    <th style="width:70px;"></th>
-                    <th style="text-align:left; padding-left:25px;">Conditions</th>
-                    <th style="width:130px;">Temp / Feels</th>
-                    <th style="width:100px;">Dew Pt</th>
-                    <th style="width:140px;">Rain % / In.</th>
-                    <th style="width:110px;">ET Loss</th>
-                    <th style="width:140px;">Wind / Gust</th>
-                    <th style="width:80px;">Dir</th>
-                    <th style="width:110px;">Pres (inHg)</th>
-                    <th style="width:170px;">Cloud Base / Vis</th>
-                    <th style="width:100px;">CAPE</th>
-                    <th style="width:70px;">UV</th>
+                    <th style="width:160px;">Time</th>
+                    <th style="width:80px"></th>
+                    <th style="text-align:left; padding-left:30px;">Conditions</th>
+                    <th style="width:150px;">Temp / Feels</th>
+                    <th style="width:120px;">Dew Pt</th>
+                    <th style="width:160px;">Rain % / In.</th>
+                    <th style="width:130px;">ET Loss</th>
+                    <th style="width:160px;">Wind / Gust</th>
+                    <th style="width:100px;">Dir</th>
+                    <th style="width:180px;">Cloudbase / Vis</th>
+                    <th style="width:120px;">CAPE</th>
+                    <th style="width:100px;">Risk</th>
                 </tr>
             </thead>
             <tbody id="hourlyBody"></tbody>
@@ -97,114 +214,248 @@
 </div>
 
 <script>
-    const LAT = 30.5871;
-    const LON = -97.641;
-    const ALMANAC_URL = 'https://raw.githubusercontent.com/JimEgan2025/JimEgan2025.github.io/refs/heads/main/almanac.html';
+    const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
+    const ALMANAC_URL = 'https://JimEgan2025.github.io/almanac.json';
+    
     let almanacData = {};
 
     async function sourceAlmanac() {
         try {
             const response = await fetch(ALMANAC_URL);
-            const htmlText = await response.text();
-            const startMarker = "almanacData = {";
-            const startIndex = htmlText.indexOf(startMarker);
-            const endMarker = "};";
-            const endIndex = htmlText.indexOf(endMarker, startIndex);
-            const objectString = htmlText.substring(startIndex + "almanacData = ".length, endIndex + 1);
-            almanacData = new Function("return " + objectString)();
+            if (!response.ok) throw new Error("JSON Fetch failed");
+            almanacData = await response.json();
             return true;
-        } catch (e) { console.error("Almanac Error", e); return false; }
+        } catch (e) {
+            console.error("Almanac Load Error", e);
+            return false;
+        }
     }
 
     const getWindDir = deg => ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg / 45) % 8];
-
-    function getWMO(code) {
+    
+    function getWeatherIcon(icon) {
         const mapping = {
-            0: {icon:"☀️", desc:"Clear"}, 1: {icon:"🌤️", desc:"Mostly Clear"}, 2: {icon:"⛅", desc:"Partly Cloudy"}, 3: {icon:"☁️", desc:"Overcast"},
-            45: {icon:"🌫️", desc:"Fog"}, 51: {icon:"🌦️", desc:"Drizzle"}, 61: {icon:"🌧️", desc:"Light Rain"}, 63: {icon:"🌧️", desc:"Moderate Rain"},
-            80: {icon:"🌧️", desc:"Showers"}, 95: {icon:"⛈️", desc:"Thunderstorms"}
+            "clear-day": "☀️",
+            "clear-night": "🌙",
+            "partly-cloudy-day": "⛅",
+            "partly-cloudy-night": "☁️",
+            "cloudy": "☁️",
+            "rain": "🌧️",
+            "showers-day": "🌦️",
+            "thunder-rain": "⛈️",
+            "snow": "❄️",
+            "fog": "🌫️",
+            "sleet": "🌨️",
+            "wind": "💨"
         };
-        return mapping[code] || {icon:"☁️", desc:"Cloudy"};
+        return mapping[icon] || "☁️";
+    }
+
+    function timeToMinutes(timeStr) {
+        if (!timeStr) return -1;
+        const parts = timeStr.split(':');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    }
+
+    function formatEventTime(timeStr) {
+        if (!timeStr) return '';
+        const parts = timeStr.split(':');
+        let h = parseInt(parts[0], 10);
+        const m = parts[1];
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${m} ${ampm}`;
     }
 
     async function init() {
         await sourceAlmanac();
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,evapotranspiration,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,visibility,uv_index,cloud_base,cape,dew_point_2m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=16&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum,et0_fao_evapotranspiration`;
-
+            
+        const now = new Date();
+        const startStr = now.toLocaleDateString('en-CA'); 
+        const endDate = new Date(); 
+        endDate.setDate(now.getDate() + 15);
+        const endStr = endDate.toLocaleDateString('en-CA');
+            
         try {
+            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/30.5871,-97.641/${startStr}/${endStr}?unitGroup=us&include=days,hours&key=${VC_API_KEY}&contentType=json`;
             const res = await fetch(url);
+            if (!res.ok) throw new Error("Weather API Error");
+            
             const data = await res.json();
-            render(data);
-        } catch (e) { document.getElementById('status').innerText = "API Error: " + e.message; }
+            render(data.days);
+        } catch (e) {
+            document.getElementById('status').innerText = "API Error: " + e.message;
+        }
     }
 
-    function render(data) {
+    function render(days) {
         const body = document.getElementById('hourlyBody');
         const now = new Date();
-        const h = data.hourly;
-        const d = data.daily;
+        const currentHourTs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).getTime();
         let renderedCount = 0;
-        let lastDate = "";
 
-        for (let i = 0; i < h.time.length; i++) {
-            if (renderedCount >= 360) break;
-            const itemTime = new Date(h.time[i]);
-            if (itemTime.getTime() < (now.getTime() - 3600000)) continue;
+        body.innerHTML = ""; 
 
-            const dateStr = h.time[i].split('T')[0];
-            const timeStr = h.time[i].split('T')[1];
-            const hr = parseInt(timeStr.split(':')[0]);
+        days.forEach(day => {
+            if (!day.hours || renderedCount >= 360) return;
 
-            if (dateStr !== lastDate) {
-                const dayIdx = d.time.indexOf(dateStr);
-                const mmdd = dateStr.slice(5); 
-                const hist = almanacData[mmdd];
-                const netBalance = (d.precipitation_sum[dayIdx] || 0) - (d.et0_fao_evapotranspiration[dayIdx] || 0);
+            const mmdd = day.datetime.slice(5); 
+            const hist = almanacData[mmdd];
+            const netBalance = (day.precip || 0) - (day.et || 0);
+            const netColor = netBalance < 0 ? '#f87171' : '#4ade80';
 
-                let histBlock = `<div>History Unavailable</div>`;
-                if (hist) {
-                    histBlock = `
-                        <div>AVG: <span class="almanac-val">${hist.avgH}°/${hist.avgL}°</span></div>
-                        <div>REC HI: <span class="almanac-val">${hist.recH}° (${hist.recHY})</span> | REC LO: <span class="almanac-val">${hist.recL}° (${hist.recLY})</span></div>
-                        <div>DAILY NET H2O: <span class="almanac-val" style="color:${netBalance < 0 ? '#f87171' : '#4ade80'}">${netBalance.toFixed(3)}"</span></div>
-                    `;
+            let histBlock = '<div>History Unavailable</div>';
+            let anomalyTag = "";
+
+            if (hist) {
+                histBlock = `
+                    <div>AVG: <span class="almanac-val">${hist.avgH}°/${hist.avgL}°</span></div>
+                    <div>REC HI: <span class="almanac-val">${hist.recH}° (${hist.recHY})</span> | REC LO: <span class="almanac-val">${hist.recL}° (${hist.recLY})</span></div>
+                    <div>DAILY NET H2O: <span class="almanac-val" style="color:${netColor}">${netBalance.toFixed(3)}"</span></div>
+                `;
+                const diff = day.tempmax - hist.avgH;
+                if (diff >= 7) {
+                    anomalyTag = '<span class="anomaly-badge" style="background:#ea580c">ABOVE NORMAL</span>';
+                } else if (diff <= -7) {
+                    anomalyTag = '<span class="anomaly-badge" style="background:#2563eb">BELOW NORMAL</span>';
                 }
-
-                body.insertAdjacentHTML('beforeend', `<tr class="day-separator"><td colspan="13"><div class="day-summary-grid"><div class="forecast-box"><span class="day-label">${dateStr === now.toISOString().split('T')[0] ? "TODAY" : new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}).toUpperCase()}</span><span>FCST: <span class="summary-val">${Math.round(d.temperature_2m_max[dayIdx])}°/${Math.round(d.temperature_2m_min[dayIdx])}°</span></span><span>RAIN: <span class="summary-val">${(d.precipitation_sum[dayIdx] || 0).toFixed(2)}"</span></span></div><div class="almanac-box">${histBlock}</div></div></td></tr>`);
-                lastDate = dateStr;
+            } else {
+                histBlock = `
+                    <div>AVG: <span class="almanac-val">N/A</span></div>
+                    <div>REC HI: <span class="almanac-val">N/A</span> | REC LO: <span class="almanac-val">N/A</span></div>
+                    <div>DAILY NET H2O: <span class="almanac-val" style="color:${netColor}">${netBalance.toFixed(3)}"</span></div>
+                `;
             }
 
-            const dayIdx = d.time.indexOf(dateStr);
-            if (hr === parseInt(d.sunrise[dayIdx].split('T')[1].split(':')[0])) body.insertAdjacentHTML('beforeend', `<tr class="sunrise-row"><td colspan="13">☀️ SUNRISE AT ${d.sunrise[dayIdx].split('T')[1]} AM</td></tr>`);
-            if (hr === parseInt(d.sunset[dayIdx].split('T')[1].split(':')[0])) body.insertAdjacentHTML('beforeend', `<tr class="sunset-row"><td colspan="13">🌙 SUNSET AT ${d.sunset[dayIdx].split('T')[1]} PM</td></tr>`);
+            const dateLabel = (day.datetime === now.toLocaleDateString('en-CA')) 
+                ? "TODAY" 
+                : new Date(day.datetime + 'T00:00:00').toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}).toUpperCase();
 
-            const wmo = getWMO(h.weather_code[i]);
-            const feelsCls = h.apparent_temperature[i] >= 100 ? 'warn-heat' : (h.apparent_temperature[i] <= 32 ? 'warn-freeze' : '');
-            
             body.insertAdjacentHTML('beforeend', `
-                <tr class="${itemTime.getHours() === now.getHours() && dateStr === now.toISOString().split('T')[0] ? 'is-now' : ''} ${hr < 6 || hr >= 20 ? 'is-night' : ''}">
-                    <td style="font-weight:900; color:#1e3a8a">${hr % 12 || 12}:00 ${hr >= 12 ? 'PM' : 'AM'}</td>
-                    <td style="font-size:3em">${wmo.icon}</td>
-                    <td style="text-align:left; padding-left:25px; font-weight:800">${wmo.desc}</td>
-                    <td class="${feelsCls}"><span style="font-size:1.4em; display:block">${Math.round(h.temperature_2m[i])}°</span><span style="font-size:16px; font-weight:600; opacity:0.8">Feels ${Math.round(h.apparent_temperature[i])}°</span></td>
-                    <td style="${h.dew_point_2m[i] >= 70 ? 'color:#0f766e; background:#ccfbf1' : ''}">${Math.round(h.dew_point_2m[i])}°</td>
-                    <td style="${h.precipitation[i] > 0 ? 'background:#eff6ff' : ''}"><span style="color:#2563eb; display:block">${h.precipitation_probability[i]}%</span><span style="font-size:18px">${h.precipitation[i].toFixed(2)}"</span></td>
-                    <td style="color:#166534; background:#f0fdf4">${Math.abs(h.evapotranspiration[i]).toFixed(3)}"</td>
-                    <td class="${h.wind_gusts_10m[i] >= 35 ? 'warn-heat' : ''}">${Math.round(h.wind_speed_10m[i])} <span style="font-size:18px; display:block">G${Math.round(h.wind_gusts_10m[i])}</span></td>
-                    <td>${getWindDir(h.wind_direction_10m[i])}</td>
-                    <td style="font-family:monospace">${(h.surface_pressure[i] * 0.02953).toFixed(2)}</td>
-                    <td><b>${h.cloud_base[i] ? Math.round(h.cloud_base[i] * 3.28).toLocaleString() + ' ft' : Math.round(((h.temperature_2m[i]-h.dew_point_2m[i])/4.4)*1000).toLocaleString() + ' ft'}</b><br><span style="font-size:16px">Vis: ${Math.round(h.visibility[i] / 1609) || 10} mi</span></td>
-                    <td><span style="padding:4px 8px; border-radius:6px; background:${h.cape[i] > 500 ? '#ea580c' : '#e5e7eb'}; color:${h.cape[i] > 500 ? 'white' : '#6b7280'}">${Math.round(h.cape[i]) || 'Stable'}</span></td>
-                    <td>${Math.round(h.uv_index[i])}</td>
-                </tr>`);
-            renderedCount++;
-        }
+                <tr class="day-separator">
+                    <td colspan="12">
+                        <div class="day-summary-grid">
+                            <div class="forecast-box">
+                                <span class="day-label">${dateLabel} ${anomalyTag}</span>
+                                <span>FCST: <span class="summary-val">${Math.round(day.tempmax)}°/${Math.round(day.tempmin)}°</span></span>
+                                <span>RAIN: <span class="summary-val">${(day.precip || 0).toFixed(2)}"</span></span>
+                            </div>
+                            <div class="almanac-box">${histBlock}</div>
+                        </div>
+                    </td>
+                </tr>
+            `);
+
+            const sunriseMins = timeToMinutes(day.sunrise);
+            const sunsetMins = timeToMinutes(day.sunset);
+
+            let sunriseInjected = false;
+            let sunsetInjected = false;
+
+            day.hours.forEach((hour, index) => {
+                const hTime = new Date(day.datetime + 'T' + hour.datetime).getTime();
+                if (hTime < currentHourTs || renderedCount >= 360) return;
+
+                const hr = parseInt(hour.datetime.split(':')[0], 10);
+                
+                // Absolute placement logic: Match the hour slot that *contains* the event minute mark (e.g., 6:45 AM falls into the 6:00 AM row block, so we inject *after* the 6:00 AM row).
+                // Specifically, if sunrise is at 6:45, it belongs inside the 6:00-7:00 block, meaning it should appear immediately after the 6:00 row renders.
+                const sunriseHour = sunriseMins >= 0 ? Math.floor(sunriseMins / 60) : -1;
+                const sunsetHour = sunsetMins >= 0 ? Math.floor(sunsetMins / 60) : -1;
+
+                const feelsCls = hour.feelslike >= 100 ? 'warn-heat' : (hour.feelslike <= 32 ? 'warn-freeze' : '');
+                const gustCls = hour.windgust >= 35 ? 'warn-heat' : '';
+
+                let calculatedCloudBase = "---";
+                if (hour.temp !== undefined && hour.dew !== undefined) {
+                    const spread = hour.temp - hour.dew;
+                    if (spread >= 0) {
+                        calculatedCloudBase = Math.round((spread / 4.4) * 1000).toLocaleString();
+                    }
+                }
+                const cloudBaseVal = `${calculatedCloudBase} ft`;
+
+                const capeVal = (hour.cape !== undefined && hour.cape !== null && !isNaN(hour.cape)) 
+                    ? Math.round(hour.cape) 
+                    : (hour.severerisk > 10 ? '150' : '0');
+
+                body.insertAdjacentHTML('beforeend', `
+                    <tr class="${hTime === currentHourTs ? 'is-now' : ''} ${hr < 6 || hr >= 20 ? 'is-night' : ''}">
+                        <td style="font-weight:900; color:#1e3a8a">
+                            ${hr % 12 || 12}:00 ${hr >= 12 ? 'PM' : 'AM'}
+                        </td>
+                        <td style="font-size:3em">
+                            ${getWeatherIcon(hour.icon)}
+                        </td>
+                        <td style="text-align:left; padding-left:30px; font-weight:800">
+                            ${hour.conditions}
+                        </td>
+                        <td class="${feelsCls}">
+                            <span style="font-size:1.4em; display:block">${Math.round(hour.temp)}°</span>
+                            <span style="font-size:16px; font-weight:600; opacity:0.8">Feels ${Math.round(hour.feelslike)}°</span>
+                        </td>
+                        <td style="${hour.dew >= 70 ? 'color:#0f766e; background:#ccfbf1' : ''}">
+                            ${Math.round(hour.dew)}°
+                        </td>
+                        <td style="${hour.precip > 0 ? 'background:#eff6ff' : ''}">
+                            <span style="color:#2563eb; display:block">${Math.round(hour.precipprob)}%</span>
+                            <span style="font-size:18px">${(hour.precip || 0).toFixed(2)}"</span>
+                        </td>
+                        <td style="color:#166534; background:#f0fdf4">
+                            ${(hour.et || 0).toFixed(3)}"
+                        </td>
+                        <td class="${gustCls}">
+                            ${Math.round(hour.windspeed)} 
+                            <span style="font-size:18px; display:block">G${Math.round(hour.windgust)}</span>
+                        </td>
+                        <td>
+                            ${getWindDir(hour.winddir)}
+                        </td>
+                        <td>
+                            <b>${cloudBaseVal}</b><br>
+                            <span style="font-size:16px">Vis: ${hour.visibility || 10} mi</span>
+                        </td>
+                        <td>
+                            ${capeVal}
+                        </td>
+                        <td>
+                            <b style="color:${hour.severerisk > 30 ? '#ef4444' : '#111827'}">${hour.severerisk || 0}</b>
+                        </td>
+                    </tr>
+                `);
+
+                // Insert event row immediately after the matching hour row has been rendered
+                if (!sunriseInjected && hr === sunriseHour) {
+                    body.insertAdjacentHTML('beforeend', `
+                        <tr class="sunrise-row">
+                            <td colspan="12">☀️ SUNRISE: ${formatEventTime(day.sunrise)}</td>
+                        </tr>
+                    `);
+                    sunriseInjected = true;
+                }
+
+                if (!sunsetInjected && hr === sunsetHour) {
+                    body.insertAdjacentHTML('beforeend', `
+                        <tr class="sunset-row">
+                            <td colspan="12">🌙 SUNSET: ${formatEventTime(day.sunset)}</td>
+                        </tr>
+                    `);
+                    sunsetInjected = true;
+                }
+
+                renderedCount++;
+            });
+        });
+
         document.getElementById('status').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
     }
 
+    window.onscroll = function() {
+        document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none";
+    };
+
     init();
-    window.onscroll = () => document.getElementById("topBtn").style.display = (window.pageYOffset > 800) ? "block" : "none";
 </script>
 </body>
 </html>
