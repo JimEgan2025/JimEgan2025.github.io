@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>360-Hour Local Weather Forecast (Open-Meteo)</title>
+    <title>Vizcaya Hour By Hour Forecast</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -22,16 +22,14 @@
         }
         h1 {
             font-size: 1.5rem;
-            margin-bottom: 5px;
-            color: #1a202c;
-        }
-        p.subtitle {
-            color: #718096;
             margin-top: 0;
             margin-bottom: 20px;
+            color: #1a202c;
         }
+        
+        /* 1 Header (38px) + 18 rows (18 * 38px = 684px) = 722px */
         .table-container {
-            max-height: 600px;
+            max-height: 722px;
             overflow-y: auto;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
@@ -42,9 +40,15 @@
             text-align: left;
             font-size: 0.9rem;
         }
+        /* Fixed row height to ensure consistent layout across platforms */
+        tr {
+            height: 38px;
+        }
+        /* Vertical padding removed to let row height govern the spacing */
         th, td {
-            padding: 10px 12px;
+            padding: 0 12px;
             border-bottom: 1px solid #edf2f7;
+            vertical-align: middle;
         }
         th {
             background-color: #f7fafc;
@@ -63,6 +67,39 @@
             text-align: center;
         }
         
+        /* Alert Legend Layout */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            background: #f8fafc;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+
+        /* Footer text containing coordinates and description */
+        .footer-text {
+            color: #718096;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            margin-bottom: 0;
+        }
+
         /* Color Coding for Critical Values */
         .temp-extreme {
             background-color: #fff5f5;
@@ -106,8 +143,7 @@
 <body>
 
 <div class="container">
-    <h1>360-Hour Weather Forecast</h1>
-    <p class="subtitle">Coordinates: 30.587, -97.641 (Local Time) | Includes CIN (Cap Tracking) & Color-Coded Alerts</p>
+    <h1>Vizcaya Hour By Hour Forecast</h1>
     
     <div class="table-container">
         <div id="loading" class="loading">Fetching forecast data...</div>
@@ -115,15 +151,15 @@
             <thead>
                 <tr>
                     <th>Time (Local)</th>
-                    <th>Temp (°F)</th>
-                    <th>Feels Like (°F)</th>
-                    <th>Dew Point (°F)</th>
-                    <th>Humidity (%)</th>
+                    <th>Temp</th>
+                    <th>Feels Like</th>
+                    <th>Dew Point</th>
+                    <th>Humidity</th>
                     <th>Wind</th>
-                    <th>Precip Prob (%)</th>
-                    <th>Precip (in)</th>
-                    <th>CAPE (J/kg)</th>
-                    <th>CIN (J/kg)</th>
+                    <th>Precip Prob</th>
+                    <th>Precip</th>
+                    <th>CAPE</th>
+                    <th>CIN</th>
                 </tr>
             </thead>
             <tbody id="weather-body">
@@ -131,31 +167,46 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Alert Guide Legend -->
+    <div class="legend">
+        <strong>Alert Guide:</strong> 
+        <span class="legend-item"><span class="color-box temp-extreme"></span> Heat Index ≥ 100°F</span>
+        <span class="legend-item"><span class="color-box dewpoint-humid"></span> Dew Point ≥ 70°F (Humid)</span>
+        <span class="legend-item"><span class="color-box cape-moderate"></span> CAPE 1000–1999 J/kg</span>
+        <span class="legend-item"><span class="color-box cape-high"></span> CAPE ≥ 2000 J/kg</span>
+        <span class="legend-item"><span class="color-box cin-capped"></span> CIN ≤ -50 J/kg (Capped)</span>
+        <span class="legend-item"><span class="color-box precip-high"></span> Precip Prob ≥ 50%</span>
+    </div>
+
+    <!-- Metadata footer -->
+    <p class="footer-text">
+        Coordinates: 30.587, -97.641 (Local Time) | Includes CIN (Cap Tracking) &amp; Color-Coded Alerts
+    </p>
 </div>
 
 <script>
-    // Helper to convert degrees to compass direction
     function getWindDirection(degrees) {
+        if (degrees === undefined || degrees === null) return '';
         const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
         const index = Math.round((degrees % 360) / 22.5);
         return directions[index % 16];
     }
 
-    // Helper to format ISO strings into readable local strings
     function formatLocalDateTime(isoString) {
-        const dateObj = new Date(isoString);
+        const dateObj = new Date(isoString + "Z");
         return dateObj.toLocaleString('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
+            timeZone: 'UTC'
         });
     }
 
     async function fetchWeather() {
-        // Added convective_inhibition (CIN) to the hourly query string
         const url = "https://api.open-meteo.com/v1/forecast?latitude=30.587&longitude=-97.641&hourly=temperature_2m,apparent_temperature,dew_point_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,cape,convective_inhibition&daily=sunrise,sunset&forecast_days=15&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto";
 
         try {
@@ -165,8 +216,8 @@
             const data = await response.json();
             const hourly = data.hourly;
             const daily = data.daily;
+            const utcOffsetSeconds = data.utc_offset_seconds || 0;
             
-            // Build a unified timeline array of events
             let timeline = [];
 
             // Add hourly data points
@@ -174,7 +225,7 @@
                 timeline.push({
                     type: 'hourly',
                     time: hourly.time[i],
-                    timeMs: new Date(hourly.time[i]).getTime(),
+                    timeMs: new Date(hourly.time[i] + "Z").getTime(),
                     temp: hourly.temperature_2m[i],
                     feelsLike: hourly.apparent_temperature[i],
                     dewPoint: hourly.dew_point_2m[i],
@@ -194,7 +245,7 @@
                     timeline.push({
                         type: 'sunrise',
                         time: timeStr,
-                        timeMs: new Date(timeStr).getTime()
+                        timeMs: new Date(timeStr + "Z").getTime()
                     });
                 });
             }
@@ -205,7 +256,7 @@
                     timeline.push({
                         type: 'sunset',
                         time: timeStr,
-                        timeMs: new Date(timeStr).getTime()
+                        timeMs: new Date(timeStr + "Z").getTime()
                     });
                 });
             }
@@ -213,9 +264,10 @@
             // Sort entire timeline chronologically
             timeline.sort((a, b) => a.timeMs - b.timeMs);
 
-            // Filter to start from current/coming hour onward
-            const nowMs = new Date().getTime();
-            timeline = timeline.filter(item => item.timeMs >= nowMs || (item.type === 'hourly' && item.timeMs >= nowMs - 3600000));
+            const localNowMs = Date.now() + (utcOffsetSeconds * 1000);
+            
+            // Keep points starting from roughly the current local hour onward
+            timeline = timeline.filter(item => item.timeMs >= localNowMs - 3600000);
 
             const tbody = document.getElementById('weather-body');
             tbody.innerHTML = ''; 
@@ -231,10 +283,10 @@
                     row.className = 'event-row';
                     row.innerHTML = `<td colspan="10">🌇 Sunset at ${formatLocalDateTime(item.time)}</td>`;
                 } else {
-                    if (hourlyCount >= 360) continue; // cap at 360 hours
+                    if (hourlyCount >= 360) continue; // Cap output to 360 hourly items
                     hourlyCount++;
 
-                    // Color Coding Logic
+                    // Styling thresholds
                     const feelsLikeClass = item.feelsLike >= 100 ? 'temp-extreme' : '';
                     const dewPointClass = item.dewPoint >= 70 ? 'dewpoint-humid' : '';
 
@@ -245,7 +297,6 @@
                         capeClass = 'cape-moderate'; 
                     }
 
-                    // CIN values are typically negative (or 0 if uncapped). Highlight significant capping (e.g., < -50 J/kg)
                     let cinClass = '';
                     if (item.cin <= -50) {
                         cinClass = 'cin-capped';
@@ -253,17 +304,28 @@
 
                     const precipClass = item.precipProb >= 50 ? 'precip-high' : '';
 
+                    // Safe fallback formatters
+                    const tempDisp = item.temp !== undefined ? `${item.temp}°F` : '-';
+                    const feelsDisp = item.feelsLike !== undefined ? `${item.feelsLike}°F` : '-';
+                    const dewDisp = item.dewPoint !== undefined ? `${item.dewPoint}°F` : '-';
+                    const humidDisp = item.humidity !== undefined ? `${item.humidity}%` : '-';
+                    const windDisp = item.windSpeed !== undefined ? `${item.windSpeed} mph (${item.windDir})` : '-';
+                    const precipProbDisp = item.precipProb !== undefined ? `${item.precipProb}%` : '-';
+                    const precipDisp = item.precip !== undefined ? `${item.precip} in` : '-';
+                    const capeDisp = item.cape !== undefined ? `${item.cape} J/kg` : '0 J/kg';
+                    const cinDisp = item.cin !== undefined ? `${item.cin} J/kg` : '0 J/kg';
+
                     row.innerHTML = `
                         <td>${formatLocalDateTime(item.time)}</td>
-                        <td>${item.temp}</td>
-                        <td class="${feelsLikeClass}">${item.feelsLike}</td>
-                        <td class="${dewPointClass}">${item.dewPoint}</td>
-                        <td>${item.humidity}</td>
-                        <td>${item.windSpeed} mph (${item.windDir})</td>
-                        <td class="${precipClass}">${item.precipProb}</td>
-                        <td>${item.precip}</td>
-                        <td class="${capeClass}">${item.cape ?? 0}</td>
-                        <td class="${cinClass}">${item.cin ?? 0}</td>
+                        <td>${tempDisp}</td>
+                        <td class="${feelsLikeClass}">${feelsDisp}</td>
+                        <td class="${dewPointClass}">${dewDisp}</td>
+                        <td>${humidDisp}</td>
+                        <td>${windDisp}</td>
+                        <td class="${precipClass}">${precipProbDisp}</td>
+                        <td>${precipDisp}</td>
+                        <td class="${capeClass}">${capeDisp}</td>
+                        <td class="${cinClass}">${cinDisp}</td>
                     `;
                 }
                 tbody.appendChild(row);
@@ -279,6 +341,9 @@
 
     fetchWeather();
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
