@@ -44,8 +44,8 @@
         #copyAiBtn:hover { background-color: #276749; }
         #status { 
             margin-top: 16px; 
-            font-weight: 500; 
-            font-size: 14px; 
+            font-weight: 500;
+            font-size: 14px;
             padding: 12px;
             border-radius: 6px;
             background-color: #edf2f7;
@@ -66,19 +66,15 @@
     </style>
 </head>
 <body>
-
 <div class="card">
-    <h2>Optimized NOAA Compiler (WPC Safe)</h2>
-    <p>Processes heavy precipitation layers asynchronously to avoid browser freezing.</p>
-
+    <h2>Optimized NOAA Compiler (AI Safe)</h2>
+    <p>Fetches lightweight SPC categorical outlooks and WPC precipitation hazard/ERO zones.</p>
     <div class="btn-container">
-        <button id="fetchCompileBtn">1. Fetch & Compile All Data</button>
+        <button id="fetchCompileBtn">1. Fetch & Compress Data</button>
         <button id="copyAiBtn" disabled>2. Copy File for AI</button>
     </div>
-
     <div id="status">Ready to fetch live data.</div>
-
-    <textarea id="outputPreview" placeholder="Unified GeoJSON payload will appear here..." readonly></textarea>
+    <textarea id="outputPreview" placeholder="Optimized GeoJSON payload will appear here..." readonly></textarea>
 </div>
 
 <script>
@@ -89,7 +85,7 @@
 
     let compiledTextPayload = "";
 
-    function showStatus(message, type = "info") {
+    function showStatus(message, type = "info") {        
         statusDiv.style.display = "block";
         statusDiv.textContent = message;
         if (type === "error") {
@@ -104,105 +100,119 @@
         }
     }
 
-    // Yield control back to browser event loop to completely prevent freezing
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    async function safeFetchWithTimeout(url, timeoutMs = 4000) {
+    async function safeFetchWithTimeout(url, timeoutMs = 4000) {        
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeoutMs);
-        try {
+        try {            
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(id);
             if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             return await res.json();
-        } catch (err) {
+        } catch (err) {            
             clearTimeout(id);
             throw err;
         }
     }
 
-    fetchCompileBtn.addEventListener('click', async () => {
+    // Round coordinates to 4 decimals to drastically reduce payload bloat
+    function roundCoord(val) {
+        return Number(val.toFixed(4));
+    }
+
+    function simplifyGeometry(geometry) {
+        if (!geometry || !geometry.coordinates) return geometry;
+        
+        if (geometry.type === "Polygon") {
+            geometry.coordinates = geometry.coordinates.map(ring => 
+                ring.map(coord => [roundCoord(coord[0]), roundCoord(coord[1])])
+            );
+        } else if (geometry.type === "MultiPolygon") {
+            geometry.coordinates = geometry.coordinates.map(polygon => 
+                polygon.map(ring => 
+                    ring.map(coord => [roundCoord(coord[0]), roundCoord(coord[1])])
+                )
+            );
+        }
+        return geometry;
+    }
+
+    fetchCompileBtn.addEventListener('click', async () => {        
         fetchCompileBtn.disabled = true;
         copyAiBtn.disabled = true;
-        showStatus("Initializing lightweight async compile...");
+        showStatus("Fetching & shrinking NOAA layers...");
 
-        const endpoints = [
-            { source: "SPC", label: "SPC Day 1 Categorical", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1/query?where=1%3D1&outFields=*&f=geojson" },
-            { source: "SPC", label: "SPC Day 2 Categorical", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9/query?where=1%3D1&outFields=*&f=geojson" },
-            { source: "SPC", label: "SPC Day 3 Categorical", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/18/query?where=1%3D1&outFields=*&f=geojson" },
-            { source: "WPC", label: "WPC Day 1 QPF", url: "https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer/1/query?where=1%3D1&outFields=*&f=geojson" },
-            { source: "WPC", label: "WPC Day 2 QPF", url: "https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer/2/query?where=1%3D1&outFields=*&f=geojson" },
-            { source: "WPC", label: "WPC Day 3 QPF", url: "https://mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer/3/query?where=1%3D1&outFields=*&f=geojson" }
-        ];
+        const endpoints = [            
+            { source: "SPC", label: "SPC Day 1", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1/query?where=1%3D1&outFields=*&f=geojson" },            
+            { source: "SPC", label: "SPC Day 2", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9/query?where=1%3D1&outFields=*&f=geojson" },            
+            { source: "SPC", label: "SPC Day 3", url: "https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/18/query?where=1%3D1&outFields=*&f=geojson" },            
+            { source: "WPC", label: "WPC Day 1 ERO", url: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/0/query?where=1%3D1&outFields=*&f=geojson" },            
+            { source: "WPC", label: "WPC Day 2 ERO", url: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/1/query?where=1%3D1&outFields=*&f=geojson" },            
+            { source: "WPC", label: "WPC Day 3 ERO", url: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/2/query?where=1%3D1&outFields=*&f=geojson" }        ];
 
-        const masterFeatureCollection = {
-            type: "FeatureCollection",
-            features: []
-        };
+        const masterFeatureCollection = {            
+            type: "FeatureCollection",            
+            features: []        };
 
         let successfulCount = 0;
 
-        for (let i = 0; i < endpoints.length; i++) {
+        for (let i = 0; i < endpoints.length; i++) {            
             let ep = endpoints[i];
-            showStatus(`Processing layer (${i + 1}/6): ${ep.label}...`);
-            await delay(50); // Let the UI thread breathe
+            showStatus(`Processing (${i + 1}/6): ${ep.label}...`);
+            await delay(50);
 
-            let data = null;
-            try {
-                data = await safeFetchWithTimeout(ep.url, 3500);
-            } catch (e1) {
-                try {
+            let data = null;            
+            try {                
+                data = await safeFetchWithTimeout(ep.url, 3500);            } catch (e1) {                
+                try {                    
                     let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(ep.url)}`;
-                    data = await safeFetchWithTimeout(proxyUrl, 4500);
-                } catch (e2) {
-                    console.warn(`Skipping ${ep.label} due to connection constraints.`);
-                    continue;
-                }
-            }
+                    data = await safeFetchWithTimeout(proxyUrl, 4500);                } catch (e2) {                    
+                    console.warn(`Skipping ${ep.label}`);
+                    continue;                }            }
 
-            if (data && Array.isArray(data.features)) {
-                // Limit heavy WPC coordinate arrays if oversized to protect memory
+            if (data && Array.isArray(data.features)) {                
                 data.features.forEach(feat => {
-                    if (!feat.properties) feat.properties = {};
-                    feat.properties.Dataset_Source = ep.source;
-                    feat.properties.Layer_Name = ep.label;
-                    
-                    // Cleanup unnecessary overhead fields if present
-                    delete feat.properties.ID;
+                    const p = feat.properties || {};
+                    // Strip extra metadata and keep only essential weather labels
+                    feat.properties = {
+                        Source: ep.source,
+                        Layer: ep.label,
+                        Risk: p.LABEL || p.DN || p.VALID || p.QA_END || p.THRESHOLD || "Unknown"
+                    };
+
+                    // Compress geometry coordinate precision
+                    feat.geometry = simplifyGeometry(feat.geometry);
                 });
 
                 masterFeatureCollection.features.push(...data.features);
-                successfulCount++;
-            }
+                successfulCount++;            }
         }
 
-        if (successfulCount === 0) {
-            showStatus("Network blocked by sandbox environment. Try running locally.", "error");
+        if (successfulCount === 0) {            
+            showStatus("Network blocked. Try running locally.", "error");
             fetchCompileBtn.disabled = false;
-            return;
-        }
+            return;        }
 
-        showStatus("Serializing optimized data payload...", "info");
+        showStatus("Compressing payload text...", "info");
         await delay(50);
 
         compiledTextPayload = JSON.stringify(masterFeatureCollection);
         outputPreview.value = compiledTextPayload;
 
-        showStatus(`Success! Compiled ${masterFeatureCollection.features.length} features safely.`, "success");
+        const sizeKb = Math.round(compiledTextPayload.length / 1024);
+        showStatus(`Success! Optimized payload size: ~${sizeKb} KB (${masterFeatureCollection.features.length} features).`, "success");
         copyAiBtn.disabled = false;
-        fetchCompileBtn.disabled = false;
-    });
+        fetchCompileBtn.disabled = false;    });
 
-    copyAiBtn.addEventListener('click', async () => {
+    copyAiBtn.addEventListener('click', async () => {        
         if (!compiledTextPayload) return;
-        try {
+        try {            
             await navigator.clipboard.writeText(compiledTextPayload);
-            showStatus("Successfully copied master file text!", "success");
-        } catch (err) {
+            showStatus("Successfully copied optimized file text!", "success");
+        } catch (err) {            
             showStatus("Failed to copy automatically.", "error");
-        }
-    });
+        }    });
 </script>
-
 </body>
 </html>
