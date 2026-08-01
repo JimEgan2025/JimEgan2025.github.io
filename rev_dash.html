@@ -90,10 +90,23 @@
 <script>
     const LAT = 30.5871;
     const LON = -97.641;
-    const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
     const ALMANAC_JSON_URL = 'https://JimEgan2025.github.io/almanac.json';
 
     let almanacData = {};
+
+    // Securely retrieve API Key from local storage or prompt the user at runtime
+    function getApiKey() {
+        let apiKey = localStorage.getItem("visual_crossing_key");
+        if (!apiKey) {
+            apiKey = prompt("Please enter your Visual Crossing API Key:");
+            if (apiKey) {
+                localStorage.setItem("visual_crossing_key", apiKey.trim());
+            } else {
+                alert("API key is required to fetch weather data.");
+            }
+        }
+        return localStorage.getItem("visual_crossing_key");
+    }
 
     // Helper to convert Degrees to Cardinal Direction
     const getWindDir = deg => ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(deg / 22.5) % 16];
@@ -161,10 +174,15 @@
     }
 
     async function init() {
+        const vcApiKey = getApiKey();
+        if (!vcApiKey) return;
+
         await sourceAlmanac();
         try {
-            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&include=days&key=${VC_API_KEY}&contentType=json`;
+            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&include=days&key=${vcApiKey}&contentType=json`;
             const res = await fetch(url);
+            if (!res.ok) throw new Error(`API Request Failed (${res.status})`);
+            
             const data = await res.json();
             const days = data.days || [];
 
@@ -194,7 +212,5 @@
     }
     init();
 </script>
-</body>
-</html>
 </body>
 </html>
