@@ -214,6 +214,7 @@
 </div>
 
 <script>
+    // Retrieves API key from browser local storage, or prompts for it once if missing
     function getApiKey() {
         let apiKey = localStorage.getItem("visual_crossing_key");
         if (!apiKey) {
@@ -346,7 +347,7 @@
                 ? "TODAY" 
                 : new Date(day.datetime + 'T00:00:00').toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'}).toUpperCase();
 
-            body.insertAdjacentHTML('beforeend', `
+            body.insertAdjacentHTML('beforeend`', `
                 <tr class="day-separator">
                     <td colspan="12">
                         <div class="day-summary-grid">
