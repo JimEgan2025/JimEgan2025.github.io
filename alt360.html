@@ -214,7 +214,19 @@
 </div>
 
 <script>
-    const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
+    function getApiKey() {
+        let apiKey = localStorage.getItem("visual_crossing_key");
+        if (!apiKey) {
+            apiKey = prompt("Please enter your Visual Crossing API Key:");
+            if (apiKey) {
+                localStorage.setItem("visual_crossing_key", apiKey.trim());
+            } else {
+                alert("API key is required to fetch weather data.");
+            }
+        }
+        return localStorage.getItem("visual_crossing_key");
+    }
+
     const ALMANAC_URL = 'https://JimEgan2025.github.io/almanac.json';
     
     let almanacData = {};
@@ -268,6 +280,9 @@
     }
 
     async function init() {
+        const VC_API_KEY = getApiKey();
+        if (!VC_API_KEY) return;
+
         await sourceAlmanac();
             
         const now = new Date();
@@ -358,8 +373,6 @@
 
                 const hr = parseInt(hour.datetime.split(':')[0], 10);
                 
-                // Absolute placement logic: Match the hour slot that *contains* the event minute mark (e.g., 6:45 AM falls into the 6:00 AM row block, so we inject *after* the 6:00 AM row).
-                // Specifically, if sunrise is at 6:45, it belongs inside the 6:00-7:00 block, meaning it should appear immediately after the 6:00 row renders.
                 const sunriseHour = sunriseMins >= 0 ? Math.floor(sunriseMins / 60) : -1;
                 const sunsetHour = sunsetMins >= 0 ? Math.floor(sunsetMins / 60) : -1;
 
@@ -424,7 +437,6 @@
                     </tr>
                 `);
 
-                // Insert event row immediately after the matching hour row has been rendered
                 if (!sunriseInjected && hr === sunriseHour) {
                     body.insertAdjacentHTML('beforeend', `
                         <tr class="sunrise-row">
