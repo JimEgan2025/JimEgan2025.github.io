@@ -145,7 +145,7 @@
         }
 
         #detailed-view table {
-            min-width: 1300px;
+            min-width: 1450px;
         }
 
         #summary-view table {
@@ -177,6 +177,8 @@
         }
         tr.today {
             background-color: #1e293b;
+        }
+        tr.today td:first-child {
             border-left: 3px solid #38bdf8;
         }
 
@@ -248,7 +250,7 @@
                 <p>Georgetown, TX (30.587, -97.641) — Consolidated Multi-Model Spreadsheet Dashboard</p>
             </div>
             <div class="controls-row">
-                <input type="text" id="vcKeyInput" value="556ZX74XKT3VBMGFNX626Q9JJ" placeholder="Paste VC API Key" style="width: 180px;">
+                <input type="text" id="vcKeyInput" placeholder="Paste VC API Key" style="width: 180px;">
                 <button onclick="fetchWeatherModels()">Sync Boards</button>
                 <div class="time-badge" id="live-time">12:30:00 PM</div>
             </div>
@@ -348,21 +350,25 @@
                         <tr>
                             <th style="text-align: left; width: 8%;">Date</th>
                             <th style="width: 5%;">Day</th>
-                            <th class="gt-header" style="width: 12%;">Visual Crossing (GT)</th>
-                            <th style="width: 11%;">European ECMWF-IFS</th>
-                            <th style="width: 11%;">European ECMWF-AIFS</th>
-                            <th style="width: 11%;">US - Global GFS</th>
-                            <th style="width: 11%;">US - Numerical Blend (NBM)</th>
-                            <th style="width: 11%;">GEM Canada</th>
-                            <th style="width: 11%;">Graphcast Experimental AI</th>
-                            <th style="width: 6%;" class="calc-col">Rain Prob Avg</th>
-                            <th style="width: 6%;" class="calc-col">Rain Amt Avg</th>
-                            <th style="width: 9%;" class="calc-col">Rain Range</th>
-                            <th style="width: 9%;" class="calc-col">Average Temp</th>
+                            <th class="gt-header" style="width: 10%;">Visual Crossing (GT)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Rain Prob</th>
+                            <th style="width: 5%;" class="calc-col">Rain Avg</th>
+                            <th style="width: 7%;" class="calc-col">Rain Range</th>
+                            <th style="width: 8%;" class="calc-col">Avg Temp</th>
                         </tr>
                     </thead>
                     <tbody id="temp-tbody">
-                        <tr><td colspan="13" style="padding: 30px; color: #64748b;">Fetching model variances...</td></tr>
+                        <tr><td colspan="17" style="padding: 30px; color: #64748b;">Fetching model variances...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -374,27 +380,26 @@
                         <tr>
                             <th style="text-align: left; width: 8%;">Date</th>
                             <th style="width: 5%;">Day</th>
-                            <th class="gt-header">Visual Crossing (GT)</th>
-                            <th>ECMWF IFS</th>
-                            <th>ECMWF-AIFS</th>
-                            <th>NAM</th>
-                            <th>RDPS (Reg)</th>
-                            <th>NOAA (NBM)</th>
-                            <th>DWD ICON (German)</th>
-                            <th>Graphcast</th>
-                            <th>GEM Canada</th>
-                            <th>SREF</th>
-                            <th>GFS</th>
-                            <th>GDPS (Global)</th>
-                            <th class="calc-col">Prob</th>
-                            <th class="calc-col">Average</th>
-                            <th class="calc-col">Min</th>
-                            <th class="calc-col">Max</th>
-                            <th class="calc-col">Range</th>
+                            <th class="gt-header" style="width: 10%;">Visual Crossing (GT)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
                         </tr>
                     </thead>
                     <tbody id="apparent-tbody">
-                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching apparent temperatures...</td></tr>
+                        <tr><td colspan="18" style="padding: 30px; color: #64748b;">Fetching apparent temperatures...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -406,27 +411,26 @@
                         <tr>
                             <th style="text-align: left; width: 8%;">Date</th>
                             <th style="width: 5%;">Day</th>
-                            <th class="gt-header">Visual Crossing (GT)</th>
-                            <th>ECMWF IFS</th>
-                            <th>ECMWF-AIFS</th>
-                            <th>NAM</th>
-                            <th>RDPS (Reg)</th>
-                            <th>NOAA (NBM)</th>
-                            <th>DWD ICON (German)</th>
-                            <th>Graphcast</th>
-                            <th>GEM Canada</th>
-                            <th>SREF</th>
-                            <th>GFS</th>
-                            <th>GDPS (Global)</th>
-                            <th class="calc-col">Prob</th>
-                            <th class="calc-col">Average</th>
-                            <th class="calc-col">Min</th>
-                            <th class="calc-col">Max</th>
-                            <th class="calc-col">Range</th>
+                            <th class="gt-header" style="width: 10%;">Visual Crossing (GT)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
                         </tr>
                     </thead>
                     <tbody id="wind-tbody">
-                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching wind forecasts...</td></tr>
+                        <tr><td colspan="18" style="padding: 30px; color: #64748b;">Fetching wind forecasts...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -438,27 +442,26 @@
                         <tr>
                             <th style="text-align: left; width: 8%;">Date</th>
                             <th style="width: 5%;">Day</th>
-                            <th class="gt-header">Visual Crossing (GT)</th>
-                            <th>ECMWF IFS</th>
-                            <th>ECMWF-AIFS</th>
-                            <th>NAM</th>
-                            <th>RDPS (Reg)</th>
-                            <th>NOAA (NBM)</th>
-                            <th>DWD ICON (German)</th>
-                            <th>Graphcast</th>
-                            <th>GEM Canada</th>
-                            <th>SREF</th>
-                            <th>GFS</th>
-                            <th>GDPS (Global)</th>
-                            <th class="calc-col">Prob</th>
-                            <th class="calc-col">Average</th>
-                            <th class="calc-col">Min</th>
-                            <th class="calc-col">Max</th>
-                            <th class="calc-col">Range</th>
+                            <th class="gt-header" style="width: 10%;">Visual Crossing (GT)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
                         </tr>
                     </thead>
                     <tbody id="precip-tbody">
-                        <tr><td colspan="19" style="padding: 30px; color: #64748b;">Fetching rain models...</td></tr>
+                        <tr><td colspan="18" style="padding: 30px; color: #64748b;">Fetching rain models...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -547,7 +550,17 @@
 
         async function fetchWeatherModels() {
             try {
-                const vcKey = document.getElementById('vcKeyInput').value.trim();
+                const vcKeyInput = document.getElementById('vcKeyInput');
+                let vcKey = vcKeyInput.value.trim();
+
+                if (vcKey) {
+                    localStorage.setItem("vcKey", vcKey);
+                } else {
+                    vcKey = localStorage.getItem("vcKey") || "";
+                    if (vcKey) {
+                        vcKeyInput.value = vcKey;
+                    }
+                }
 
                 const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs025,ecmwf_aifs025_single,gfs_seamless,ncep_nbm_conus,gem_seamless,gfs_graphcast025,ncep_nam_conus,gem_regional,gem_global,icon_seamless&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=15`;
                 const omResponse = await fetch(openMeteoUrl);
@@ -559,7 +572,11 @@
                     try {
                         const vcUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${lat},${lon}?unitGroup=us&key=${vcKey}&contentType=json`;
                         const vcResponse = await fetch(vcUrl);
-                        vcData = await vcResponse.json();
+                        if (vcResponse.ok) {
+                            vcData = await vcResponse.json();
+                        } else {
+                            console.warn("Visual Crossing returned non-OK status: ", vcResponse.status);
+                        }
                     } catch (e) {
                         console.warn("Visual Crossing failed to fetch: ", e);
                     }
@@ -568,16 +585,20 @@
                 renderDashboard(omData, vcData);
 
             } catch (error) {
-                const errHTML = `<tr><td colspan="19" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
-                document.getElementById("temp-tbody").innerHTML = errHTML;
-                document.getElementById("apparent-tbody").innerHTML = errHTML;
-                document.getElementById("wind-tbody").innerHTML = errHTML;
-                document.getElementById("precip-tbody").innerHTML = errHTML;
+                const errHTML17 = `<tr><td colspan="17" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                const errHTML18 = `<tr><td colspan="18" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                const errHTML7 = `<tr><td colspan="7" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                const errHTML6 = `<tr><td colspan="6" style="padding: 30px; color: #f87171;">Error loading models: ${error.message}</td></tr>`;
+                
+                document.getElementById("temp-tbody").innerHTML = errHTML17;
+                document.getElementById("apparent-tbody").innerHTML = errHTML18;
+                document.getElementById("wind-tbody").innerHTML = errHTML18;
+                document.getElementById("precip-tbody").innerHTML = errHTML18;
 
-                document.getElementById("summary-temp-tbody").innerHTML = errHTML;
-                document.getElementById("summary-apparent-tbody").innerHTML = errHTML;
-                document.getElementById("summary-wind-tbody").innerHTML = errHTML;
-                document.getElementById("summary-precip-tbody").innerHTML = errHTML;
+                document.getElementById("summary-temp-tbody").innerHTML = errHTML7;
+                document.getElementById("summary-apparent-tbody").innerHTML = errHTML6;
+                document.getElementById("summary-wind-tbody").innerHTML = errHTML6;
+                document.getElementById("summary-precip-tbody").innerHTML = errHTML6;
             }
         }
 
@@ -703,7 +724,8 @@
             let aiMarkdown = "# Vizcaya Weather Consensus Report\n";
             aiMarkdown += `Generated: ${new Date().toLocaleString()}\n\n`;
 
-            const todayStr = new Date().toISOString().split('T')[0];
+            const chicagoFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit' });
+            const todayStr = chicagoFormatter.format(new Date());
 
             for (let i = 0; i < datasets.times.length; i++) {
                 const dateStr = datasets.times[i];
@@ -857,6 +879,20 @@
         }
 
         window.onload = function() {
+            let vcKey = localStorage.getItem("vcKey");
+            
+            if (!vcKey) {
+                vcKey = prompt("Please enter your Visual Crossing API Key to sync all boards:");
+                if (vcKey) {
+                    vcKey = vcKey.trim();
+                    localStorage.setItem("vcKey", vcKey);
+                }
+            }
+            
+            if (vcKey) {
+                document.getElementById('vcKeyInput').value = vcKey;
+            }
+            
             fetchWeatherModels();
         };
     </script>
