@@ -1,479 +1,321 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Texas Weather Decision Console v9.9</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <!-- Leaflet GIS Framework Styling -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #0b1220; color: #e5e7eb; }
-    header { background: #0f172a; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
-    h1 { font-size: 16px; margin: 0; }
-    button { background: #111827; color: #fff; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-left: 6px; font-weight: bold; }
-    button:hover { background: #1f2937; }
-    #layout { display: grid; grid-template-columns: 390px 1fr; height: calc(100vh - 48px); }
-    #sidebar { overflow: auto; padding: 10px; border-right: 1px solid #1f2937; display: flex; flex-direction: column; gap: 10px; }
-    .panel { background: #0f172a; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; }
-    .small { font-size: 12px; opacity: 0.9; line-height: 1.4; }
-    .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; text-transform: uppercase; }
-    .grid-row { display: grid; grid-template-columns: 60px 130px 130px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e293b; }
-    .grid-header { font-weight: bold; border-bottom: 2px solid #334155; padding-bottom: 4px; color: #94a3b8; }
-    #map { height: 100%; }
-    .leaflet-control-layers { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; border-radius: 8px !important; }
-    .leaflet-control-layers-toggle { filter: invert(1); }
-  </style>
-</head>
-<body>
+<!DOCTYPE html><html lang="en"><head>  <meta charset="UTF-8">  <title>Texas Weather Decision Console v9.10</title>  <meta name="viewport" content="width=device-width, initial-scale=1">    <!-- Leaflet GIS Framework Styling -->  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>  <style>    body { margin: 0; font-family: Arial, sans-serif; background: #0b1220; color: #e5e7eb; }    header { background: #0f172a; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }    h1 { font-size: 16px; margin: 0; }    button { background: #111827; color: #fff; border: 1px solid #334155; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-left: 6px; font-weight: bold; }    button:hover { background: #1f2937; }    #layout { display: grid; grid-template-columns: 390px 1fr; height: calc(100vh - 48px); }    #sidebar { overflow: auto; padding: 10px; border-right: 1px solid #1f2937; display: flex; flex-direction: column; gap: 10px; }    .panel { background: #0f172a; border: 1px solid #1f2937; border-radius: 8px; padding: 12px; }    .small { font-size: 12px; opacity: 0.9; line-height: 1.4; }    .badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; text-transform: uppercase; }    .grid-row { display: grid; grid-template-columns: 60px 130px 130px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid #1e293b; }    .grid-header { font-weight: bold; border-bottom: 2px solid #334155; padding-bottom: 4px; color: #94a3b8; }    #map { height: 100%; }    .leaflet-control-layers { background: #0f172a !important; color: #e5e7eb !important; border: 1px solid #334155 !important; border-radius: 8px !important; }    .leaflet-control-layers-toggle { filter: invert(1); }  </style></head><body>
+<header>  <h1>Weather Decision Console v9.10 (Live Dynamic Sync)</h1>  <div><button id="btnRefresh">Execute Live Sync</button></div></header>
+<div id="layout">  <div id="sidebar">        <!-- EXCLUSIVE POINT TELEMETRY PANEL -->    <div class="panel">      <b style="color: #60a5fa; font-size: 14px;">📍 Local Telemetry: Round Rock, TX</b>      <div style="font-size: 11px; color: #94a3b8; margin: 2px 0 8px 0;">Anchor Coordinates: 30.5284, -97.6491</div>      <div class="grid-row grid-header">        <div>Period</div>        <div>SPC Severe</div>        <div>WPC Rainfall</div>      </div>      <div class="grid-row">        <b>Day 1</b>        <div id="rr-spc1">Evaluating...</div>        <div id="rr-wpc1">Evaluating...</div>      </div>      <div class="grid-row">        <b>Day 2</b>        <div id="rr-spc2">Evaluating...</div>        <div id="rr-wpc2">Evaluating...</div>      </div>      <div class="grid-row">        <b>Day 3</b>        <div id="rr-spc3">Evaluating...</div>        <div id="rr-wpc3">Evaluating...</div>      </div>            <!-- Short-fuse active alert checks -->      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #334155; font-size: 12px;">        <div><b>Active Local Mesoscale Hit:</b> <span id="local-meso" style="color: #10b981; font-weight: bold;">NONE</span></div>      </div>    </div>
+    <!-- SUB-REGIONAL MACRO CAPTURE PANEL -->    <div class="panel">      <b style="color: #cbd5e1; font-size: 13px;">🗺️ Regional Trends Mapped (Texas Extents)</b>      <div id="macroBriefing" class="small" style="margin-top: 6px; max-height: 180px; overflow-y: auto; color: #94a3b8;">        Processing incoming geometries...      </div>    </div>
+    <!-- TOKEN-OPTIMIZED AI PROMPT OUTPUT BOX -->    <div class="panel" style="border: 1px solid #0284c7; background: #030712; flex-grow: 1; display: flex; flex-direction: column;">      <b style="color: #38bdf8; font-size: 13px;">🤖 Clean AI Data Stack</b>      <textarea id="aiPromptBox" style="width:95%; flex-grow: 1; min-height: 160px; background:#020617; color:#38bdf8; border:1px solid #334155; font-family:monospace; font-size:11px; margin-top:6px; border-radius:4px; padding:6px; resize: none;" readonly></textarea>      <button id="btnCopyPrompt" style="width:100%; margin:6px 0 0 0; font-size:12px; background:#0284c7; border:none; color: white; padding: 7px; border-radius: 4px; cursor: pointer; font-weight: bold;">Copy Raw Token Manifest</button>    </div>
+  </div>  <div id="map"></div></div>
+<!-- Core JavaScript Processing Engine --><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>(function() {  const map = L.map('map').setView([27.5, -94.0], 5);  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 10, attribution: '© CARTO' }).addTo(map);
 
-<header>
-  <h1>Weather Decision Console v9.9 (NHC Full Tropical Integration)</h1>
-  <div><button id="btnRefresh">Execute Live Sync</button></div>
-</header>
-
-<div id="layout">
-  <div id="sidebar">
-    
-    <!-- EXCLUSIVE POINT TELEMETRY PANEL -->
-    <div class="panel">
-      <b style="color: #60a5fa; font-size: 14px;">📍 Local Telemetry: Round Rock, TX</b>
-      <div style="font-size: 11px; color: #94a3b8; margin: 2px 0 8px 0;">Anchor Coordinates: 30.5284, -97.6491</div>
-      <div class="grid-row grid-header">
-        <div>Period</div>
-        <div>SPC Severe</div>
-        <div>WPC Rainfall</div>
-      </div>
-      <div class="grid-row">
-        <b>Day 1</b>
-        <div id="rr-spc1">Evaluating...</div>
-        <div id="rr-wpc1">Evaluating...</div>
-      </div>
-      <div class="grid-row">
-        <b>Day 2</b>
-        <div id="rr-spc2">Evaluating...</div>
-        <div id="rr-wpc2">Evaluating...</div>
-      </div>
-      <div class="grid-row">
-        <b>Day 3</b>
-        <div id="rr-spc3">Evaluating...</div>
-        <div id="rr-wpc3">Evaluating...</div>
-      </div>
-      
-      <!-- Short-fuse active alert checks -->
-      <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #334155; font-size: 12px;">
-        <div><b>Active Local Mesoscale Hit:</b> <span id="local-meso" style="color: #10b981; font-weight: bold;">NONE</span></div>
-      </div>
-    </div>
-
-    <!-- SUB-REGIONAL MACRO CAPTURE PANEL -->
-    <div class="panel">
-      <b style="color: #cbd5e1; font-size: 13px;">🗺️ Regional Trends Mapped (Texas Extents)</b>
-      <div id="macroBriefing" class="small" style="margin-top: 6px; max-height: 180px; overflow-y: auto; color: #94a3b8;">
-        Processing incoming geometries...
-      </div>
-    </div>
-
-    <!-- TOKEN-OPTIMIZED AI PROMPT OUTPUT BOX -->
-    <div class="panel" style="border: 1px solid #0284c7; background: #030712; flex-grow: 1; display: flex; flex-direction: column;">
-      <b style="color: #38bdf8; font-size: 13px;">🤖 Clean AI Data Stack</b>
-      <textarea id="aiPromptBox" style="width:95%; flex-grow: 1; min-height: 160px; background:#020617; color:#38bdf8; border:1px solid #334155; font-family:monospace; font-size:11px; margin-top:6px; border-radius:4px; padding:6px; resize: none;" readonly></textarea>
-      <button id="btnCopyPrompt" style="width:100%; margin:6px 0 0 0; font-size:12px; background:#0284c7; border:none; color: white; padding: 7px; border-radius: 4px; cursor: pointer; font-weight: bold;">Copy Raw Token Manifest</button>
-    </div>
-
-  </div>
-  <div id="map"></div>
-</div>
-
-<!-- Core JavaScript Processing Engine -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function() {
-  const map = L.map('map').setView([27.5, -94.0], 5); // Cleanly balances Texas & the Gulf
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 10, attribution: '© CARTO' }).addTo(map);
-
-  const TARGET_ANCHOR = [30.5284, -97.6491]; 
-  
-  L.circleMarker(TARGET_ANCHOR, {
-    radius: 7, fillColor: '#60a5fa', color: '#ffffff', weight: 2, fillOpacity: 1
+  const TARGET_ANCHOR = [30.5284, -97.6491];     
+  L.circleMarker(TARGET_ANCHOR, {    
+    radius: 7, fillColor: '#60a5fa', color: '#ffffff', weight: 2, fillOpacity: 1  
   }).addTo(map).bindPopup("<b>Target Node: Round Rock / Vizcaya Corridor</b>");
 
-  const texasOutlineLayer = L.layerGroup().addTo(map);
-  const alertLayer = L.layerGroup().addTo(map);
-  const day1Layer = L.layerGroup().addTo(map); 
-  const day2Layer = L.layerGroup();
-  const day3Layer = L.layerGroup();
-  const wpc1Layer = L.layerGroup().addTo(map);
-  const wpc2Layer = L.layerGroup();
-  const wpc3Layer = L.layerGroup();
-  const mesoscaleLayer = L.layerGroup().addTo(map);
-  
-  // NHC Dynamic Tropical Layer Groups
-  const tropicalOutlookLayer = L.layerGroup().addTo(map);
-  const tropicalConeLayer = L.layerGroup().addTo(map);
+  const texasOutlineLayer = L.layerGroup().addTo(map);  
+  const alertLayer = L.layerGroup().addTo(map);  
+  const day1Layer = L.layerGroup().addTo(map);   
+  const day2Layer = L.layerGroup();  
+  const day3Layer = L.layerGroup();  
+  const wpc1Layer = L.layerGroup().addTo(map);  
+  const wpc2Layer = L.layerGroup();  
+  const wpc3Layer = L.layerGroup();  
+  const mesoscaleLayer = L.layerGroup().addTo(map);    
+  const tropicalOutlookLayer = L.layerGroup().addTo(map);  
+  const tropicalConeLayer = L.layerGroup().addTo(map);  
   const tropicalTrackLayer = L.layerGroup().addTo(map);
 
-  // Live Production Enterprise WMS Radar Overlay Gateway
-  const radarLayer = L.tileLayer.wms('https://mapservices.weather.noaa.gov/eventdriven/services/radar/radar_base_reflectivity/MapServer/WMSServer', {
-    layers: '0',
-    format: 'image/png',
-    transparent: true,
-    version: '1.3.0',
-    crs: L.CRS.EPSG3857,
-    opacity: 0.65,
-    attribution: 'NOAA/NWS Live Radar'
+  const radarLayer = L.tileLayer.wms('https://mapservices.weather.noaa.gov/eventdriven/services/radar/radar_base_reflectivity/MapServer/WMSServer', {    
+    layers: '0', format: 'image/png', transparent: true, version: '1.3.0', crs: L.CRS.EPSG3857, opacity: 0.65, attribution: 'NOAA/NWS Live Radar'  
   }).addTo(map);
 
-  L.control.layers(null, {
-    "📡 Live NWS Radar Reflectivity": radarLayer,
-    "🟡 NHC Potential Areas of Interest": tropicalOutlookLayer,
-    "░ NHC Forecast Cone of Uncertainty": tropicalConeLayer,
-    "🌀 NHC Forecast Track Line": tropicalTrackLayer,
-    "⚪ Texas State Boundary": texasOutlineLayer,
-    "⚠️ Active NWS Texas Alerts": alertLayer,
-    "🔬 Mesoscale Discussions (SPC/WPC)": mesoscaleLayer,
-    "⛈️ SPC Day 1 Severe": day1Layer,
-    "⛈️ SPC Day 2 Severe": day2Layer,
-    "⛈️ SPC Day 3 Severe": day3Layer,
-    "🌧️ WPC Flood Day 1": wpc1Layer,
-    "🌧️ WPC Flood Day 2": wpc2Layer,
-    "🌧️ WPC Flood Day 3": wpc3Layer
-  }, { collapsed: false }).addTo(map);
+  L.control.layers(null, {    
+    "📡 Live NWS Radar Reflectivity": radarLayer,    
+    "🟡 NHC Potential Areas of Interest": tropicalOutlookLayer,    
+    "░ NHC Forecast Cone of Uncertainty": tropicalConeLayer,    
+    "🌀 NHC Forecast Track Line": tropicalTrackLayer,    
+    "⚪ Texas State Boundary": texasOutlineLayer,    
+    "⚠️ Active NWS Texas Alerts": alertLayer,    
+    "🔬 Mesoscale Discussions (SPC/WPC)": mesoscaleLayer,    
+    "⛈️ SPC Day 1 Severe": day1Layer,    
+    "⛈️ SPC Day 2 Severe": day2Layer,    
+    "⛈️ SPC Day 3 Severe": day3Layer,    
+    "🌧️ WPC Flood Day 1": wpc1Layer,    
+    "🌧️ WPC Flood Day 2": wpc2Layer,    
+    "🌧️ WPC Flood Day 3": wpc3Layer  }, { collapsed: false }).addTo(map);
 
-  const ENDPOINTS = {
-    texasGeoJSON: "https://raw.githubusercontent.com/Cincome/tx.geojson/master/tx.geojson",
-    d1: "https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson",
-    d2: "https://www.spc.noaa.gov/products/outlook/day2otlk_cat.nolyr.geojson",
-    d3: "https://www.spc.noaa.gov/products/outlook/day3otlk_cat.nolyr.geojson",
-    wpc1: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
-    wpc2: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
-    wpc3: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/2/query?where=1%3D1&outFields=*&f=geojson",
-    alerts: "https://api.weather.gov/alerts/active?area=TX",
-    spcMeso: "https://www.spc.noaa.gov/products/md/activemd.geojson",
-    wpcMeso: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_mpd/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
-    
-    // NHC Active Tropical Feeds (Unified Dynamic Enterprise Summaries)
-    nhcOutlook: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
-    nhcTrack: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
-    nhcCone: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/2/query?where=1%3D1&outFields=*&f=geojson"
+  const ENDPOINTS = {    
+    texasGeoJSON: "https://raw.githubusercontent.com/Cincome/tx.geojson/master/tx.geojson",    
+    d1: "https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson",    
+    d2: "https://www.spc.noaa.gov/products/outlook/day2otlk_cat.nolyr.geojson",    
+    d3: "https://www.spc.noaa.gov/products/outlook/day3otlk_cat.nolyr.geojson",    
+    wpc1: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",    
+    wpc2: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",    
+    wpc3: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/2/query?where=1%3D1&outFields=*&f=geojson",    
+    alerts: "https://api.weather.gov/alerts/active?area=TX",    
+    spcMeso: "https://www.spc.noaa.gov/products/md/activemd.geojson",    
+    wpcMeso: "https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_mpd/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",    
+    nhcOutlook: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",    
+    nhcTrack: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",    
+    nhcCone: "https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer/2/query?where=1%3D1&outFields=*&f=geojson"  
   };
 
-  let applicationState = {
-    local: { spc_d1: "NONE", wpc_d1: "< 5%", spc_d2: "NONE", wpc_d2: "< 5%", spc_d3: "NONE", wpc_d3: "< 5%", activeMeso: "NONE", tropicalThreat: "NONE" },
-    macro: { spc_d1: [], wpc_d1: [], spc_d2: [], wpc_d2: [], spc_d3: [], wpc_d3: [], activeMeso: [], activeStorms: [], activeOutlooks: [] }
+  let applicationState = {    
+    local: { spc_d1: "NONE", wpc_d1: "< 5%", spc_d2: "NONE", wpc_d2: "< 5%", spc_d3: "NONE", wpc_d3: "< 5%", activeMeso: "NONE", tropicalThreat: "NONE" },    
+    macro: { spc_d1: [], wpc_d1: [], spc_d2: [], wpc_d2: [], spc_d3: [], wpc_d3: [], activeMeso: [], activeStorms: [], activeOutlooks: [] }  
   };
 
-  const VISUAL_CONFIG = {
-    "HIGH": { color: "#ef4444", text: "#fff" },
-    "MDT":  { color: "#f97316", text: "#fff" },
-    "ENH":  { color: "#eab308", text: "#000" },
-    "SLGT": { color: "#22c55e", text: "#000" },
-    "MRGL": { color: "#059669", text: "#fff" },
-    "TSTM": { color: "#1e3a8a", text: "#fff" },
-    "NONE": { color: "#334155", text: "#94a3b8" }
+  const VISUAL_CONFIG = {    
+    "HIGH": { color: "#ef4444", text: "#fff" },    
+    "MDT":  { color: "#f97316", text: "#fff" },    
+    "ENH":  { color: "#eab308", text: "#000" },    
+    "SLGT": { color: "#22c55e", text: "#000" },    
+    "MRGL": { color: "#059669", text: "#fff" },    
+    "TSTM": { color: "#1e3a8a", text: "#fff" },    
+    "NONE": { color: "#334155", text: "#94a3b8" }  
   };
 
-  function normalizeApiLabel(rawLabel) {
-    const s = String(rawLabel).toUpperCase().replace(/[\s,_()\-]+/g, '');
-    if (s.includes("HIGH")) return "HIGH";
-    if (s.includes("MDT") || s.includes("MOD")) return "MDT";
-    if (s.includes("ENH")) return "ENH";
-    if (s.includes("SLGT") || s.includes("SLIGHT")) return "SLGT";
-    if (s.includes("MRGL") || s.includes("MARGINAL")) return "MRGL";
-    if (s.includes("TSTM") || s.includes("THUNDER")) return "TSTM";
-    return "NONE";
+  function normalizeApiLabel(rawLabel) {    
+    const s = String(rawLabel).toUpperCase().replace(/[\s,_()\-]+/g, '');    
+    if (s.includes("HIGH")) return "HIGH";    
+    if (s.includes("MDT") || s.includes("MOD")) return "MDT";    
+    if (s.includes("ENH")) return "ENH";    
+    if (s.includes("SLGT") || s.includes("SLIGHT")) return "SLGT";    
+    if (s.includes("MRGL") || s.includes("MARGINAL")) return "MRGL";    
+    if (s.includes("TSTM") || s.includes("THUNDER")) return "TSTM";    
+    return "NONE";  
   }
 
-  function testPointInsidePolygon(point, vs) {
-    const lat = point[0], lng = point[1];
-    let inside = false;
-    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-      const xi = vs[i][0], yi = vs[i][1];
-      const xj = vs[j][0], yj = vs[j][1];
-      const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
+  function testPointInsidePolygon(point, vs) {    
+    const lat = point[0], lng = point[1];    
+    let inside = false;    
+    for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {      
+      const xi = vs[i][0], yi = vs[i][1];      
+      const xj = vs[j][0], yj = vs[j][1];      
+      const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);      
+      if (intersect) inside = !inside;    
+    }    
+    return inside;  
   }
 
-  function verifySpatialIntersection(feature, point) {
-    if (!feature.geometry) return false;
-    const type = feature.geometry.type;
+  function verifySpatialIntersection(feature, point) {    
+    if (!feature.geometry) return false;    
+    const type = feature.geometry.type;    
     const coords = feature.geometry.coordinates;
-
-    if (type === "Polygon") {
-      return testPointInsidePolygon(point, coords[0]);
-    } else if (type === "MultiPolygon") {
-      for (let i = 0; i < coords.length; i++) {
-        if (testPointInsidePolygon(point, coords[i][0])) return true;
-      }
-    }
-    return false;
+    if (type === "Polygon") {      
+      return testPointInsidePolygon(point, coords[0]);    
+    } else if (type === "MultiPolygon") {      
+      for (let i = 0; i < coords.length; i++) {        
+        if (testPointInsidePolygon(point, coords[i][0])) return true;      
+      }    }    
+    return false;  
   }
 
-  function assignMicroRegionSector(feature) {
-    try {
-      if (!feature.geometry || !feature.geometry.coordinates) return "Texas Domain";
-      let node = feature.geometry.type === "Polygon" ? feature.geometry.coordinates[0][0] : feature.geometry.coordinates[0][0][0];
+  function assignMicroRegionSector(feature) {    
+    try {      
+      if (!feature.geometry || !feature.geometry.coordinates) return "Texas Domain";      
+      let node = feature.geometry.type === "Polygon" ? feature.geometry.coordinates[0][0] : feature.geometry.coordinates[0][0][0];      
       const lng = node[0], lat = node[1];
-
-      if (lat > 33.8) return "Panhandle";
-      if (lng < -101 && lat <= 33.8 && lat > 30.5) return "West Texas";
-      if (lng < -101 && lat <= 30.5) return "Trans-Pecos";
-      if (lng > -96.5) return "East Texas";
-      if (lat < 28.8) return "South Texas Corridor";
-      return "Central Texas Corridor";
-    } catch (e) {
-      return "Regional Coordinates Extent";
-    }
+      if (lat > 33.8) return "Panhandle";      
+      if (lng < -101 && lat <= 33.8 && lat > 30.5) return "West Texas";      
+      if (lng < -101 && lat <= 30.5) return "Trans-Pecos";      
+      if (lng > -96.5) return "East Texas";      
+      if (lat < 28.8) return "South Texas Corridor";      
+      return "Central Texas Corridor";    } catch (e) {      
+      return "Regional Coordinates Extent";    }  
   }
 
-  // Client-side filter targeting only Atlantic basin features
-  function isAtlanticBasin(feature) {
-    const b = (feature.properties?.BASIN || feature.properties?.basin || "").toUpperCase();
-    return b.includes("AL") || b.includes("AT") || b === ""; // Default to true if empty to catch general coastal warnings
+  function isAtlanticBasin(feature) {    
+    const b = (feature.properties?.BASIN || feature.properties?.basin || "").toUpperCase();    
+    return b.includes("AL") || b.includes("AT") || b === "";  
   }
 
-  function processStrictHierarchy(geojsonData, point) {
+  function processStrictHierarchy(geojsonData, point) {    
     if (!geojsonData || !geojsonData.features) return { localMatch: "NONE", regionalSectors: [] };
-
-    const TIER_ORDER = ["HIGH", "MDT", "ENH", "SLGT", "MRGL", "TSTM"];
-    let detectedLocalRisk = "NONE";
+    const TIER_ORDER = ["HIGH", "MDT", "ENH", "SLGT", "MRGL", "TSTM"];    
+    let detectedLocalRisk = "NONE";    
     let foundSectors = [];
 
-    for (let currentTier of TIER_ORDER) {
-      const matchingFeatures = geojsonData.features.filter(f => {
-        const p = f.properties || {};
-        const label = p.LABEL || p.label || p.outlook || p.OUTLOOK || "";
-        return normalizeApiLabel(label) === currentTier;
-      });
+    for (let currentTier of TIER_ORDER) {      
+      const matchingFeatures = geojsonData.features.filter(f => {        
+        const p = f.properties || {};        
+        const label = p.LABEL || p.label || p.outlook || p.OUTLOOK || "";        
+        return normalizeApiLabel(label) === currentTier;      });
 
-      matchingFeatures.forEach(f => {
-        const sectorName = assignMicroRegionSector(f);
+      matchingFeatures.forEach(f => {        
+        const sectorName = assignMicroRegionSector(f);        
         foundSectors.push(`${currentTier} (${sectorName})`);
+        if (detectedLocalRisk === "NONE" && verifySpatialIntersection(f, point)) {          
+          detectedLocalRisk = currentTier;        
+        }      });    }
 
-        if (detectedLocalRisk === "NONE" && verifySpatialIntersection(f, point)) {
-          detectedLocalRisk = currentTier;
-        }
-      });
-    }
-
-    return { localMatch: detectedLocalRisk, regionalSectors: [...new Set(foundSectors)] };
+    return { localMatch: detectedLocalRisk, regionalSectors: [...new Set(foundSectors)] };  
   }
 
-  async function loadTexasOutline() {
-    try {
-      const res = await fetch(ENDPOINTS.texasGeoJSON);
-      if (!res.ok) return;
-      const data = await res.json();
-      L.geoJSON(data, { style: { color: "#475569", weight: 1.5, fillColor: "none", opacity: 0.4 } }).addTo(texasOutlineLayer);
-    } catch (e) { console.error(e); }
+  async function loadTexasOutline() {    
+    try {      
+      const res = await fetch(ENDPOINTS.texasGeoJSON);      
+      if (!res.ok) return;      
+      const data = await res.json();      
+      L.geoJSON(data, { style: { color: "#475569", weight: 1.5, fillColor: "none", opacity: 0.4 } }).addTo(texasOutlineLayer);    } catch (e) { console.error(e); }  
   }
 
-  async function processLayerLifecycle(endpointUrl, dayKey, isWpc, targetMapLayer) {
-    try {
-      const cacheBustUrl = `${endpointUrl}${endpointUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;
-      const res = await fetch(cacheBustUrl);
-      if (!res.ok) return;
+  async function processLayerLifecycle(endpointUrl, dayKey, isWpc, targetMapLayer) {    
+    try {      
+      const cacheBustUrl = `${endpointUrl}${endpointUrl.includes('?') ? '&' : '?'}_=${Date.now()}`;      
+      const res = await fetch(cacheBustUrl);      
+      if (!res.ok) return;      
       const data = await res.json();
 
       const evaluation = processStrictHierarchy(data, TARGET_ANCHOR);
-
-      if (isWpc) {
-        applicationState.local[`wpc_${dayKey}`] = evaluation.localMatch === "NONE" ? "< 5%" : `${evaluation.localMatch} RISK`;
-        applicationState.macro[`wpc_${dayKey}`] = evaluation.regionalSectors;
-      } else {
-        applicationState.local[`spc_${dayKey}`] = evaluation.localMatch;
-        applicationState.macro[`spc_${dayKey}`] = evaluation.regionalSectors;
+      if (isWpc) {        
+        applicationState.local[`wpc_${dayKey}`] = evaluation.localMatch === "NONE" ? "< 5%" : `${evaluation.localMatch} RISK`;        
+        applicationState.macro[`wpc_${dayKey}`] = evaluation.regionalSectors;      
+      } else {        
+        applicationState.local[`spc_${dayKey}`] = evaluation.localMatch;        
+        applicationState.macro[`spc_${dayKey}`] = evaluation.regionalSectors;      
       }
 
-      if (data && data.features) {
-        data.features.forEach(f => {
-          const lbl = f.properties?.LABEL || f.properties?.label || f.properties?.outlook || "";
-          const norm = normalizeApiLabel(lbl);
-          if (norm === "NONE" || String(lbl).toUpperCase().includes("LESS THAN")) return;
-          
-          const cfg = VISUAL_CONFIG[norm] || VISUAL_CONFIG["NONE"];
-          L.geoJSON(f, { style: { color: cfg.color, weight: isWpc ? 2 : 1.5, fillOpacity: isWpc ? 0.15 : 0.08 } }).addTo(targetMapLayer);
-        });
-      }
-    } catch (e) { console.error(e); }
+      if (data && data.features) {        
+        data.features.forEach(f => {          
+          const lbl = f.properties?.LABEL || f.properties?.label || f.properties?.outlook || "";          
+          const norm = normalizeApiLabel(lbl);          
+          if (norm === "NONE" || String(lbl).toUpperCase().includes("LESS THAN")) return;                    
+          const cfg = VISUAL_CONFIG[norm] || VISUAL_CONFIG["NONE"];          
+          L.geoJSON(f, { style: { color: cfg.color, weight: isWpc ? 2 : 1.5, fillOpacity: isWpc ? 0.15 : 0.08 } }).addTo(targetMapLayer);        });      }    } catch (e) { console.error(e); }  
   }
 
-  async function processMesoscaleFeeds() {
-    try {
-      const spcRes = await fetch(ENDPOINTS.spcMeso);
-      if (spcRes.ok) {
-        const data = await spcRes.json();
-        if (data && data.features) {
-          data.features.forEach(f => {
-            const mdNum = f.properties?.mdnum || f.properties?.MDNUM || "Discussion";
-            const summary = f.properties?.headline || f.properties?.REASON || "Convective Activity";
-            const sectorName = assignMicroRegionSector(f);
-            
-            applicationState.macro.activeMeso.push(`SPC MD #${mdNum} (${sectorName})`);
-            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {
-              applicationState.local.activeMeso = `SPC MD #${mdNum} ACTIVE INTEREST`;
+  async function processMesoscaleFeeds() {    
+    try {      
+      const spcRes = await fetch(ENDPOINTS.spcMeso);      
+      if (spcRes.ok) {        
+        const data = await spcRes.json();        
+        if (data && data.features) {          
+          data.features.forEach(f => {            
+            const mdNum = f.properties?.mdnum || f.properties?.MDNUM || "Discussion";            
+            const summary = f.properties?.headline || f.properties?.REASON || "Convective Activity";            
+            const sectorName = assignMicroRegionSector(f);                        
+            applicationState.macro.activeMeso.push(`SPC MD #${mdNum} (${sectorName})`);            
+            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {              
+              applicationState.local.activeMeso = `SPC MD #${mdNum} ACTIVE INTEREST`;            
             }
+            L.geoJSON(f, {              
+              style: { color: "#c084fc", weight: 2, fillColor: "#c084fc", fillOpacity: 0.05, dashArray: "4, 4" }            }).addTo(mesoscaleLayer).bindPopup(`<b>SPC Mesoscale Discussion #${mdNum}</b><br>${summary}`);          });        }      }    } catch (e) { console.log("SPC feed offline."); }
 
-            L.geoJSON(f, {
-              style: { color: "#c084fc", weight: 2, fillColor: "#c084fc", fillOpacity: 0.05, dashArray: "4, 4" }
-            }).addTo(mesoscaleLayer).bindPopup(`<b>SPC Mesoscale Discussion #${mdNum}</b><br>${summary}`);
-          });
-        }
-      }
-    } catch (e) { console.log("SPC feed offline or empty."); }
-
-    try {
-      const wpcRes = await fetch(ENDPOINTS.wpcMeso);
-      if (wpcRes.ok) {
-        const data = await wpcRes.json();
-        if (data && data.features) {
-          data.features.forEach(f => {
-            const mpdNum = f.properties?.mpdnum || f.properties?.MPDNUM || "Discussion";
-            const summary = f.properties?.headline || f.properties?.DISCUSSION || "Heavy Rainfall Potential";
+    try {      
+      const wpcRes = await fetch(ENDPOINTS.wpcMeso);      
+      if (wpcRes.ok) {        
+        const data = await wpcRes.json();        
+        if (data && data.features) {          
+          data.features.forEach(f => {            
+            const mpdNum = f.properties?.mpdnum || f.properties?.MPDNUM || "Discussion";            
+            const summary = f.properties?.headline || f.properties?.DISCUSSION || "Heavy Rainfall Potential";            
             const sectorName = assignMicroRegionSector(f);
 
-            applicationState.macro.activeMeso.push(`WPC MPD #${mpdNum} (${sectorName})`);
-            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {
-              applicationState.local.activeMeso = `WPC MPD #${mpdNum} ACTIVE INTEREST`;
+            applicationState.macro.activeMeso.push(`WPC MPD #${mpdNum} (${sectorName})`);            
+            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {              
+              applicationState.local.activeMeso = `WPC MPD #${mpdNum} ACTIVE INTEREST`;            
             }
 
-            L.geoJSON(f, {
-              style: { color: "#22d3ee", weight: 2, fillColor: "#22d3ee", fillOpacity: 0.05, dashArray: "4, 4" }
-            }).addTo(mesoscaleLayer).bindPopup(`<b>WPC Heavy Rain MPD #${mpdNum}</b><br>${summary}`);
-          });
-        }
-      }
-    } catch (e) { console.log("WPC feed offline or empty."); }
+            L.geoJSON(f, {              
+              style: { color: "#22d3ee", weight: 2, fillColor: "#22d3ee", fillOpacity: 0.05, dashArray: "4, 4" }            }).addTo(mesoscaleLayer).bindPopup(`<b>WPC Heavy Rain MPD #${mpdNum}</b><br>${summary}`);          });        }      }    } catch (e) { console.log("WPC feed offline."); }  
   }
 
-  // REVISED & OPTIMIZED: Unified NHC Data Feed Processor
-  async function syncTropicalTrackingFeeds() {
-    try {
-      // 1. Render Potential Areas of Interest (Outlooks / Layer 0)
-      const outlookRes = await fetch(`${ENDPOINTS.nhcOutlook}&_=${Date.now()}`);
-      if (outlookRes.ok) {
-        const data = await outlookRes.json();
-        if (data && data.features) {
-          data.features.forEach(f => {
-            if (!isAtlanticBasin(f)) return;
-            const dist = f.properties?.DISTURBANCE || f.properties?.id || "Area";
-            const prob2day = f.properties?.PROB2DAY || f.properties?.prob2day || "N/A";
-            const prob5day = f.properties?.PROB7DAY || f.properties?.prob7day || "N/A"; // Modern systems track 7-day outlooks
-            
-            applicationState.macro.activeOutlooks.push(`Disturbance ${dist} (7-Day: ${prob5day})`);
-            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {
-              applicationState.local.tropicalThreat = `ANCHOR WITHIN OUTLOOK DISTURBANCE AREA ${dist}`;
-            }
+  async function syncTropicalTrackingFeeds() {    
+    try {      
+      const outlookRes = await fetch(`${ENDPOINTS.nhcOutlook}&_=${Date.now()}`);      
+      if (outlookRes.ok) {        
+        const data = await outlookRes.json();        
+        if (data && data.features) {          
+          data.features.forEach(f => {            
+            if (!isAtlanticBasin(f)) return;            
+            const dist = f.properties?.DISTURBANCE || f.properties?.id || "Area";            
+            const prob2day = f.properties?.PROB2DAY || f.properties?.prob2day || "N/A";            
+            const prob5day = f.properties?.PROB7DAY || f.properties?.prob7day || "N/A";                        
+            applicationState.macro.activeOutlooks.push(`Disturbance ${dist} (7-Day: ${prob5day})`);            
+            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {              
+              applicationState.local.tropicalThreat = `ANCHOR WITHIN OUTLOOK DISTURBANCE AREA ${dist}`;            }
 
-            L.geoJSON(f, {
-              style: { color: "#eab308", weight: 1.5, fillColor: "#eab308", fillOpacity: 0.2, dashArray: "3, 3" }
-            }).addTo(tropicalOutlookLayer).bindPopup(`<b>NHC Active Outlook Area</b><br>ID: ${dist}<br>2-Day Prob: ${prob2day}%<br>7-Day Prob: ${prob5day}%`);
-          });
-        }
-      }
+            L.geoJSON(f, {              
+              style: { color: "#eab308", weight: 1.5, fillColor: "#eab308", fillOpacity: 0.2, dashArray: "3, 3" }            }).addTo(tropicalOutlookLayer).bindPopup(`<b>NHC Active Outlook Area</b><br>ID: ${dist}<br>2-Day Prob: ${prob2day}%<br>7-Day Prob: ${prob5day}%`);          });        }      }
 
-      // 2. Render Cones of Uncertainty (Layer 2)
-      const coneRes = await fetch(`${ENDPOINTS.nhcCone}&_=${Date.now()}`);
-      if (coneRes.ok) {
-        const data = await coneRes.json();
-        if (data && data.features) {
-          data.features.forEach(f => {
-            if (!isAtlanticBasin(f)) return;
-            const stormName = f.properties?.STORMNAME || f.properties?.stormname || "Active Tropical System";
-            const advisory = f.properties?.ADVISNUM || f.properties?.advisnum || "";
-            
-            applicationState.macro.activeStorms.push(`${stormName} (Advisory ${advisory})`);
-            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {
-              applicationState.local.tropicalThreat = `CRITICAL: ANCHOR NODE INSIDE FORECAST CONE FOR ${stormName.toUpperCase()}`;
-            }
+      const coneRes = await fetch(`${ENDPOINTS.nhcCone}&_=${Date.now()}`);      
+      if (coneRes.ok) {        
+        const data = await coneRes.json();        
+        if (data && data.features) {          
+          data.features.forEach(f => {            
+            if (!isAtlanticBasin(f)) return;            
+            const stormName = f.properties?.STORMNAME || f.properties?.stormname || "Active Tropical System";            
+            const advisory = f.properties?.ADVISNUM || f.properties?.advisnum || "";                        
+            applicationState.macro.activeStorms.push(`${stormName} (Advisory ${advisory})`);            
+            if (verifySpatialIntersection(f, TARGET_ANCHOR)) {              
+              applicationState.local.tropicalThreat = `CRITICAL: ANCHOR NODE INSIDE FORECAST CONE FOR ${stormName.toUpperCase()}`;            }
 
-            L.geoJSON(f, {
-              style: { color: "#0ea5e9", weight: 1.5, fillColor: "#38bdf8", fillOpacity: 0.15 }
-            }).addTo(tropicalConeLayer).bindPopup(`<b>NHC Cone of Uncertainty</b><br>Storm: ${stormName}<br>Advisory: ${advisory}`);
-          });
-        }
-      }
+            L.geoJSON(f, {              
+              style: { color: "#0ea5e9", weight: 1.5, fillColor: "#38bdf8", fillOpacity: 0.15 }            }).addTo(tropicalConeLayer).bindPopup(`<b>NHC Cone of Uncertainty</b><br>Storm: ${stormName}<br>Advisory: ${advisory}`);          });        }      }
 
-      // 3. Render Center Line Tracks (Layer 1)
-      const trackRes = await fetch(`${ENDPOINTS.nhcTrack}&_=${Date.now()}`);
-      if (trackRes.ok) {
-        const data = await trackRes.json();
-        if (data && data.features) {
-          data.features.forEach(f => {
-            if (!isAtlanticBasin(f)) return;
-            L.geoJSON(f, {
-              style: { color: "#f43f5e", weight: 3, dashArray: "2, 4" }
-            }).addTo(tropicalTrackLayer);
-          });
-        }
-      }
-    } catch (e) { console.error("NHC server sync error: ", e); }
+      const trackRes = await fetch(`${ENDPOINTS.nhcTrack}&_=${Date.now()}`);      
+      if (trackRes.ok) {        
+        const data = await trackRes.json();        
+        if (data && data.features) {          
+          data.features.forEach(f => {            
+            if (!isAtlanticBasin(f)) return;            
+            L.geoJSON(f, { style: { color: "#f43f5e", weight: 3, dashArray: "2, 4" } }).addTo(tropicalTrackLayer);          });        }      }    } catch (e) { console.error("NHC sync error: ", e); }  
   }
 
-  async function syncLiveNwsAlerts() {
-    try {
-      const res = await fetch(ENDPOINTS.alerts, { headers: { "Accept": "application/geo+json", "User-Agent": "WeatherConsoleApp/9.9" } });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.features) {
-        L.geoJSON(data, {
-          style: function(f) {
-            const severity = f.properties?.severity;
-            return severity === "Extreme" ? { color: "#df2020", weight: 2, fillOpacity: 0.2 } :
-                   severity === "Severe" ? { color: "#e67e22", weight: 1.5, fillOpacity: 0.1 } :
-                                           { color: "#f1c40f", weight: 1, fillOpacity: 0.02 };
-          },
-          onEachFeature: function(f, l) {
-            l.bindPopup(`<strong>${f.properties.event || 'Alert'}</strong><br><span style='font-size:11px;'>${f.properties.headline || 'Active'}</span>`);
-          }
-        }).addTo(alertLayer);
-      }
-    } catch (e) { console.error(e); }
+  async function syncLiveNwsAlerts() {    
+    try {      
+      const res = await fetch(ENDPOINTS.alerts, { headers: { "Accept": "application/geo+json", "User-Agent": "WeatherConsoleApp/9.10" } });      
+      if (!res.ok) return;      
+      const data = await res.json();      
+      if (data && data.features) {        
+        L.geoJSON(data, {          
+          style: function(f) {            
+            const severity = f.properties?.severity;            
+            return severity === "Extreme" ? { color: "#df2020", weight: 2, fillOpacity: 0.2 } :                   
+                   severity === "Severe" ? { color: "#e67e22", weight: 1.5, fillOpacity: 0.1 } :                                           
+                   { color: "#f1c40f", weight: 1, fillOpacity: 0.02 };          },          
+          onEachFeature: function(f, l) {            
+            l.bindPopup(`<strong>${f.properties.event || 'Alert'}</strong><br><span style='font-size:11px;'>${f.properties.headline || 'Active'}</span>`);          }        }).addTo(alertLayer);      }    } catch (e) { console.error(e); }  
   }
 
-  function paintConsoleOutputs() {
-    for (let i = 1; i <= 3; i++) {
-      const spcVal = applicationState.local[`spc_d${i}`];
-      const wpcVal = applicationState.local[`wpc_d${i}`];
-      const sCfg = VISUAL_CONFIG[spcVal] || VISUAL_CONFIG["NONE"];
+  function paintConsoleOutputs() {    
+    for (let i = 1; i <= 3; i++) {      
+      const spcVal = applicationState.local[`spc_d${i}`];      
+      const wpcVal = applicationState.local[`wpc_d${i}`];      
+      const sCfg = VISUAL_CONFIG[spcVal] || VISUAL_CONFIG["NONE"];      
       const wCfg = VISUAL_CONFIG[wpcVal.replace(" RISK", "")] || VISUAL_CONFIG["NONE"];
 
-      document.getElementById(`rr-spc${i}`).innerHTML = `<span class="badge" style="background:${sCfg.color}; color:${sCfg.text}">${spcVal}</span>`;
-      document.getElementById(`rr-wpc${i}`).innerHTML = `<span class="badge" style="background:${wCfg.color}; color:${wCfg.text}">${wpcVal}</span>`;
-    }
+      document.getElementById(`rr-spc${i}`).innerHTML = `<span class="badge" style="background:${sCfg.color}; color:${sCfg.text}">${spcVal}</span>`;      
+      document.getElementById(`rr-wpc${i}`).innerHTML = `<span class="badge" style="background:${wCfg.color}; color:${wCfg.text}">${wpcVal}</span>`;    }
 
-    const mesoEl = document.getElementById("local-meso");
-    if (applicationState.local.activeMeso !== "NONE") {
-      mesoEl.innerText = applicationState.local.activeMeso;
-      mesoEl.style.color = "#f43f5e";
-    } else {
-      mesoEl.innerText = "NONE";
-      mesoEl.style.color = "#10b981";
-    }
+    const mesoEl = document.getElementById("local-meso");    
+    if (applicationState.local.activeMeso !== "NONE") {      
+      mesoEl.innerText = applicationState.local.activeMeso;      
+      mesoEl.style.color = "#f43f5e";    } else {      
+      mesoEl.innerText = "NONE";      
+      mesoEl.style.color = "#10b981";    }
 
-    const briefingBox = document.getElementById("macroBriefing");
-    let markup = "";
-    for (let i = 1; i <= 3; i++) {
-      markup += `<b style='color:#f1f5f9;'>Day ${i} Regional Grid Resolution:</b><br>`;
-      markup += `• SPC Active: ${applicationState.macro[`spc_d${i}`].join(", ") || "No active categorical tiers."}<br>`;
-      markup += `• WPC Active: ${applicationState.macro[`wpc_d${i}`].join(", ") || "Less than 5% across all basins."}<br><div style='margin-bottom:6px;'></div>`;
-    }
-    markup += `<b style='color:#c084fc;'>Active Short-Fuse Mesoscale Corridors:</b><br>`;
-    markup += `• Discussions: ${applicationState.macro.activeMeso.join(", ") || "No active national mesoscale areas tracked."}<br><div style='margin-bottom:6px;'></div>`;
-    
-    markup += `<b style='color:#eab308;'>NHC Tropical Outlook Areas:</b><br>`;
+    const briefingBox = document.getElementById("macroBriefing");    
+    let markup = "";    
+    for (let i = 1; i <= 3; i++) {      
+      markup += `<b style='color:#f1f5f9;'>Day ${i} Regional Grid Resolution:</b><br>`;      
+      markup += `• SPC Active: ${applicationState.macro[`spc_d${i}`].join(", ") || "No active categorical tiers."}<br>`;      
+      markup += `• WPC Active: ${applicationState.macro[`wpc_d${i}`].join(", ") || "Less than 5% across all basins."}<br><div style='margin-bottom:6px;'></div>`;    }
+    markup += `<b style='color:#c084fc;'>Active Short-Fuse Mesoscale Corridors:</b><br>`;    
+    markup += `• Discussions: ${applicationState.macro.activeMeso.join(", ") || "No active national mesoscale areas tracked."}<br><div style='margin-bottom:6px;'></div>`;        
+    markup += `<b style='color:#eab308;'>NHC Tropical Outlook Areas:</b><br>`;    
     markup += `• Mapped: ${applicationState.macro.activeOutlooks.join(", ") || "No active investment spaces detected."}<br><div style='margin-bottom:6px;'></div>`;
-
-    markup += `<b style='color:#38bdf8;'>NHC Active Storm Vectors:</b><br>`;
-    markup += `• Mapped Systems: ${applicationState.macro.activeStorms.join(", ") || "No active marine storm fronts tracked in Atlantic basin."}`;
+    markup += `<b style='color:#38bdf8;'>NHC Active Storm Vectors:</b><br>`;    
+    markup += `• Mapped Systems: ${applicationState.macro.activeStorms.join(", ") || "No active marine storm fronts tracked in Atlantic basin."}`;    
     briefingBox.innerHTML = markup;
+
+    // Dynamically generate current UTC / Local Matrix Date string
+    const dynamicMatrixDate = new Date().toUTCString();
 
     document.getElementById("aiPromptBox").value = `[METEOROLOGICAL STACK SYSTEM INTERSECT — PROMPT TRUTH]
 TARGET COORDINATE ANCHOR: Round Rock, Williamson County, Texas (30.5284, -97.6491)
 DATA ACCESS METHODOLOGY: Top-Down Strict Conditional Exclusion Loop
-VALID ENVIRO MATRIX DATE: June 28, 2026
+VALID ENVIRO MATRIX DATE: ${dynamicMatrixDate}
 
 1. EXCLUSIVE POINT TELEMETRY TARGET (LOCAL LOCATION FORECAST):
    - Day 1: SPC = ${applicationState.local.spc_d1} | WPC = ${applicationState.local.wpc_d1}
@@ -497,49 +339,41 @@ MANDATORY DATA INFERENCE CONTROLS:
 - Do not infer local impact from nearby polygons or distant hurricane tracks.
 - Do not aggregate all Texas regions into one statewide threat.
 - Preserve Day 1, Day 2, and Day 3 as separate time periods.
-- If point telemetry says NONE / <5%, report the point as quiet.`;
-  }
+- If point telemetry says NONE / <5%, report the point as quiet.`;  }
 
-  async function triggerMasterSync() {
-    [texasOutlineLayer, alertLayer, day1Layer, day2Layer, day3Layer, wpc1Layer, wpc2Layer, wpc3Layer, mesoscaleLayer, tropicalOutlookLayer, tropicalConeLayer, tropicalTrackLayer].forEach(l => l.clearLayers());
+  async function triggerMasterSync() {    
+    [texasOutlineLayer, alertLayer, day1Layer, day2Layer, day3Layer, wpc1Layer, wpc2Layer, wpc3Layer, mesoscaleLayer, tropicalOutlookLayer, tropicalConeLayer, tropicalTrackLayer].forEach(l => l.clearLayers());        
     
-    applicationState = {
-      local: { spc_d1: "NONE", wpc_d1: "< 5%", spc_d2: "NONE", wpc_d2: "< 5%", spc_d3: "NONE", wpc_d3: "< 5%", activeMeso: "NONE", tropicalThreat: "NONE" },
-      macro: { spc_d1: [], wpc_d1: [], spc_d2: [], wpc_d2: [], spc_d3: [], wpc_d3: [], activeMeso: [], activeStorms: [], activeOutlooks: [] }
+    applicationState = {      
+      local: { spc_d1: "NONE", wpc_d1: "< 5%", spc_d2: "NONE", wpc_d2: "< 5%", spc_d3: "NONE", wpc_d3: "< 5%", activeMeso: "NONE", tropicalThreat: "NONE" },      
+      macro: { spc_d1: [], wpc_d1: [], spc_d2: [], wpc_d2: [], spc_d3: [], wpc_d3: [], activeMeso: [], activeStorms: [], activeOutlooks: [] }    
     };
 
-    document.getElementById("macroBriefing").innerText = "Executing mathematical ray-casting calculation passes over live geometry arrays...";
-
-    await loadTexasOutline();
+    document.getElementById("macroBriefing").innerText = "Executing live ray-casting calculation passes over live GeoJSON arrays...";
+    await loadTexasOutline();        
     
-    await Promise.all([
-      processLayerLifecycle(ENDPOINTS.d1, "d1", false, day1Layer),
-      processLayerLifecycle(ENDPOINTS.d2, "d2", false, day2Layer),
-      processLayerLifecycle(ENDPOINTS.d3, "d3", false, day3Layer),
-      processLayerLifecycle(ENDPOINTS.wpc1, "d1", true, wpc1Layer),
-      processLayerLifecycle(ENDPOINTS.wpc2, "d2", true, wpc2Layer),
-      processLayerLifecycle(ENDPOINTS.wpc3, "d3", true, wpc3Layer),
-      processMesoscaleFeeds(),
-      syncTropicalTrackingFeeds(),
-      syncLiveNwsAlerts()
-    ]);
+    await Promise.all([      
+      processLayerLifecycle(ENDPOINTS.d1, "d1", false, day1Layer),      
+      processLayerLifecycle(ENDPOINTS.d2, "d2", false, day2Layer),      
+      processLayerLifecycle(ENDPOINTS.d3, "d3", false, day3Layer),      
+      processLayerLifecycle(ENDPOINTS.wpc1, "d1", true, wpc1Layer),      
+      processLayerLifecycle(ENDPOINTS.wpc2, "d2", true, wpc2Layer),      
+      processLayerLifecycle(ENDPOINTS.wpc3, "d3", true, wpc3Layer),      
+      processMesoscaleFeeds(),      
+      syncTropicalTrackingFeeds(),      
+      syncLiveNwsAlerts()    ]);
 
-    paintConsoleOutputs();
-  }
+    paintConsoleOutputs();  }
 
-  document.getElementById("btnRefresh").addEventListener("click", triggerMasterSync);
-  document.getElementById("btnCopyPrompt").addEventListener("click", () => {
-    document.getElementById("aiPromptBox").select();
-    document.execCommand("copy");
-    alert("Token-optimized data manifest with mesoscale and hurricane constraints copied cleanly.");
-  });
+  document.getElementById("btnRefresh").addEventListener("click", triggerMasterSync);  
+  document.getElementById("btnCopyPrompt").addEventListener("click", () => {    
+    document.getElementById("aiPromptBox").select();    
+    document.execCommand("copy");    
+    alert("Live token-optimized data manifest copied to clipboard.");  });
 
+  // Execute initial sync immediately on load
   triggerMasterSync();
 
-  // Integrated sync intervals
-  setInterval(triggerMasterSync, 10 * 60 * 1000); // Master data geometry tick (10 mins)
-  setInterval(() => { radarLayer.redraw(); }, 4 * 60 * 1000); // Live radar canvas redraw tick (4 mins)
-})();
-</script>
-</body>
-</html>
+  setInterval(triggerMasterSync, 10 * 60 * 1000); 
+  setInterval(() => { radarLayer.redraw(); }, 4 * 60 * 1000); 
+})();</script></body></html>
