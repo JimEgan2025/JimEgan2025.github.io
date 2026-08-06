@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Master MOS Dashboard</title>
+    <style>
+        :root { --bg: #f1f5f9; --text: #1e293b; --accent: #2563eb; --border: #cbd5e1; --header: #334155; --almanac: #64748b; }
+        html { scroll-behavior: smooth; }
+        
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 15px; 
+            font-size: 15px; 
+            line-height: 1.2; 
+        }
+        
+        .container { width: 85%; max-width: none; margin: 0 auto; }
+
+        .dashboard-header { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            text-align: center; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+        }
+        .header-title { font-size: 1.8rem; margin: 0; color: var(--header); font-weight: 900; letter-spacing: -1px; }
+        .header-as-of { font-size: 1rem; color: #64748b; margin-top: 5px; font-weight: 600; }
+
+        .summary-wrap, .hourly-wrap, .table-wrap { 
+            background: #fff; 
+            padding: 10px; 
+            border-radius: 12px; 
+            border: 2px solid var(--accent); 
+            margin-bottom: 25px; 
+            overflow-x: auto; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: var(--accent); color: white; padding: 10px 5px; border: 1px solid #1d4ed8; font-size: 13px; text-transform: uppercase; }
+        td { border: 1px solid var(--border); padding: 10px 5px; text-align: center; font-weight: 700; font-size: 15px; }
+        
+        .row-label { background: #f8fafc; text-align: left !important; font-weight: 800 !important; width: 180px; color: var(--header); padding-left: 12px; }
+        
+        .h-badge { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.85em; display: inline-block; min-width: 65px; }
+        .bg-red { background: #dc2626; }
+        .bg-blue { background: #1e40af; }
+        .front-arrival { background: #eff6ff !important; border: 2px solid #1d4ed8 !important; }
+
+        .metric-group { background: #334155; color: white; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.1em; padding: 10px 15px !important; text-align: left !important; }
+        .almanac-row { background: #f9fafb !important; color: var(--almanac); font-style: italic; font-size: 0.95em; }
+
+        h2 { background: var(--header); color: white; padding: 12px 15px; margin: 30px 0 0 0; font-size: 1.2rem; border-radius: 8px 8px 0 0; font-weight: 800; }
+        
+        .avg-cell { font-weight: 900; border-left: 2px solid #22c55e; background: #f0fdf4 !important; color: #166534; }
+        .tossed { text-decoration: line-through; opacity: 0.3; font-weight: normal !important; }
+
+        #loading { text-align: center; padding: 20px; font-weight: bold; color: var(--accent); background: #fff; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
+        .cond-icon { font-size: 1.2rem; display: block; }
+        .cond-text { font-size: 0.7rem; color: #64748b; font-weight: normal; display: block; margin-top: 2px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="dashboard-header">
+        <div class="header-title">Vizcaya Master Forecast</div>
+        <div id="asOfTime" class="header-as-of">Synchronizing Satellite Data...</div>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px; font-weight: 700;">ROUND ROCK, TX // v21.9 // SAFE PRECIP FIX</div>
+    </div>
+
+    <div id="loading">📡 Filtering Forecast Noise...</div>
+
+    <!-- 7 Day Summary -->
+    <h2 id="summary">Executive 7-Day Summary</h2>
+    <div class="summary-wrap"><table id="summaryTable"><thead id="summaryHead"></thead><tbody id="summaryBody"></tbody></table></div>
+
+    <!-- Extended Trend -->
+    <h2 id="extended">Extended 8-14 Day Trend</h2>
+    <div class="summary-wrap"><table id="extendedTable"><thead id="extendedHead"></thead><tbody id="extendedBody"></tbody></table></div>
+
+    <h2 id="hourly">Hourly Forecast</h2>
+    <div class="hourly-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Hour</th>
+                    <th>Cond</th>
+                    <th>Temp</th>
+                    <th>Dew</th>
+                    <th>Wind</th>
+                    <th>Rain / %</th>
+                    <th>Dir</th>
+                </tr>
+            </thead>
+            <tbody id="hourlyBody"></tbody>
+        </table>
+    </div>
+
+    <div id="dashboard-content"></div>
+</div>
+
+<script>
+    const ALMANAC_URL = 'https://jimegan2025.github.io/almanac.json';
+    const LAT = 30.5871, LON = -97.641;
+    const modelConfig = [
+        {key:'ecmwf_ifs025',label:'ECM'}, 
+        {key:'gfs_seamless',label:'GFS'}, 
+        {key:'best_match',label:'BLN'}, 
+        {key:'gem_seamless',label:'GEM'}, 
+        {key:'icon_seamless',label:'ICN'}
+    ];
+
+    function getSkyCondition(cloudCoverPercent) {
+        if (cloudCoverPercent < 15) return ["☀️", "Clear"];
+        if (cloudCoverPercent < 40) return ["🌤️", "M. Clear"];
+        if (cloudCoverPercent < 70) return ["⛅", "P. Cloud"];
+        return ["☁️", "Cloudy"];
+    }
+
+    function getWeatherInfo(code, rainProb, cloudCover) {
+        if (rainProb >= 30) {
+            if (code >= 95) return ["⛈️", "T-Storm"];
+            if (code >= 71 && code <= 75) return ["❄️", "Snow"];
+            return ["🌧️", "Rain / Showers"];
+        }
+        return getSkyCondition(cloudCover);
+    }
+
+    let almanac = {}, hourlyFrontIdx = -1, dCore = null, dEnv = null, hData = null, frontalTimingLabel = "Stable";
+
+    async function loadData() {
+        const loader = document.getElementById('loading');
+        const asOfLabel = document.getElementById('asOfTime');
+        
+        try {
+            const [almRes, r1, r2, r3] = await Promise.all([
+                fetch(ALMANAC_URL),
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum,cloud_cover_mean,weather_code&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=16&models=${modelConfig.map(m=>m.key).join(',')}`),
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,dewpoint_2m_max&temperature_unit=fahrenheit&precipitation_unit=inch&wind_speed_unit=mph&timezone=auto&forecast_days=16&models=best_match,ecmwf_ifs025,gfs_seamless,icon_seamless`),
+                fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,dewpoint_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,cloud_cover,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&models=best_match`)
+            ]);
+
+            if (almRes.ok) almanac = await almRes.json();
+            dCore = await r1.json();
+            dEnv = await r2.json();
+            hData = await r3.json();
+
+            renderHourly(hData);
+            renderSummary(dCore, dEnv, 'summary', 1, 8, false);
+            renderSummary(dCore, dEnv, 'extended', 8, 15, true);
+            renderDetails(dCore, dEnv);
+            
+            const now = new Date();
+            asOfLabel.innerText = `${now.toLocaleDateString([], {month:'short', day:'numeric'})} @ ${now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+            loader.style.display = 'none';
+        } catch (e) { 
+            loader.innerText = "Sync Error. Retrying..."; 
+            console.error(e);
+        }
+    }
+
+    function getStats(data, keys, metric, day) {
+        const v = keys.map(k => data.daily[`${metric}_${k}`]?.[day]).filter(x => x != null && !isNaN(x));
+        if (!v.length) return { avg: 0, min: 0, max: 0, spread: 0 };
+        let s = [...v].sort((a,b)=>a-b);
+        const rawSpread = s[s.length-1] - s[0];
+        if (s.length > 3) { s.pop(); s.shift(); }
+        return { avg: s.reduce((a,b)=>a+b,0)/s.length, min: s[0], max: s[s.length-1], spread: rawSpread };
+    }
+
+    function degToCard(deg) {
+        const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return arr[(Math.floor((deg / 22.5) + 0.5) % 16)];
+    }
+
+    function renderHourly(data) {
+        const body = document.getElementById('hourlyBody'); body.innerHTML = '';
+        const h = data.hourly;
+        const nowIdx = h.time.findIndex(t => new Date(t) >= new Date());
+        hourlyFrontIdx = -1; let maxScore = 0;
+
+        for (let i = nowIdx + 3; i < nowIdx + 36; i++) {
+            const tempDrop = h.temperature_2m[i-3] - h.temperature_2m[i];
+            const dewDrop = h.dewpoint_2m[i-3] - h.dewpoint_2m[i];
+            const isNorthNow = (h.wind_direction_10m[i] < 60 || h.wind_direction_10m[i] > 300);
+            const wasSouthBefore = (h.wind_direction_10m[i-3] > 120 && h.wind_direction_10m[i-3] < 240);
+            let score = 0;
+            if (wasSouthBefore && isNorthNow) score += 35; 
+            if (dewDrop > 6) score += 15;
+            score += tempDrop;
+            if (score > maxScore && score > 35 && tempDrop > 5) { maxScore = score; hourlyFrontIdx = i; }
+        }
+        if (hourlyFrontIdx !== -1) {
+            const fTime = new Date(h.time[hourlyFrontIdx]);
+            frontalTimingLabel = (fTime.getDate() === new Date().getDate()) ? "❄️ Arrival Today" : "❄️ Front Tomorrow";
+        } else { frontalTimingLabel = "Stable"; }
+
+        for (let i = nowIdx; i < nowIdx + 24; i++) {
+            const row = body.insertRow(); if (i === hourlyFrontIdx) row.className = 'front-arrival';
+            const time = new Date(h.time[i]).toLocaleTimeString([],{hour:'numeric'});
+            
+            const hCode = h.weather_code[i];
+            const hRainProb = h.precipitation_probability ? h.precipitation_probability[i] : 0;
+            const hCloud = h.cloud_cover ? h.cloud_cover[i] : 0;
+            
+            const [icon, label] = getWeatherInfo(hCode, hRainProb, hCloud);
+            const rainAmt = h.precipitation[i] > 0 ? h.precipitation[i].toFixed(2) + '"' : '0"';
+            row.innerHTML = `<td>${time}</td><td><span class="cond-icon">${icon}</span><span class="cond-text">${label}</span></td><td>${Math.round(h.temperature_2m[i])}°</td><td>${Math.round(h.dewpoint_2m[i])}°</td><td>${Math.round(h.wind_speed_10m[i])}<br><small>G:${Math.round(h.wind_gusts_10m[i])}</small></td><td>${rainAmt}<br><small>${hRainProb}%</small></td><td><span style="display:inline-block; transform:rotate(${h.wind_direction_10m[i]}deg)">↓</span><br>${degToCard(h.wind_direction_10m[i])}</td>`;
+        }
+    }
+
+    function renderSummary(d1, d2, tableId, start, end, isExt) {
+        const body = document.getElementById(`${tableId}Body`);
+        const head = document.getElementById(`${tableId}Head`);
+        const dates = d1.daily.time.slice(start, end);
+        const mAll = modelConfig.map(m=>m.key);
+        const mSub = ['best_match','ecmwf_ifs025', 'gfs_seamless','icon_seamless'];
+
+        head.innerHTML = '<tr><th class="row-label">DATE / METRIC</th>' + dates.map(d => `<th>${new Date(d+'T00:00').toLocaleDateString([],{weekday:'short'})}<br>${new Date(d+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</th>`).join('') + '</tr>';
+        let rows = [];
+        
+        rows.push({ l: 'Conditions', g: 'Overview & Hazards', f: d => {
+            const rawCode = d1.daily.weather_code_best_match ? d1.daily.weather_code_best_match[d] : 0;
+            const consensusRainProb = getStats(d2, mSub, 'precipitation_probability_max', d).avg;
+            const consensusCloud = getStats(d1, mAll, 'cloud_cover_mean', d).avg;
+            
+            const [icon, label] = getWeatherInfo(rawCode, consensusRainProb, consensusCloud);
+            return `<span style="font-size:1.3rem">${icon}</span><br><small>${label}</small>`;
+        }});
+        
+        rows.push({ l: 'Confidence', g: 'Overview & Hazards', f: d => {
+            const s = getStats(d1, mAll, 'temperature_2m_max', d).spread;
+            if (s <= 4) return '<span class="h-badge" style="background:#22c55e">High</span>';
+            if (s <= 8) return '<span class="h-badge" style="background:#eab308">Medium</span>';
+            return '<span class="h-badge" style="background:#ef4444">Low</span>';
+        }});
+        
+        if (!isExt) {
+            rows.push({ l: 'Hazard Alerts', g: 'Overview & Hazards', f: d => {
+                const aMax = getStats(d2, mSub, 'apparent_temperature_max', d).avg;
+                const aMin = getStats(d2, mSub, 'apparent_temperature_min', d).avg;
+                if (aMax >= 100) return '<span class="h-badge bg-red">🔥 Heat Risk</span>';
+                if (aMin <= 32) return '<span class="h-badge bg-blue">🧊 Freeze Risk</span>';
+                return "---";
+            }});
+        }
+        
+        rows.push({ l: 'Consensus Hi/Lo', g: 'Temperature Analysis', f: d => `${Math.round(getStats(d1,mAll,'temperature_2m_max',d).avg)}° / ${Math.round(getStats(d1,mAll,'temperature_2m_min',d).avg)}°` });
+        rows.push({ l: 'Feels Like Hi/Lo', g: 'Temperature Analysis', f: d => {
+            const fHi = getStats(d2, mSub, 'apparent_temperature_max', d).avg;
+            const fLo = getStats(d2, mSub, 'apparent_temperature_min', d).avg;
+            return `${Math.round(fHi)}° / ${Math.round(fLo)}°`;
+        }});
+
+        if (!isExt) {
+            rows.push({ l: 'Normal Hi/Lo', g: 'Temperature Analysis', isAlm: true, f: d => {
+                const a = almanac[d1.daily.time[d].substring(5)] || {avgH:'--',avgL:'--'};
+                return `${a.avgH}° / ${a.avgL}°`;
+            }});
+            rows.push({ l: 'Departure', g: 'Temperature Analysis', isAlm: true, f: d => {
+                const a = almanac[d1.daily.time[d].substring(5)]; if (!a || a.avgH === '--') return '--';
+                const normAvg = (parseFloat(a.avgH) + parseFloat(a.avgL)) / 2;
+                const consAvg = (getStats(d1, mAll, 'temperature_2m_max', d).avg + getStats(d1, mAll, 'temperature_2m_min', d).avg) / 2;
+                const diff = consAvg - normAvg;
+                return `<span style="color:${diff < 0 ? '#2563eb' : '#dc2626'}; font-weight:900;">${diff > 0 ? '+' : ''}${diff.toFixed(1)}°</span>`;
+            }});
+        }
+        
+        rows.push({ l: 'Rain Amt / %', g: 'Environment & Wind', f: d => `${getStats(d1, mAll, 'precipitation_sum', d).avg.toFixed(2)}" / ${Math.round(getStats(d2, mSub, 'precipitation_probability_max', d).avg)}%` });
+        rows.push({ l: 'Humidity / Dew', g: 'Environment & Wind', f: d => `${Math.round(getStats(d2, mSub, 'relative_humidity_2m_mean', d).avg)}% / ${Math.round(getStats(d2, mSub, 'dewpoint_2m_max', d).avg)}°` });
+        rows.push({ l: 'Wind Consensus', g: 'Environment & Wind', f: d => `${degToCard(d2.daily.wind_direction_10m_dominant_best_match[d])} ${Math.round(getStats(d2,mSub,'wind_speed_10m_max',d).avg)} mph` });
+
+        let lastGroup = ''; body.innerHTML = '';
+        rows.forEach(r => {
+            if (r.g !== lastGroup) { body.innerHTML += `<tr><td colspan="10" class="metric-group">${r.g}</td></tr>`; lastGroup = r.g; }
+            body.innerHTML += `<tr class="${r.isAlm?'almanac-row':''}"><td>${r.l}</td>${dates.map((_,i)=>`<td>${r.f(i + start)}</td>`).join('')}</tr>`;
+        });
+    }
+
+    function renderDetails(d1, d2) {
+        const cont = document.getElementById('dashboard-content'); cont.innerHTML = '';
+        const mAll = modelConfig.map(m=>m.key);
+        const mSub = ['best_match', 'ecmwf_ifs025', 'gfs_seamless', 'icon_seamless'];
+        const sets = [
+            {t:'Dry Bulb Temperature Hi/Lo', m:'temperature_2m', src:d1, k:mAll},
+            {t:'Precipitation Amount (Inches)', m:'precipitation_sum', src:d1, k:mAll},
+            {t:'Humidity & Dew Point', m:'comfort', src:d2, k:mSub},
+            {t:'Wind Speed & Max Gusts', m:'wind', src:d2, k:mSub}
+        ];
+        
+        sets.forEach(s => {
+            let h = `<h2>${s.t}</h2><div class="table-wrap"><table><thead><tr><th>Date</th>${s.k.map(v=>`<th>${v.substring(0,3).toUpperCase()}</th>`).join('')}<th>CONS</th></tr></thead><tbody>`;
+            for (let i = 1; i <= 7; i++) {
+                let d = i;
+                h += `<tr><td>${new Date(d1.daily.time[d]+'T00:00').toLocaleDateString([],{month:'short',day:'numeric'})}</td>`;
+                let rowVals = s.k.map(v => {
+                    if (s.m==='comfort') return `${Math.round(s.src.daily[`relative_humidity_2m_mean_${v}`]?.[d] ?? 0)}%/${Math.round(s.src.daily[`dewpoint_2m_max_${v}`]?.[d] ?? 0)}°`;
+                    if (s.m==='wind') return `${Math.round(s.src.daily[`wind_speed_10m_max_${v}`]?.[d] ?? 0)}/${Math.round(s.src.daily[`wind_gusts_10m_max_${v}`]?.[d] ?? 0)}`;
+                    if (s.m==='precipitation_sum') {
+                        let val = s.src.daily[`${s.m}_${v}`]?.[d];
+                        return (val != null && !isNaN(val)) ? val.toFixed(2) : "0.00";
+                    }
+                    return `${Math.round(s.src.daily[`${s.m}_max_${v}`]?.[d] ?? 0)}/${Math.round(s.src.daily[`${s.m}_min_${v}`]?.[d] ?? 0)}`;
+                });
+                const nums = rowVals.map(rv => parseFloat(rv.split(/[%\/ ]/)[0]));
+                rowVals.forEach((rv, idx) => h += `<td class="${(nums.length>3 && (nums[idx]===Math.min(...nums)||nums[idx]===Math.max(...nums)))?'tossed':''}">${rv}</td>`);
+                let cons = "";
+                if (s.m==='comfort') cons = `${Math.round(getStats(s.src, s.k, 'relative_humidity_2m_mean', d).avg)}%/${Math.round(getStats(s.src, s.k, 'dewpoint_2m_max', d).avg)}°`;
+                else if (s.m==='wind') cons = `${Math.round(getStats(s.src, s.k, 'wind_speed_10m_max', d).avg)}/${Math.round(getStats(s.src, s.k, 'wind_gusts_10m_max', d).avg)}`;
+                else if (s.m==='precipitation_sum') cons = getStats(s.src, s.k, 'precipitation_sum', d).avg.toFixed(2);
+                else cons = `${Math.round(getStats(s.src, s.k, 'temperature_2m_max', d).avg)}/${Math.round(getStats(s.src, s.k, 'temperature_2m_min', d).avg)}`;
+                h += `<td class="avg-cell">${cons}</td></tr>`;
+            }
+            cont.innerHTML += h + '</tbody></table></div>';
+        });
+    }
+
+    loadData();
+    setInterval(loadData, 3600000);
+</script>
+</body>
+</html>
