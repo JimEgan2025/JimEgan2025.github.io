@@ -132,6 +132,11 @@
       font-style: italic;
     }
 
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
     .btn {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -143,6 +148,17 @@
 
     .btn:hover {
       border-color: var(--accent);
+    }
+
+    .btn-copy {
+      background: #2563eb;
+      border-color: #3b82f6;
+      font-weight: 700;
+    }
+
+    .btn-copy:hover {
+      background: #1d4ed8;
+      border-color: #60a5fa;
     }
 
     /* VIEWER */
@@ -185,17 +201,24 @@
     <div class="tabs">
       <div class="group-label">Core Operations</div>
       <button class="tab active" data-url="https://jimegan2025.github.io/index.html" data-title="Home">Home</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/command.html" data-title="Command">Command</button>
       <button class="tab" data-url="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" data-title="Station Summary">Station Summary</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/next14.html" data-title="Main Forecast">Main Forecast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/leadforecast.html" data-title="Alternate Forecast">Alternate Forecast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/almanac.html" data-title="Almanac">Almanac</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/mobilewx.html" data-title="Mobile Weather">Mobile Weather</button>
 
       <div class="group-label">Forecasts</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/next14.html" data-title="Main Forecast">Main Forecast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/360dash.html" data-title="360 Dashboard">360 Dashboard</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/next10days.html" data-title="Next 10 Days">Next 10 Days</button>
       <button class="tab" data-url="https://jimegan2025.github.io/newspc.html" data-title="SPC Forecast">SPC Forecast</button>
       <button class="tab" data-url="https://jimegan2025.github.io/texasdash" data-title="NWS Offices">NWS Offices</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/modelcompare.html" data-title="Model Comparisons">Model Comparisons</button>
-      <button class="tab" data-url="https://www.spc.noaa.gov/products/activity_loop.gif" data-title="SPC Activity Loop">SPC Activity Loop</button>
       <button class="tab" data-url="https://jimegan2025.github.io/nowcast.html" data-title="NowCast">NowCast</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/vizcayawx.html" data-title="Alternate Forecast">Alternate Forecast</button>
+
+      <div class="group-label">Data</div>
+      <button class="tab" data-url="https://jimegan2025.github.io/command.html" data-title="Command">Command</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/modelcompare.html" data-title="Model Comparisons">Model Comparisons</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead">Overhead</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Temps">Temps</button>
 
       <div class="group-label">Radar & Severe</div>
       <button class="tab" data-url="https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669" data-title="Baron Radar">Baron Radar</button>
@@ -203,23 +226,14 @@
       <button class="tab" data-url="https://jimegan2025.github.io/sky.html" data-title="NWS Radar">NWS Radar</button>
       <button class="tab" data-url="https://jimegan2025.github.io/txradar.html" data-title="TX Radar">TX Radar</button>
       <button class="tab" data-url="https://jimegan2025.github.io/textravel.html" data-title="Texas Travel">Texas Travel</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/risk.html" data-title="Risk">Risk</button>
       <button class="tab" data-url="https://jimegan2025.github.io/alerts.html" data-title="Alerts">Alerts</button>
 
-      <div class="group-label">Atmospheric Profile</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead">Overhead</button>
-
-      <div class="group-label">Almanac & Records</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/almanac.html" data-title="Almanac">Almanac</button>
-
-      <div class="group-label">Metrics</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Temps">Temps</button>
+      <div class="group-label">Meters</div>
       <button class="tab" data-url="https://jimegan2025.github.io/muggyMeter.html" data-title="Muggy Meter">Muggy Meter</button>
       <button class="tab" data-url="https://jimegan2025.github.io/rainMeter.html" data-title="Rain Meter">Rain Meter</button>
 
       <div class="group-label">Tropical</div>
       <button class="tab" data-url="https://jimegan2025.github.io/tropical.html" data-title="Tropical">Tropical</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/tropicalwatch.html" data-title="Tropical Watch">Tropical Watch</button>
       <button class="tab" data-url="https://www.nhc.noaa.gov/text/MIATWDAT.shtml" data-title="NHC Discussion">NHC Discussion</button>
       <button class="tab" data-url="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png" data-title="Global Tropical Hazards Outlook">Global Tropical Hazards Outlook</button>
     </div>
@@ -232,7 +246,8 @@
         <div id="title">Home</div>
         <div id="asOfTime"></div>
       </div>
-      <div>
+      <div class="btn-group">
+        <button class="btn btn-copy" id="btnCopyAI">📋 Copy for AI</button>
         <button class="btn" id="btnFit">Fit (100%)</button>
         <button class="btn" id="btnRefresh">Refresh</button>
         <button class="btn" id="btnPopOut">Pop Out</button>
@@ -289,6 +304,48 @@
       const img = document.getElementById('imgView');
       const url = img.style.display !== 'none' ? img.src : iframe.src;
       window.open(url, '_blank');
+    }
+
+    function copyForAI() {
+      const btn = document.getElementById('btnCopyAI');
+      const currentTitle = document.getElementById('title').innerText;
+      const iframe = document.getElementById('frame');
+      const img = document.getElementById('imgView');
+      const currentUrl = img.style.display !== 'none' ? img.src : iframe.src;
+
+      const instructions = `You are interacting with Weather Ops Center | Pro.
+Active Operational View: ${currentTitle}
+Target Resource URL: ${currentUrl}
+Timestamp: ${new Date().toLocaleString()}
+
+Directive: Please analyze the current weather operations view and context for Round Rock, TX. Provide professional meteorological insights, operational review, or data breakdown corresponding to this active view.`;
+
+      // Attempt to fetch iframe content if same-origin, otherwise fallback to URL/metadata instructions
+      let payloadText = instructions;
+      
+      if (img.style.display === 'none') {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          if (iframeDoc && iframeDoc.body) {
+            payloadText += `\n\nExtracted Page Content:\n${iframeDoc.body.innerText.trim()}`;
+          }
+        } catch (e) {
+          payloadText += `\n\nNote: Active view is loaded via cross-origin iframe (${currentUrl}). Please use the URL and operational title above for analysis.`;
+        }
+      } else {
+        payloadText += `\n\nNote: Active view is an image/loop resource (${currentUrl}).`;
+      }
+
+      navigator.clipboard.writeText(payloadText).then(() => {
+        btn.innerText = "✅ Copied!";
+        btn.style.background = "#16a34a";
+        setTimeout(() => {
+          btn.innerText = "📋 Copy for AI";
+          btn.style.background = "#2563eb";
+        }, 2500);
+      }).catch(err => {
+        alert("Failed to copy to clipboard: " + err);
+      });
     }
 
     function filterTabs() {
@@ -370,6 +427,7 @@
     document.getElementById('btnRefresh').addEventListener('click', refresh);
     document.getElementById('btnPopOut').addEventListener('click', popOut);
     document.getElementById('btnFit').addEventListener('click', toggleFit);
+    document.getElementById('btnCopyAI').addEventListener('click', copyForAI);
     document.getElementById('tabSearch').addEventListener('keyup', filterTabs);
 
     // --- Initialization ---
