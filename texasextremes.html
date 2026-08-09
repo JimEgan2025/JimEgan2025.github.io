@@ -1,1 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Comprehensive Texas & Central Texas Weather Dashboard</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 1.5rem;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 { margin-bottom: 0.2rem; color: #003366; text-align: center; }
+    p.subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+    
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #003366;
+      margin: 1rem 0 0.5rem 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .summary-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: center;
+      border-top: 4px solid #004b8d;
+    }
+    .summary-card.regional {
+      border-top: 4px solid #0d9488;
+    }
+    .summary-card h3 { margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+    .summary-card .val { font-size: 1.2rem; font-weight: bold; color: #003366; }
+    .summary-card.regional .val { color: #0f766e; }
+    .summary-card .loc { font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+
+    #progress-container {
+      width: 100%;
+      background-color: #ddd;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    #progress-bar {
+      width: 0%;
+      height: 20px;
+      background-color: #004b8d;
+      text-align: center;
+      line-height: 20px;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      transition: width 0.2s ease-in-out;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      max-height: 700px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    thead { background: #333; color: white; position: sticky; top: 0; z-index: 10; }
+    th, td { padding: 0.75rem; border-bottom: 1px solid #eee; text-align: left; font-size: 0.85rem; }
+    th { cursor: pointer; white-space: nowrap; user-select: none; }
+    th:hover { background: #444; }
+    th::after { content: " ↕"; font-size: 0.75rem; color: #aaa; }
+    tr:hover td { background: #f1f5f9; }
+    .rain-pos { color: #004b8d; font-weight: bold; }
+    .wind-val { color: #666; font-weight: 500; }
+    .hot-temp { color: #b91c1c; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>Texas Live Weather Actuals</h1>
+  <p class="subtitle" id="networkSubtitle">Scanning active NWS/FAA observation network...</p>
+
+  <!-- Statewide Summary Container -->
+  <div class="section-title">Statewide Extremes</div>
+  <div class="summary-grid" id="summaryContainer">
+    <div class="summary-card">
+      <h3>State High Temp</h3>
+      <div class="val" id="sumHigh">--</div>
+      <div class="loc" id="sumHighLoc">Scanning...</div>
+    </div>
+    <div class="summary-card">
+      <h3>State Low Temp</h3>
+      <div class="val" id="sumLow">--</div>
+      <div class="loc" id="sumLowLoc">Scanning...</div>
+    </div>
+    <div class="summary-card">
+      <h3>Max Wind Gust</h3>
+      <div class="val" id="sumWind">--</div>
+      <div class="loc" id="sumWindLoc">Scanning...</div>
+    </div>
+    <div class="summary-card">
+      <h3>Max Rainfall Today</h3>
+      <div class="val" id="sumRain">--</div>
+      <div class="loc" id="sumRainLoc">Scanning...</div>
+    </div>
+  </div>
+
+  <!-- Central Texas Summary Container -->
+  <div class="section-title">Central Texas Corridor (Austin / San Antonio / Waco Metro)</div>
+  <div class="summary-grid">
+    <div class="summary-card regional">
+      <h3>Central TX High</h3>
+      <div class="val" id="ctxHigh">--</div>
+      <div class="loc" id="ctxHighLoc">Scanning...</div>
+    </div>
+    <div class="summary-card regional">
+      <h3>Central TX Low</h3>
+      <div class="val" id="ctxLow">--</div>
+      <div class="loc" id="ctxLowLoc">Scanning...</div>
+    </div>
+    <div class="summary-card regional">
+      <h3>Central TX Max Gust</h3>
+      <div class="val" id="ctxWind">--</div>
+      <div class="loc" id="ctxWindLoc">Scanning...</div>
+    </div>
+    <div class="summary-card regional">
+      <h3>Central TX Max Rain</h3>
+      <div class="val" id="ctxRain">--</div>
+      <div class="loc" id="ctxRainLoc">Scanning...</div>
+    </div>
+  </div>
+
+  <div id="progress-container">
+    <div id="progress-bar">Initializing network scan...</div>
+  </div>
+
+  <div class="table-container">
+    <table id="weatherTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Station / City</th>
+          <th onclick="sortTable(1)">Current Temp (°F)</th>
+          <th onclick="sortTable(2)">Actual High Today (°F)</th>
+          <th onclick="sortTable(3)">Actual Low Today (°F)</th>
+          <th onclick="sortTable(4)">Rain Today (in)</th>
+          <th onclick="sortTable(5)">Max Gust (mph)</th>
+          <th onclick="sortTable(6)">Current Condition</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+// Validated network of 111 reporting stations
+const stations = [
+    // --- Heat Corridors & Borderlands ---
+    { name: "Presidio Lely Intl", id: "KPRS" },
+    { name: "Lajitas / Big Bend", id: "KT89" },
+    { name: "Cotulla / La Salle Co.", id: "KCOT" },
+    { name: "McAllen Miller Intl", id: "KMFE" },
+    { name: "Laredo Intl", id: "KLRD" },
+    { name: "Del Rio Intl", id: "KDRT" },
+    { name: "Brownsville South Padre", id: "KBRO" },
+    { name: "Harlingen Valley Intl", id: "KHRL" },
+    { name: "Zapata County", id: "KZPZ" },
+    { name: "Carrizo Springs", id: "KCZT" },
+    { name: "Alice Intl", id: "KALI" },
+    { name: "Kingsville NAS", id: "KNGW" },
+    { name: "Corpus Christi Intl", id: "KCRP" },
+    { name: "Rockport State", id: "KRKP" },
+    { name: "Victoria Regional", id: "KVCT" },
+    { name: "Port Isabel / Cameron", id: "PIL" },
+    { name: "Beeville Municipal", id: "KBEA" },
+    { name: "Crystal City Municipal", id: "CZS" },
+    { name: "Eagle Pass Maverick Co.", id: "5T9" },
+    { name: "Port Lavaca / Calhoun", id: "PKV" },
+
+    // --- West Texas & Permian Basin ---
+    { name: "Wink / Winkler Co.", id: "KINK" },
+    { name: "Pecos Municipal", id: "KPEO" },
+    { name: "El Paso Intl", id: "KELP" },
+    { name: "Midland International", id: "KMAF" },
+    { name: "Big Spring McMahon", id: "KBPG" },
+    { name: "Odessa Schlemeyer", id: "KODS" },
+    { name: "Fort Stockton Pecos Co", id: "KFST" },
+    { name: "Alpine Casparis", id: "KE38" },
+    { name: "Marfa Municipal", id: "KMRF" },
+    { name: "Van Horn County", id: "KVHN" },
+    { name: "Guadalupe Pass", id: "GDP" },
+
+    // --- Panhandle & South Plains ---
+    { name: "Amarillo Rick Husband", id: "KAMA" },
+    { name: "Lubbock Preston Smith", id: "KLBB" },
+    { name: "Childress Municipal", id: "KCDS" },
+    { name: "Plainview Hale Co", id: "KPVW" },
+    { name: "Borger Municipal", id: "KBGD" },
+    { name: "Dalhart Municipal", id: "KDHT" },
+    { name: "Perryton Ochiltree", id: "IDN" },
+
+    // --- North Texas & DFW ---
+    { name: "Dallas-Fort Worth Intl", id: "KDFW" },
+    { name: "Dallas Love Field", id: "KDAL" },
+    { name: "Fort Worth Alliance", id: "KAFW" },
+    { name: "Fort Worth Meacham", id: "KFTW" },
+    { name: "Arlington Municipal", id: "KGKY" },
+    { name: "McKinney National", id: "KTKI" },
+    { name: "Denton Enterprise", id: "KDTO" },
+    { name: "Sherman / Denison", id: "KGYI" },
+    { name: "Wichita Falls / Sheppard", id: "KSPS" },
+    { name: "Mineral Wells", id: "KMWL" },
+    { name: "Stephenville Municipal", id: "KSEP" },
+    { name: "Corsicana Municipal", id: "KCRS" },
+    { name: "Lancaster Regional", id: "KLNC" },
+    { name: "Gainesville Municipal", id: "GLE" },
+    { name: "Mount Pleasant Regional", id: "MPJ" },
+    { name: "Sulphur Springs Municipal", id: "SLR" },
+
+    // --- Central Texas & Austin / San Antonio (Targeted Corridor) ---
+    { name: "Austin-Bergstrom Intl", id: "KAUS", central: true },
+    { name: "Austin Executive", id: "KEDC", central: true },
+    { name: "Austin Camp Mabry", id: "KATT", central: true },
+    { name: "San Antonio Intl", id: "KSAT", central: true },
+    { name: "San Antonio Stinson", id: "KSSF", central: true },
+    { name: "Waco Regional", id: "KACT", central: true },
+    { name: "Killeen / Fort Hood", id: "KILE", central: true },
+    { name: "Temple Municipal", id: "KTPL", central: true },
+    { name: "College Station Easterwood", id: "KCLL", central: true },
+    { name: "San Marcos Regional", id: "KHYI", central: true },
+    { name: "New Braunfels Regional", id: "KBAZ", central: true },
+    { name: "Burnet Municipal", id: "KBMQ", central: true },
+    { name: "Georgetown Executive", id: "KGTU", central: true },
+    { name: "Uvalde Garner Field", id: "UVA", central: true },
+    { name: "Hondo Municipal", id: "HDO", central: true },
+    { name: "Kerrville Municipal", id: "ERV", central: true },
+    { name: "Fredericksburg / Gillespie", id: "T82", central: true },
+    { name: "Giddings / Lee Co.", id: "GYB", central: true },
+    { name: "Taylor Municipal", id: "TXZ", central: true },
+    { name: "Caldwell Municipal", id: "RWV", central: true },
+    { name: "Brazos Valley / Bryan", id: "CFD", central: true },
+
+    // --- East Texas & Gulf Coast ---
+    { name: "Houston Intercontinental", id: "KIAH" },
+    { name: "Houston Hobby", id: "KHOU" },
+    { name: "Sugar Land Regional", id: "KSGR" },
+    { name: "Conroe / Lone Star", id: "KCXO" },
+    { name: "Angleton / Lake Jackson", id: "KLBX" },
+    { name: "Beaumont / Port Arthur", id: "KBPT" },
+    { name: "Lufkin Angelina Co.", id: "KLFK" },
+    { name: "Tyler Pounds Regional", id: "KTYR" },
+    { name: "Longview East Texas", id: "KGGG" },
+    { name: "Texarkana Regional", id: "KTXK" },
+    { name: "Palestine Municipal", id: "PSN" },
+    { name: "Huntsville Municipal", id: "UTS" },
+    { name: "Galveston Scholes Intl", id: "KGLS" },
+    { name: "Palacios Municipal", id: "PSX" },
+    { name: "Marshall / Harrison Co.", id: "ASL" },
+    { name: "Henderson / Rusk Co.", id: "RFI" },
+    { name: "Nacogdoches A.L. Mangham", id: "OCH" },
+
+    // --- West-Central Texas ---
+    { name: "Abilene Regional", id: "KABI" },
+    { name: "Abilene Dyess AFB", id: "KDYS" },
+    { name: "San Angelo Regional", id: "KSJT" },
+    { name: "Brownwood Regional", id: "KBWD" }
+];
+
+let globalResults = [];
+
+function parseWindMph(windObj) {
+    if (!windObj || windObj.value == null) return 0;
+    let val = windObj.value;
+    let unit = windObj.unitCode || "";
+    let mph = 0;
+
+    if (unit.includes("km_h")) {
+        mph = val * 0.621371; 
+    } else if (unit.includes("m_s")) {
+        mph = val * 2.23694;  
+    } else if (unit.includes("knot")) {
+        mph = val * 1.15078;  
+    } else {
+        if (val > 35) {
+            mph = val * 0.621371; 
+        } else {
+            mph = val * 2.23694;  
+        }
+    }
+    return mph > 65 ? 0 : mph; 
+}
+
+async function fetchStationData(station) {
+    const headers = {
+        "User-Agent": "(TexasWeatherDashboard, admin@example.com)",
+        "Accept": "application/geo+json"
+    };
+    try {
+        const latestRes = await fetch(`https://api.weather.gov/stations/${station.id}/observations/latest`, { headers });
+        if (!latestRes.ok) return null;
+        const latestData = await latestRes.json();
+        const props = latestData.properties || {};
+
+        const tempC = props.temperature?.value;
+        const currentTemp = tempC != null ? (tempC * 9/5) + 32 : null;
+        const condition = props.textDescription || "N/A";
+
+        const hourlyRes = await fetch(`https://api.weather.gov/stations/${station.id}/observations`, { headers });
+        const hourlyData = await hourlyRes.json();
+        const features = hourlyData.features || [];
+
+        const todayUTC = new Date().toISOString().split('T')[0];
+        let temps = [];
+        let rainTotal = 0;
+        let maxGust = 0;
+
+        features.forEach(f => {
+            const fProps = f.properties || {};
+            const timestamp = fProps.timestamp || "";
+            if (timestamp.startsWith(todayUTC)) {
+                const tVal = fProps.temperature?.value;
+                if (tVal != null) temps.push((tVal * 9/5) + 32);
+
+                const pVal = fProps.precipitationLastHour?.value;
+                if (pVal != null && pVal > 0) rainTotal += pVal / 25.4;
+
+                const gustObj = fProps.windGust;
+                const gustMph = parseWindMph(gustObj);
+                if (gustMph > maxGust) maxGust = gustMph;
+            }
+        });
+
+        return {
+            name: station.name,
+            id: station.id,
+            central: !!station.central,
+            current: currentTemp,
+            high: temps.length > 0 ? Math.max(...temps) : currentTemp,
+            low: temps.length > 0 ? Math.min(...temps) : currentTemp,
+            rain: rainTotal,
+            gust: maxGust,
+            condition: condition
+        };
+    } catch (err) {
+        return null;
+    }
+}
+
+async function runStaggeredScan() {
+    const progressBar = document.getElementById("progress-bar");
+    const batchSize = 8;
+    const batchDelayMs = 300;
+    const total = stations.length;
+    let completed = 0;
+
+    for (let i = 0; i < stations.length; i += batchSize) {
+        const chunk = stations.slice(i, i + batchSize);
+        const promises = chunk.map(station => fetchStationData(station));
+        const batchResults = await Promise.all(promises);
+        
+        const validBatch = batchResults.filter(r => r !== null);
+        globalResults.push(...validBatch);
+        
+        completed += chunk.length;
+        const percent = Math.min(Math.round((completed / total) * 100), 100);
+        progressBar.style.width = percent + "%";
+        progressBar.innerText = `Scanning Network: ${Math.min(completed, total)} / ${total} Stations`;
+
+        renderTable(globalResults);
+        updateSummaryCards(globalResults);
+
+        if (i + batchSize < stations.length) {
+            await new Promise(resolve => setTimeout(resolve, batchDelayMs));
+        }
+    }
+
+    document.getElementById("progress-container").style.display = "none";
+    document.getElementById("networkSubtitle").innerText = `Active Statewide NWS/FAA Observation Network (${globalResults.length} Responsive Stations) — Click column headers to sort`;
+}
+
+function updateSummaryCards(data) {
+    if (data.length === 0) return;
+
+    // Statewide Calculations
+    let highest = data.reduce((max, d) => (d.high > (max.high ?? -999) ? d : max), {});
+    let lowest = data.reduce((min, d) => (d.low < (min.low ?? 999) ? d : min), {});
+    let windiest = data.reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), {});
+    let wettest = data.reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), {});
+
+    if (highest.high != null) {
+        document.getElementById("sumHigh").innerText = highest.high.toFixed(1) + "°F";
+        document.getElementById("sumHighLoc").innerText = highest.name;
+    }
+    if (lowest.low != null) {
+        document.getElementById("sumLow").innerText = lowest.low.toFixed(1) + "°F";
+        document.getElementById("sumLowLoc").innerText = lowest.name;
+    }
+    if (windiest.gust != null && windiest.gust > 0) {
+        document.getElementById("sumWind").innerText = windiest.gust.toFixed(0) + " mph";
+        document.getElementById("sumWindLoc").innerText = windiest.name;
+    } else {
+        document.getElementById("sumWind").innerText = "Calm / Light";
+        document.getElementById("sumWindLoc").innerText = windiest.name || "";
+    }
+    if (wettest.rain != null && wettest.rain > 0) {
+        document.getElementById("sumRain").innerText = wettest.rain.toFixed(2) + "\"";
+        document.getElementById("sumRainLoc").innerText = wettest.name;
+    } else {
+        document.getElementById("sumRain").innerText = "0.00\"";
+        document.getElementById("sumRainLoc").innerText = "Statewide dry";
+    }
+
+    // Central Texas Sub-Region Calculations
+    let centralData = data.filter(d => d.central);
+    if (centralData.length > 0) {
+        let ctxHigh = centralData.reduce((max, d) => (d.high > (max.high ?? -999) ? d : max), {});
+        let ctxLow = centralData.reduce((min, d) => (d.low < (min.low ?? 999) ? d : min), {});
+        let ctxWind = centralData.reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), {});
+        let ctxRain = centralData.reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), {});
+
+        if (ctxHigh.high != null) {
+            document.getElementById("ctxHigh").innerText = ctxHigh.high.toFixed(1) + "°F";
+            document.getElementById("ctxHighLoc").innerText = ctxHigh.name;
+        }
+        if (ctxLow.low != null) {
+            document.getElementById("ctxLow").innerText = ctxLow.low.toFixed(1) + "°F";
+            document.getElementById("ctxLowLoc").innerText = ctxLow.name;
+        }
+        if (ctxWind.gust != null && ctxWind.gust > 0) {
+            document.getElementById("ctxWind").innerText = ctxWind.gust.toFixed(0) + " mph";
+            document.getElementById("ctxWindLoc").innerText = ctxWind.name;
+        } else {
+            document.getElementById("ctxWind").innerText = "Calm / Light";
+            document.getElementById("ctxWindLoc").innerText = ctxWind.name || "";
+        }
+        if (ctxRain.rain != null && ctxRain.rain > 0) {
+            document.getElementById("ctxRain").innerText = ctxRain.rain.toFixed(2) + "\"";
+            document.getElementById("ctxRainLoc").innerText = ctxRain.name;
+        } else {
+            document.getElementById("ctxRain").innerText = "0.00\"";
+            document.getElementById("ctxRainLoc").innerText = "Region dry";
+        }
+    }
+}
+
+function renderTable(data) {
+    const tbody = document.querySelector("#weatherTable tbody");
+    tbody.innerHTML = data.map(r => {
+        const highClass = r.high >= 100 ? 'hot-temp' : '';
+        return `
+            <tr>
+              <td><b>${r.name}</b> ${r.central ? '<span style="font-size:0.7rem; color:#0f766e; background:#ccfbf1; padding:1px 4px; border-radius:4px; margin-left:4px;">CTX</span>' : ''}</td>
+              <td><b>${r.current != null ? r.current.toFixed(1) + '°' : 'N/A'}</b></td>
+              <td class="${highClass}">${r.high != null ? r.high.toFixed(1) + '°' : 'N/A'}</td>
+              <td>${r.low != null ? r.low.toFixed(1) + '°' : 'N/A'}</td>
+              <td class="${r.rain > 0 ? 'rain-pos' : ''}">${r.rain.toFixed(2)}"</td>
+              <td class="wind-val">${r.gust > 0 ? r.gust.toFixed(0) + ' mph' : 'Calm / Light'}</td>
+              <td>${r.condition}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+let sortDirections = {};
+function sortTable(columnIndex) {
+    let dir = sortDirections[columnIndex] || 'asc';
+    globalResults.sort((a, b) => {
+        let valA, valB;
+        if (columnIndex === 0) { valA = a.name; valB = b.name; }
+        else if (columnIndex === 1) { valA = a.current ?? -999; valB = b.current ?? -999; }
+        else if (columnIndex === 2) { valA = a.high ?? -999; valB = b.high ?? -999; }
+        else if (columnIndex === 3) { valA = a.low ?? 999; valB = b.low ?? 999; }
+        else if (columnIndex === 4) { valA = a.rain ?? 0; valB = b.rain ?? 0; }
+        else if (columnIndex === 5) { valA = a.gust ?? 0; valB = b.gust ?? 0; }
+        else if (columnIndex === 6) { valA = a.condition ?? ''; valB = b.condition ?? ''; }
+
+        if (valA < valB) return dir === 'asc' ? -1 : 1;
+        if (valA > valB) return dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    sortDirections[columnIndex] = dir === 'asc' ? 'desc' : 'asc';
+    renderTable(globalResults);
+}
+
+document.addEventListener("DOMContentLoaded", runStaggeredScan);
+</script>
+
+</body>
+</html>
