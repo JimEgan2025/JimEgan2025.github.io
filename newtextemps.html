@@ -184,7 +184,7 @@
           <th onclick="sortTable(2)">24h High (°F)</th>
           <th onclick="sortTable(3)">24h Low (°F)</th>
           <th onclick="sortTable(4)">24h Rain (in)</th>
-          <th onclick="sortTable(5)">Max Gust (kts)</th>
+          <th onclick="sortTable(5)">Max Gust (mph)</th>
           <th onclick="sortTable(6)">Latest Timestamp (UTC)</th>
         </tr>
       </thead>
@@ -218,7 +218,6 @@ const stationNames = {
   "ALI": "Alice International",
   "AMA": "Amarillo (Rick Husband)",
   "BRO": "Brownsville South Padre",
-  "CLL": "College Station",
   "COT": "Cotulla-La Salle",
   "CRP": "Corpus Christi Int'l",
   "CXO": "Conroe (North Houston)",
@@ -261,7 +260,7 @@ const stationNames = {
   "SKF": "San Antonio (Kelly Field)",
   "SPS": "Wichita Falls (Sheppard AFB)",
   "SSF": "San Antonio Stinson",
-  "SWW": "Sweetwater aviatn",
+  "SWW": "Sweetwater",
   "TKI": "McKinney National",
   "TYR": "Tyler Pounds Regional",
   "UVA": "Uvalde Garner Field",
@@ -376,7 +375,9 @@ function parseCSVText(rawText) {
 
         if (gustIdx !== -1) {
             let gust = parseFloat(cols[gustIdx]);
-            if (!isNaN(gust) && gust > s.maxGust) s.maxGust = gust;
+            // Convert knots to mph (1 knot = 1.15078 mph)
+            let gustMph = gust * 1.15078;
+            if (!isNaN(gustMph) && gustMph > s.maxGust) s.maxGust = gustMph;
         }
 
         if (p01iIdx !== -1) {
@@ -419,7 +420,7 @@ function updateSummaryCards(data) {
         document.getElementById("ctxLow").innerText = ctxLow.minTemp.toFixed(1) + "°F";
         document.getElementById("ctxLowLoc").innerText = formatStation(ctxLow.id);
 
-        document.getElementById("ctxWind").innerText = ctxWind.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + " kts" : "Calm";
+        document.getElementById("ctxWind").innerText = ctxWind.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + " mph" : "Calm";
         document.getElementById("ctxWindLoc").innerText = formatStation(ctxWind.id);
 
         document.getElementById("ctxRain").innerText = ctxRain.totalPrecip > 0 ? ctxRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
@@ -438,7 +439,7 @@ function updateSummaryCards(data) {
     document.getElementById("stateLow").innerText = stateLow.minTemp.toFixed(1) + "°F";
     document.getElementById("stateLowLoc").innerText = formatStation(stateLow.id);
 
-    document.getElementById("stateWind").innerText = stateWind.maxGust > 0 ? stateWind.maxGust.toFixed(1) + " kts" : "Calm";
+    document.getElementById("stateWind").innerText = stateWind.maxGust > 0 ? stateWind.maxGust.toFixed(1) + " mph" : "Calm";
     document.getElementById("stateWindLoc").innerText = formatStation(stateWind.id);
 
     document.getElementById("stateRain").innerText = stateRain.totalPrecip > 0 ? stateRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
@@ -456,7 +457,7 @@ function renderTable(data) {
               <td class="${highClass}">${r.maxTemp != null ? r.maxTemp.toFixed(1) + '°' : 'N/A'}</td>
               <td>${r.minTemp != null ? r.minTemp.toFixed(1) + '°' : 'N/A'}</td>
               <td class="${r.totalPrecip > 0 ? 'rain-pos' : ''}">${r.totalPrecip.toFixed(2)}"</td>
-              <td class="wind-val">${r.maxGust > 0 ? r.maxGust.toFixed(1) + ' kts' : 'Calm'}</td>
+              <td class="wind-val">${r.maxGust > 0 ? r.maxGust.toFixed(1) + ' mph' : 'Calm'}</td>
               <td>${r.latestValid || 'N/A'}</td>
             </tr>
         `;
