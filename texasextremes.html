@@ -159,7 +159,6 @@
   </div>
 
 <script>
-// Validated network of 111 reporting stations
 const stations = [
     // --- Heat Corridors & Borderlands ---
     { name: "Presidio Lely Intl", id: "KPRS" },
@@ -182,6 +181,9 @@ const stations = [
     { name: "Crystal City Municipal", id: "CZS" },
     { name: "Eagle Pass Maverick Co.", id: "5T9" },
     { name: "Port Lavaca / Calhoun", id: "PKV" },
+    { name: "Falfurrias / Brooks Co.", id: "BKS" },
+    { name: "Hebbronville / Jim Hogg", id: "HBV" },
+    { name: "Raymondville / Willacy", id: "T90" },
 
     // --- West Texas & Permian Basin ---
     { name: "Wink / Winkler Co.", id: "KINK" },
@@ -195,6 +197,9 @@ const stations = [
     { name: "Marfa Municipal", id: "KMRF" },
     { name: "Van Horn County", id: "KVHN" },
     { name: "Guadalupe Pass", id: "GDP" },
+    { name: "Seminole / Gaines Co.", id: "GNC" },
+    { name: "Andrews County", id: "E11" },
+    { name: "McCamey / Rankin", id: "MMY" },
 
     // --- Panhandle & South Plains ---
     { name: "Amarillo Rick Husband", id: "KAMA" },
@@ -204,6 +209,10 @@ const stations = [
     { name: "Borger Municipal", id: "KBGD" },
     { name: "Dalhart Municipal", id: "KDHT" },
     { name: "Perryton Ochiltree", id: "IDN" },
+    { name: "Pampa / Lefors", id: "PPA" },
+    { name: "Levelland Municipal", id: "LND" },
+    { name: "Brownfield Municipal", id: "BFE" },
+    { name: "Littlefield Municipal", id: "LIU" },
 
     // --- North Texas & DFW ---
     { name: "Dallas-Fort Worth Intl", id: "KDFW" },
@@ -219,11 +228,14 @@ const stations = [
     { name: "Stephenville Municipal", id: "KSEP" },
     { name: "Corsicana Municipal", id: "KCRS" },
     { name: "Lancaster Regional", id: "KLNC" },
-    { name: "Gainesville Municipal", id: "GLE" },
     { name: "Mount Pleasant Regional", id: "MPJ" },
     { name: "Sulphur Springs Municipal", id: "SLR" },
+    { name: "Gainesville Municipal", id: "GLE" },
+    { name: "Graham Municipal", id: "RPH" },
+    { name: "Bowie Municipal", id: "T93" },
+    { name: "Decatur Municipal", id: "LUD" },
 
-    // --- Central Texas & Austin / San Antonio (Targeted Corridor) ---
+    // --- Central Texas & Austin / San Antonio ---
     { name: "Austin-Bergstrom Intl", id: "KAUS", central: true },
     { name: "Austin Executive", id: "KEDC", central: true },
     { name: "Austin Camp Mabry", id: "KATT", central: true },
@@ -245,6 +257,10 @@ const stations = [
     { name: "Taylor Municipal", id: "TXZ", central: true },
     { name: "Caldwell Municipal", id: "RWV", central: true },
     { name: "Brazos Valley / Bryan", id: "CFD", central: true },
+    { name: "Pleasanton Municipal", id: "PEZ", central: true },
+    { name: "Boerne / Stagecoach", id: "5R9", central: true },
+    { name: "Lampasas Municipal", id: "LMP", central: true },
+    { name: "Brady / Curtis Field", id: "BBD", central: true },
 
     // --- East Texas & Gulf Coast ---
     { name: "Houston Intercontinental", id: "KIAH" },
@@ -264,12 +280,21 @@ const stations = [
     { name: "Marshall / Harrison Co.", id: "ASL" },
     { name: "Henderson / Rusk Co.", id: "RFI" },
     { name: "Nacogdoches A.L. Mangham", id: "OCH" },
+    { name: "Crockett / Houston Co.", id: "TRL" },
+    { name: "Madisonville Municipal", id: "DNI" },
+    { name: "Liberty Municipal", id: "T78" },
+    { name: "Anahuac / Chambers Co.", id: "EOZ" },
+    { name: "Jasper County", id: "JAS" },
+    { name: "Orange County", id: "ORG" },
 
     // --- West-Central Texas ---
     { name: "Abilene Regional", id: "KABI" },
     { name: "Abilene Dyess AFB", id: "KDYS" },
     { name: "San Angelo Regional", id: "KSJT" },
-    { name: "Brownwood Regional", id: "KBWD" }
+    { name: "Brownwood Regional", id: "KBWD" },
+    { name: "Sweetwater / Nolan Co.", id: "SWW" },
+    { name: "Eastland Municipal", id: "ETN" },
+    { name: "Comanche County", id: "MKN" }
 ];
 
 let globalResults = [];
@@ -287,11 +312,7 @@ function parseWindMph(windObj) {
     } else if (unit.includes("knot")) {
         mph = val * 1.15078;  
     } else {
-        if (val > 35) {
-            mph = val * 0.621371; 
-        } else {
-            mph = val * 2.23694;  
-        }
+        mph = val > 35 ? val * 0.621371 : val * 2.23694;
     }
     return mph > 65 ? 0 : mph; 
 }
@@ -336,13 +357,16 @@ async function fetchStationData(station) {
             }
         });
 
+        const computedHigh = temps.length > 0 ? Math.max(...temps) : currentTemp;
+        const computedLow = temps.length > 0 ? Math.min(...temps) : currentTemp;
+
         return {
             name: station.name,
             id: station.id,
             central: !!station.central,
             current: currentTemp,
-            high: temps.length > 0 ? Math.max(...temps) : currentTemp,
-            low: temps.length > 0 ? Math.min(...temps) : currentTemp,
+            high: computedHigh,
+            low: computedLow,
             rain: rainTotal,
             gust: maxGust,
             condition: condition
@@ -354,8 +378,8 @@ async function fetchStationData(station) {
 
 async function runStaggeredScan() {
     const progressBar = document.getElementById("progress-bar");
-    const batchSize = 8;
-    const batchDelayMs = 300;
+    const batchSize = 10;
+    const batchDelayMs = 250;
     const total = stations.length;
     let completed = 0;
 
@@ -387,20 +411,20 @@ async function runStaggeredScan() {
 function updateSummaryCards(data) {
     if (data.length === 0) return;
 
-    // Statewide Calculations
-    let highest = data.reduce((max, d) => (d.high > (max.high ?? -999) ? d : max), {});
-    let lowest = data.reduce((min, d) => (d.low < (min.low ?? 999) ? d : min), {});
-    let windiest = data.reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), {});
-    let wettest = data.reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), {});
+    const validData = data.filter(d => d.high != null && d.low != null);
+    if (validData.length === 0) return;
 
-    if (highest.high != null) {
-        document.getElementById("sumHigh").innerText = highest.high.toFixed(1) + "°F";
-        document.getElementById("sumHighLoc").innerText = highest.name;
-    }
-    if (lowest.low != null) {
-        document.getElementById("sumLow").innerText = lowest.low.toFixed(1) + "°F";
-        document.getElementById("sumLowLoc").innerText = lowest.name;
-    }
+    let highest = validData.reduce((max, d) => (d.high > max.high ? d : max), validData[0]);
+    let lowest = validData.reduce((min, d) => (d.low < min.low ? d : min), validData[0]);
+    let windiest = data.reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), data[0]);
+    let wettest = data.reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), data[0]);
+
+    document.getElementById("sumHigh").innerText = highest.high.toFixed(1) + "°F";
+    document.getElementById("sumHighLoc").innerText = highest.name;
+
+    document.getElementById("sumLow").innerText = lowest.low.toFixed(1) + "°F";
+    document.getElementById("sumLowLoc").innerText = lowest.name;
+
     if (windiest.gust != null && windiest.gust > 0) {
         document.getElementById("sumWind").innerText = windiest.gust.toFixed(0) + " mph";
         document.getElementById("sumWindLoc").innerText = windiest.name;
@@ -408,6 +432,7 @@ function updateSummaryCards(data) {
         document.getElementById("sumWind").innerText = "Calm / Light";
         document.getElementById("sumWindLoc").innerText = windiest.name || "";
     }
+
     if (wettest.rain != null && wettest.rain > 0) {
         document.getElementById("sumRain").innerText = wettest.rain.toFixed(2) + "\"";
         document.getElementById("sumRainLoc").innerText = wettest.name;
@@ -416,22 +441,19 @@ function updateSummaryCards(data) {
         document.getElementById("sumRainLoc").innerText = "Statewide dry";
     }
 
-    // Central Texas Sub-Region Calculations
-    let centralData = data.filter(d => d.central);
+    let centralData = validData.filter(d => d.central);
     if (centralData.length > 0) {
-        let ctxHigh = centralData.reduce((max, d) => (d.high > (max.high ?? -999) ? d : max), {});
-        let ctxLow = centralData.reduce((min, d) => (d.low < (min.low ?? 999) ? d : min), {});
-        let ctxWind = centralData.reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), {});
-        let ctxRain = centralData.reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), {});
+        let ctxHigh = centralData.reduce((max, d) => (d.high > max.high ? d : max), centralData[0]);
+        let ctxLow = centralData.reduce((min, d) => (d.low < min.low ? d : min), centralData[0]);
+        let ctxWind = centralData.filter(d => d.central).reduce((max, d) => (d.gust > (max.gust ?? 0) ? d : max), centralData[0]);
+        let ctxRain = centralData.filter(d => d.central).reduce((max, d) => (d.rain > (max.rain ?? 0) ? d : max), centralData[0]);
 
-        if (ctxHigh.high != null) {
-            document.getElementById("ctxHigh").innerText = ctxHigh.high.toFixed(1) + "°F";
-            document.getElementById("ctxHighLoc").innerText = ctxHigh.name;
-        }
-        if (ctxLow.low != null) {
-            document.getElementById("ctxLow").innerText = ctxLow.low.toFixed(1) + "°F";
-            document.getElementById("ctxLowLoc").innerText = ctxLow.name;
-        }
+        document.getElementById("ctxHigh").innerText = ctxHigh.high.toFixed(1) + "°F";
+        document.getElementById("ctxHighLoc").innerText = ctxHigh.name;
+
+        document.getElementById("ctxLow").innerText = ctxLow.low.toFixed(1) + "°F";
+        document.getElementById("ctxLowLoc").innerText = ctxLow.name;
+
         if (ctxWind.gust != null && ctxWind.gust > 0) {
             document.getElementById("ctxWind").innerText = ctxWind.gust.toFixed(0) + " mph";
             document.getElementById("ctxWindLoc").innerText = ctxWind.name;
@@ -439,6 +461,7 @@ function updateSummaryCards(data) {
             document.getElementById("ctxWind").innerText = "Calm / Light";
             document.getElementById("ctxWindLoc").innerText = ctxWind.name || "";
         }
+
         if (ctxRain.rain != null && ctxRain.rain > 0) {
             document.getElementById("ctxRain").innerText = ctxRain.rain.toFixed(2) + "\"";
             document.getElementById("ctxRainLoc").innerText = ctxRain.name;
@@ -490,6 +513,9 @@ function sortTable(columnIndex) {
 
 document.addEventListener("DOMContentLoaded", runStaggeredScan);
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
