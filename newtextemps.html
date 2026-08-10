@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Texas Weather Dashboard & Regional Telemetry</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 1.5rem;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 { margin-bottom: 0.2rem; color: #003366; text-align: center; }
+    p.subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #003366;
+      margin: 1.5rem 0 0.5rem 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Central Texas Box */
+    .summary-card.ctx-card {
+      background: #f8fafc;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      text-align: center;
+      border-top: 4px solid #003366;
+    }
+    .summary-card.ctx-card h3 { color: #003366; }
+    .summary-card.ctx-card .val { color: #003366; }
+
+    /* Statewide Box */
+    .summary-card.state-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      text-align: center;
+      border-top: 4px solid #0d9488;
+    }
+    .summary-card h3 { margin: 0 0 0.4rem 0; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+    .summary-card .val { font-size: 1.2rem; font-weight: bold; color: #0f766e; }
+    .summary-card .loc { font-size: 0.75rem; color: #555; margin-top: 0.3rem; font-weight: 500; }
+
+    #status-bar {
+      background: #e2e8f0;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #334155;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+      max-height: 650px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    thead { background: #333; color: white; position: sticky; top: 0; z-index: 10; }
+    th, td { padding: 0.75rem; border-bottom: 1px solid #eee; text-align: left; font-size: 0.85rem; }
+    th { cursor: pointer; white-space: nowrap; user-select: none; }
+    th:hover { background: #444; }
+    th::after { content: " ↕"; font-size: 0.75rem; color: #aaa; }
+    tr:hover td { background: #f1f5f9; }
+    .rain-pos { color: #004b8d; font-weight: bold; }
+    .wind-val { color: #666; font-weight: 500; }
+    .hot-temp { color: #b91c1c; font-weight: bold; }
+    .ctx-tag { background: #e0f2fe; color: #0369a1; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+
+    .btn-bar { text-align: right; margin-bottom: 0.5rem; }
+    button {
+      background: #003366;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #002244; }
+
+    @media print {
+      body { background: white; margin: 0; color: black; }
+      .btn-bar, #status-bar, p.subtitle { display: none; }
+      h1 { font-size: 1.4rem; text-align: left; }
+      .table-container, .summary-grid { box-shadow: none; max-height: none; }
+      table { min-width: 100%; border: 1px solid #ccc; }
+      th { background: #eee !important; color: black !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Texas Weather Dashboard & Regional Telemetry</h1>
+  <p class="subtitle">Direct Bulk Ingestion via Iowa State University ASOS Export Gateway</p>
+
+  <!-- Central Texas Focus Box -->
+  <div class="section-title">📍 Central Texas Corridor Summary (24h Window)</div>
+  <div class="summary-grid">
+    <div class="summary-card ctx-card">
+      <h3>CTX High Temp</h3>
+      <div class="val" id="ctxHigh">--</div>
+      <div class="loc" id="ctxHighLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card ctx-card">
+      <h3>CTX Low Temp</h3>
+      <div class="val" id="ctxLow">--</div>
+      <div class="loc" id="ctxLowLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card ctx-card">
+      <h3>CTX Max Gust</h3>
+      <div class="val" id="ctxWind">--</div>
+      <div class="loc" id="ctxWindLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card ctx-card">
+      <h3>CTX Max Rainfall</h3>
+      <div class="val" id="ctxRain">--</div>
+      <div class="loc" id="ctxRainLoc">Waiting for feed...</div>
+    </div>
+  </div>
+
+  <!-- Statewide Overview Box -->
+  <div class="section-title">🌐 Statewide Extremes Overview</div>
+  <div class="summary-grid">
+    <div class="summary-card state-card">
+      <h3>State High Temp</h3>
+      <div class="val" id="stateHigh">--</div>
+      <div class="loc" id="stateHighLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card state-card">
+      <h3>State Low Temp</h3>
+      <div class="val" id="stateLow">--</div>
+      <div class="loc" id="stateLowLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card state-card">
+      <h3>State Max Gust</h3>
+      <div class="val" id="stateWind">--</div>
+      <div class="loc" id="stateWindLoc">Waiting for feed...</div>
+    </div>
+    <div class="summary-card state-card">
+      <h3>State Max Rain</h3>
+      <div class="val" id="stateRain">--</div>
+      <div class="loc" id="stateRainLoc">Waiting for feed...</div>
+    </div>
+  </div>
+
+  <div id="status-bar">Connecting to Iowa State Mesonet bulk CSV endpoint...</div>
+
+  <div class="section-title">
+    <span>Station Network Telemetry (<span id="stationCountLbl">0</span> Stations Parsed)</span>
+    <div class="btn-bar">
+      <button onclick="window.print()">🖨️ Print Weather Report</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table id="weatherTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Station Location</th>
+          <th onclick="sortTable(1)">Latest Temp (°F)</th>
+          <th onclick="sortTable(2)">24h High (°F)</th>
+          <th onclick="sortTable(3)">24h Low (°F)</th>
+          <th onclick="sortTable(4)">24h Rain (in)</th>
+          <th onclick="sortTable(5)">Max Gust (kts)</th>
+          <th onclick="sortTable(6)">Latest Timestamp (UTC)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+// Station dictionary for human-readable descriptions
+const stationNames = {
+  "AUS": "Austin-Bergstrom Int'l",
+  "HYI": "San Marcos Regional",
+  "GTU": "Georgetown Municipal",
+  "EDC": "Austin Executive",
+  "ATT": "Austin Camp Mabry",
+  "ACT": "Waco Regional",
+  "ILE": "Killeen / Robert Gray",
+  "TPL": "Temple Municipal",
+  "CLL": "College Station (Easterwood)",
+  "BAZ": "New Braunfels Regional",
+  "BMQ": "Burnet Municipal",
+  "ERV": "Kerrville Municipal",
+  "GYB": "Taylor Municipal",
+  "HHF": "Hemphill County (Canadian)",
+  "MRF": "Marfa Municipal",
+  "CWC": "Centerville",
+  "E41": "Madisonville Municipal",
+  "ABI": "Abilene Regional",
+  "ADS": "Addison Airport (Dallas)",
+  "AFW": "Fort Worth Alliance",
+  "ALI": "Alice International",
+  "AMA": "Amarillo (Rick Husband)",
+  "BRO": "Brownsville South Padre",
+  "CLL": "College Station",
+  "COT": "Cotulla-La Salle",
+  "CRP": "Corpus Christi Int'l",
+  "CXO": "Conroe (North Houston)",
+  "DAL": "Dallas Love Field",
+  "DFW": "Dallas/Fort Worth Int'l",
+  "DRT": "Del Rio International",
+  "DTO": "Denton Enterprise",
+  "DWH": "David Wayne Hooks (Houston)",
+  "ELP": "El Paso International",
+  "EFD": "Ellington Field (Houston)",
+  "FST": "Fort Stockton-Pecos",
+  "FTW": "Fort Worth Meacham",
+  "FWS": "Fort Worth Spinks",
+  "GGG": "Longview (Gregg County)",
+  "GLS": "Galveston (Scholes)",
+  "GPT": "Gulfport / Biloxi",
+  "GRK": "Killeen (Gray Army Airfield)",
+  "GVT": "Greenville (Majors)",
+  "HDO": "Hondo Municipal",
+  "HOU": "Houston Hobby",
+  "HRL": "Harlingen (Valley Int'l)",
+  "IAH": "Houston Intercontinental",
+  "JCT": "Junction (Kimble County)",
+  "LBB": "Lubbock Preston Smith",
+  "LBX": "La Porte Municipal",
+  "LFK": "Lufkin (Angelina County)",
+  "LRD": "Laredo International",
+  "MAF": "Midland International",
+  "MFE": "McAllen Miller Int'l",
+  "MWL": "Mineral Wells",
+  "NFW": "Fort Worth NAS JRB",
+  "NGP": "Corpus Christi NAS",
+  "NQI": "Kingsville NAS",
+  "PSX": "Palacios Municipal",
+  "RND": "San Antonio (Randolph AFB)",
+  "RKP": "Rockport (Aransas County)",
+  "SAT": "San Antonio International",
+  "SGR": "Sugar Land Regional",
+  "SJT": "San Angelo Regional",
+  "SKF": "San Antonio (Kelly Field)",
+  "SPS": "Wichita Falls (Sheppard AFB)",
+  "SSF": "San Antonio Stinson",
+  "SWW": "Sweetwater aviatn",
+  "TKI": "McKinney National",
+  "TYR": "Tyler Pounds Regional",
+  "UVA": "Uvalde Garner Field",
+  "VCT": "Victoria Regional",
+  "VHN": "Valentine / Van Horn"
+};
+
+function formatStation(stid) {
+    const name = stationNames[stid];
+    return name ? `${stid} — ${name}` : stid;
+}
+
+// Central Texas IDs explicitly flagged for the CTX corridor box
+const ctxStations = new Set([
+  "AUS", "EDC", "ATT", "ACT", "ILE", "TPL", "CLL", "HYI", "BAZ", "BMQ", 
+  "GTU", "UVA", "HDO", "ERV", "T82", "GYB", "TXZ", "RWV", "CFD", "PEZ", "LMP", "BBD"
+]);
+
+const targetUrl = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?network=TX_ASOS&station=0F2&station=11R&station=18H&station=25T&station=2F5&station=2R9&station=3T5&station=4F2&station=5C1&station=5R3&station=5T9&station=60R&station=66R&station=6P9&station=6R3&station=6R6&station=81R&station=8T6&station=ABI&station=ACT&station=ADS&station=AFW&station=ALI&station=AMA&station=APY&station=AQO&station=ARM&station=ASL&station=ATA&station=ATT&station=AUS&station=AXH&station=BAZ&station=BBD&station=BBF&station=BEA&station=BGD&station=BIF&station=BKD&station=BKS&station=BMQ&station=BMT&station=BPC&station=BPG&station=BPT&station=BQX&station=BRO&station=BSM&station=BWD&station=BYY&station=CDS&station=CFD&station=CLL&station=CNW&station=COM&station=COT&station=CPT&station=CRH&station=CRP&station=CRS&station=CVB&station=CWC&station=CXO&station=CZT&station=DAL&station=DFW&station=DHT&station=DKR&station=DLF&station=DRT&station=DTO&station=DUX&station=DWH&station=DYS&station=DZB&station=E01&station=E11&station=E35&station=E38&station=E41&station=E42&station=E57&station=EBG&station=ECU&station=EDC&station=EFD&station=ELA&station=ELP&station=EMK&station=ERV&station=ETN&station=F00&station=F05&station=F12&station=F17&station=F44&station=F46&station=FST&station=FTN&station=FTW&station=FWS&station=GDJ&station=GDP&station=GGG&station=GKY&station=GLE&station=GLS&station=GNC&station=GOP&station=GPM&station=GRK&station=GTU&station=GUL&station=GVT&station=GVW&station=GVX&station=GYB&station=GYF&station=GYI&station=GZN&station=HBV&station=HDO&station=HHF&station=HHV&station=HLR&station=HOU&station=HQI&station=HQZ&station=HRL&station=HRX&station=HYI&station=IAH&station=IKG&station=ILE&station=INJ&station=INK&station=JAS&station=JCT&station=JDD&station=JSO&station=JWY&station=JXI&station=LBB&station=LBR&station=LBX&station=LFK&station=LHB&station=LLN&station=LNC&station=LRD&station=LUD&station=LUV&station=LVJ&station=LXY&station=LZZ&station=MAF&station=MCJ&station=MDD&station=MFE&station=MIU&station=MKN&station=MNZ&station=MRF&station=MWL&station=MZG&station=NFW&station=NGP&station=NGW&station=NMT&station=NOG&station=NQI&station=NWL&station=OCH&station=ODO&station=OPM&station=ORG&station=OSA&station=OZA&station=PEQ&station=PEZ&station=PIL&station=PKV&station=PPA&station=PRS&station=PRX&station=PSN&station=PSX&station=PVW&station=PWG&station=PYX&station=RAS&station=RBD&station=RBO&station=RFI&station=RKP&station=RND&station=RPE&station=RPH&station=RWV&station=RYW&station=SAT&station=SEP&station=SEQ&station=SGR&station=SHP&station=SJT&station=SKF&station=SLR&station=SNK&station=SOA&station=SPL&station=SPS&station=SSF&station=SWW&station=T20&station=T35&station=T41&station=T65&station=T69&station=T70&station=T74&station=T77&station=T78&station=T82&station=T89&station=TFP&station=TKI&station=TME&station=TPL&station=TRL&station=TXW&station=TYR&station=UTS&station=UVA&station=VAF&station=VCT&station=VHN&station=XBP&data=all&year1=2026&month1=8&day1=9&year2=2026&month2=8&day2=10&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=M&trace=T&direct=no&report_type=3&report_type=4";
+
+let globalResults = [];
+
+function parseCSVLine(text) {
+    let result = [];
+    let entry = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        let c = text[i];
+        if (c === '"') {
+            inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+            result.push(entry.trim());
+            entry = "";
+        } else {
+            entry += c;
+        }
+    }
+    result.push(entry.trim());
+    return result;
+}
+
+async function fetchAndProcessBulkFeed() {
+    const statusBar = document.getElementById("status-bar");
+    try {
+        const response = await fetch(targetUrl);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const csvText = await response.text();
+        parseCSVText(csvText);
+    } catch (err) {
+        statusBar.style.background = "#fee2e2";
+        statusBar.style.color = "#991b1b";
+        statusBar.innerHTML = `⚠️ Direct fetch blocked by CORS or network error. Please ensure you are running through a local web server or CORS extension. (<span style="font-family:monospace; font-size:0.75rem;">${err.message}</span>)`;
+    }
+}
+
+function parseCSVText(rawText) {
+    const lines = rawText.split(/\r?\n/);
+    if (lines.length < 2) return;
+
+    const headers = parseCSVLine(lines[0].toLowerCase());
+    const stationIdx = headers.indexOf("station");
+    const validIdx = headers.indexOf("valid");
+    const tmpfIdx = headers.indexOf("tmpf");
+    const gustIdx = headers.indexOf("gust");
+    const p01iIdx = headers.indexOf("p01i");
+
+    if (stationIdx === -1 || tmpfIdx === -1) {
+        document.getElementById("status-bar").innerText = "Error: Required CSV columns not found in response header.";
+        return;
+    }
+
+    let stationMap = {};
+
+    for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line || line.startsWith("#")) continue;
+
+        let cols = parseCSVLine(line);
+        let stid = cols[stationIdx];
+        if (!stid) continue;
+
+        if (!stationMap[stid]) {
+            stationMap[stid] = {
+                id: stid,
+                isCtx: ctxStations.has(stid),
+                count: 0,
+                currentTemp: null,
+                maxTemp: -999,
+                minTemp: 999,
+                maxGust: 0,
+                totalPrecip: 0,
+                latestValid: ""
+            };
+        }
+
+        let s = stationMap[stid];
+        s.count++;
+
+        let validTime = validIdx !== -1 ? cols[validIdx] : "";
+        if (validTime >= s.latestValid) {
+            s.latestValid = validTime;
+            let currentT = parseFloat(cols[tmpfIdx]);
+            if (!isNaN(currentT)) s.currentTemp = currentT;
+        }
+
+        let tmpf = parseFloat(cols[tmpfIdx]);
+        if (!isNaN(tmpf) && tmpf > -100 && tmpf < 150) {
+            if (tmpf > s.maxTemp) s.maxTemp = tmpf;
+            if (tmpf < s.minTemp) s.minTemp = tmpf;
+        }
+
+        if (gustIdx !== -1) {
+            let gust = parseFloat(cols[gustIdx]);
+            if (!isNaN(gust) && gust > s.maxGust) s.maxGust = gust;
+        }
+
+        if (p01iIdx !== -1) {
+            let p = parseFloat(cols[p01iIdx]);
+            if (!isNaN(p) && p > 0) s.totalPrecip += p;
+        }
+    }
+
+    globalResults = Object.values(stationMap).map(s => {
+        if (s.maxTemp === -999) s.maxTemp = null;
+        if (s.minTemp === 999) s.minTemp = null;
+        return s;
+    });
+
+    const statusBar = document.getElementById("status-bar");
+    statusBar.style.background = "#dcfce7";
+    statusBar.style.color = "#166534";
+    statusBar.innerText = `Successfully parsed bulk telemetry for ${globalResults.length} Texas stations.`;
+    document.getElementById("stationCountLbl").innerText = globalResults.length;
+
+    updateSummaryCards(globalResults);
+    renderTable(globalResults);
+}
+
+function updateSummaryCards(data) {
+    const validData = data.filter(d => d.maxTemp != null && d.minTemp != null);
+    if (validData.length === 0) return;
+
+    // --- 1. Central Texas Box ---
+    const ctxData = validData.filter(d => d.isCtx);
+    if (ctxData.length > 0) {
+        let ctxHigh = ctxData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), ctxData[0]);
+        let ctxLow = ctxData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), ctxData[0]);
+        let ctxWind = ctxData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), ctxData[0]);
+        let ctxRain = ctxData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), ctxData[0]);
+
+        document.getElementById("ctxHigh").innerText = ctxHigh.maxTemp.toFixed(1) + "°F";
+        document.getElementById("ctxHighLoc").innerText = formatStation(ctxHigh.id);
+
+        document.getElementById("ctxLow").innerText = ctxLow.minTemp.toFixed(1) + "°F";
+        document.getElementById("ctxLowLoc").innerText = formatStation(ctxLow.id);
+
+        document.getElementById("ctxWind").innerText = ctxWind.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + " kts" : "Calm";
+        document.getElementById("ctxWindLoc").innerText = formatStation(ctxWind.id);
+
+        document.getElementById("ctxRain").innerText = ctxRain.totalPrecip > 0 ? ctxRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
+        document.getElementById("ctxRainLoc").innerText = ctxRain.totalPrecip > 0 ? formatStation(ctxRain.id) : "Corridor Dry";
+    }
+
+    // --- 2. Statewide Box ---
+    let stateHigh = validData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), validData[0]);
+    let stateLow = validData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), validData[0]);
+    let stateWind = validData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), validData[0]);
+    let stateRain = validData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), validData[0]);
+
+    document.getElementById("stateHigh").innerText = stateHigh.maxTemp.toFixed(1) + "°F";
+    document.getElementById("stateHighLoc").innerText = formatStation(stateHigh.id);
+
+    document.getElementById("stateLow").innerText = stateLow.minTemp.toFixed(1) + "°F";
+    document.getElementById("stateLowLoc").innerText = formatStation(stateLow.id);
+
+    document.getElementById("stateWind").innerText = stateWind.maxGust > 0 ? stateWind.maxGust.toFixed(1) + " kts" : "Calm";
+    document.getElementById("stateWindLoc").innerText = formatStation(stateWind.id);
+
+    document.getElementById("stateRain").innerText = stateRain.totalPrecip > 0 ? stateRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
+    document.getElementById("stateRainLoc").innerText = stateRain.totalPrecip > 0 ? formatStation(stateRain.id) : "State Dry";
+}
+
+function renderTable(data) {
+    const tbody = document.querySelector("#weatherTable tbody");
+    tbody.innerHTML = data.map(r => {
+        const highClass = r.maxTemp >= 100 ? 'hot-temp' : '';
+        return `
+            <tr>
+              <td><b>${formatStation(r.id)}</b> ${r.isCtx ? '<span class="ctx-tag">CTX</span>' : ''}</td>
+              <td><b>${r.currentTemp != null ? r.currentTemp.toFixed(1) + '°' : 'N/A'}</b></td>
+              <td class="${highClass}">${r.maxTemp != null ? r.maxTemp.toFixed(1) + '°' : 'N/A'}</td>
+              <td>${r.minTemp != null ? r.minTemp.toFixed(1) + '°' : 'N/A'}</td>
+              <td class="${r.totalPrecip > 0 ? 'rain-pos' : ''}">${r.totalPrecip.toFixed(2)}"</td>
+              <td class="wind-val">${r.maxGust > 0 ? r.maxGust.toFixed(1) + ' kts' : 'Calm'}</td>
+              <td>${r.latestValid || 'N/A'}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+let sortDirections = {};
+function sortTable(columnIndex) {
+    let dir = sortDirections[columnIndex] || 'asc';
+    globalResults.sort((a, b) => {
+        let valA, valB;
+        if (columnIndex === 0) { valA = a.id; valB = b.id; }
+        else if (columnIndex === 1) { valA = a.currentTemp ?? -999; valB = b.currentTemp ?? -999; }
+        else if (columnIndex === 2) { valA = a.maxTemp ?? -999; valB = b.maxTemp ?? -999; }
+        else if (columnIndex === 3) { valA = a.minTemp ?? 999; valB = b.minTemp ?? 999; }
+        else if (columnIndex === 4) { valA = a.totalPrecip ?? 0; valB = b.totalPrecip ?? 0; }
+        else if (columnIndex === 5) { valA = a.maxGust ?? 0; valB = b.maxGust ?? 0; }
+        else if (columnIndex === 6) { valA = a.latestValid ?? ''; valB = b.latestValid ?? ''; }
+
+        if (valA < valB) return dir === 'asc' ? -1 : 1;
+        if (valA > valB) return dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    sortDirections[columnIndex] = dir === 'asc' ? 'desc' : 'asc';
+    renderTable(globalResults);
+}
+
+document.addEventListener("DOMContentLoaded", fetchAndProcessBulkFeed);
+</script>
+
+</body>
+</html>
