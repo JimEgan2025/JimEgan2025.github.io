@@ -31,7 +31,7 @@
       gap: 1rem;
       margin-bottom: 1rem;
     }
-
+    
     /* Central Texas Box */
     .summary-card.ctx-card {
       background: #f8fafc;
@@ -100,10 +100,18 @@
       cursor: pointer;
     }
     button:hover { background: #002244; }
+
+    @media print {
+      body { background: white; margin: 0; color: black; }
+      .btn-bar, #status-bar, p.subtitle { display: none; }
+      h1 { font-size: 1.4rem; text-align: left; }
+      .table-container, .summary-grid { box-shadow: none; max-height: none; }
+      table { min-width: 100%; border: 1px solid #ccc; }
+      th { background: #eee !important; color: black !important; }
+    }
   </style>
 </head>
 <body>
-
   <h1>Texas Weather Dashboard & Regional Telemetry</h1>
   <p class="subtitle">Direct Bulk Ingestion via Iowa State University ASOS Export Gateway</p>
 
@@ -153,7 +161,7 @@
     <div class="summary-card state-card">
       <h3>State Max Rain</h3>
       <div class="val" id="stateRain">--</div>
-      <div class="loc" id="stateRainLoc">Waiting for feed...</div>
+      <div class="loc" id="stateMaxRainLoc">Waiting for feed...</div>
     </div>
   </div>
 
@@ -162,7 +170,7 @@
   <div class="section-title">
     <span>Station Network Telemetry (<span id="stationCountLbl">0</span> Stations Parsed)</span>
     <div class="btn-bar">
-      <button onclick="downloadAIReport()">🤖 Export Extremes for AI (.txt)</button>
+      <button onclick="window.print()">🖨️ Print Weather Report</button>
     </div>
   </div>
 
@@ -184,498 +192,416 @@
   </div>
 
 <script>
-// Comprehensive Station dictionary mapping every code to a human-readable location
+// Fully expanded station dictionary for human-readable descriptions
 const stationNames = {
-  // Major & Regional Airports
-  "AUS": "Austin-Bergstrom Int'l",
-  "HYI": "San Marcos Regional",
-  "GTU": "Georgetown Municipal",
-  "EDC": "Austin Executive",
-  "ATT": "Austin Camp Mabry",
-  "ACT": "Waco Regional",
-  "ILE": "Killeen / Robert Gray",
-  "TPL": "Temple Municipal",
-  "CLL": "College Station (Easterwood)",
-  "BAZ": "New Braunfels Regional",
-  "BMQ": "Burnet Municipal",
-  "ERV": "Kerrville Municipal",
-  "GYB": "Taylor Municipal",
-  "HHF": "Hemphill County (Canadian)",
-  "MRF": "Marfa Municipal",
-  "CWC": "Centerville",
-  "E41": "Madisonville Municipal",
-  "ABI": "Abilene Regional",
-  "ADS": "Addison Airport (Dallas)",
-  "AFW": "Fort Worth Alliance",
-  "ALI": "Alice International",
-  "AMA": "Amarillo (Rick Husband)",
-  "BRO": "Brownsville South Padre",
-  "COT": "Cotulla-La Salle",
-  "CRP": "Corpus Christi Int'l",
-  "CXO": "Conroe (North Houston)",
-  "DAL": "Dallas Love Field",
-  "DFW": "Dallas/Fort Worth Int'l",
-  "DRT": "Del Rio International",
-  "DTO": "Denton Enterprise",
-  "DWH": "David Wayne Hooks (Houston)",
-  "ELP": "El Paso International",
-  "EFD": "Ellington Field (Houston)",
-  "FST": "Fort Stockton-Pecos",
-  "FTW": "Fort Worth Meacham",
-  "FWS": "Fort Worth Spinks",
-  "GGG": "Longview (Gregg County)",
-  "GLS": "Galveston (Scholes)",
-  "GPT": "Gulfport / Biloxi",
-  "GRK": "Killeen (Gray Army Airfield)",
-  "GVT": "Greenville (Majors)",
-  "HDO": "Hondo Municipal",
-  "HOU": "Houston Hobby",
-  "HRL": "Harlingen (Valley Int'l)",
-  "IAH": "Houston Intercontinental",
-  "JCT": "Junction (Kimble County)",
-  "LBB": "Lubbock Preston Smith",
-  "LBX": "La Porte Municipal",
-  "LFK": "Lufkin (Angelina County)",
-  "LRD": "Laredo International",
-  "MAF": "Midland International",
-  "MFE": "McAllen Miller Int'l",
-  "MWL": "Mineral Wells",
-  "NFW": "Fort Worth NAS JRB",
-  "NGP": "Corpus Christi NAS",
-  "NQI": "Kingsville NAS",
-  "PSX": "Palacios Municipal",
-  "RND": "San Antonio (Randolph AFB)",
-  "RKP": "Rockport (Aransas County)",
-  "SAT": "San Antonio International",
-  "SGR": "Sugar Land Regional",
-  "SJT": "San Angelo Regional",
-  "SKF": "San Antonio (Kelly Field)",
-  "SPS": "Wichita Falls (Sheppard AFB)",
-  "SSF": "San Antonio Stinson",
-  "SWW": "Sweetwater",
-  "TKI": "McKinney National",
-  "TYR": "Tyler Pounds Regional",
-  "UVA": "Uvalde Garner Field",
-  "VCT": "Victoria Regional",
-  "VHN": "Valentine / Van Horn",
+  // Major & Regional Met Sites
+  "AUS": "Austin-Bergstrom Int'l", "HYI": "San Marcos Regional", "GTU": "Georgetown Municipal",
+  "EDC": "Austin Executive", "ATT": "Austin Camp Mabry", "ACT": "Waco Regional",
+  "ILE": "Killeen / Robert Gray", "TPL": "Temple Municipal", "CLL": "College Station (Easterwood)",
+  "BAZ": "New Braunfels Regional", "BMQ": "Burnet Municipal", "ERV": "Kerrville Municipal",
+  "GYB": "Taylor Municipal", "HHF": "Hemphill County (Canadian)", "MRF": "Marfa Municipal",
+  "CWC": "Centerville", "E41": "Madisonville Municipal", "ABI": "Abilene Regional",
+  "ADS": "Addison Airport (Dallas)", "AFW": "Fort Worth Alliance", "ALI": "Alice International",
+  "AMA": "Amarillo (Rick Husband)", "APY": "Big Spring McMahon-Wrinkle", "BRO": "Brownsville South Padre",
+  "COT": "Cotulla-La Salle", "CRP": "Corpus Christi Int'l", "CXO": "Conroe (North Houston)",
+  "DAL": "Dallas Love Field", "DFW": "Dallas/Fort Worth Int'l", "DRT": "Del Rio International",
+  "DTO": "Denton Enterprise", "DWH": "David Wayne Hooks (Houston)", "ELP": "El Paso International",
+  "EFD": "Ellington Field (Houston)", "FST": "Fort Stockton-Pecos", "FTW": "Fort Worth Meacham",
+  "FWS": "Fort Worth Spinks", "GGG": "Longview (Gregg County)", "GLS": "Galveston (Scholes)",
+  "GPT": "Gulfport / Biloxi", "GRK": "Killeen (Gray Army Airfield)", "GVT": "Greenville (Majors)",
+  "HDO": "Hondo Municipal", "HOU": "Houston Hobby", "HRL": "Harlingen (Valley Int'l)",
+  "IAH": "Houston Intercontinental", "JCT": "Junction (Kimble County)", "LBB": "Lubbock Preston Smith",
+  "LBX": "La Porte Municipal", "LFK": "Lufkin (Angelina County)", "LRD": "Laredo International",
+  "MAF": "Midland International", "MFE": "McAllen Miller Int'l", "MWL": "Mineral Wells",
+  "NFW": "Fort Worth NAS JRB", "NGP": "Corpus Christi NAS", "NQI": "Kingsville NAS",
+  "PSX": "Palacios Municipal", "RND": "San Antonio (Randolph AFB)", "RKP": "Rockport (Aransas County)",
+  "SAT": "San Antonio International", "SGR": "Sugar Land Regional", "SJT": "San Angelo Regional",
+  "SKF": "San Antonio (Kelly Field)", "SPS": "Wichita Falls (Sheppard AFB)", "SSF": "San Antonio Stinson",
+  "SWW": "Sweetwater", "TKI": "McKinney National", "TYR": "Tyler Pounds Regional",
+  "UVA": "Uvalde Garner Field", "VCT": "Victoria Regional", "VHN": "Valentine / Van Horn",
 
-  // Additional Municipal / Regional / Military / AWOS Network Sites
-  "0F2": "Gainesville Municipal",
-  "11R": "Refugio (Rooke Field)",
-  "18H": "Hondo (South Texas Regional)",
-  "2F5": "HEB Airport (Wichita Falls)",
-  "2R9": "Devine Municipal",
-  "3T5": "Lancaster Airport",
-  "4F2": "Anahuac (Chambers County)",
-  "5C1": "Cleveland Municipal",
-  "5T9": "Sinton (San Patricio County)",
-  "60R": "Wharton Regional",
-  "66R": "South Texas Regional (Hondo)",
-  "6R3": "Bronte / Robert Lee",
-  "6R6": "Hooks / Tomball",
-  "81R": "Giddings-Lee County",
-  "8T6": "Winters Municipal",
-  "APY": "Ranger Municipal",
-  "AQO": "Llano Municipal",
-  "ARM": "Robstown (Al Fresco)",
-  "ASL": "Marshall (Harrison County)",
-  "ATA": "Atlanta Municipal",
-  "AXH": "Houston Southwest",
-  "BBF": "Burk Burnett (Wichita Falls)",
-  "BEA": "Alice International",
-  "BGD": "Borger (Great Southwest)",
-  "BIF": "Fort Bliss (Biggs AAF / El Paso)",
-  "BKD": "Breckenridge Municipal",
-  "BKS": "Cisco (Central Texas)",
-  "BMQ": "Burnet Municipal",
-  "BMT": "Beaumont Municipal",
-  "BPC": "Bastrop / Cedar Creek",
-  "BPG": "Big Spring (McMahon-Wrinkle)",
-  "BQX": "Brazos (Weather Station / Freeport)",
-  "BWD": "Brownwood Regional",
-  "BYY": "Bay City Regional",
-  "CDS": "Childress Municipal",
-  "CFD": "Bryan / College Station (Coulter Field)",
-  "CNW": "Waco (TSTC Waco)",
-  "COM": "Comanche County",
-  "CPT": "Cleburne Regional",
-  "CRS": "Corsicana Municipal",
-  "CVB": "Castroville Municipal",
-  "DZB": "Zapata County",
-  "E01": "Gainesville / Cooke County",
-  "E11": "Crockett (Houston County)",
-  "E35": "Anahuac Municipal",
-  "E38": "Madisonville",
-  "E42": "Mexia Municipal",
-  "E57": "Palestine Municipal",
-  "EBG": "Edinburg International",
-  "ECU": "Secor / El Campo",
-  "ELA": "Eagle Lake",
-  "ETN": "Eastland Municipal",
-  "F00": "Graham Municipal",
-  "F05": "Vernon (Wilbarger County)",
-  "F17": "Floydada Municipal",
-  "F44": "Bandera County",
-  "F46": "Fredericksburg (Gillespie County)",
-  "FTN": "Fort Stockton",
-  "GDJ": "Granbury Regional",
-  "GGH": "Garland",
-  "GKY": "Arlington Municipal",
-  "GNC": "Gainesville",
-  "GOP": "Goliad Industrial",
-  "GPM": "Grand Prairie Municipal",
-  "GUL": "Goliad",
-  "GYF": "Guadalupe Peak",
-  "GZN": "Georgetown",
-  "HBV": "Hebbronville",
+  // Additional Municipal, Offshore, and AWOS/ASOS Sites
+  "BBD": "Brady Municipal",
+  "T89": "Castroville Municipal",
+  "E57": "Denver City Airport",
+  "BQX": "Brazos 451 (Offshore Platform)",
+  "XBP": "Bridgeport Municipal",
+  "LUV": "Decatur Municipal",
+  "OSA": "La Grange Met Site",
+  "PPA": "Pampa Perryton Area",
   "HRX": "Hereford Municipal",
-  "IKG": "Ingleside",
-  "INJ": "Hillsboro Municipal",
-  "INK": "Wink County",
-  "JAS": "Jasper County",
-  "JDD": "Dimmitt Municipal",
-  "JSO": "Jacksonville",
-  "JWY": "Midlothian / Waxahachie (Scarborough)",
-  "JXI": "Jacksonville",
-  "LHB": "Mexia",
-  "LLN": "Llano",
-  "LNC": "Lancaster Regional",
-  "LUD": "Lueders",
-  "LUV": "Livingston Municipal",
-  "LXY": "Mexia",
-  "LZZ": "Lampasas",
-  "MCJ": "Mason County",
+  "ECU": "Waco / McGregor Executive",
   "MDD": "Midland Airpark",
-  "MKN": "Marlin",
-  "MNZ": "Madisonville",
-  "NMT": "Neches",
-  "NOG": "Nogales / North Houston area",
-  "NWL": "New Waverly",
-  "OCH": "Nacogdoches (A.L. Mangham Jr.)",
-  "ODO": "Odessa (Schlemeyer Field)",
-  "OSA": "Mount Pleasant Regional",
+  "BKD": "Breckenridge Airport",
+  "MCJ": "Muenster Municipal",
+  "0F2": "Gainesville Municipal",
+  "DZB": "Zavalla / Diboll",
+  "LZZ": "Lampasas",
   "OZA": "Ozona Municipal",
-  "PEQ": "Pecos Municipal",
-  "PEZ": "Pleasanton Municipal",
-  "PIL": "Port Isabel",
-  "PKV": "Calhoun County (Port Lavaca)",
-  "PPA": "Pampa (Perry Lefors Field)",
-  "PRX": "Paris (Cox Field)",
-  "PSN": "Palestine",
-  "PWG": "Waco (Prison/Regional)",
-  "RAS": "Robstown",
-  "RBO": "Robstown",
-  "RFI": "Rusk County",
-  "RPH": "Rph / Stephenville alternate",
-  "RWV": "Caldwell Municipal",
-  "RYW": "Royse City",
-  "SEQ": "Seminole Municipal",
-  "SEP": "Stephenville (Clark Field)",
-  "SLR": "Sulphur Springs Municipal",
-  "SNK": "Snyder (Winston Field)",
-  "SOA": "Sonora",
-  "T20": "Canyon Lake",
-  "T35": "Sulphur Springs",
-  "T41": "Junction",
-  "T65": "Kountze / Silsbee",
-  "T69": "Crockett",
-  "T70": "Hebbronville / Falfurrias",
-  "T74": "Stamford",
-  "T78": "Mason",
-  "T82": "Castroville Municipal",
-  "T89": "Three Rivers",
+  "FTN": "Fredericksburg (Ranch Airpark)",
+  "ASL": "Marshall (Harrison County)",
+  "TME": "Taylor / Manor",
+  "RPH": "Royse City",
+  "11R": "Granbury Regional",
+  "E38": "Seminole Municipal",
+  "GOP": "Goliad County",
+  "JAS": "Jasper County (Bell Field)",
+  "SEP": "Stephenville Municipal",
+  "E35": "Childress Municipal",
+  "DUX": "Dublin Municipal",
+  "RYW": "Abernathy",
   "TFP": "Teague",
-  "TME": "Taylor",
-  "TRL": "Terrell Municipal",
-  "TXW": "Texas World Speedway / Bryan",
-  "TXZ": "Texas Coastal Zone / Alternate",
+  "AQO": "Llano Municipal",
+  "ARM": "Alvin / Manvel",
+  "CPT": "Cleburne Municipal",
+  "F05": "Post / Garza County",
+  "HBV": "Hebbronville",
+  "GUL": "Gull Island (Offshore)",
   "VAF": "Refugio",
-  "XBP": "Bridgeport Municipal"
+  "GPM": "Grand Prairie Municipal",
+  "GYI": "Sherman / Denison (North Texas Regional)",
+  "BKS": "Cisco / Eastland",
+  "GLE": "Gainesville",
+  "BPG": "Big Spring",
+  "JSO": "Jacksonville",
+  "LHB": "Mexia",
+  "BYY": "Bay City Regional",
+  "EBG": "Edinburg",
+  "INJ": "Hillsboro Municipal",
+  "JWY": "Midlothian / Waxahachie",
+  "SNK": "Snyder (Winston Field)",
+  "PSN": "Palestine Municipal",
+  "RBO": "Robstown",
+  "PEQ": "Pecos Municipal",
+  "JXI": "Kenedy",
+  "JDD": "Woodville",
+  "PKV": "Alice",
+  "MKN": "Nacogdoches",
+  "RAS": "Aransas Pass",
+  "BEA": "Beeville",
+  "RFI": "Rusk County",
+  "PVW": "Plainview (Miller Field)",
+  "BWD": "Brownwood Regional",
+  "RWV": "Caldwell Municipal",
+  "3T5": "Livingston Municipal",
+  "AXH": "Houston Southwest",
+  "6R3": "Sulphur Springs",
+  "BMT": "Beaumont Municipal",
+  "T35": "Sinton / San Patricio",
+  "F44": "Crockett",
+  "F46": "Anahuac / Chambers County",
+  "CFD": "Bryan / College Station (Coulter Field)",
+  "CZT": "Carrizo Springs",
+  "66R": "Clifton Municipal",
+  "F17": "Floydada",
+  "ELA": "Eagle Lake",
+  "5T9": "Slaton",
+  "GZN": "Gonzales",
+  "F00": "Burnet",
+  "IKG": "Ingleside",
+  "6P9": "Port Aransas",
+  "TXW": "West",
+  "2R9": "Huntsville Municipal",
+  "4F2": "Fredericksburg",
+  "T74": "Throckmorton",
+  "T41": "Hamilton Municipal",
+  "GYF": "Corpus Christi",
+  "T69": "Childress",
+  "81R": "Junction",
+  "E42": "Denver City",
+  "LLN": "Llano",
+  "T78": "Temple",
+  "8T6": "San Augustine",
+  "ATA": "Atlanta",
+  "60R": "Woodville",
+  "18H": "Hondo",
+  "E01": "Gainesville",
+  "GDJ": "Granbury",
+  "LUD": "Ludlow",
+  "COM": "Coleman Municipal",
+  "GNC": "Gainesville",
+  "SLR": "Sulphur Springs",
+  "ORG": "Orange County",
+  "MNZ": "Mineola / Quitman",
+  "CVB": "Castroville",
+  "5C1": "Sulphur Springs",
+  "SOA": "Sonora",
+  "T82": "Castroville",
+  "E11": "El Campo",
+  "T20": "Tulia",
+  "LXY": "Mexia",
+  "ETN": "Eastland",
+  "BGD": "Borger Municipal",
+  "HQZ": "Mesquite Metro",
+  "6R6": "Sulphur Springs",
+  "CNW": "Waco (TSTC Waco)",
+  "DHT": "Dalhart Municipal",
+  "GKY": "Arlington Municipal",
+  "ODO": "Odessa (Schlemeyer Field)",
+  "INK": "Wink County",
+  "PIL": "Port Isabel / South Padre",
+  "RBD": "Dallas Executive",
+  "CRS": "Corsicana Municipal",
+  "LVJ": "Pearland Regional",
+  "PRX": "Paris Municipal",
+  "DLF": "Del Rio (Laughlin AFB)",
+  "HLR": "Fort Cavazos (Killeen / Robert Gray AAF)",
+  "DYS": "Abilene (Dyess AFB)",
+  "BIF": "El Paso (Fort Bliss)",
+  "T70": "Terrell Municipal",
+  "SEQ": "Seguin (Guadalupe County)",
+  "PWG": "Waco (Waco Regional Alternate)",
+  "OCH": "Nacogdoches",
+  "NOG": "Nogales",
+  "NWL": "New Waverly"
 };
 
 function formatStation(stid) {
-    const name = stationNames[stid];
-    return name ? `${stid} — ${name}` : stid;
+  const name = stationNames[stid];
+  return name ? `${stid} — ${name}` : stid;
 }
 
 // Central Texas IDs explicitly flagged for the CTX corridor box
 const ctxStations = new Set([
-  "AUS", "EDC", "ATT", "ACT", "ILE", "TPL", "CLL", "HYI", "BAZ", "BMQ", 
-  "GTU", "UVA", "HDO", "ERV", "T82", "GYB", "TXZ", "RWV", "CFD", "PEZ", "LMP", "BBD"
+  "AUS", "EDC", "ATT", "ACT", "ILE", "TPL", "CLL", "HYI", "BAZ", "BMQ",
+  "GTU", "UVA", "HDO", "ERV", "T82", "GYB", "RWV", "CFD", "PEZ", "LMP", "BBD", "T89"
 ]);
+
+// Climatological bounds checker
+const SANITY_MAX_TEMP = 109.0;
+const SANITY_MIN_TEMP = -10.0;
+
+const nowUTC = new Date();
+const year = nowUTC.getUTCFullYear();
+const month = nowUTC.getUTCMonth() + 1;
+const day = nowUTC.getUTCDate();
+
+const targetUrl = `https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?network=TX_ASOS&data=all&year1=${year}&month1=${month}&day1=${day}&year2=${year}&month2=${month}&day2=${day}&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=M&trace=T&direct=no&report_type=3&report_type=4`;
 
 let globalResults = [];
 
 function parseCSVLine(text) {
-    let result = [];
-    let entry = "";
-    let inQuotes = false;
-    for (let i = 0; i < text.length; i++) {
-        let c = text[i];
-        if (c === '"') {
-            inQuotes = !inQuotes;
-        } else if (c === ',' && !inQuotes) {
-            result.push(entry.trim());
-            entry = "";
-        } else {
-            entry += c;
-        }
+  let result = [];
+  let entry = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    let c = text[i];
+    if (c === '"') {
+      inQuotes = !inQuotes;
+    } else if (c === ',' && !inQuotes) {
+      result.push(entry.trim());
+      entry = "";
+    } else {
+      entry += c;
     }
-    result.push(entry.trim());
-    return result;
+  }
+  result.push(entry.trim());
+  return result;
 }
 
 async function fetchAndProcessBulkFeed() {
-    const statusBar = document.getElementById("status-bar");
-    
-    const now = new Date();
-    const yyyy = now.getUTCFullYear();
-    const mm = now.getUTCMonth() + 1;
-    const dd = now.getUTCDate();
-    
-    const yesterday = new Date(now);
-    yesterday.setUTCDate(now.getUTCDate() - 1);
-    const y_yyyy = yesterday.getUTCFullYear();
-    const y_mm = yesterday.getUTCMonth() + 1;
-    const y_dd = yesterday.getUTCDate();
+  const statusBar = document.getElementById("status-bar");
+  try {
+    const response = await fetch(targetUrl);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+    const csvText = await response.text();
+    parseCSVText(csvText);
+  } catch (err) {
+    statusBar.style.background = "#fef3c7";
+    statusBar.style.color = "#92400e";
+    statusBar.innerHTML = `⚠️ Live network fetch blocked by browser CORS policy (common when running local files). <b>Loaded offline Texas ASOS sample telemetry dataset.</b>`;
+    loadFallbackData();
+  }
+}
 
-    const baseUrl = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?network=TX_ASOS";
-    const stationsParam = "&station=0F2&station=11R&station=18H&station=25T&station=2F5&station=2R9&station=3T5&station=4F2&station=5C1&station=5R3&station=5T9&station=60R&station=66R&station=6P9&station=6R3&station=6R6&station=81R&station=8T6&station=ABI&station=ACT&station=ADS&station=AFW&station=ALI&station=AMA&station=APY&station=AQO&station=ARM&station=ASL&station=ATA&station=ATT&station=AUS&station=AXH&station=BAZ&station=BBD&station=BBF&station=BEA&station=BGD&station=BIF&station=BKD&station=BKS&station=BMQ&station=BMT&station=BPC&station=BPG&station=BPT&station=BQX&station=BRO&station=BSM&station=BWD&station=BYY&station=CDS&station=CFD&station=CLL&station=CNW&station=COM&station=COT&station=CPT&station=CRH&station=CRP&station=CRS&station=CVB&station=CWC&station=CXO&station=CZT&station=DAL&station=DFW&station=DHT&station=DKR&station=DLF&station=DRT&station=DTO&station=DUX&station=DWH&station=DYS&station=DZB&station=E01&station=E11&station=E35&station=E38&station=E41&station=E42&station=E57&station=EBG&station=ECU&station=EDC&station=EFD&station=ELA&station=ELP&station=EMK&station=ERV&station=ETN&station=F00&station=F05&station=F12&station=F17&station=F44&station=F46&station=FST&station=FTN&station=FTW&station=FWS&station=GDJ&station=GDP&station=GGG&station=GKY&station=GLE&station=GLS&station=GNC&station=GOP&station=GPM&station=GRK&station=GTU&station=GUL&station=GVT&station=GVW&station=GVX&station=GYB&station=GYF&station=GYI&station=GZN&station=HBV&station=HDO&station=HHF&station=HHV&station=HLR&station=HOU&station=HQI&station=HQZ&station=HRL&station=HRX&station=HYI&station=IAH&station=IKG&station=ILE&station=INJ&station=INK&station=JAS&station=JCT&station=JDD&station=JSO&station=JWY&station=JXI&station=LBB&station=LBR&station=LBX&station=LFK&station=LHB&station=LLN&station=LNC&station=LRD&station=LUD&station=LUV&station=LVJ&station=LXY&station=LZZ&station=MAF&station=MCJ&station=MDD&station=MFE&station=MIU&station=MKN&station=MNZ&station=MRF&station=MWL&station=MZG&station=NFW&station=NGP&station=NGW&station=NMT&station=NOG&station=NQI&station=NWL&station=OCH&station=OCH&station=ODO&station=OPM&station=ORG&station=OSA&station=OZA&station=PEQ&station=PEZ&station=PIL&station=PKV&station=PPA&station=PRS&station=PRX&station=PSN&station=PSX&station=PVW&station=PWG&station=PYX&station=RAS&station=RBD&station=RBO&station=RFI&station=RKP&station=RND&station=RPE&station=RPH&station=RWV&station=RYW&station=SAT&station=SEP&station=SEQ&station=SGR&station=SHP&station=SJT&station=SKF&station=SLR&station=SNK&station=SOA&station=SPL&station=SPS&station=SSF&station=SWW&station=T20&station=T35&station=T41&station=T65&station=T69&station=T70&station=T74&station=T77&station=T78&station=T82&station=T89&station=TFP&station=TKI&station=TME&station=TPL&station=TRL&station=TXW&station=TYR&station=UTS&station=UVA&station=VAF&station=VCT&station=VHN&station=XBP";
-    const settingsParam = `&data=all&year1=${y_yyyy}&month1=${y_mm}&day1=${y_dd}&year2=${yyyy}&month2=${mm}&day2=${dd}&tz=Etc%2FUTC&format=onlycomma&latlon=no&elev=no&missing=M&trace=T&direct=no&report_type=3&report_type=4`;
-
-    const dynamicUrl = baseUrl + stationsParam + settingsParam;
-
-    try {
-        const response = await fetch(dynamicUrl);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-        const csvText = await response.text();
-        parseCSVText(csvText);
-    } catch (err) {
-        statusBar.style.background = "#fee2e2";
-        statusBar.style.color = "#991b1b";
-        statusBar.innerHTML = `⚠️ Direct fetch blocked by CORS or network error. Please ensure you are running through a local web server or CORS extension. (<span style="font-family:monospace; font-size:0.75rem;">${err.message}</span>)`;
-    }
+function loadFallbackData() {
+  const sampleCSV = `station,valid,tmpf,gust,p01i
+AUS,2026-08-15 16:00,96.5,14.2,0.00
+HYI,2026-08-15 16:00,95.0,12.0,0.00
+GTU,2026-08-15 16:00,94.2,16.5,0.00
+ATT,2026-08-15 16:00,97.1,15.0,0.00
+ACT,2026-08-15 16:00,98.0,18.2,0.00
+DFW,2026-08-15 16:00,92.5,22.1,0.05
+IAH,2026-08-15 16:00,93.0,19.4,0.12
+ELP,2026-08-15 16:00,91.0,11.0,0.00
+MAF,2026-08-15 16:00,89.5,13.2,0.00
+CRP,2026-08-15 16:00,90.2,24.0,0.00`;
+  parseCSVText(sampleCSV);
 }
 
 function parseCSVText(rawText) {
-    const lines = rawText.split(/\r?\n/);
-    if (lines.length < 2) return;
+  const lines = rawText.split(/\r?\n/);
+  if (lines.length < 2) return;
 
-    const headers = parseCSVLine(lines[0].toLowerCase());
-    const stationIdx = headers.indexOf("station");
-    const validIdx = headers.indexOf("valid");
-    const tmpfIdx = headers.indexOf("tmpf");
-    const gustIdx = headers.indexOf("gust");
-    const p01iIdx = headers.indexOf("p01i");
+  const headers = parseCSVLine(lines[0].toLowerCase());
+  const stationIdx = headers.indexOf("station");
+  const validIdx = headers.indexOf("valid");
+  const tmpfIdx = headers.indexOf("tmpf");
+  const gustIdx = headers.indexOf("gust");
+  const p01iIdx = headers.indexOf("p01i");
 
-    if (stationIdx === -1 || tmpfIdx === -1) {
-        document.getElementById("status-bar").innerText = "Error: Required CSV columns not found in response header.";
-        return;
+  if (stationIdx === -1 || tmpfIdx === -1) {
+    document.getElementById("status-bar").innerText = "Error: Required CSV columns not found in response header.";
+    return;
+  }
+
+  let stationMap = {};
+
+  for (let i = 1; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line || line.startsWith("#")) continue;
+
+    let cols = parseCSVLine(line);
+    let stid = cols[stationIdx];
+    if (!stid) continue;
+
+    if (!stationMap[stid]) {
+      stationMap[stid] = {
+        id: stid,
+        isCtx: ctxStations.has(stid),
+        count: 0,
+        currentTemp: null,
+        maxTemp: -999,
+        minTemp: 999,
+        maxGust: 0,
+        totalPrecip: 0,
+        latestValid: ""
+      };
     }
 
-    let stationMap = {};
+    let s = stationMap[stid];
+    s.count++;
 
-    for (let i = 1; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (!line || line.startsWith("#")) continue;
-
-        let cols = parseCSVLine(line);
-        let stid = cols[stationIdx];
-        if (!stid) continue;
-
-        if (!stationMap[stid]) {
-            stationMap[stid] = {
-                id: stid,
-                isCtx: ctxStations.has(stid),
-                count: 0,
-                currentTemp: null,
-                maxTemp: -999,
-                minTemp: 999,
-                maxGust: 0,
-                totalPrecip: 0,
-                latestValid: ""
-            };
-        }
-
-        let s = stationMap[stid];
-        s.count++;
-
-        let validTime = validIdx !== -1 ? cols[validIdx] : "";
-        if (validTime >= s.latestValid) {
-            s.latestValid = validTime;
-            let currentT = parseFloat(cols[tmpfIdx]);
-            if (!isNaN(currentT)) s.currentTemp = currentT;
-        }
-
-        let tmpf = parseFloat(cols[tmpfIdx]);
-        if (!isNaN(tmpf) && tmpf > -100 && tmpf < 150) {
-            if (tmpf > s.maxTemp) s.maxTemp = tmpf;
-            if (tmpf < s.minTemp) s.minTemp = tmpf;
-        }
-
-        if (gustIdx !== -1) {
-            let gust = parseFloat(cols[gustIdx]);
-            let gustMph = gust * 1.15078;
-            if (!isNaN(gustMph) && gustMph > s.maxGust) s.maxGust = gustMph;
-        }
-
-        if (p01iIdx !== -1) {
-            let p = parseFloat(cols[p01iIdx]);
-            if (!isNaN(p) && p > 0) s.totalPrecip += p;
-        }
+    let validTime = validIdx !== -1 ? cols[validIdx] : "";
+    if (validTime >= s.latestValid) {
+      s.latestValid = validTime;
+      let currentT = parseFloat(cols[tmpfIdx]);
+      if (!isNaN(currentT) && currentT >= SANITY_MIN_TEMP && currentT <= SANITY_MAX_TEMP) {
+        s.currentTemp = currentT;
+      }
     }
 
-    globalResults = Object.values(stationMap).map(s => {
-        if (s.maxTemp === -999) s.maxTemp = null;
-        if (s.minTemp === 999) s.minTemp = null;
-        return s;
-    });
+    let tmpf = parseFloat(cols[tmpfIdx]);
+    if (!isNaN(tmpf) && tmpf >= SANITY_MIN_TEMP && tmpf <= SANITY_MAX_TEMP) {
+      if (tmpf > s.maxTemp) s.maxTemp = tmpf;
+      if (tmpf < s.minTemp) s.minTemp = tmpf;
+    }
 
-    const statusBar = document.getElementById("status-bar");
-    statusBar.style.background = "#dcfce7";
-    statusBar.style.color = "#166534";
-    statusBar.innerText = `Successfully parsed live bulk telemetry for ${globalResults.length} Texas stations.`;
-    document.getElementById("stationCountLbl").innerText = globalResults.length;
+    if (gustIdx !== -1) {
+      let gust = parseFloat(cols[gustIdx]);
+      let gustMph = gust * 1.15078; // Convert knots to mph
+      if (!isNaN(gustMph) && gustMph > s.maxGust) s.maxGust = gustMph;
+    }
 
-    updateSummaryCards(globalResults);
-    renderTable(globalResults);
+    if (p01iIdx !== -1) {
+      let p = parseFloat(cols[p01iIdx]);
+      if (!isNaN(p) && p > 0) s.totalPrecip += p;
+    }
+  }
+
+  globalResults = Object.values(stationMap).map(s => {
+    if (s.maxTemp === -999) s.maxTemp = null;
+    if (s.minTemp === 999) s.minTemp = null;
+    return s;
+  });
+
+  document.getElementById("stationCountLbl").innerText = globalResults.length;
+
+  updateSummaryCards(globalResults);
+  renderTable(globalResults);
 }
 
 function updateSummaryCards(data) {
-    const validData = data.filter(d => d.maxTemp != null && d.minTemp != null);
-    if (validData.length === 0) return;
+  const validData = data.filter(d => d.maxTemp != null && d.minTemp != null);
+  if (validData.length === 0) return;
 
-    // --- 1. Central Texas Box ---
-    const ctxData = validData.filter(d => d.isCtx);
-    if (ctxData.length > 0) {
-        let ctxHigh = ctxData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), ctxData[0]);
-        let ctxLow = ctxData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), ctxData[0]);
-        let ctxWind = ctxData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), ctxData[0]);
-        let ctxRain = ctxData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), ctxData[0]);
+  // --- 1. Central Texas Box ---
+  const ctxData = validData.filter(d => d.isCtx);
+  if (ctxData.length > 0) {
+    let ctxHigh = ctxData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), ctxData[0]);
+    let ctxLow = ctxData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), ctxData[0]);
+    let ctxWind = ctxData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), ctxData[0]);
+    let ctxRain = ctxData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), ctxData[0]);
 
-        document.getElementById("ctxHigh").innerText = ctxHigh.maxTemp.toFixed(1) + "°F";
-        document.getElementById("ctxHighLoc").innerText = formatStation(ctxHigh.id);
+    document.getElementById("ctxHigh").innerText = ctxHigh?.maxTemp != null ? ctxHigh.maxTemp.toFixed(1) + "°F" : "N/A";
+    document.getElementById("ctxHighLoc").innerText = ctxHigh ? formatStation(ctxHigh.id) : "N/A";
 
-        document.getElementById("ctxLow").innerText = ctxLow.minTemp.toFixed(1) + "°F";
-        document.getElementById("ctxLowLoc").innerText = formatStation(ctxLow.id);
+    document.getElementById("ctxLow").innerText = ctxLow?.minTemp != null ? ctxLow.minTemp.toFixed(1) + "°F" : "N/A";
+    document.getElementById("ctxLowLoc").innerText = ctxLow ? formatStation(ctxLow.id) : "N/A";
 
-        document.getElementById("ctxWind").innerText = ctxWind.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + " mph" : "Calm";
-        document.getElementById("ctxWindLoc").innerText = formatStation(ctxWind.id);
+    document.getElementById("ctxWind").innerText = ctxWind?.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + " mph" : "Calm";
+    document.getElementById("ctxWindLoc").innerText = ctxWind ? formatStation(ctxWind.id) : "N/A";
 
-        document.getElementById("ctxRain").innerText = ctxRain.totalPrecip > 0 ? ctxRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
-        document.getElementById("ctxRainLoc").innerText = ctxRain.totalPrecip > 0 ? formatStation(ctxRain.id) : "Corridor Dry";
-    }
+    document.getElementById("ctxRain").innerText = ctxRain?.totalPrecip > 0 ? ctxRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
+    document.getElementById("ctxRainLoc").innerText = ctxRain?.totalPrecip > 0 ? formatStation(ctxRain.id) : "Corridor Dry";
+  } else {
+    document.getElementById("ctxHigh").innerText = "N/A";
+    document.getElementById("ctxHighLoc").innerText = "No active CTX stations";
+    document.getElementById("ctxLow").innerText = "N/A";
+    document.getElementById("ctxLowLoc").innerText = "No active CTX stations";
+    document.getElementById("ctxWind").innerText = "Calm";
+    document.getElementById("ctxWindLoc").innerText = "No active CTX stations";
+    document.getElementById("ctxRain").innerText = "0.00\"";
+    document.getElementById("ctxRainLoc").innerText = "Corridor Dry";
+  }
 
-    // --- 2. Statewide Box ---
-    let stateHigh = validData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), validData[0]);
-    let stateLow = validData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), validData[0]);
-    let stateWind = validData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), validData[0]);
-    let stateRain = validData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), validData[0]);
+  // --- 2. Statewide Box ---
+  let stateHigh = validData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), validData[0]);
+  let stateLow = validData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), validData[0]);
+  let stateWind = validData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), validData[0]);
+  let stateRain = validData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), validData[0]);
 
-    document.getElementById("stateHigh").innerText = stateHigh.maxTemp.toFixed(1) + "°F";
-    document.getElementById("stateHighLoc").innerText = formatStation(stateHigh.id);
+  document.getElementById("stateHigh").innerText = stateHigh?.maxTemp != null ? stateHigh.maxTemp.toFixed(1) + "°F" : "N/A";
+  document.getElementById("stateHighLoc").innerText = stateHigh ? formatStation(stateHigh.id) : "N/A";
 
-    document.getElementById("stateLow").innerText = stateLow.minTemp.toFixed(1) + "°F";
-    document.getElementById("stateLowLoc").innerText = formatStation(stateLow.id);
+  document.getElementById("stateLow").innerText = stateLow?.minTemp != null ? stateLow.minTemp.toFixed(1) + "°F" : "N/A";
+  document.getElementById("stateLowLoc").innerText = stateLow ? formatStation(stateLow.id) : "N/A";
 
-    document.getElementById("stateWind").innerText = stateWind.maxGust > 0 ? stateWind.maxGust.toFixed(1) + " mph" : "Calm";
-    document.getElementById("stateWindLoc").innerText = formatStation(stateWind.id);
+  document.getElementById("stateWind").innerText = stateWind?.maxGust > 0 ? stateWind.maxGust.toFixed(1) + " mph" : "Calm";
+  document.getElementById("stateWindLoc").innerText = stateWind ? formatStation(stateWind.id) : "N/A";
 
-    document.getElementById("stateRain").innerText = stateRain.totalPrecip > 0 ? stateRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
-    document.getElementById("stateRainLoc").innerText = stateRain.totalPrecip > 0 ? formatStation(stateRain.id) : "State Dry";
-}
-
-function downloadAIReport() {
-    const validData = globalResults.filter(d => d.maxTemp != null && d.minTemp != null);
-    if (validData.length === 0) {
-        alert("Weather data is still loading or unavailable.");
-        return;
-    }
-
-    // Compute metrics on the fly for text export
-    const ctxData = validData.filter(d => d.isCtx);
-    let ctxHigh = ctxData.length ? ctxData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), ctxData[0]) : null;
-    let ctxLow = ctxData.length ? ctxData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), ctxData[0]) : null;
-    let ctxWind = ctxData.length ? ctxData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), ctxData[0]) : null;
-    let ctxRain = ctxData.length ? ctxData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), ctxData[0]) : null;
-
-    let stateHigh = validData.reduce((max, d) => (d.maxTemp > max.maxTemp ? d : max), validData[0]);
-    let stateLow = validData.reduce((min, d) => (d.minTemp < min.minTemp ? d : min), validData[0]);
-    let stateWind = validData.reduce((max, d) => (d.maxGust > max.maxGust ? d : max), validData[0]);
-    let stateRain = validData.reduce((max, d) => (d.totalPrecip > max.totalPrecip ? d : max), validData[0]);
-
-    const timestamp = new Date().toUTCString();
-
-    const reportContent = `=== TEXAS WEATHER EXTREMES & TELEMETRY REPORT ===
-Generated: ${timestamp}
-Source: Iowa State ASOS Network Feed (${globalResults.length} Stations Parsed)
-
---------------------------------------------------
-1. CENTRAL TEXAS CORRIDOR SUMMARY (24h Window)
---------------------------------------------------
-- High Temp: ${ctxHigh ? ctxHigh.maxTemp.toFixed(1) + '°F at ' + formatStation(ctxHigh.id) : 'N/A'}
-- Low Temp:  ${ctxLow ? ctxLow.minTemp.toFixed(1) + '°F at ' + formatStation(ctxLow.id) : 'N/A'}
-- Max Gust:  ${ctxWind && ctxWind.maxGust > 0 ? ctxWind.maxGust.toFixed(1) + ' mph at ' + formatStation(ctxWind.id) : 'Calm'}
-- Max Rain:  ${ctxRain && ctxRain.totalPrecip > 0 ? ctxRain.totalPrecip.toFixed(2) + '" at ' + formatStation(ctxRain.id) : '0.00" (Corridor Dry)'}
-
---------------------------------------------------
-2. STATEWIDE EXTREMES OVERVIEW
---------------------------------------------------
-- High Temp: ${stateHigh.maxTemp.toFixed(1)}°F at ${formatStation(stateHigh.id)}
-- Low Temp:  ${stateLow.minTemp.toFixed(1)}°F at ${formatStation(stateLow.id)}
-- Max Gust:  ${stateWind.maxGust > 0 ? stateWind.maxGust.toFixed(1) + ' mph at ' + formatStation(stateWind.id) : 'Calm'}
-- Max Rain:  ${stateRain.totalPrecip > 0 ? stateRain.totalPrecip.toFixed(2) + '" at ' + formatStation(stateRain.id) : '0.00" (State Dry)'}
-`;
-
-    const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `texas_weather_ai_summary_${new Date().toISOString().slice(0,10)}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  document.getElementById("stateRain").innerText = stateRain?.totalPrecip > 0 ? stateRain.totalPrecip.toFixed(2) + "\"" : "0.00\"";
+  document.getElementById("stateMaxRainLoc").innerText = stateRain?.totalPrecip > 0 ? formatStation(stateRain.id) : "State Dry";
 }
 
 function renderTable(data) {
-    const tbody = document.querySelector("#weatherTable tbody");
-    tbody.innerHTML = data.map(r => {
-        const highClass = r.maxTemp >= 100 ? 'hot-temp' : '';
-        return `
-            <tr>
-              <td><b>${formatStation(r.id)}</b> ${r.isCtx ? '<span class="ctx-tag">CTX</span>' : ''}</td>
-              <td><b>${r.currentTemp != null ? r.currentTemp.toFixed(1) + '°' : 'N/A'}</b></td>
-              <td class="${highClass}">${r.maxTemp != null ? r.maxTemp.toFixed(1) + '°' : 'N/A'}</td>
-              <td>${r.minTemp != null ? r.minTemp.toFixed(1) + '°' : 'N/A'}</td>
-              <td class="${r.totalPrecip > 0 ? 'rain-pos' : ''}">${r.totalPrecip.toFixed(2)}"</td>
-              <td class="wind-val">${r.maxGust > 0 ? r.maxGust.toFixed(1) + ' mph' : 'Calm'}</td>
-              <td>${r.latestValid || 'N/A'}</td>
-            </tr>
-        `;
-    }).join('');
+  const tbody = document.querySelector("#weatherTable tbody");
+  tbody.innerHTML = data.map(r => {
+    const highClass = r.maxTemp >= 100 ? 'hot-temp' : '';
+    return `
+      <tr>
+        <td><b>${formatStation(r.id)}</b> ${r.isCtx ? '<span class="ctx-tag">CTX</span>' : ''}</td>
+        <td><b>${r.currentTemp != null ? r.currentTemp.toFixed(1) + '°' : 'N/A'}</b></td>
+        <td class="${highClass}">${r.maxTemp != null ? r.maxTemp.toFixed(1) + '°' : 'N/A'}</td>
+        <td>${r.minTemp != null ? r.minTemp.toFixed(1) + '°' : 'N/A'}</td>
+        <td class="${r.totalPrecip > 0 ? 'rain-pos' : ''}">${r.totalPrecip.toFixed(2)}"</td>
+        <td class="wind-val">${r.maxGust > 0 ? r.maxGust.toFixed(1) + ' mph' : 'Calm'}</td>
+        <td>${r.latestValid || 'N/A'}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 let sortDirections = {};
 function sortTable(columnIndex) {
-    let dir = sortDirections[columnIndex] || 'asc';
-    globalResults.sort((a, b) => {
-        let valA, valB;
-        if (columnIndex === 0) { valA = a.id; valB = b.id; }
-        else if (columnIndex === 1) { valA = a.currentTemp ?? -999; valB = b.currentTemp ?? -999; }
-        else if (columnIndex === 2) { valA = a.maxTemp ?? -999; valB = b.maxTemp ?? -999; }
-        else if (columnIndex === 3) { valA = a.minTemp ?? 999; valB = b.minTemp ?? 999; }
-        else if (columnIndex === 4) { valA = a.totalPrecip ?? 0; valB = b.totalPrecip ?? 0; }
-        else if (columnIndex === 5) { valA = a.maxGust ?? 0; valB = b.maxGust ?? 0; }
-        else if (columnIndex === 6) { valA = a.latestValid ?? ''; valB = b.latestValid ?? ''; }
+  let dir = sortDirections[columnIndex] || 'asc';
+  globalResults.sort((a, b) => {
+    let valA, valB;
+    if (columnIndex === 0) { valA = a.id; valB = b.id; }
+    else if (columnIndex === 1) { valA = a.currentTemp ?? -999; valB = b.currentTemp ?? -999; }
+    else if (columnIndex === 2) { valA = a.maxTemp ?? -999; valB = b.maxTemp ?? -999; }
+    else if (columnIndex === 3) { valA = a.minTemp ?? 999; valB = b.minTemp ?? 999; }
+    else if (columnIndex === 4) { valA = a.totalPrecip ?? 0; valB = b.totalPrecip ?? 0; }
+    else if (columnIndex === 5) { valA = a.maxGust ?? 0; valB = b.maxGust ?? 0; }
+    else if (columnIndex === 6) { valA = a.latestValid ?? ''; valB = b.latestValid ?? ''; }
 
-        if (valA < valB) return dir === 'asc' ? -1 : 1;
-        if (valA > valB) return dir === 'asc' ? 1 : -1;
-        return 0;
-    });
-    sortDirections[columnIndex] = dir === 'asc' ? 'desc' : 'asc';
-    renderTable(globalResults);
+    if (valA < valB) return dir === 'asc' ? -1 : 1;
+    if (valA > valB) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  sortDirections[columnIndex] = dir === 'asc' ? 'desc' : 'asc';
+  renderTable(globalResults);
 }
 
 document.addEventListener("DOMContentLoaded", fetchAndProcessBulkFeed);
