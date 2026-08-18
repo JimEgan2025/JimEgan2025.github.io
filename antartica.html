@@ -30,7 +30,6 @@
     </style>
 </head>
 <body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
-
 <div class="max-w-6xl mx-auto">
     <div class="text-center mb-12">
         <h1 class="text-4xl font-bold text-red-700">VIKING OCTANTIS</h1>
@@ -63,38 +62,38 @@
 <script>
 // ====================== ITINERARY DATA ======================
 const days = [
-    {date:"Nov 06 Fri", desc:"Depart Austin (AUS) → Ft. Lauderdale (FLL) → Embark", lat:26.12, lon:-80.14, avg:"82/70", fullDate:"2026-11-06"},
-    {date:"Nov 07 Sat", desc:"Scenic Sailing – Gulf of Mexico", lat:24.5, lon:-83.0, avg:"80/68", fullDate:"2026-11-07"},
-    {date:"Nov 08 Sun", desc:"Cozumel, Mexico", lat:20.42, lon:-86.92, avg:"84/73", fullDate:"2026-11-08"},
-    {date:"Nov 09–10 Mon-Tue", desc:"Sail Caribbean Sea", lat:18.0, lon:-78.0, avg:"85/75", fullDate:"2026-11-09"},
-    {date:"Nov 11 Wed", desc:"Scenic Sailing – Panama Canal", lat:9.0, lon:-79.6, avg:"88/75", fullDate:"2026-11-11"},
-    {date:"Nov 12 Thu", desc:"Fuerte Amador (Panama City), Panama", lat:8.91, lon:-79.55, avg:"88/75", fullDate:"2026-11-12"},
-    {date:"Nov 13 Fri", desc:"Sail Pacific Ocean", lat:5.0, lon:-82.0, avg:"86/76", fullDate:"2026-11-13"},
-    {date:"Nov 14 Sat", desc:"Manta, Ecuador", lat:-0.95, lon:-80.73, avg:"82/70", fullDate:"2026-11-14"},
-    {date:"Nov 15–16 Sun-Mon", desc:"Sail Pacific Ocean", lat:-5.0, lon:-82.0, avg:"80/68", fullDate:"2026-11-15"},
-    {date:"Nov 17 Tue", desc:"Callao (Lima), Peru", lat:-12.07, lon:-77.15, avg:"72/64", fullDate:"2026-11-17"},
-    {date:"Nov 18–19 Wed-Thu", desc:"Sail Pacific Ocean", lat:-15.0, lon:-77.0, avg:"70/62", fullDate:"2026-11-18"},
-    {date:"Nov 20 Fri", desc:"Iquique, Chile", lat:-20.23, lon:-70.14, avg:"75/62", fullDate:"2026-11-20"},
-    {date:"Nov 21–22 Sat-Sun", desc:"Sail Pacific Ocean", lat:-25.0, lon:-72.0, avg:"72/58", fullDate:"2026-11-21"},
-    {date:"Nov 23 Mon", desc:"Valparaíso (Santiago), Chile", lat:-33.04, lon:-71.63, avg:"72/54", fullDate:"2026-11-23"},
-    {date:"Nov 24 Tue", desc:"Sail Pacific Ocean", lat:-38.0, lon:-74.0, avg:"65/50", fullDate:"2026-11-24"},
-    {date:"Nov 25 Wed", desc:"Scenic Sailing – Chilean Fjords", lat:-45.5, lon:-73.0, avg:"60/45", fullDate:"2026-11-25"},
-    {date:"Nov 26 Thu", desc:"Puerto Chacabuco, Chile", lat:-45.47, lon:-72.83, avg:"60/45", fullDate:"2026-11-26"},
-    {date:"Nov 27 Fri", desc:"Scenic Sailing – Chilean Fjords", lat:-48.0, lon:-73.5, avg:"58/42", fullDate:"2026-11-27"},
-    {date:"Nov 28–30 Sat-Mon", desc:"Explore Chilean Glaciers", lat:-50.0, lon:-73.8, avg:"55/40", fullDate:"2026-11-28"},
-    {date:"Dec 01 Tue", desc:"Punta Arenas, Chile", lat:-53.16, lon:-70.91, avg:"56/43", fullDate:"2026-12-01"},
-    {date:"Dec 02–05 Wed-Sat", desc:"Sail Drake Passage / Toward Antarctica", lat:-57.0, lon:-65.0, avg:"45/35", fullDate:"2026-12-02"},
-    {date:"Dec 06 Sun", desc:"Enter Antarctic waters / Explore", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-06"},
-    {date:"Dec 07 Mon", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-07"},
-    {date:"Dec 08 Tue", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-08"},
-    {date:"Dec 09 Wed", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-09"},
-    {date:"Dec 10 Thu", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-10"},
-    {date:"Dec 11 Fri", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", fullDate:"2026-12-11"},
-    {date:"Dec 12 Sat", desc:"Explore Antarctica / Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", fullDate:"2026-12-12"},
-    {date:"Dec 13 Sun", desc:"Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", fullDate:"2026-12-13"},
-    {date:"Dec 14 Mon", desc:"Scenic Sailing – Cape Horn", lat:-55.98, lon:-67.27, avg:"55/41", fullDate:"2026-12-14"},
-    {date:"Dec 15 Tue", desc:"Disembark Ushuaia → Airport", lat:-54.8, lon:-68.3, avg:"57/41", fullDate:"2026-12-15"},
-    {date:"Dec 16 Wed", desc:"Depart Ushuaia (USH) → Austin (AUS)", lat:-54.8, lon:-68.3, avg:"57/41", fullDate:"2026-12-16"}
+    {date:"Nov 06 Fri", desc:"Depart Austin (AUS) → Ft. Lauderdale (FLL) → Embark", lat:26.12, lon:-80.14, avg:"82/70", year:2026, month:11, day:6},
+    {date:"Nov 07 Sat", desc:"Scenic Sailing – Gulf of Mexico", lat:24.5, lon:-83.0, avg:"80/68", year:2026, month:11, day:7},
+    {date:"Nov 08 Sun", desc:"Cozumel, Mexico", lat:20.42, lon:-86.92, avg:"84/73", year:2026, month:11, day:8},
+    {date:"Nov 09–10 Mon-Tue", desc:"Sail Caribbean Sea", lat:18.0, lon:-78.0, avg:"85/75", year:2026, month:11, day:9},
+    {date:"Nov 11 Wed", desc:"Scenic Sailing – Panama Canal", lat:9.0, lon:-79.6, avg:"88/75", year:2026, month:11, day:11},
+    {date:"Nov 12 Thu", desc:"Fuerte Amador (Panama City), Panama", lat:8.91, lon:-79.55, avg:"88/75", year:2026, month:11, day:12},
+    {date:"Nov 13 Fri", desc:"Sail Pacific Ocean", lat:5.0, lon:-82.0, avg:"86/76", year:2026, month:11, day:13},
+    {date:"Nov 14 Sat", desc:"Manta, Ecuador", lat:-0.95, lon:-80.73, avg:"82/70", year:2026, month:11, day:14},
+    {date:"Nov 15–16 Sun-Mon", desc:"Sail Pacific Ocean", lat:-5.0, lon:-82.0, avg:"80/68", year:2026, month:11, day:15},
+    {date:"Nov 17 Tue", desc:"Callao (Lima), Peru", lat:-12.07, lon:-77.15, avg:"72/64", year:2026, month:11, day:17},
+    {date:"Nov 18–19 Wed-Thu", desc:"Sail Pacific Ocean", lat:-15.0, lon:-77.0, avg:"70/62", year:2026, month:11, day:18},
+    {date:"Nov 20 Fri", desc:"Iquique, Chile", lat:-20.23, lon:-70.14, avg:"75/62", year:2026, month:11, day:20},
+    {date:"Nov 21–22 Sat-Sun", desc:"Sail Pacific Ocean", lat:-25.0, lon:-72.0, avg:"72/58", year:2026, month:11, day:21},
+    {date:"Nov 23 Mon", desc:"Valparaíso (Santiago), Chile", lat:-33.04, lon:-71.63, avg:"72/54", year:2026, month:11, day:23},
+    {date:"Nov 24 Tue", desc:"Sail Pacific Ocean", lat:-38.0, lon:-74.0, avg:"65/50", year:2026, month:11, day:24},
+    {date:"Nov 25 Wed", desc:"Scenic Sailing – Chilean Fjords", lat:-45.5, lon:-73.0, avg:"60/45", year:2026, month:11, day:25},
+    {date:"Nov 26 Thu", desc:"Puerto Chacabuco, Chile", lat:-45.47, lon:-72.83, avg:"60/45", year:2026, month:11, day:26},
+    {date:"Nov 27 Fri", desc:"Scenic Sailing – Chilean Fjords", lat:-48.0, lon:-73.5, avg:"58/42", year:2026, month:11, day:27},
+    {date:"Nov 28–30 Sat-Mon", desc:"Explore Chilean Glaciers", lat:-50.0, lon:-73.8, avg:"55/40", year:2026, month:11, day:28},
+    {date:"Dec 01 Tue", desc:"Punta Arenas, Chile", lat:-53.16, lon:-70.91, avg:"56/43", year:2026, month:12, day:1},
+    {date:"Dec 02–05 Wed-Sat", desc:"Sail Drake Passage / Toward Antarctica", lat:-57.0, lon:-65.0, avg:"45/35", year:2026, month:12, day:2},
+    {date:"Dec 06 Sun", desc:"Enter Antarctic waters / Explore", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:6},
+    {date:"Dec 07 Mon", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:7},
+    {date:"Dec 08 Tue", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:8},
+    {date:"Dec 09 Wed", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:9},
+    {date:"Dec 10 Thu", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:10},
+    {date:"Dec 11 Fri", desc:"Explore Antarctica", lat:-64.5, lon:-62.5, avg:"35/28", year:2026, month:12, day:11},
+    {date:"Dec 12 Sat", desc:"Explore Antarctica / Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", year:2026, month:12, day:12},
+    {date:"Dec 13 Sun", desc:"Sail Drake Passage", lat:-59.0, lon:-62.0, avg:"42/34", year:2026, month:12, day:13},
+    {date:"Dec 14 Mon", desc:"Scenic Sailing – Cape Horn", lat:-55.98, lon:-67.27, avg:"55/41", year:2026, month:12, day:14},
+    {date:"Dec 15 Tue", desc:"Disembark Ushuaia → Airport", lat:-54.8, lon:-68.3, avg:"57/41", year:2026, month:12, day:15},
+    {date:"Dec 16 Wed", desc:"Depart Ushuaia (USH) → Austin (AUS)", lat:-54.8, lon:-68.3, avg:"57/41", year:2026, month:12, day:16}
 ];
 
 const itineraryBody = document.getElementById('itinerary');
@@ -135,16 +134,21 @@ days.forEach(day => {
 
         if (!content.dataset.loaded) {
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${day.lat}&longitude=${day.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
-
             try {
                 const res = await fetch(url);
                 const data = await res.json();
                 const wmo = {0:"Clear ☀️",1:"Mainly clear",2:"Partly cloudy",3:"Overcast ☁️",45:"Fog 🌫️",71:"Light snow ❄️",73:"Snow",75:"Heavy snow",85:"Snow showers"};
-
-                const dateObj = new Date(day.fullDate);
+                
+                // Fix: Construct date explicitly via local parameters to avoid UTC shifting bugs
+                const dateObj = new Date(day.year, day.month - 1, day.day, 12, 0, 0);
                 const times = SunCalc.getTimes(dateObj, day.lat, day.lon);
-                const sunrise = times.sunrise ? times.sunrise.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}) : 'N/A';
-                const sunset  = times.sunset  ? times.sunset.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}) : 'N/A';
+                
+                // Format using Open-Meteo's returned timezone or fallback to UTC formatting if timezone string isn't grabbed directly
+                const tz = data.timezone || 'UTC';
+                const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz });
+                
+                const sunrise = times.sunrise ? timeFormatter.format(times.sunrise) : 'N/A';
+                const sunset  = times.sunset  ? timeFormatter.format(times.sunset)  : 'N/A';
 
                 let html = `
                     <div class="grid md:grid-cols-3 gap-6 mb-8">
@@ -239,7 +243,6 @@ sites.forEach(site => {
         if (!content.dataset.loaded) {
             content.innerHTML = '<div class="text-center py-6 text-gray-500">Loading...</div>';
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${site.lat}&longitude=${site.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
-
             try {
                 const res = await fetch(url);
                 const data = await res.json();
@@ -281,7 +284,6 @@ sites.forEach(site => {
 </script>
 
 <p class="text-center text-sm text-gray-500 mt-12">
-    Early December on the Antarctic Peninsula: ~19–21 hours daylight (sunrise ~3–4 AM, sunset ~10–11 PM local). Sun never fully sets — extended golden hour & twilight for photography!
-</p>
+    Early December on the Antarctic Peninsula: ~19–21 hours daylight (sunrise ~3–4 AM, sunset ~10–11 PM local). Sun never fully sets — extended golden hour & twilight for photography!</p>
 </body>
 </html>
