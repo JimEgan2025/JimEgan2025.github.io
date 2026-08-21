@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Weather Consensus & Model Comparison (7-Day)</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-focus: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --vc-bg: #ecfdf5;
+            --vc-text: #047857;
+            --vc-border: #a7f3d0;
+            --header-dark: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1180px;
+            transition: max-width 0.2s ease;
+        }
+
+        .container.full-width {
+            max-width: 100% !important;
+        }
+
+        header {
+            background: var(--card-bg);
+            padding: 24px 28px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            background-color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .time-badge {
+            background-color: #f1f5f9;
+            color: var(--header-dark);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-feature-settings: "tnum";
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .nav-btn {
+            background-color: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background-color: #f8fafc;
+        }
+
+        .nav-btn.active {
+            background-color: var(--header-dark);
+            color: #ffffff;
+            border-color: var(--header-dark);
+            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.15);
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--header-dark);
+            margin-bottom: 12px;
+            margin-top: 35px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        .table-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 13.5px;
+        }
+
+        #detailed-view table {
+            min-width: 1450px;
+        }
+
+        #summary-view table {
+            font-size: 14.5px;
+            min-width: 100%;
+        }
+
+        #summary-view th, #summary-view td {
+            padding: 13px 15px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #summary-view th {
+            font-size: 12px;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        td.date-col {
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .vc-col {
+            background-color: var(--vc-bg) !important;
+            color: var(--vc-text) !important;
+            font-weight: 700;
+        }
+
+        th.vc-header {
+            background-color: #065f46 !important;
+            color: #ffffff !important;
+            border-color: #047857 !important;
+        }
+
+        .calc-col {
+            background-color: var(--accent-light) !important;
+            color: var(--accent) !important;
+            font-weight: 700;
+        }
+
+        .pending-text {
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        .chart-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        #consensusChart {
+            width: 100%;
+            height: 330px;
+            display: block;
+        }
+
+        .report-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .report-header p {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+        }
+
+        .report-box {
+            width: 100%;
+            height: 230px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border);
+            color: var(--header-dark);
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 13px;
+            padding: 14px;
+            border-radius: 8px;
+            resize: vertical;
+            outline: none;
+            line-height: 1.6;
+        }
+
+        .report-box:focus {
+            border-color: var(--accent);
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="main-container">
+        <header>
+            <div>
+                <h1>Vizcaya Weather Consensus</h1>
+                <div class="subtitle">Georgetown, TX (30.587, -97.641) — Multi-Model Comparison & Variance Board</div>
+            </div>
+            <div class="controls-row">
+                <input type="text" id="vcKeyInput" placeholder="Visual Crossing API Key" style="width: 200px;">
+                <button onclick="fetchWeatherModels()">Sync Models</button>
+                <div class="time-badge" id="live-time">12:30:00 PM</div>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <button id="btn-summary" class="nav-btn active" onclick="switchView('summary')">Consensus Summary (7-Day)</button>
+            <button id="btn-detailed" class="nav-btn" onclick="switchView('detailed')">Full Model Details (Full Width)</button>
+        </div>
+
+        <!-- VIEW A: CONSENSUS SUMMARY PAGE -->
+        <div id="summary-view">
+            <div class="section-title">High & Low Temperatures (7-Day Comparison)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="vc-header" style="width: 20%;">Visual Crossing (VC)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Temp</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Temp Range</th>
+                            <th style="width: 10%;" class="calc-col">Rain Prob</th>
+                            <th style="width: 10%;" class="calc-col">Rain Avg</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-temp-tbody">
+                        <tr><td colspan="7" style="padding: 35px; color: #64748b;">Fetching 7-day model summaries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Apparent Temperatures (Feels Like / Heat Index)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="vc-header" style="width: 20%;">Visual Crossing (VC)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Apparent</th>
+                            <th style="width: 25%;" class="calc-col">Consensus Feels Like Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-apparent-tbody">
+                        <tr><td colspan="6" style="padding: 35px; color: #64748b;">Fetching apparent summaries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Winds & Sustained Gusts (7-Day)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="vc-header" style="width: 20%;">Visual Crossing (VC)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Wind / Gust</th>
+                            <th style="width: 25%;" class="calc-col">Peak Wind Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-wind-tbody">
+                        <tr><td colspan="6" style="padding: 35px; color: #64748b;">Fetching wind summaries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Precipitation Amount & Probabilities (7-Day)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="vc-header" style="width: 20%;">Visual Crossing (VC)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Rain</th>
+                            <th style="width: 25%;" class="calc-col">Rain Spread Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-precip-tbody">
+                        <tr><td colspan="6" style="padding: 35px; color: #64748b;">Fetching rain summaries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW B: DETAILED MODEL PAGE -->
+        <div id="detailed-view" style="display: none;">
+            <div class="section-title">High & Low Temperatures — 7-Day Model Variances</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="vc-header" style="width: 10%;">Visual Crossing (VC)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Rain Prob</th>
+                            <th style="width: 5%;" class="calc-col">Rain Avg</th>
+                            <th style="width: 7%;" class="calc-col">Rain Range</th>
+                            <th style="width: 8%;" class="calc-col">Avg Temp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="temp-tbody">
+                        <tr><td colspan="17" style="padding: 35px; color: #64748b;">Fetching 7-day model variances...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Apparent Temperatures (Feels Like / Heat Index °F)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="vc-header" style="width: 10%;">Visual Crossing (VC)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apparent-tbody">
+                        <tr><td colspan="18" style="padding: 35px; color: #64748b;">Fetching 7-day apparent temperatures...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Winds & Sustained Gusts (mph)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="vc-header" style="width: 10%;">Visual Crossing (VC)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wind-tbody">
+                        <tr><td colspan="18" style="padding: 35px; color: #64748b;">Fetching 7-day wind models...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-title">Precipitation Amount (Inches)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="vc-header" style="width: 10%;">Visual Crossing (VC)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="precip-tbody">
+                        <tr><td colspan="18" style="padding: 35px; color: #64748b;">Fetching 7-day rain models...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 7-DAY CONSENSUS GRAPH -->
+        <div class="section-title">7-Day Consensus High Temperature & Heat Index Trend</div>
+        <div class="chart-container">
+            <canvas id="consensusChart"></canvas>
+        </div>
+
+        <div class="section-title">AI Forecast Coprocessor (Model Comparison Pack)</div>
+        <div class="report-container">
+            <div class="report-header">
+                <p>Formatted model variance & Visual Crossing comparison data for AI report analysis.</p>
+                <button id="copy-report-btn" onclick="copyAIPrompt()">Copy to Clipboard</button>
+            </div>
+            <textarea id="ai-report-box" class="report-box" readonly placeholder="Synchronize model data to compile report package..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        const lat = 30.5871;
+        const lon = -97.641;
+
+        const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        let lastChartData = null;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        document.getElementById("vcKeyInput").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                fetchWeatherModels();
+            }
+        });
+
+        function switchView(view) {
+            const container = document.getElementById('main-container');
+            const summaryTab = document.getElementById('btn-summary');
+            const detailedTab = document.getElementById('btn-detailed');
+            const summaryView = document.getElementById('summary-view');
+            const detailedView = document.getElementById('detailed-view');
+
+            if (view === 'detailed') {
+                summaryView.style.display = 'none';
+                detailedView.style.display = 'block';
+                container.classList.add('full-width');
+                summaryTab.classList.remove('active');
+                detailedTab.classList.add('active');
+            } else {
+                summaryView.style.display = 'block';
+                detailedView.style.display = 'none';
+                container.classList.remove('full-width');
+                summaryTab.classList.add('active');
+                detailedTab.classList.remove('active');
+            }
+
+            if (lastChartData) {
+                setTimeout(() => renderConsensusChart(lastChartData), 50);
+            }
+        }
+
+        function copyAIPrompt() {
+            const reportBox = document.getElementById("ai-report-box");
+            reportBox.select();
+            reportBox.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(reportBox.value);
+
+            const btn = document.getElementById("copy-report-btn");
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.backgroundColor = "#059669";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "#2563eb";
+            }, 2000);
+        }
+
+        const modelKeywords = {
+            "ecmwf_ifs025": "ecmwf_ifs025",
+            "ecmwf_aifs025_single": "aifs",
+            "gfs_seamless": "gfs_seamless",
+            "ncep_nbm_conus": "ncep_nbm_conus",
+            "gem_seamless": "gem_seamless",
+            "gfs_graphcast025": "graphcast",
+            "ncep_nam_conus": "ncep_nam_conus",
+            "gem_regional": "gem_regional",
+            "gem_global": "gem_global",
+            "icon_seamless": "icon_seamless"
+        };
+
+        async function fetchWeatherModels() {
+            try {
+                const vcKeyInput = document.getElementById('vcKeyInput');
+                let vcKey = vcKeyInput.value.trim();
+
+                if (vcKey) {
+                    localStorage.setItem("vcKey", vcKey);
+                } else {
+                    vcKey = localStorage.getItem("vcKey") || "";
+                    if (vcKey) {
+                        vcKeyInput.value = vcKey;
+                    }
+                }
+
+                // 8 days requested so we can cleanly start tomorrow (Day 1 through Day 7)
+                const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs025,ecmwf_aifs025_single,gfs_seamless,ncep_nbm_conus,gem_seamless,gfs_graphcast025,ncep_nam_conus,gem_regional,gem_global,icon_seamless&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8`;
+                const omResponse = await fetch(openMeteoUrl);
+                const omData = await omResponse.json();
+                if (omData.error) throw new Error(omData.reason);
+
+                let vcData = null;
+                if (vcKey) {
+                    try {
+                        const vcUrl = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${lat},${lon}?unitGroup=us&key=${vcKey}&contentType=json`;
+                        const vcResponse = await fetch(vcUrl);
+                        if (vcResponse.ok) {
+                            vcData = await vcResponse.json();
+                        } else {
+                            console.warn("Visual Crossing returned non-OK status: ", vcResponse.status);
+                        }
+                    } catch (e) {
+                        console.warn("Visual Crossing failed to fetch: ", e);
+                    }
+                }
+
+                renderDashboard(omData, vcData);
+
+            } catch (error) {
+                const errHTML = `<tr><td colspan="18" style="padding: 35px; color: #dc2626; font-weight: bold;">Error syncing weather models: ${error.message}</td></tr>`;
+                document.getElementById("temp-tbody").innerHTML = errHTML;
+                document.getElementById("apparent-tbody").innerHTML = errHTML;
+                document.getElementById("wind-tbody").innerHTML = errHTML;
+                document.getElementById("precip-tbody").innerHTML = errHTML;
+
+                document.getElementById("summary-temp-tbody").innerHTML = errHTML;
+                document.getElementById("summary-apparent-tbody").innerHTML = errHTML;
+                document.getElementById("summary-wind-tbody").innerHTML = errHTML;
+                document.getElementById("summary-precip-tbody").innerHTML = errHTML;
+            }
+        }
+
+        function aggregateHourlyForDate(hourly, modelName, dateStr) {
+            if (!hourly) return null;
+            const keys = Object.keys(hourly);
+            const keyword = modelKeywords[modelName] || modelName;
+
+            const tempKey = keys.find(k => k.startsWith('temperature_2m') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const appKey = keys.find(k => k.startsWith('apparent_temperature') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const precipKey = keys.find(k => k.startsWith('precipitation') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const windKey = keys.find(k => k.startsWith('wind_speed_10m') && k.toLowerCase().includes(keyword.toLowerCase()));
+            const gustKey = keys.find(k => k.startsWith('wind_gusts_10m') && k.toLowerCase().includes(keyword.toLowerCase()));
+
+            const temps = [];
+            const apps = [];
+            const winds = [];
+            const gusts = [];
+            let precipSum = 0;
+            let hasPrecipData = false;
+
+            for (let j = 0; j < hourly.time.length; j++) {
+                if (hourly.time[j].startsWith(dateStr)) {
+                    if (tempKey && hourly[tempKey] && hourly[tempKey][j] !== null && hourly[tempKey][j] !== undefined) {
+                        temps.push(hourly[tempKey][j]);
+                    }
+                    if (appKey && hourly[appKey] && hourly[appKey][j] !== null && hourly[appKey][j] !== undefined) {
+                        apps.push(hourly[appKey][j]);
+                    }
+                    if (precipKey && hourly[precipKey] && hourly[precipKey][j] !== null && hourly[precipKey][j] !== undefined) {
+                        precipSum += hourly[precipKey][j];
+                        hasPrecipData = true;
+                    }
+                    if (windKey && hourly[windKey] && hourly[windKey][j] !== null && hourly[windKey][j] !== undefined) {
+                        winds.push(hourly[windKey][j]);
+                    }
+                    if (gustKey && hourly[gustKey] && hourly[gustKey][j] !== null && hourly[gustKey][j] !== undefined) {
+                        gusts.push(hourly[gustKey][j]);
+                    }
+                }
+            }
+
+            if (temps.length === 0 && apps.length === 0 && winds.length === 0 && !hasPrecipData) return null;
+
+            return {
+                maxTemp: temps.length > 0 ? Math.max(...temps) : null,
+                minTemp: temps.length > 0 ? Math.min(...temps) : null,
+                maxApp: apps.length > 0 ? Math.max(...apps) : null,
+                minApp: apps.length > 0 ? Math.min(...apps) : null,
+                precipSum: hasPrecipData ? precipSum : null,
+                maxWind: winds.length > 0 ? Math.max(...winds) : null,
+                maxGust: gusts.length > 0 ? Math.max(...gusts) : null
+            };
+        }
+
+        function renderDashboard(omData, vcData) {
+            const daily = omData.daily;
+            const hourly = omData.hourly;
+            const keys = Object.keys(daily);
+            
+            const findKey = (prefix, modelName) => {
+                const keyword = modelKeywords[modelName] || modelName;
+                const matchedKey = keys.find(k => k.startsWith(prefix) && k.toLowerCase().includes(keyword.toLowerCase()));
+                return matchedKey ? daily[matchedKey] : null;
+            };
+
+            const models = [
+                "ecmwf_ifs025",
+                "ecmwf_aifs025_single",
+                "gfs_seamless",
+                "ncep_nbm_conus",
+                "gem_seamless",
+                "gfs_graphcast025",
+                "ncep_nam_conus",
+                "gem_regional",
+                "gem_global",
+                "icon_seamless"
+            ];
+
+            const datasets = {
+                times: daily.time,
+                tempMax: models.map(m => findKey("temperature_2m_max", m)),
+                tempMin: models.map(m => findKey("temperature_2m_min", m)),
+                appMax: models.map(m => findKey("apparent_temperature_max", m)),
+                appMin: models.map(m => findKey("apparent_temperature_min", m)),
+                precip: models.map(m => findKey("precipitation_sum", m)),
+                prob: models.map(m => findKey("precipitation_probability_max", m)),
+                windMax: models.map(m => findKey("wind_speed_10m_max", m)),
+                windGust: models.map(m => findKey("wind_gusts_10m_max", m))
+            };
+
+            const getVal = (dataset, mIndex, dayIndex, dateStr) => {
+                const arr = dataset[mIndex];
+
+                if (arr && arr[dayIndex] !== null && arr[dayIndex] !== undefined) {
+                    return arr[dayIndex];
+                }
+
+                const model = models[mIndex];
+                const aggregated = aggregateHourlyForDate(hourly, model, dateStr);
+                if (aggregated) {
+                    if (dataset === datasets.tempMax) return aggregated.maxTemp;
+                    if (dataset === datasets.tempMin) return aggregated.minTemp;
+                    if (dataset === datasets.appMax) return aggregated.maxApp;
+                    if (dataset === datasets.appMin) return aggregated.minApp;
+                    if (dataset === datasets.precip) return aggregated.precipSum;
+                    if (dataset === datasets.windMax) return aggregated.maxWind;
+                    if (dataset === datasets.windGust) return aggregated.maxGust;
+                }
+                return null;
+            };
+
+            let tempRowsHTML = "";
+            let apparentRowsHTML = "";
+            let windRowsHTML = "";
+            let precipRowsHTML = "";
+
+            let summaryTempHTML = "";
+            let summaryApparentHTML = "";
+            let summaryWindHTML = "";
+            let summaryPrecipHTML = "";
+
+            let aiDataPack = "[FILE: Multi-Model Variance Analysis]\nTYPE: MODEL_SPREAD\n\n";
+            aiDataPack += "Vizcaya 7-Day Model Comparison & Ensemble Spread\n";
+            aiDataPack += `Location: Georgetown / Round Rock, TX (30.587, -97.641)\n\n`;
+
+            const chartDays = [];
+            const chartHighs = [];
+            const chartApparent = [];
+
+            // Start loop at 1 (tomorrow) through Day 7 (index 7)
+            const totalDays = Math.min(datasets.times.length, 8);
+
+            for (let i = 1; i < totalDays; i++) {
+                const dateStr = datasets.times[i];
+                const dObj = new Date(dateStr + "T00:00:00");
+                const dayName = daysOfWeek[dObj.getDay()];
+
+                let vcDay = null;
+                if (vcData && vcData.days) {
+                    vcDay = vcData.days.find(d => d.datetime === dateStr);
+                }
+
+                // --- TEMPERATURES ---
+                const tMaxVals = models.map((_, mIdx) => getVal(datasets.tempMax, mIdx, i, dateStr)).filter(v => v !== null);
+                const tMinVals = models.map((_, mIdx) => getVal(datasets.tempMin, mIdx, i, dateStr)).filter(v => v !== null);
+                
+                const avgMax = tMaxVals.length ? (tMaxVals.reduce((a, b) => a + b, 0) / tMaxVals.length) : null;
+                const avgMin = tMinVals.length ? (tMinVals.reduce((a, b) => a + b, 0) / tMinVals.length) : null;
+                const overallAvgTemp = (avgMax !== null && avgMin !== null) ? ((avgMax + avgMin) / 2).toFixed(1) : "-";
+
+                const probVals = models.map((_, mIdx) => getVal(datasets.prob, mIdx, i, dateStr)).filter(v => v !== null);
+                const avgProb = probVals.length ? Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length) : 0;
+
+                const precipVals = models.map((_, mIdx) => getVal(datasets.precip, mIdx, i, dateStr)).filter(v => v !== null);
+                const avgPrecip = precipVals.length ? (precipVals.reduce((a, b) => a + b, 0) / precipVals.length) : 0;
+                const minPrecip = precipVals.length ? Math.min(...precipVals) : 0;
+                const maxPrecip = precipVals.length ? Math.max(...precipVals) : 0;
+
+                // Detailed Temp Row
+                tempRowsHTML += `<tr>`;
+                tempRowsHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                tempRowsHTML += `<td class="vc-col">${vcDay ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}°` : '<span class="pending-text">N/A</span>'}</td>`;
+                
+                for (let mIdx = 0; mIdx < models.length; mIdx++) {
+                    const mx = getVal(datasets.tempMax, mIdx, i, dateStr);
+                    const mn = getVal(datasets.tempMin, mIdx, i, dateStr);
+                    tempRowsHTML += `<td>${mx !== null ? `${Math.round(mx)}°` : '-'}/${mn !== null ? `${Math.round(mn)}°` : '-'}</td>`;
+                }
+                tempRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
+                tempRowsHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
+                tempRowsHTML += `<td class="calc-col">${minPrecip.toFixed(2)}" - ${maxPrecip.toFixed(2)}"</td>`;
+                tempRowsHTML += `<td class="calc-col">${overallAvgTemp}°</td>`;
+                tempRowsHTML += `</tr>`;
+
+                // Summary Temp Row
+                const tempRangeStr = (avgMax !== null && avgMin !== null) ? `${Math.round(avgMin)}° — ${Math.round(avgMax)}°` : "-";
+                summaryTempHTML += `<tr>`;
+                summaryTempHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                summaryTempHTML += `<td class="vc-col">${vcDay ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}°` : '-'}</td>`;
+                summaryTempHTML += `<td class="calc-col">${overallAvgTemp}°</td>`;
+                summaryTempHTML += `<td class="calc-col">${tempRangeStr}</td>`;
+                summaryTempHTML += `<td class="calc-col">${avgProb}%</td>`;
+                summaryTempHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
+                summaryTempHTML += `</tr>`;
+
+                // --- APPARENT TEMPERATURES ---
+                const appMaxVals = models.map((_, mIdx) => getVal(datasets.appMax, mIdx, i, dateStr)).filter(v => v !== null);
+                const appMinVals = models.map((_, mIdx) => getVal(datasets.appMin, mIdx, i, dateStr)).filter(v => v !== null);
+                const avgAppMax = appMaxVals.length ? (appMaxVals.reduce((a, b) => a + b, 0) / appMaxVals.length) : null;
+                const avgAppMin = appMinVals.length ? (appMinVals.reduce((a, b) => a + b, 0) / appMinVals.length) : null;
+
+                apparentRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                apparentRowsHTML += `<td class="vc-col">${vcDay && vcDay.feelslikemax !== undefined ? `${Math.round(vcDay.feelslikemax)}° / ${Math.round(vcDay.feelslikemin)}°` : '-'}</td>`;
+                for (let mIdx = 0; mIdx < models.length; mIdx++) {
+                    const amx = getVal(datasets.appMax, mIdx, i, dateStr);
+                    const amn = getVal(datasets.appMin, mIdx, i, dateStr);
+                    apparentRowsHTML += `<td>${amx !== null ? `${Math.round(amx)}°` : '-'}/${amn !== null ? `${Math.round(amn)}°` : '-'}</td>`;
+                }
+                apparentRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
+                apparentRowsHTML += `<td class="calc-col">${avgAppMax !== null ? Math.round(avgAppMax) : '-'}° / ${avgAppMin !== null ? Math.round(avgAppMin) : '-'}°</td>`;
+                apparentRowsHTML += `<td class="calc-col">${appMinVals.length ? Math.round(Math.min(...appMinVals)) : '-'}°</td>`;
+                apparentRowsHTML += `<td class="calc-col">${appMaxVals.length ? Math.round(Math.max(...appMaxVals)) : '-'}°</td>`;
+                apparentRowsHTML += `<td class="calc-col">${(appMaxVals.length && appMinVals.length) ? (Math.max(...appMaxVals) - Math.min(...appMinVals)) + '°' : '-'}</td>`;
+                apparentRowsHTML += `</tr>`;
+
+                summaryApparentHTML += `<tr>`;
+                summaryApparentHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                summaryApparentHTML += `<td class="vc-col">${vcDay && vcDay.feelslikemax !== undefined ? `${Math.round(vcDay.feelslikemax)}° / ${Math.round(vcDay.feelslikemin)}°` : '-'}</td>`;
+                summaryApparentHTML += `<td class="calc-col">${avgAppMax !== null ? Math.round(avgAppMax) : '-'}° / ${avgAppMin !== null ? Math.round(avgAppMin) : '-'}°</td>`;
+                summaryApparentHTML += `<td class="calc-col">${appMinVals.length ? Math.round(Math.min(...appMinVals)) : '-'}° to ${appMaxVals.length ? Math.round(Math.max(...appMaxVals)) : '-'}°</td>`;
+                summaryApparentHTML += `<td class="calc-col">${avgProb}%</td>`;
+                summaryApparentHTML += `</tr>`;
+
+                // --- WINDS & GUSTS ---
+                const windVals = models.map((_, mIdx) => getVal(datasets.windMax, mIdx, i, dateStr)).filter(v => v !== null);
+                const gustVals = models.map((_, mIdx) => getVal(datasets.windGust, mIdx, i, dateStr)).filter(v => v !== null);
+                const avgWind = windVals.length ? (windVals.reduce((a, b) => a + b, 0) / windVals.length) : null;
+                const avgGust = gustVals.length ? (gustVals.reduce((a, b) => a + b, 0) / gustVals.length) : null;
+
+                windRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                windRowsHTML += `<td class="vc-col">${vcDay && vcDay.windspeed !== undefined ? `${Math.round(vcDay.windspeed)} / ${Math.round(vcDay.windgust || 0)} mph` : '-'}</td>`;
+                for (let mIdx = 0; mIdx < models.length; mIdx++) {
+                    const w = getVal(datasets.windMax, mIdx, i, dateStr);
+                    const g = getVal(datasets.windGust, mIdx, i, dateStr);
+                    windRowsHTML += `<td>${w !== null ? Math.round(w) : '-'}/${g !== null ? Math.round(g) : '-'}</td>`;
+                }
+                windRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
+                windRowsHTML += `<td class="calc-col">${avgWind !== null ? Math.round(avgWind) : '-'} / ${avgGust !== null ? Math.round(avgGust) : '-'} mph</td>`;
+                windRowsHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.min(...windVals)) : '-'} mph</td>`;
+                windRowsHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.max(...windVals)) : '-'} mph</td>`;
+                windRowsHTML += `<td class="calc-col">${windVals.length ? (Math.max(...windVals) - Math.min(...windVals)) + ' mph' : '-'}</td>`;
+                windRowsHTML += `</tr>`;
+
+                summaryWindHTML += `<tr>`;
+                summaryWindHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                summaryWindHTML += `<td class="vc-col">${vcDay && vcDay.windspeed !== undefined ? `${Math.round(vcDay.windspeed)} / ${Math.round(vcDay.windgust || 0)} mph` : '-'}</td>`;
+                summaryWindHTML += `<td class="calc-col">${avgWind !== null ? Math.round(avgWind) : '-'} / ${avgGust !== null ? Math.round(avgGust) : '-'} mph</td>`;
+                summaryWindHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.min(...windVals)) : '-'} to ${windVals.length ? Math.round(Math.max(...windVals)) : '-'} mph</td>`;
+                summaryWindHTML += `<td class="calc-col">${avgProb}%</td>`;
+                summaryWindHTML += `</tr>`;
+
+                // --- PRECIPITATION AMOUNT ---
+                precipRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                precipRowsHTML += `<td class="vc-col">${vcDay && vcDay.precip !== undefined ? `${vcDay.precip}"` : '0.00"'}</td>`;
+                for (let mIdx = 0; mIdx < models.length; mIdx++) {
+                    const p = getVal(datasets.precip, mIdx, i, dateStr);
+                    precipRowsHTML += `<td>${p !== null ? p.toFixed(2) : '0.00'}"</td>`;
+                }
+                precipRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
+                precipRowsHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
+                precipRowsHTML += `<td class="calc-col">${minPrecip.toFixed(2)}"</td>`;
+                precipRowsHTML += `<td class="calc-col">${maxPrecip.toFixed(2)}"</td>`;
+                precipRowsHTML += `<td class="calc-col">${(maxPrecip - minPrecip).toFixed(2)}"</td>`;
+                precipRowsHTML += `</tr>`;
+
+                summaryPrecipHTML += `<tr>`;
+                summaryPrecipHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
+                summaryPrecipHTML += `<td class="vc-col">${vcDay && vcDay.precip !== undefined ? `${vcDay.precip}"` : '0.00"'}</td>`;
+                summaryPrecipHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
+                summaryPrecipHTML += `<td class="calc-col">${minPrecip.toFixed(2)}" — ${maxPrecip.toFixed(2)}"</td>`;
+                summaryPrecipHTML += `<td class="calc-col">${avgProb}%</td>`;
+                summaryPrecipHTML += `</tr>`;
+
+                // Side-by-side Visual Crossing vs Multi-Model Consensus AI Export
+                const vcStr = (vcDay && vcDay.tempmax !== undefined) ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}° (Feels ${Math.round(vcDay.feelslikemax)}°)` : 'N/A';
+                aiDataPack += `Date: ${dateStr} (${dayName}) | Visual Crossing: ${vcStr} | Multi-Model Consensus: ${Math.round(avgMax)}° / ${Math.round(avgMin)}° (Feels ${Math.round(avgAppMax)}°) | Rain: ${avgPrecip.toFixed(2)}" (${avgProb}%) | Wind: ${Math.round(avgWind)} mph (Gusts ${Math.round(avgGust)} mph)\n`;
+
+                // Collect for 7-day chart
+                chartDays.push(`${dayName} ${dObj.getMonth()+1}/${dObj.getDate()}`);
+                chartHighs.push(Math.round(avgMax));
+                chartApparent.push(Math.round(avgAppMax));
+            }
+
+            document.getElementById("temp-tbody").innerHTML = tempRowsHTML;
+            document.getElementById("apparent-tbody").innerHTML = apparentRowsHTML;
+            document.getElementById("wind-tbody").innerHTML = windRowsHTML;
+            document.getElementById("precip-tbody").innerHTML = precipRowsHTML;
+
+            document.getElementById("summary-temp-tbody").innerHTML = summaryTempHTML;
+            document.getElementById("summary-apparent-tbody").innerHTML = summaryApparentHTML;
+            document.getElementById("summary-wind-tbody").innerHTML = summaryWindHTML;
+            document.getElementById("summary-precip-tbody").innerHTML = summaryPrecipHTML;
+
+            document.getElementById("ai-report-box").value = aiDataPack;
+
+            lastChartData = { days: chartDays, highs: chartHighs, apparent: chartApparent };
+            renderConsensusChart(lastChartData);
+        }
+
+        function renderConsensusChart(data) {
+            const canvas = document.getElementById('consensusChart');
+            if (!canvas || !data || !data.days || data.days.length === 0) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = 330 * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = 330;
+            ctx.clearRect(0, 0, width, height);
+
+            const padLeft = 55, padRight = 35, padTop = 60, padBottom = 45;
+            const chartW = width - padLeft - padRight;
+            const chartH = height - padTop - padBottom;
+
+            const allVals = [...data.highs, ...data.apparent];
+            const minVal = Math.floor(Math.min(...allVals) / 5) * 5 - 5;
+            const maxVal = Math.ceil(Math.max(...allVals) / 5) * 5 + 5;
+
+            // Legend
+            ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            
+            // High Temp Legend (Royal Blue)
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath();
+            ctx.arc(padLeft + 10, 25, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillText('Consensus High Temperature (°)', padLeft + 25, 29);
+
+            // Heat Index Legend (Amber)
+            ctx.fillStyle = '#ea580c';
+            ctx.beginPath();
+            ctx.arc(padLeft + 280, 25, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillText('Consensus Feels Like / Heat Index (°)', padLeft + 295, 29);
+
+            // Grid Lines & Y Axis Labels
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'right';
+
+            const steps = 5;
+            for (let i = 0; i <= steps; i++) {
+                const val = minVal + (i * (maxVal - minVal) / steps);
+                const y = padTop + chartH - (i * chartH / steps);
+                
+                ctx.beginPath();
+                ctx.moveTo(padLeft, y);
+                ctx.lineTo(width - padRight, y);
+                ctx.stroke();
+
+                ctx.fillText(`${Math.round(val)}°`, padLeft - 10, y + 4);
+            }
+
+            const stepX = chartW / (data.days.length - 1);
+            const getX = (idx) => padLeft + idx * stepX;
+            const getY = (val) => padTop + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
+
+            // Draw Heat Index Line (Amber)
+            ctx.strokeStyle = '#ea580c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            data.apparent.forEach((val, idx) => {
+                const x = getX(idx);
+                const y = getY(val);
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw High Temp Line (Royal Blue)
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            data.highs.forEach((val, idx) => {
+                const x = getX(idx);
+                const y = getY(val);
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw Points and Values
+            data.days.forEach((day, idx) => {
+                const x = getX(idx);
+                const yHi = getY(data.highs[idx]);
+                const yApp = getY(data.apparent[idx]);
+
+                // Heat Index Point & Value Badge
+                ctx.fillStyle = '#ea580c';
+                ctx.beginPath();
+                ctx.arc(x, yApp, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#9a3412';
+                ctx.fillText(`${data.apparent[idx]}°`, x, yApp - 10);
+
+                // High Temp Point & Value Badge
+                ctx.fillStyle = '#2563eb';
+                ctx.beginPath();
+                ctx.arc(x, yHi, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#1e40af';
+                ctx.fillText(`${data.highs[idx]}°`, x, yHi + 20);
+
+                // Date Label
+                ctx.fillStyle = '#334155';
+                ctx.font = 'bold 12px -apple-system, system-ui, sans-serif';
+                ctx.fillText(day, x, height - 15);
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if (lastChartData) renderConsensusChart(lastChartData);
+        });
+
+        window.onload = function() {
+            let vcKey = localStorage.getItem("vcKey");
+            
+            if (!vcKey) {
+                vcKey = prompt("Please enter your Visual Crossing API Key to sync all boards:");
+                if (vcKey) {
+                    vcKey = vcKey.trim();
+                    localStorage.setItem("vcKey", vcKey);
+                }
+            }
+            
+            if (vcKey) {
+                document.getElementById('vcKeyInput').value = vcKey;
+            }
+            
+            fetchWeatherModels();
+        };
+    </script>
+</body>
+</html>
