@@ -3,199 +3,317 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Susan & Jim: The 41-Day Chronological Action Plan</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Viking Octantis 2026 • Photographer Weather Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: #0b1116; }
-        #sidebar { width: 560px; background: #1c2833; color: white; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); z-index: 1001; }
-        .sidebar-header { padding: 15px; background: #17202a; border-bottom: 3px solid #3498db; text-align: center; }
-        .status-bar { display: flex; background: #111; padding: 10px; font-size: 11px; justify-content: space-around; border-bottom: 1px solid #34495e; }
-        .risk-tag { padding: 2px 8px; border-radius: 3px; font-weight: bold; }
-        .level-1 { background: #27ae60; } .level-2 { background: #f1c40f; color: black; } 
-        .level-3 { background: #e67e22; } .level-4 { background: #c0392b; }
-        .ice-alert { background: #3498db; color: white; padding: 10px; font-size: 13px; font-weight: bold; text-align: center; display: none; }
-        .section { padding: 15px; border-bottom: 1px solid #2c3e50; }
-        h3 { margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #3498db; letter-spacing: 2px; }
-        #photo-advice { background: #111; padding: 20px; border-radius: 8px; border-left: 5px solid #f1c40f; font-size: 13.5px; line-height: 1.6; color: #ecf0f1; min-height: 250px; overflow-y: auto; }
-        #location-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; background: #17202a; }
-        .location-item { padding: 12px 18px; border-bottom: 1px solid #2c3e50; cursor: pointer; display: flex; align-items: center; border-left: 4px solid transparent; }
-        .location-item:hover { background: #2c3e50; border-left: 4px solid #3498db; }
-        .icon-box { margin-right: 15px; font-size: 24px; width: 40px; text-align: center; }
-        .day-num { color: #3498db; font-weight: bold; font-size: 11px; display: block; }
-        .site-name { font-weight: bold; font-size: 15px; color: #ecf0f1; }
-        .tag { font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; margin-right: 5px; color: white; text-transform: uppercase; }
-        .susan-tag { background: #8e44ad; } .jim-tag { background: #d35400; }
-        #map { flex-grow: 1; }
-        .advice-block { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #222; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f9fafb; }
+        .forecast-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 0.5rem 0;
+            scrollbar-width: thin;
+        }
+        .day-card {
+            min-width: 90px;
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 1rem 0.75rem;
+            background: #f1f5f9;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .forecast-content { display: none; padding: 1.5rem; background: #f8fafc; border-top: 1px solid #e5e7eb; }
+        .card-expanded .forecast-content { display: block; }
+        .toggle-btn { transition: all 0.2s; }
     </style>
 </head>
-<body>
-    <div id="sidebar">
-        <div class="sidebar-header">
-            <h2 style="margin:0; font-size: 18px;">41-DAY ACTION TIMELINE</h2>
-            <span style="font-size: 10px; color: #bdc3c7;">Full Master Itinerary Integrated</span>
-        </div>
-        <div id="ice-warning" class="ice-alert">❄️ ICE PROTOCOL: EXPOSURE COMP +1.3 ❄️</div>
-        <div id="site-status" class="status-bar">
-            <span>RISK: <span id="risk-val" class="risk-tag level-1">--</span></span>
-            <span>SUN: <span id="sun-val">--</span></span>
-            <span>TEMP: <span id="temp-val">--</span></span>
-        </div>
-        <div class="section">
-            <h3>Daily Mission & Trip Details</h3>
-            <div id="photo-advice">Select a day from the timeline to sync the map and details.</div>
-        </div>
-        <ul id="location-list"></ul>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+<div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-red-700">VIKING OCTANTIS</h1>
+        <p class="text-2xl mt-3">The Americas & Antarctic Explorer • Nov 6 – Dec 16, 2026</p>
+        <p class="text-lg text-gray-600 mt-4">Toggle rows for live forecast + 2026 sunrise/sunset • Antarctica sites expand inline</p>
     </div>
-    <div id="map"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map', {zoomControl: false}).setView([9, -79], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.control.zoom({ position: 'topright' }).addTo(map);
 
-        const itinerary = [
-            { day: "Day 1", date: "Nov 6", name: "Ft. Lauderdale, Florida", type: "Departure", risk: "LEVEL 1", rClass: "level-1", sun: "6:34 AM / 5:35 PM", temp: "81°F", icon: "⚓", lat: 26.09, lon: -80.12, zoom: 12, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Arrive FLL, transfer to pier, embark by 2 PM (depart 6 PM)[cite: 1]. Drop checked bags for Cabin 3034[cite: 1]. Stop at Dining Desk (Deck 5) for Manfredi's/Restaurant reservations and Excursion Desk (Deck 1) regarding Susan's hip history for SOBs[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Brown Pelicans, Frigatebirds, & Ospreys at port exit[cite: 1]. <br><span class='tag jim-tag'>James</span> 'Blue Hour' Miami skyline & Port Everglades industrial silhouettes[cite: 1].</div>" },
-                        
-            { day: "Day 2", date: "Nov 7", name: "Gulf of Mexico", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "82°F", icon: "🚢", lat: 23.50, lon: -90.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> At sea navigating the historic Gulf of Mexico[cite: 1].</div><div class='advice-block'>Unwind in the Scandinavian-inspired spa: sauna, warming cave, or spa pool[cite: 1].</div>" },
+    <!-- Daily Itinerary -->
+    <div class="bg-white rounded-xl shadow overflow-hidden mb-16">
+        <table class="w-full">
+            <thead class="bg-red-700 text-white">
+                <tr>
+                    <th class="px-6 py-4 text-left">Date 2026</th>
+                    <th class="px-6 py-4 text-left">Port / Activity</th>
+                    <th class="px-6 py-4 text-left">Avg High/Low (°F)</th>
+                    <th class="px-6 py-4 text-center">Forecast + Light</th>
+                </tr>
+            </thead>
+            <tbody id="itinerary"></tbody>
+        </table>
+    </div>
 
-            { day: "Day 3", date: "Nov 8", name: "Cozumel, Mexico", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "6:04 AM / 5:11 PM", temp: "84°F", icon: "⚓", lat: 20.42, lon: -86.92, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Excursion: 'El Pueblo del Maiz: A Mayan Village' (10 AM - 1:30 PM)[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Cozumel Emerald hummingbird at San Gervasio[cite: 1]. <br><span class='tag jim-tag'>James</span> Wide-angle turquoise water gradients on catamaran[cite: 1].</div>" },
+    <!-- Antarctic Sites -->
+    <div class="mt-16">
+        <h2 class="text-3xl font-bold text-center mb-8 text-red-700">Antarctic Peninsula Sites (Dec 7–12) – Photo Hotspots</h2>
+        <div id="antarctic-sites" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</div>
 
-            { day: "Day 4", date: "Nov 9", name: "Caribbean Sea", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "85°F", icon: "🚢", lat: 15.00, lon: -80.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Cruising through legendary pirate waters[cite: 1].</div><div class='advice-block'>Relax in the Explorers' Lounge with panoramic views and a cocktail[cite: 1].</div>" },
+<script>
+// ====================== WMO WEATHER CODES ======================
+const wmo = {
+    0: "Clear ☀️",
+    1: "Mainly clear 🌤️",
+    2: "Partly cloudy ⛅",
+    3: "Overcast ☁️",
+    45: "Fog 🌫️",
+    48: "Rime fog 🌫️",
+    51: "Light drizzle 🌧️",
+    53: "Moderate drizzle 🌧️",
+    55: "Dense drizzle 🌧️",
+    56: "Light freezing drizzle 🌧️",
+    57: "Dense freezing drizzle 🌧️",
+    61: "Slight rain 🌧️",
+    63: "Moderate rain 🌧️",
+    65: "Heavy rain 🌧️",
+    66: "Light freezing rain 🌧️",
+    67: "Heavy freezing rain 🌧️",
+    71: "Light snow ❄️",
+    73: "Snow ❄️",
+    75: "Heavy snow ❄️",
+    77: "Snow grains ❄️",
+    80: "Slight rain showers 🌦️",
+    81: "Moderate rain showers 🌦️",
+    82: "Violent rain showers 🌦️",
+    85: "Light snow showers ❄️",
+    86: "Heavy snow showers ❄️",
+    95: "Thunderstorm ⚡",
+    96: "Thunderstorm with slight hail ⚡",
+    99: "Thunderstorm with heavy hail ⚡"
+};
 
-            { day: "Day 5", date: "Nov 10", name: "Caribbean Sea", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "86°F", icon: "🚢", lat: 11.00, lon: -78.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Continued transit through the Caribbean Sea toward Panama[cite: 1].</div>" },
+// ====================== ITINERARY DATA ======================
+const days = [
+    {date:"Nov 06 Fri", desc:"Ft. Lauderdale, Florida – Embarkation", lat:26.09, lon:-80.12, avg:"81/70", year:2026, month:11, day:6},
+    {date:"Nov 07 Sat", desc:"Sail the Gulf of Mexico", lat:23.50, lon:-90.00, avg:"82/68", year:2026, month:11, day:7},
+    {date:"Nov 08 Sun", desc:"Cozumel, Mexico", lat:20.42, lon:-86.92, avg:"84/73", year:2026, month:11, day:8},
+    {date:"Nov 09 Mon", desc:"Sail the Caribbean Sea", lat:15.00, lon:-80.00, avg:"85/75", year:2026, month:11, day:9},
+    {date:"Nov 10 Tue", desc:"Sail the Caribbean Sea", lat:11.00, lon:-78.00, avg:"86/75", year:2026, month:11, day:10},
+    {date:"Nov 11 Wed", desc:"Scenic Sailing: Panama Canal", lat:9.11, lon:-79.69, avg:"88/75", year:2026, month:11, day:11},
+    {date:"Nov 12 Thu", desc:"Panama City (Fuerte Amador), Panama", lat:8.95, lon:-79.53, avg:"89/75", year:2026, month:11, day:12},
+    {date:"Nov 13 Fri", desc:"Sail the Pacific Ocean", lat:5.00, lon:-81.00, avg:"86/76", year:2026, month:11, day:13},
+    {date:"Nov 14 Sat", desc:"Manta, Ecuador", lat:-0.96, lon:-80.71, avg:"82/70", year:2026, month:11, day:14},
+    {date:"Nov 15 Sun", desc:"Sail the Pacific Ocean", lat:-5.00, lon:-81.50, avg:"78/66", year:2026, month:11, day:15},
+    {date:"Nov 16 Mon", desc:"Sail the Pacific Ocean", lat:-8.50, lon:-79.00, avg:"75/64", year:2026, month:11, day:16},
+    {date:"Nov 17 Tue", desc:"Lima (Callao), Peru", lat:-12.04, lon:-77.12, avg:"72/60", year:2026, month:11, day:17},
+    {date:"Nov 18 Wed", desc:"Sail the Pacific Ocean", lat:-15.00, lon:-76.00, avg:"72/59", year:2026, month:11, day:18},
+    {date:"Nov 19 Thu", desc:"Sail the Pacific Ocean", lat:-18.00, lon:-74.00, avg:"72/58", year:2026, month:11, day:19},
+    {date:"Nov 20 Fri", desc:"Iquique, Chile", lat:-20.21, lon:-70.14, avg:"70/58", year:2026, month:11, day:20},
+    {date:"Nov 21 Sat", desc:"Sail the Pacific Ocean", lat:-24.00, lon:-71.50, avg:"68/56", year:2026, month:11, day:21},
+    {date:"Nov 22 Sun", desc:"Sail the Pacific Ocean", lat:-28.00, lon:-72.00, avg:"72/55", year:2026, month:11, day:22},
+    {date:"Nov 23 Mon", desc:"Santiago (Valparaíso), Chile", lat:-33.45, lon:-70.66, avg:"75/54", year:2026, month:11, day:23},
+    {date:"Nov 24 Tue", desc:"Sail the Pacific Ocean", lat:-38.00, lon:-74.00, avg:"65/49", year:2026, month:11, day:24},
+    {date:"Nov 25 Wed", desc:"Scenic Sailing: Chilean Fjords", lat:-42.00, lon:-73.50, avg:"60/45", year:2026, month:11, day:25},
+    {date:"Nov 26 Thu", desc:"Puerto Chacabuco, Chile (Thanksgiving)", lat:-45.45, lon:-72.81, avg:"57/43", year:2026, month:11, day:26},
+    {date:"Nov 27 Fri", desc:"Scenic Sailing: Chilean Fjords", lat:-47.50, lon:-74.00, avg:"55/41", year:2026, month:11, day:27},
+    {date:"Nov 28 Sat", desc:"Explore Chilean Glaciers", lat:-48.50, lon:-73.80, avg:"52/39", year:2026, month:11, day:28},
+    {date:"Nov 29 Sun", desc:"El Brujo Glacier", lat:-49.25, lon:-73.68, avg:"50/38", year:2026, month:11, day:29},
+    {date:"Nov 30 Mon", desc:"Scenic Sailing: Chilean Fjords", lat:-51.00, lon:-74.00, avg:"52/39", year:2026, month:11, day:30},
+    {date:"Dec 01 Tue", desc:"Punta Arenas, Chile", lat:-53.15, lon:-70.91, avg:"52/40", year:2026, month:12, day:1},
+    {date:"Dec 02 Wed", desc:"Agostini Glacier", lat:-54.55, lon:-69.75, avg:"48/36", year:2026, month:12, day:2},
+    {date:"Dec 03 Thu", desc:"Garibaldi Fjord, Chile", lat:-54.85, lon:-69.98, avg:"48/36", year:2026, month:12, day:3},
+    {date:"Dec 04 Fri", desc:"Scenic Sailing: Cape Horn", lat:-55.98, lon:-67.29, avg:"45/34", year:2026, month:12, day:4},
+    {date:"Dec 05 Sat", desc:"Ushuaia, Argentina", lat:-54.80, lon:-68.30, avg:"50/38", year:2026, month:12, day:5},
+    {date:"Dec 06 Sun", desc:"Sail the Drake Passage", lat:-58.00, lon:-65.00, avg:"40/31", year:2026, month:12, day:6},
+    {date:"Dec 07 Mon", desc:"Antarctica – Expedition Ops", lat:-64.83, lon:-63.50, avg:"32/25", year:2026, month:12, day:7},
+    {date:"Dec 08 Tue", desc:"Antarctica – Expedition Ops", lat:-65.00, lon:-64.00, avg:"32/25", year:2026, month:12, day:8},
+    {date:"Dec 09 Wed", desc:"Antarctica – Expedition Ops", lat:-65.20, lon:-64.20, avg:"32/25", year:2026, month:12, day:9},
+    {date:"Dec 10 Thu", desc:"Antarctica – Expedition Ops", lat:-65.40, lon:-64.50, avg:"32/25", year:2026, month:12, day:10},
+    {date:"Dec 11 Fri", desc:"Antarctica – Expedition Ops", lat:-65.60, lon:-64.80, avg:"32/25", year:2026, month:12, day:11},
+    {date:"Dec 12 Sat", desc:"Antarctica – Expedition Ops", lat:-65.80, lon:-65.00, avg:"32/25", year:2026, month:12, day:12},
+    {date:"Dec 13 Sun", desc:"Sail the Drake Passage", lat:-58.00, lon:-65.00, avg:"38/29", year:2026, month:12, day:13},
+    {date:"Dec 14 Mon", desc:"Scenic Sailing: Cape Horn", lat:-55.98, lon:-67.29, avg:"42/32", year:2026, month:12, day:14},
+    {date:"Dec 15 Tue", desc:"Sail Toward Ushuaia", lat:-54.80, lon:-68.30, avg:"48/36", year:2026, month:12, day:15},
+    {date:"Dec 16 Wed", desc:"Ushuaia (Disembark) → Austin", lat:30.26, lon:-97.74, avg:"48/36", year:2026, month:12, day:16}
+];
 
-            { day: "Day 6", date: "Nov 11", name: "Panama Canal Transit", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "6:15 AM / 5:50 PM", temp: "88°F", icon: "🚢", lat: 9.11, lon: -79.69, zoom: 11, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Full daytime 48-mile transit through Gatun Lake and Culebra Cut (8-10 hours)[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Toucans and sloths in Culebra Cut[cite: 1]. <br><span class='tag jim-tag'>James</span> Zoom in on lock gate engineering details and electric 'mulas'[cite: 1].</div>" },
+const itineraryBody = document.getElementById('itinerary');
+days.forEach(day => {
+    const row = document.createElement('tr');
+    row.className = 'bg-white border-b hover:bg-gray-50';
+    row.innerHTML = `
+        <td class="px-6 py-4 font-medium">${day.date}</td>
+        <td class="px-6 py-4">${day.desc}</td>
+        <td class="px-6 py-4">${day.avg}</td>
+        <td class="px-6 py-4 text-center">
+            <button class="bg-red-700 hover:bg-red-800 text-white px-5 py-2 rounded text-sm font-medium toggle-btn">
+                Show Forecast + Sunrise/Sunset
+            </button>
+        </td>
+    `;
+    const expandRow = document.createElement('tr');
+    expandRow.innerHTML = `<td colspan="4"><div class="forecast-content"><div class="text-center text-gray-500 py-8">Loading forecast...</div></div></td>`;
+    const content = expandRow.querySelector('.forecast-content');
 
-            { day: "Day 7", date: "Nov 12", name: "Panama City (Fuerte Amador)", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "6:15 AM / 5:55 PM", temp: "89°F", icon: "⚓", lat: 8.95, lon: -79.53, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Depart 5 PM, overnight stay[cite: 1]. Excursion: 'Jungle Exploration by Boat' across Gatun Lake[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Howler/capuchin monkeys and caimans[cite: 1]. <br><span class='tag jim-tag'>James</span> Night neon skyscraper glow[cite: 1].</div>" },
+    itineraryBody.appendChild(row);
+    itineraryBody.appendChild(expandRow);
 
-            { day: "Day 8", date: "Nov 13", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "86°F", icon: "🚢", lat: 5.00, lon: -81.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Cross the equator with the traditional 'Crossing the Line' ceremony[cite: 1].</div>" },
+    const btn = row.querySelector('.toggle-btn');
+    btn.addEventListener('click', async () => {
+        const isOpen = content.style.display === 'block';
+        if (isOpen) {
+            content.style.display = 'none';
+            btn.textContent = 'Show Forecast + Sunrise/Sunset';
+            return;
+        }
 
-            { day: "Day 9", date: "Nov 14", name: "Manta, Ecuador", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "6:06 AM / 6:11 PM", temp: "82°F", icon: "⚠️", lat: -0.96, lon: -80.71, zoom: 14, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 6 AM - 6 PM[cite: 1]. Walkable: No (use free port shuttle)[cite: 1]. Excursion: 'Manta's Timeless Traditions' to Montecristi (Panama hats) and tagua nut carving[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Vermilion Flycatcher[cite: 1]. <br><span class='tag jim-tag'>James</span> Macro textures of weaving straw[cite: 1].</div>" },
+        content.style.display = 'block';
+        btn.textContent = 'Hide Forecast + Sunrise/Sunset';
 
-            { day: "Day 10", date: "Nov 15", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "78°F", icon: "🚢", lat: -5.00, lon: -81.50, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Traverse the world's largest ocean[cite: 1].</div><div class='advice-block'>Soak up views from the Finse Terrace on heated couches near lava rock firepits[cite: 1].</div>" },
+        if (!content.dataset.loaded) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${day.lat}&longitude=${day.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                const dateObj = new Date(day.year, day.month - 1, day.day, 12, 0, 0);
+                const times = SunCalc.getTimes(dateObj, day.lat, day.lon);
+                
+                const tz = data.timezone || 'UTC';
+                const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz });
 
-            { day: "Day 11", date: "Nov 16", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "75°F", icon: "🚢", lat: -8.50, lon: -79.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Continued transit across the Pacific Ocean[cite: 1].</div>" },
+                const sunrise = times.sunrise ? timeFormatter.format(times.sunrise) : 'N/A';
+                const sunset  = times.sunset  ? timeFormatter.format(times.sunset)  : 'N/A';
 
-            { day: "Day 12", date: "Nov 17", name: "Lima (Callao), Peru", type: "Port", risk: "LEVEL 4", rClass: "level-4", sun: "5:34 AM / 6:15 PM", temp: "72°F", icon: "⚠️", lat: -12.04, lon: -77.12, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: No (mandatory Viking shuttle to Miraflores)[cite: 1]. Excursion: 'Coastal Wildlife of Peru' to Palomino Islands to swim with sea lions[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Inca Terns with white mustaches[cite: 1]. <br><span class='tag jim-tag'>James</span> Colonial baroque architecture[cite: 1].</div>" },
+                const getWeatherDesc = (code) => wmo[code] || `Condition (${code})`;
 
-            { day: "Day 13", date: "Nov 18", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -15.00, lon: -76.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Sail azure waters touching over 30% of Earth's surface[cite: 1]. Infinity Pool or Promenade Deck strolls[cite: 1].</div>" },
+                let html = `
+                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gray-50 p-6 rounded-xl text-center">
+                            <div class="text-sm text-gray-600 mb-2">CURRENT</div>
+                            <div class="text-5xl font-light">${data.current.temperature_2m}°F</div>
+                            <div class="text-gray-600 mt-1">Feels ${data.current.apparent_temperature}°F</div>
+                            <div class="text-2xl mt-4">${getWeatherDesc(data.current.weather_code)}</div>
+                            <div class="text-sm mt-3">Wind: ${data.current.wind_speed_10m} mph</div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="text-sm text-gray-600 mb-4 uppercase tracking-wide">7-Day Forecast</div>
+                            <div class="forecast-grid">
+                `;
+                for (let i = 0; i < 7; i++) {
+                    const d = data.daily.time[i].slice(5);
+                    const hi = data.daily.temperature_2m_max[i];
+                    const lo = data.daily.temperature_2m_min[i];
+                    const code = data.daily.weather_code[i];
+                    html += `
+                        <div class="day-card">
+                            <div class="font-medium">${d}</div>
+                            <div class="text-3xl my-2">${getWeatherDesc(code)}</div>
+                            <div class="font-medium">${hi}° / ${lo}°</div>
+                        </div>
+                    `;
+                }
+                html += `</div></div></div>`;
+                html += `
+                    <div class="mt-8 bg-amber-50 border border-amber-200 p-6 rounded-2xl">
+                        <div class="text-center">
+                            <div class="text-amber-700 font-medium text-sm tracking-widest uppercase">Sunrise / Sunset – ${day.date} 2026</div>
+                            <div class="text-3xl font-light mt-4">${sunrise} → ${sunset}</div>
+                            <div class="text-sm text-amber-600 mt-3">Golden hour ≈ 1 hr after sunrise & before sunset. In early Dec Antarctica Peninsula ≈ 19–21 hrs daylight – extended low light for photos!</div>
+                        </div>
+                    </div>
+                `;
+                content.innerHTML = html;
+                content.dataset.loaded = 'true';
+            } catch (e) {
+                content.innerHTML = `<div class="text-red-600 text-center py-8">Error loading forecast – check connection</div>`;
+            }
+        }
+    });
+});
 
-            { day: "Day 14", date: "Nov 19", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -18.00, lon: -74.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Continued Pacific Ocean sea day[cite: 1]. Linger on the Sun Deck for open ocean vistas[cite: 1].</div>" },
+// ====================== ANTARCTIC SITES (INLINE) ======================
+const sites = [
+    {name:"Paradise Bay", desc:"Glaciers + gentoo penguins – stunning reflections & golden light", lat:-64.82, lon:-62.87},
+    {name:"Neko Harbour", desc:"Gentoo colony & calving glacier – dramatic action shots", lat:-64.84, lon:-62.58},
+    {name:"Port Lockroy", desc:"Historic base & gentoos – human history + wildlife contrast", lat:-64.83, lon:-63.50},
+    {name:"Cuverville Island", desc:"Large gentoo rookery – penguin behavior & ice", lat:-64.68, lon:-62.68},
+    {name:"Deception Island", desc:"Volcanic caldera, black sand, chinstraps – unique textures", lat:-62.97, lon:-60.65},
+    {name:"Petermann Island", desc:"Adélies, icebergs, Lemaire Channel – epic landscapes", lat:-65.17, lon:-64.17},
+    {name:"Half Moon Island", desc:"Chinstraps on cliffs – good wildlife portraits", lat:-62.46, lon:-59.91}
+];
 
-            { day: "Day 15", date: "Nov 20", name: "Iquique, Chile", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "5:49 AM / 7:01 PM", temp: "70°F", icon: "⚓", lat: -20.21, lon: -70.14, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: Yes via Baquedano St after port shuttle[cite: 1]. Excursion: Saltpeter mining town of Santa Laura & Pica oasis[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Industrial desert landscapes & Atacama giant geoglyphs. <br><span class='tag susan-tag'>Susan</span> Peruvian Pelicans on shore[cite: 1].</div>" },
+const sitesDiv = document.getElementById('antarctic-sites');
+sites.forEach(site => {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl shadow p-6 hover:shadow-xl transition';
+    card.innerHTML = `
+        <h3 class="text-xl font-bold mb-2">${site.name}</h3>
+        <p class="text-gray-600 mb-4">${site.desc}</p>
+        <button class="w-full bg-red-700 hover:bg-red-800 text-white font-medium py-3 rounded-lg toggle-site">
+            Show Live Weather
+        </button>
+        <div class="forecast-content mt-4 text-sm"></div>
+    `;
+    sitesDiv.appendChild(card);
 
-            { day: "Day 16", date: "Nov 21", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "68°F", icon: "🚢", lat: -24.00, lon: -71.50, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> At sea learning about Pacific geology and submarine volcanoes[cite: 1].</div>" },
+    const btn = card.querySelector('.toggle-site');
+    const content = card.querySelector('.forecast-content');
 
-            { day: "Day 17", date: "Nov 22", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -28.00, lon: -72.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Continued Pacific transit preparing for Patagonia[cite: 1].</div>" },
+    btn.addEventListener('click', async () => {
+        const isOpen = content.style.display === 'block';
+        if (isOpen) {
+            content.style.display = 'none';
+            btn.textContent = 'Show Live Weather';
+            return;
+        }
 
-            { day: "Day 18", date: "Nov 23", name: "Santiago (Valparaíso), Chile", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "6:31 AM / 8:31 PM", temp: "75°F", icon: "⚠️", lat: -33.45, lon: -70.66, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 7 AM - 11 PM[cite: 1]. Walkable: No from pier, yes after shuttle[cite: 1]. Excursion: Valparaíso hills (funiculares), Baburizza Palace, and Fonck Museum in Viña del Mar[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Street murals, funiculars, architecture, spotting Giant Hummingbirds for Susan[cite: 1].</div>" },
+        content.style.display = 'block';
+        btn.textContent = 'Hide Live Weather';
 
-            { day: "Day 19", date: "Nov 24", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "65°F", icon: "🚢", lat: -38.00, lon: -74.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> At sea enjoying shipboard amenities, fitness center, and promenade walks[cite: 1].</div>" },
+        if (!content.dataset.loaded) {
+            content.innerHTML = '<div class="text-center py-6 text-gray-500">Loading...</div>';
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${site.lat}&longitude=${site.lon}&current=temperature_2m,apparent_temperature,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const getWeatherDesc = (code) => wmo[code] || `Condition (${code})`;
 
-            { day: "Day 20", date: "Nov 25", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "60°F", icon: "🚢", lat: -42.00, lon: -73.50, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic entry into the pristine Chilean fjords and ice fields[cite: 1].</div>" },
-
-            { day: "Day 21", date: "Nov 26", name: "Puerto Chacabuco, Chile", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "5:42 AM / 9:26 PM", temp: "57°F", icon: "⚓", lat: -45.45, lon: -72.81, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8:30 AM - 5 PM (Thanksgiving)[cite: 1]. Excursion: Aikén del Sur Private Park (Lake Riesco, Old Man's Beard waterfall, lamb BBQ) + Zodiac fjord cruise[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Andean Condor & chucao birds. <br><span class='tag jim-tag'>James</span> Slow shutter waterfall landscapes[cite: 1].</div>" },
-
-            { day: "Day 22", date: "Nov 27", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "55°F", icon: "🚢", lat: -47.50, lon: -74.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation through internal fjord passageways amid mist and rain[cite: 1].</div>" },
-
-            { day: "Day 23", date: "Nov 28", name: "Chilean Glaciers", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "52°F", icon: "❄️", lat: -48.50, lon: -73.80, zoom: 8, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic sailing along the edge of the ancient Patagonian Ice Sheet[cite: 1].</div><div class='advice-block'>Witness towering blue ice faces and floating icebergs[cite: 1].</div>" },
-
-            { day: "Day 24", date: "Nov 29", name: "El Brujo Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "5:21 AM / 21:55 PM", temp: "50°F", icon: "❄️", lat: -49.25, lon: -73.68, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic glacier cruising day. Zodiac check 9:30 AM, SOB outing 1:30 PM[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Bright blue vertical ice wall fracturing. <br><span class='tag susan-tag'>Susan</span> Soaring petrels against dark stone[cite: 1].</div>" },
-
-            { day: "Day 25", date: "Nov 30", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "52°F", icon: "🚢", lat: -51.00, lon: -74.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Sail past walls of blue ice, dense forests, and steep mountain ranges[cite: 1]. Look for Magellanic penguins, elephant seals, and whales[cite: 1].</div>" },
-
-            { day: "Day 26", date: "Dec 1", name: "Punta Arenas, Chile", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "5:21 AM / 9:55 PM", temp: "52°F", icon: "⚓", lat: -53.15, lon: -70.91, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: Yes (Muelle Prat to city center)[cite: 1]. Excursion: Panoramic Punta Arenas (Cerro de la Cruz views, Shepherd Monument, Plaza de Armas)[cite: 1].</div>" },
-
-            { day: "Day 27", date: "Dec 2", name: "Agostini Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "❄️", lat: -54.55, lon: -69.75, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Glacier cruising along the Southern Patagonian Ice Field[cite: 1]. Zodiac/SOB landing time[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Dramatic twin tongues descending into the water[cite: 1]. <br><span class='tag susan-tag'>Susan</span> Detailed ice textures cascading down mountain slopes[cite: 1].</div>" },
-
-            { day: "Day 28", date: "Dec 3", name: "Garibaldi Fjord, Chile", type: "Fjord Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "❄️", lat: -54.85, lon: -69.98, zoom: 13, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Fjord navigation through Alberto de Agostini National Park[cite: 1]. Zodiac/SOB landing time[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> 4K video of potential calving. <br><span class='tag susan-tag'>Susan</span> High-res snapshots for HDR fjord cliff contrast[cite: 1].</div>" },
-
-            { day: "Day 29", date: "Dec 4", name: "Cape Horn", type: "Scenic Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "45°F", icon: "🚢", lat: -55.98, lon: -67.29, zoom: 11, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation past the convergence of the Atlantic and Pacific Oceans[cite: 1].</div><div class='advice-block'>View the stark, treeless massifs of Jurassic volcanic rock on Hornos Island and its historic southernmost lighthouse[cite: 1].</div>" },
-
-            { day: "Day 30", date: "Dec 5", name: "Ushuaia, Argentina", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "4:54 AM / 10:11 PM", temp: "50°F", icon: "⚓", lat: -54.80, lon: -68.30, zoom: 12, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 5 PM[cite: 1]. Walkable: Yes (most walkable port)[cite: 1]. Excursion: Scenic drive to Escondido and Fagnano Lakes across Garibaldi Pass (6.5 hours)[cite: 1].</div>" },
-
-            { day: "Day 31", date: "Dec 6", name: "Drake Passage", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "40°F", icon: "🚢", lat: -58.00, lon: -65.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> At sea crossing the 600-mile Drake Passage toward Antarctica[cite: 1]. Savor international cuisine onboard[cite: 1].</div>" },
-
-            { day: "Day 32", date: "Dec 7", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -64.83, lon: -63.50, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Daily Antarctic operations (6 AM - 3 PM)[cite: 1]. Rotate through color-coded group assignments (Red, Green, Blue) for Zodiac landings[cite: 1].</div><div class='advice-block'>Icebergs, Weddell seals on ice floes, and humpback or minke whales[cite: 1].</div>" },
-
-            { day: "Day 33", date: "Dec 8", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.00, lon: -64.00, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Ongoing Antarctic fjord explorations, Zodiac cruising, and shore landings[cite: 1]. Watch for glacial calving[cite: 1].</div>" },
-
-            { day: "Day 34", date: "Dec 9", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.20, lon: -64.20, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Continued daily Antarctic field operations and expert-led science recaps[cite: 1].</div>" },
-
-            { day: "Day 35", date: "Dec 10", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.40, lon: -64.50, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Daily Zodiac excursions and possible kayak or submarine launches[cite: 1]. Schedules adapt to wind and ice[cite: 1].</div>" },
-
-            { day: "Day 36", date: "Dec 11", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.60, lon: -64.80, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Deep Antarctic Peninsula exploration and wildlife encounters[cite: 1].</div>" },
-
-            { day: "Day 37", date: "Dec 12", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.80, lon: -65.00, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Further Zodiac landings on remote snowy shores[cite: 1]. Utilize Viking parka, Muck boots, and layered glove systems[cite: 1].</div>" },
-
-            { day: "Day 38", date: "Dec 13", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -66.00, lon: -65.20, zoom: 10, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Final full day of Antarctic wilderness operations[cite: 1]. Savor immersive moments among ice floes[cite: 1].</div>" },
-
-            { day: "Day 39", date: "Dec 14", name: "Drake Passage", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "38°F", icon: "🚢", lat: -58.00, lon: -65.00, zoom: 6, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Return transit heading north across the Drake Passage[cite: 1].</div><div class='advice-block'>Relax in the Finse Terrace with heated couches and lava rock firepits[cite: 1].</div>" },
-
-            { day: "Day 40", date: "Dec 15", name: "Cape Horn", type: "Scenic Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "42°F", icon: "🚢", lat: -55.98, lon: -67.29, zoom: 11, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation past Cape Horn on the return journey[cite: 1]. Conclude with the Farewell Dinner onboard[cite: 1].</div>" },
-
-            { day: "Day 41", date: "Dec 16", name: "Ushuaia → Austin", type: "Travel Home", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "✈️", lat: 30.26, lon: -97.74, zoom: 4, 
-              advice: "<div class='advice-block'><b>Logistics:</b> Disembark Ushuaia at 5 PM[cite: 1]. Private Viking charter flight to Buenos Aires (USH→EZE, 12:38 - 4:08 PM)[cite: 1]. United Business Class overnight to Houston (IAH), clear Global Entry Customs, and hop to Austin (AUS) arriving Dec 17[cite: 1]. Total journey: ~31.5 hours[cite: 1].</div>" }
-        ];
-
-        const list = document.getElementById('location-list');
-        itinerary.forEach((s) => {
-            const li = document.createElement('li');
-            li.className = 'location-item';
-            li.innerHTML = `<div class='icon-box'>${s.icon}</div><div class='info-box'><span class='day-num'>${s.day} | ${s.date}</span><span class='site-name'>${s.name}</span></div>`;
-            li.onclick = () => {
-                map.flyTo([s.lat, s.lon], s.zoom, { duration: 3 });
-                document.getElementById('risk-val').textContent = s.risk;
-                document.getElementById('risk-val').className = "risk-tag " + s.rClass;
-                document.getElementById('sun-val').textContent = s.sun;
-                document.getElementById('temp-val').textContent = s.temp;
-                document.getElementById('photo-advice').innerHTML = s.advice;
-                document.getElementById('ice-warning').style.display = (s.type.includes("Glacier") || s.name.includes("Antarctica") || s.name.includes("Glaciers")) ? "block" : "none";
-            };
-            list.appendChild(li);
-            L.marker([s.lat, s.lon]).addTo(map).bindPopup(`<b>${s.day} - ${s.name}</b>`);
-        });
-    </script>
+                let html = `
+                    <div class="bg-gray-50 p-5 rounded-lg text-center mb-4">
+                        <div class="text-4xl font-bold">${data.current.temperature_2m}°F</div>
+                        <div class="text-gray-600">Feels ${data.current.apparent_temperature}°F</div>
+                        <div class="text-2xl my-3">${getWeatherDesc(data.current.weather_code)}</div>
+                        <div>Wind: ${data.current.wind_speed_10m} mph</div>
+                    </div>
+                    <div class="text-sm text-gray-600 mb-3 uppercase tracking-wide">7-Day Forecast</div>
+                    <div class="forecast-grid">
+                `;
+                for (let i = 0; i < 7; i++) {
+                    const d = data.daily.time[i].slice(5);
+                    const hi = data.daily.temperature_2m_max[i];
+                    const lo = data.daily.temperature_2m_min[i];
+                    const code = data.daily.weather_code[i];
+                    html += `
+                        <div class="day-card">
+                            <div class="font-medium">${d}</div>
+                            <div class="text-3xl my-2">${getWeatherDesc(code)}</div>
+                            <div class="font-medium">${hi}° / ${lo}°</div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+                content.innerHTML = html;
+                content.dataset.loaded = 'true';
+            } catch (e) {
+                content.innerHTML = '<div class="text-red-600 text-center py-6">Error loading weather</div>';
+            }
+        }
+    });
+});
+</script>
+<p class="text-center text-sm text-gray-500 mt-12">
+    Early December on the Antarctic Peninsula: ~19–21 hours daylight (sunrise ~3–4 AM, sunset ~10–11 PM local). Sun never fully sets — extended golden hour & twilight for photography!
+</p>
 </body>
 </html>
