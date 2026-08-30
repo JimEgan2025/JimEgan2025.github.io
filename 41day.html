@@ -9,129 +9,178 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: #0b1116; }
         #sidebar { width: 560px; background: #1c2833; color: white; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); z-index: 1001; }
         .sidebar-header { padding: 15px; background: #17202a; border-bottom: 3px solid #3498db; text-align: center; }
-        
         .status-bar { display: flex; background: #111; padding: 10px; font-size: 11px; justify-content: space-around; border-bottom: 1px solid #34495e; }
         .risk-tag { padding: 2px 8px; border-radius: 3px; font-weight: bold; }
         .level-1 { background: #27ae60; } .level-2 { background: #f1c40f; color: black; } 
         .level-3 { background: #e67e22; } .level-4 { background: #c0392b; }
         .ice-alert { background: #3498db; color: white; padding: 10px; font-size: 13px; font-weight: bold; text-align: center; display: none; }
-
         .section { padding: 15px; border-bottom: 1px solid #2c3e50; }
         h3 { margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #3498db; letter-spacing: 2px; }
-        
-        #photo-advice { background: #111; padding: 20px; border-radius: 8px; border-left: 5px solid #f1c40f; font-size: 14.5px; line-height: 1.6; color: #ecf0f1; min-height: 250px; overflow-y: auto; }
-        
+        #photo-advice { background: #111; padding: 20px; border-radius: 8px; border-left: 5px solid #f1c40f; font-size: 13.5px; line-height: 1.6; color: #ecf0f1; min-height: 250px; overflow-y: auto; }
         #location-list { flex-grow: 1; overflow-y: auto; list-style: none; padding: 0; margin: 0; background: #17202a; }
         .location-item { padding: 12px 18px; border-bottom: 1px solid #2c3e50; cursor: pointer; display: flex; align-items: center; border-left: 4px solid transparent; }
         .location-item:hover { background: #2c3e50; border-left: 4px solid #3498db; }
         .icon-box { margin-right: 15px; font-size: 24px; width: 40px; text-align: center; }
         .day-num { color: #3498db; font-weight: bold; font-size: 11px; display: block; }
         .site-name { font-weight: bold; font-size: 15px; color: #ecf0f1; }
-
         .tag { font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 3px; margin-right: 5px; color: white; text-transform: uppercase; }
-        .susan-tag { background: #8e44ad; } .jim-tag { background: #d35400; } .galaxy-tag { background: #27ae60; }
-        
+        .susan-tag { background: #8e44ad; } .jim-tag { background: #d35400; }
         #map { flex-grow: 1; }
-        .advice-block { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #222; }
-        .advice-header { font-weight: bold; color: #f1c40f; margin-bottom: 5px; display: block; }
+        .advice-block { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
-
     <div id="sidebar">
         <div class="sidebar-header">
             <h2 style="margin:0; font-size: 18px;">41-DAY ACTION TIMELINE</h2>
-            <span style="font-size: 10px; color: #bdc3c7;">Chronological Action Days Only</span>
+            <span style="font-size: 10px; color: #bdc3c7;">Full Master Itinerary Integrated</span>
         </div>
-
         <div id="ice-warning" class="ice-alert">❄️ ICE PROTOCOL: EXPOSURE COMP +1.3 ❄️</div>
-
         <div id="site-status" class="status-bar">
             <span>RISK: <span id="risk-val" class="risk-tag level-1">--</span></span>
             <span>SUN: <span id="sun-val">--</span></span>
             <span>TEMP: <span id="temp-val">--</span></span>
         </div>
-
         <div class="section">
-            <h3>Daily Photography Mission</h3>
-            <div id="photo-advice">Select a day from the timeline to sync the map and gear tips.</div>
+            <h3>Daily Mission & Trip Details</h3>
+            <div id="photo-advice">Select a day from the timeline to sync the map and details.</div>
         </div>
-
         <ul id="location-list"></ul>
     </div>
-
     <div id="map"></div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const map = L.map('map', {zoomControl: false}).setView([9, -79], 4); // Centered on Panama midpoint
+        const map = L.map('map', {zoomControl: false}).setView([9, -79], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
         const itinerary = [
-            { day: "Day 1", date: "Nov 6", name: "Ft. Lauderdale", type: "Departure", risk: "LEVEL 1", rClass: "level-1", sun: "06:34/17:35", temp: "81°F", icon: "⚓", lat: 26.09, lon: -80.12, zoom: 12,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Port exit. Pelicans & Ospreys on channel markers. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Miami skyline 'Blue Hour' from Deck 3.</div>" },
-            
-            { day: "Day 3", date: "Nov 8", name: "Cozumel, Mexico", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "06:04/17:11", temp: "84°F", icon: "⚓", lat: 20.42, lon: -86.92, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> San Gervasio Ruins. Target: Endemic Cozumel Emerald hummingbird. <br><span class='tag galaxy-tag'>Galaxy</span> <b>0.6x Wide:</b> Turquoise water gradients on Catamaran.</div>" },
-            
-            { day: "Day 6", date: "Nov 11", name: "Panama Canal Transit", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "06:15/17:50", temp: "88°F", icon: "🚢", lat: 9.11, lon: -79.69, zoom: 11,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Toucans and Sloths in Culebra Cut. <br><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Lock gate engineering details.</div>" },
+            { day: "Day 1", date: "Nov 6", name: "Ft. Lauderdale, Florida", type: "Departure", risk: "LEVEL 1", rClass: "level-1", sun: "6:34 AM / 5:35 PM", temp: "81°F", icon: "⚓", lat: 26.09, lon: -80.12, zoom: 12, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Arrive FLL, transfer to pier, embark by 2 PM (depart 6 PM)[cite: 1]. Drop checked bags for Cabin 3034[cite: 1]. Stop at Dining Desk (Deck 5) for Manfredi's/Restaurant reservations and Excursion Desk (Deck 1) regarding Susan's hip history for SOBs[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Brown Pelicans, Frigatebirds, & Ospreys at port exit[cite: 1]. <br><span class='tag jim-tag'>James</span> 'Blue Hour' Miami skyline & Port Everglades industrial silhouettes[cite: 1].</div>" },
+                        
+            { day: "Day 2", date: "Nov 7", name: "Gulf of Mexico", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "82°F", icon: "🚢", lat: 23.50, lon: -90.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> At sea navigating the historic Gulf of Mexico[cite: 1].</div><div class='advice-block'>Unwind in the Scandinavian-inspired spa: sauna, warming cave, or spa pool[cite: 1].</div>" },
 
-            { day: "Day 7", date: "Nov 12", name: "Panama City", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "06:15/17:55", temp: "89°F", icon: "⚓", lat: 8.95, lon: -79.53, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>Night Mode:</b> Neon skyscraper glow. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Capuchin monkeys on Gatun Lake.</div>" },
+            { day: "Day 3", date: "Nov 8", name: "Cozumel, Mexico", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "6:04 AM / 5:11 PM", temp: "84°F", icon: "⚓", lat: 20.42, lon: -86.92, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Excursion: 'El Pueblo del Maiz: A Mayan Village' (10 AM - 1:30 PM)[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Cozumel Emerald hummingbird at San Gervasio[cite: 1]. <br><span class='tag jim-tag'>James</span> Wide-angle turquoise water gradients on catamaran[cite: 1].</div>" },
 
-            { day: "Day 9", date: "Nov 14", name: "Manta, Ecuador", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "06:06/18:11", temp: "82°F", icon: "⚠️", lat: -0.96, lon: -80.71, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Vermilion Flycatcher (Pacoche Forest). <br><span class='tag jim-tag'>Jim</span> <b>Discretion:</b> High-risk zone. Use ZS200 for Panama Hat weaving textures. Stay in group.</div>" },
+            { day: "Day 4", date: "Nov 9", name: "Caribbean Sea", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "85°F", icon: "🚢", lat: 15.00, lon: -80.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Cruising through legendary pirate waters[cite: 1].</div><div class='advice-block'>Relax in the Explorers' Lounge with panoramic views and a cocktail[cite: 1].</div>" },
 
-            { day: "Day 12", date: "Nov 17", name: "Lima, Peru", type: "Port", risk: "LEVEL 4", rClass: "level-4", sun: "05:34/18:15", temp: "72°F", icon: "⚠️", lat: -12.04, lon: -77.12, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Inca Terns with white mustaches (Palomino Is). <br><span class='tag jim-tag'>Jim</span> <b>SAFETY:</b> Critical Risk. Use shuttle to Miraflores. a6600 for Baroque architecture.</div>" },
+            { day: "Day 5", date: "Nov 10", name: "Caribbean Sea", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "86°F", icon: "🚢", lat: 11.00, lon: -78.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Continued transit through the Caribbean Sea toward Panama[cite: 1].</div>" },
 
-            { day: "Day 15", date: "Nov 20", name: "Iquique, Chile", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "05:49/19:01", temp: "70°F", icon: "⚓", lat: -20.21, lon: -70.14, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Santa Laura ghost town industrial ruins. <br><span class='tag galaxy-tag'>Galaxy</span> <b>Ultrawide:</b> Atacama Giant geoglyph.</div>" },
+            { day: "Day 6", date: "Nov 11", name: "Panama Canal Transit", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "6:15 AM / 5:50 PM", temp: "88°F", icon: "🚢", lat: 9.11, lon: -79.69, zoom: 11, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Full daytime 48-mile transit through Gatun Lake and Culebra Cut (8-10 hours)[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Toucans and sloths in Culebra Cut[cite: 1]. <br><span class='tag jim-tag'>James</span> Zoom in on lock gate engineering details and electric 'mulas'[cite: 1].</div>" },
 
-            { day: "Day 18", date: "Nov 23", name: "Valparaíso", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "06:31/20:31", temp: "75°F", icon: "⚠️", lat: -33.04, lon: -71.62, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Street murals and funiculars. <br><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Giant Hummingbirds (Patio Bellavista). Jim spots for Susan.</div>" },
+            { day: "Day 7", date: "Nov 12", name: "Panama City (Fuerte Amador)", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "6:15 AM / 5:55 PM", temp: "89°F", icon: "⚓", lat: 8.95, lon: -79.53, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Depart 5 PM, overnight stay[cite: 1]. Excursion: 'Jungle Exploration by Boat' across Gatun Lake[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Howler/capuchin monkeys and caimans[cite: 1]. <br><span class='tag jim-tag'>James</span> Night neon skyscraper glow[cite: 1].</div>" },
 
-            { day: "Day 21", date: "Nov 26", name: "Puerto Chacabuco", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "05:42/21:26", temp: "57°F", icon: "⚓", lat: -45.45, lon: -72.81, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Andean Condor at Rio Simpson National Reserve. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Slow Shutter (1/4s) for Old Man's Beard Waterfall.</div>" },
+            { day: "Day 8", date: "Nov 13", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "86°F", icon: "🚢", lat: 5.00, lon: -81.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Cross the equator with the traditional 'Crossing the Line' ceremony[cite: 1].</div>" },
 
-            { day: "Day 23", date: "Nov 28", name: "Amalia Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:10/21:45", temp: "48°F", icon: "❄️", lat: -50.78, lon: -73.75, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Zoom into deep blue ice crevasses. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Fur Seals on ice floes near glacier face.</div>" },
+            { day: "Day 9", date: "Nov 14", name: "Manta, Ecuador", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "6:06 AM / 6:11 PM", temp: "82°F", icon: "⚠️", lat: -0.96, lon: -80.71, zoom: 14, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 6 AM - 6 PM[cite: 1]. Walkable: No (use free port shuttle)[cite: 1]. Excursion: 'Manta's Timeless Traditions' to Montecristi (Panama hats) and tagua nut carving[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Vermilion Flycatcher[cite: 1]. <br><span class='tag jim-tag'>James</span> Macro textures of weaving straw[cite: 1].</div>" },
 
-            { day: "Day 24", date: "Nov 29", name: "Garibaldi Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:00/21:55", temp: "45°F", icon: "❄️", lat: -54.85, lon: -69.98, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> 4K Video of potential calving. <br><span class='tag galaxy-tag'>Galaxy</span> <b>Expert RAW:</b> Best for HDR fjord cliff contrast.</div>" },
+            { day: "Day 10", date: "Nov 15", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "78°F", icon: "🚢", lat: -5.00, lon: -81.50, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Traverse the world's largest ocean[cite: 1].</div><div class='advice-block'>Soak up views from the Finse Terrace on heated couches near lava rock firepits[cite: 1].</div>" },
 
-            { day: "Day 25", date: "Nov 30", name: "Pia Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "05:00/22:00", temp: "44°F", icon: "❄️", lat: -54.78, lon: -69.61, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>Burst Mode:</b> Capture the splash when ice hits water. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> 'Electric Blue' compression ice detail.</div>" },
+            { day: "Day 11", date: "Nov 16", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "75°F", icon: "🚢", lat: -8.50, lon: -79.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Continued transit across the Pacific Ocean[cite: 1].</div>" },
 
-            { day: "Day 26", date: "Dec 1", name: "Punta Arenas", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "05:21/21:55", temp: "52°F", icon: "🐧", lat: -53.16, lon: -70.91, zoom: 13,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Magellanic Penguins (Magdalena Is). <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Sculpted cypress trees in the Municipal Cemetery.</div>" },
+            { day: "Day 12", date: "Nov 17", name: "Lima (Callao), Peru", type: "Port", risk: "LEVEL 4", rClass: "level-4", sun: "5:34 AM / 6:15 PM", temp: "72°F", icon: "⚠️", lat: -12.04, lon: -77.12, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: No (mandatory Viking shuttle to Miraflores)[cite: 1]. Excursion: 'Coastal Wildlife of Peru' to Palomino Islands to swim with sea lions[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Inca Terns with white mustaches[cite: 1]. <br><span class='tag jim-tag'>James</span> Colonial baroque architecture[cite: 1].</div>" },
 
-            { day: "Day 30", date: "Dec 5", name: "Ushuaia", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "04:54/22:11", temp: "50°F", icon: "⚓", lat: -54.80, lon: -68.30, zoom: 12,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Beagle Channel panoramas. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Dolphin Gulls at Lapataia Bay.</div>" },
+            { day: "Day 13", date: "Nov 18", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -15.00, lon: -76.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Sail azure waters touching over 30% of Earth's surface[cite: 1]. Infinity Pool or Promenade Deck strolls[cite: 1].</div>" },
 
-            { day: "Day 32", date: "Dec 7", name: "Yankee Harbour", type: "Viking Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "33°F", icon: "🐧", lat: -62.53, lon: -59.78, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Gentoo Penguin highway. Focus on 'tobogganing' behavior.</div>" },
+            { day: "Day 14", date: "Nov 19", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -18.00, lon: -74.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Continued Pacific Ocean sea day[cite: 1]. Linger on the Sun Deck for open ocean vistas[cite: 1].</div>" },
 
-            { day: "Day 33", date: "Dec 8", name: "Mikkelsen Harbour", type: "Viking Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "34°F", icon: "⚓", lat: -63.90, lon: -60.78, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Macro detail of whale bones. <br><span class='tag galaxy-tag'>Galaxy</span> <b>4K/60:</b> Special Ops boat approach.</div>" },
+            { day: "Day 15", date: "Nov 20", name: "Iquique, Chile", type: "Port", risk: "LEVEL 2", rClass: "level-2", sun: "5:49 AM / 7:01 PM", temp: "70°F", icon: "⚓", lat: -20.21, lon: -70.14, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: Yes via Baquedano St after port shuttle[cite: 1]. Excursion: Saltpeter mining town of Santa Laura & Pica oasis[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Industrial desert landscapes & Atacama giant geoglyphs. <br><span class='tag susan-tag'>Susan</span> Peruvian Pelicans on shore[cite: 1].</div>" },
 
-            { day: "Day 34", date: "Dec 9", name: "Portal Point", type: "Mainland Landing", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -64.50, lon: -61.76, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>0.6x Ultrawide:</b> Massive glacial scale from mainland step. <br><span class='tag susan-tag'>Susan</span> <b>70-300mm:</b> Antarctic Terns nesting.</div>" },
+            { day: "Day 16", date: "Nov 21", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "68°F", icon: "🚢", lat: -24.00, lon: -71.50, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> At sea learning about Pacific geology and submarine volcanoes[cite: 1].</div>" },
 
-            { day: "Day 35", date: "Dec 10", name: "Danco Island", type: "Viking Excursion", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "33°F", icon: "🐧", lat: -64.73, lon: -62.59, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag jim-tag'>Jim</span> <b>ZS200:</b> Ship at anchor from 300ft summit. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Gentoos at the peak.</div>" },
+            { day: "Day 17", date: "Nov 22", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "72°F", icon: "🚢", lat: -28.00, lon: -72.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Continued Pacific transit preparing for Patagonia[cite: 1].</div>" },
 
-            { day: "Day 36", date: "Dec 11", name: "Neumayer Channel", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "🚢", lat: -64.79, lon: -63.50, zoom: 12,
-              advice: "<div class='advice-block'><span class='tag galaxy-tag'>Galaxy</span> <b>Hyperlapse:</b> From Observation Deck. <br><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Humpback whale feeding zone.</div>" },
+            { day: "Day 18", date: "Nov 23", name: "Santiago (Valparaíso), Chile", type: "Port", risk: "LEVEL 3", rClass: "level-3", sun: "6:31 AM / 8:31 PM", temp: "75°F", icon: "⚠️", lat: -33.45, lon: -70.66, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 7 AM - 11 PM[cite: 1]. Walkable: No from pier, yes after shuttle[cite: 1]. Excursion: Valparaíso hills (funiculares), Baburizza Palace, and Fonck Museum in Viña del Mar[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Street murals, funiculars, architecture, spotting Giant Hummingbirds for Susan[cite: 1].</div>" },
 
-            { day: "Day 37", date: "Dec 12", name: "Paradise Harbor", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "34°F", icon: "❄️", lat: -64.81, lon: -62.86, zoom: 14,
-              advice: "<div class='advice-block'><span class='tag susan-tag'>Susan</span> <b>200-600mm:</b> Whales and falling ice splashes. <br><span class='tag jim-tag'>Jim</span> <b>a6600:</b> Reflection shots in still water.</div>" }
+            { day: "Day 19", date: "Nov 24", name: "Pacific Ocean", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "65°F", icon: "🚢", lat: -38.00, lon: -74.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> At sea enjoying shipboard amenities, fitness center, and promenade walks[cite: 1].</div>" },
+
+            { day: "Day 20", date: "Nov 25", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "60°F", icon: "🚢", lat: -42.00, lon: -73.50, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic entry into the pristine Chilean fjords and ice fields[cite: 1].</div>" },
+
+            { day: "Day 21", date: "Nov 26", name: "Puerto Chacabuco, Chile", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "5:42 AM / 9:26 PM", temp: "57°F", icon: "⚓", lat: -45.45, lon: -72.81, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8:30 AM - 5 PM (Thanksgiving)[cite: 1]. Excursion: Aikén del Sur Private Park (Lake Riesco, Old Man's Beard waterfall, lamb BBQ) + Zodiac fjord cruise[cite: 1].</div><div class='advice-block'><span class='tag susan-tag'>Susan</span> Andean Condor & chucao birds. <br><span class='tag jim-tag'>James</span> Slow shutter waterfall landscapes[cite: 1].</div>" },
+
+            { day: "Day 22", date: "Nov 27", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "55°F", icon: "🚢", lat: -47.50, lon: -74.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation through internal fjord passageways amid mist and rain[cite: 1].</div>" },
+
+            { day: "Day 23", date: "Nov 28", name: "Chilean Glaciers", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "52°F", icon: "❄️", lat: -48.50, lon: -73.80, zoom: 8, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic sailing along the edge of the ancient Patagonian Ice Sheet[cite: 1].</div><div class='advice-block'>Witness towering blue ice faces and floating icebergs[cite: 1].</div>" },
+
+            { day: "Day 24", date: "Nov 29", name: "El Brujo Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "5:21 AM / 21:55 PM", temp: "50°F", icon: "❄️", lat: -49.25, lon: -73.68, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic glacier cruising day. Zodiac check 9:30 AM, SOB outing 1:30 PM[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Bright blue vertical ice wall fracturing. <br><span class='tag susan-tag'>Susan</span> Soaring petrels against dark stone[cite: 1].</div>" },
+
+            { day: "Day 25", date: "Nov 30", name: "Chilean Fjords", type: "Scenic Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "52°F", icon: "🚢", lat: -51.00, lon: -74.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Sail past walls of blue ice, dense forests, and steep mountain ranges[cite: 1]. Look for Magellanic penguins, elephant seals, and whales[cite: 1].</div>" },
+
+            { day: "Day 26", date: "Dec 1", name: "Punta Arenas, Chile", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "5:21 AM / 9:55 PM", temp: "52°F", icon: "⚓", lat: -53.15, lon: -70.91, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 6 PM[cite: 1]. Walkable: Yes (Muelle Prat to city center)[cite: 1]. Excursion: Panoramic Punta Arenas (Cerro de la Cruz views, Shepherd Monument, Plaza de Armas)[cite: 1].</div>" },
+
+            { day: "Day 27", date: "Dec 2", name: "Agostini Glacier", type: "Glacier Cruising", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "❄️", lat: -54.55, lon: -69.75, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Glacier cruising along the Southern Patagonian Ice Field[cite: 1]. Zodiac/SOB landing time[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> Dramatic twin tongues descending into the water[cite: 1]. <br><span class='tag susan-tag'>Susan</span> Detailed ice textures cascading down mountain slopes[cite: 1].</div>" },
+
+            { day: "Day 28", date: "Dec 3", name: "Garibaldi Fjord, Chile", type: "Fjord Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "❄️", lat: -54.85, lon: -69.98, zoom: 13, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Fjord navigation through Alberto de Agostini National Park[cite: 1]. Zodiac/SOB landing time[cite: 1].</div><div class='advice-block'><span class='tag jim-tag'>James</span> 4K video of potential calving. <br><span class='tag susan-tag'>Susan</span> High-res snapshots for HDR fjord cliff contrast[cite: 1].</div>" },
+
+            { day: "Day 29", date: "Dec 4", name: "Cape Horn", type: "Scenic Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "45°F", icon: "🚢", lat: -55.98, lon: -67.29, zoom: 11, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation past the convergence of the Atlantic and Pacific Oceans[cite: 1].</div><div class='advice-block'>View the stark, treeless massifs of Jurassic volcanic rock on Hornos Island and its historic southernmost lighthouse[cite: 1].</div>" },
+
+            { day: "Day 30", date: "Dec 5", name: "Ushuaia, Argentina", type: "Port", risk: "LEVEL 1", rClass: "level-1", sun: "4:54 AM / 10:11 PM", temp: "50°F", icon: "⚓", lat: -54.80, lon: -68.30, zoom: 12, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Docked 8 AM - 5 PM[cite: 1]. Walkable: Yes (most walkable port)[cite: 1]. Excursion: Scenic drive to Escondido and Fagnano Lakes across Garibaldi Pass (6.5 hours)[cite: 1].</div>" },
+
+            { day: "Day 31", date: "Dec 6", name: "Drake Passage", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "40°F", icon: "🚢", lat: -58.00, lon: -65.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> At sea crossing the 600-mile Drake Passage toward Antarctica[cite: 1]. Savor international cuisine onboard[cite: 1].</div>" },
+
+            { day: "Day 32", date: "Dec 7", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -64.83, lon: -63.50, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Daily Antarctic operations (6 AM - 3 PM)[cite: 1]. Rotate through color-coded group assignments (Red, Green, Blue) for Zodiac landings[cite: 1].</div><div class='advice-block'>Icebergs, Weddell seals on ice floes, and humpback or minke whales[cite: 1].</div>" },
+
+            { day: "Day 33", date: "Dec 8", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.00, lon: -64.00, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Ongoing Antarctic fjord explorations, Zodiac cruising, and shore landings[cite: 1]. Watch for glacial calving[cite: 1].</div>" },
+
+            { day: "Day 34", date: "Dec 9", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.20, lon: -64.20, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Continued daily Antarctic field operations and expert-led science recaps[cite: 1].</div>" },
+
+            { day: "Day 35", date: "Dec 10", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.40, lon: -64.50, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Daily Zodiac excursions and possible kayak or submarine launches[cite: 1]. Schedules adapt to wind and ice[cite: 1].</div>" },
+
+            { day: "Day 36", date: "Dec 11", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.60, lon: -64.80, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Deep Antarctic Peninsula exploration and wildlife encounters[cite: 1].</div>" },
+
+            { day: "Day 37", date: "Dec 12", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -65.80, lon: -65.00, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Further Zodiac landings on remote snowy shores[cite: 1]. Utilize Viking parka, Muck boots, and layered glove systems[cite: 1].</div>" },
+
+            { day: "Day 38", date: "Dec 13", name: "Antarctica", type: "Expedition Ops", risk: "LEVEL 1", rClass: "level-1", sun: "24HR", temp: "32°F", icon: "❄️", lat: -66.00, lon: -65.20, zoom: 10, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Final full day of Antarctic wilderness operations[cite: 1]. Savor immersive moments among ice floes[cite: 1].</div>" },
+
+            { day: "Day 39", date: "Dec 14", name: "Drake Passage", type: "At Sea", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "38°F", icon: "🚢", lat: -58.00, lon: -65.00, zoom: 6, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Return transit heading north across the Drake Passage[cite: 1].</div><div class='advice-block'>Relax in the Finse Terrace with heated couches and lava rock firepits[cite: 1].</div>" },
+
+            { day: "Day 40", date: "Dec 15", name: "Cape Horn", type: "Scenic Navigation", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "42°F", icon: "🚢", lat: -55.98, lon: -67.29, zoom: 11, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Scenic navigation past Cape Horn on the return journey[cite: 1]. Conclude with the Farewell Dinner onboard[cite: 1].</div>" },
+
+            { day: "Day 41", date: "Dec 16", name: "Ushuaia → Austin", type: "Travel Home", risk: "LEVEL 1", rClass: "level-1", sun: "--", temp: "48°F", icon: "✈️", lat: 30.26, lon: -97.74, zoom: 4, 
+              advice: "<div class='advice-block'><b>Logistics:</b> Disembark Ushuaia at 5 PM[cite: 1]. Private Viking charter flight to Buenos Aires (USH→EZE, 12:38 - 4:08 PM)[cite: 1]. United Business Class overnight to Houston (IAH), clear Global Entry Customs, and hop to Austin (AUS) arriving Dec 17[cite: 1]. Total journey: ~31.5 hours[cite: 1].</div>" }
         ];
 
         const list = document.getElementById('location-list');
-        itinerary.forEach((s, i) => {
+        itinerary.forEach((s) => {
             const li = document.createElement('li');
             li.className = 'location-item';
             li.innerHTML = `<div class='icon-box'>${s.icon}</div><div class='info-box'><span class='day-num'>${s.day} | ${s.date}</span><span class='site-name'>${s.name}</span></div>`;
@@ -142,10 +191,10 @@
                 document.getElementById('sun-val').textContent = s.sun;
                 document.getElementById('temp-val').textContent = s.temp;
                 document.getElementById('photo-advice').innerHTML = s.advice;
-                document.getElementById('ice-warning').style.display = (s.type.includes("Glacier") || s.day.startsWith("D3") || s.name.includes("Channel")) ? "block" : "none";
+                document.getElementById('ice-warning').style.display = (s.type.includes("Glacier") || s.name.includes("Antarctica") || s.name.includes("Glaciers")) ? "block" : "none";
             };
             list.appendChild(li);
-            L.marker([s.lat, s.lon]).addTo(map).bindPopup(s.name);
+            L.marker([s.lat, s.lon]).addTo(map).bindPopup(`<b>${s.day} - ${s.name}</b>`);
         });
     </script>
 </body>
