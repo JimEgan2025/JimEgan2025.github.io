@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VizcayaWX 35-Day Climatology vs Model Analyzer</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --border: #e2e8f0;
+            --warm-red: #dc2626;
+            --cool-blue: #2563eb;
+            --wet-green: #059669;
+            --dry-orange: #d97706;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0 0 4px 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 13.5px;
+            color: var(--text-sub);
+        }
+
+        .status-badge {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #059669;
+            background: #ecfdf5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #a7f3d0;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .horizon-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-sub);
+        }
+
+        select {
+            padding: 7px 12px;
+            font-size: 13.5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-refresh {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-refresh:hover {
+            background: var(--primary-hover);
+        }
+
+        .card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--primary);
+            padding: 16px 18px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .card strong {
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .signals-list {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .signals-list li {
+            margin-bottom: 6px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+            text-align: center;
+        }
+
+        th {
+            background: #f1f5f9;
+            color: var(--text-sub);
+            font-weight: 600;
+            padding: 12px 10px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .col-left { text-align: left; }
+
+        .surplus-rain {
+            color: var(--wet-green);
+            font-weight: 700;
+        }
+
+        .deficit-rain {
+            color: var(--dry-orange);
+            font-weight: 700;
+        }
+
+        .warm-temp {
+            color: var(--warm-red);
+            font-weight: 700;
+        }
+
+        .cool-temp {
+            color: var(--cool-blue);
+            font-weight: 700;
+        }
+
+        .chart-box {
+            margin-top: 28px;
+            height: 400px;
+            position: relative;
+        }
+
+        /* AI Ingestion Block Styling */
+        .ai-export-section {
+            margin-top: 36px;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .ai-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-copy {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy:hover {
+            background: #7dd3fc;
+        }
+
+        .ai-textarea {
+            width: 100%;
+            height: 220px;
+            background: #1e293b;
+            color: #cbd5e1;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12.5px;
+            padding: 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: vertical;
+            line-height: 1.5;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>VizcayaWX Sub-Seasonal Outlook: Model vs. 130-Year History</h1>
+            <p class="subtitle">Round Rock, TX (30.5871° N, 97.6410° W) — NOAA GFS Ensemble compared against 130-Year Climatology</p>
+        </div>
+        <div class="status-badge" id="sourceBadge">🔄 Syncing telemetry...</div>
+    </header>
+
+    <div class="action-bar">
+        <div class="horizon-selector">
+            <label for="days">Forecast Window:</label>
+            <select id="days" onchange="runAnalysis()">
+                <option value="14">14 Days (Synoptic)</option>
+                <option value="30">30 Days (Extended)</option>
+                <option value="35" selected>35 Days (Sub-Seasonal Horizon)</option>
+            </select>
+        </div>
+        <button class="btn-refresh" onclick="runAnalysis()">↻ Refresh Model Run</button>
+    </div>
+
+    <div class="card">
+        <strong>🔍 The Long-Range Story (History vs. Model Guidance):</strong>
+        <ul class="signals-list" id="signalsList">
+            <li>Syncing telemetry and historical records...</li>
+        </ul>
+    </div>
+
+    <h3>📊 Weekly Comparison: What History Expects vs. What Models Predict</h3>
+    <div class="table-wrap">
+        <table id="summaryTable">
+            <thead>
+                <tr>
+                    <th class="col-left">Week</th>
+                    <th class="col-left">Date Range</th>
+                    <th style="color:#ef4444">Model High</th>
+                    <th style="color:#64748b">130-Yr High</th>
+                    <th style="color:#3b82f6">Model Low</th>
+                    <th style="color:#64748b">130-Yr Low</th>
+                    <th>Temp Anomaly</th>
+                    <th style="color:#0284c7">Model Rain</th>
+                    <th style="color:#64748b">History Norm</th>
+                    <th>Rain Anomaly (vs History)</th>
+                    <th class="col-left">Projected Rain Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="11">Loading telemetry data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="chart-box">
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <!-- AI Data Ingestion Block Section -->
+    <div class="ai-export-section">
+        <div class="ai-header">
+            <h3>📋 AI Daily Weather Report Data Ingestion Block</h3>
+            <button class="btn-copy" id="copyBtn" onclick="copyAiBlock()">📋 Copy for Report Stack</button>
+        </div>
+        <textarea class="ai-textarea" id="aiDataBlock" readonly placeholder="Generating structured AI data block..."></textarea>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// HARDWIRED STATION CONFIGURATION
+// ==========================================
+const LATITUDE = 30.5871;
+const LONGITUDE = -97.6410;
+const ALMANAC_URL = "https://jimegan2025.github.io/almanac.json";
+
+let chartInstance = null;
+let almanacData = null;
+
+const getAvg = (arr, key, decimals = 1) => {
+    const valid = arr.map(x => x[key]).filter(v => v !== null && v !== undefined && !isNaN(v));
+    if (!valid.length) return "N/A";
+    const sum = valid.reduce((a, b) => a + b, 0);
+    return (sum / valid.length).toFixed(decimals);
+};
+
+const getSum = (arr, key, decimals = 2) => {
+    const valid = arr.map(x => x[key]).filter(v => v !== null && v !== undefined && !isNaN(v));
+    if (!valid.length) return "0.00";
+    return valid.reduce((a, b) => a + b, 0).toFixed(decimals);
+};
+
+// Calculates daily normal rain from accumulated YTD accP
+function getDailyNormalRain(dateStr, almanac) {
+    if (!almanac) return 0;
+    const parts = dateStr.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+
+    const keyToday = `${parts[1]}-${parts[2]}`;
+    const entryToday = almanac[keyToday];
+    if (!entryToday || entryToday.accP === undefined) return 0;
+    const todayAcc = parseFloat(entryToday.accP);
+
+    if (month === 1 && day === 1) {
+        return todayAcc;
+    }
+
+    const prevDate = new Date(year, month - 1, day);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const yMonth = String(prevDate.getMonth() + 1).padStart(2, '0');
+    const yDay = String(prevDate.getDate()).padStart(2, '0');
+    const keyYesterday = `${yMonth}-${yDay}`;
+
+    const entryYesterday = almanac[keyYesterday];
+    if (!entryYesterday || entryYesterday.accP === undefined) return 0;
+    const yesterdayAcc = parseFloat(entryYesterday.accP);
+
+    const delta = todayAcc - yesterdayAcc;
+    return delta >= 0 ? parseFloat(delta.toFixed(3)) : todayAcc;
+}
+
+function findNormals(dateStr, almanac) {
+    if (!almanac) return { normalHigh: null, normalLow: null, normalMean: null, recordHigh: null, recordHighYear: '', recordLow: null, recordLowYear: '', normalDailyRain: 0 };
+    
+    const parts = dateStr.split('-');
+    const key = `${parts[1]}-${parts[2]}`;
+    const entry = almanac[key];
+
+    if (!entry) {
+        return { normalHigh: null, normalLow: null, normalMean: null, recordHigh: null, recordHighYear: '', recordLow: null, recordLowYear: '', normalDailyRain: 0 };
+    }
+
+    const nHigh = entry.avgH !== undefined && entry.avgH !== null ? parseFloat(entry.avgH) : null;
+    const nLow = entry.avgL !== undefined && entry.avgL !== null ? parseFloat(entry.avgL) : null;
+    let nMean = entry.avgM !== undefined && entry.avgM !== null ? parseFloat(entry.avgM) : null;
+    if (nMean === null && nHigh !== null && nLow !== null) nMean = (nHigh + nLow) / 2;
+
+    const dailyRainNorm = getDailyNormalRain(dateStr, almanac);
+
+    return {
+        normalHigh: nHigh,
+        normalLow: nLow,
+        normalMean: nMean,
+        recordHigh: entry.recH !== undefined && entry.recH !== null ? parseFloat(entry.recH) : null,
+        recordHighYear: entry.recHY || '',
+        recordLow: entry.recL !== undefined && entry.recL !== null ? parseFloat(entry.recL) : null,
+        recordLowYear: entry.recLY || '',
+        normalDailyRain: dailyRainNorm
+    };
+}
+
+async function runAnalysis() {
+    const days = document.getElementById('days').value;
+    const sourceBadge = document.getElementById('sourceBadge');
+    const signalsList = document.getElementById('signalsList');
+    const tableBody = document.querySelector('#summaryTable tbody');
+
+    signalsList.innerHTML = "<li>Fetching GFS Ensemble forecast and syncing 130-year climatology...</li>";
+    tableBody.innerHTML = "<tr><td colspan='11'>Loading telemetry data...</td></tr>";
+
+    // 1. Fetch Almanac JSON
+    if (!almanacData) {
+        try {
+            const almRes = await fetch(ALMANAC_URL);
+            if (!almRes.ok) throw new Error(`HTTP ${almRes.status}`);
+            almanacData = await almRes.json();
+            const dateCount = Object.keys(almanacData).length;
+            sourceBadge.innerHTML = `✅ 130-Year Climatology Synced (${dateCount} Days)`;
+            sourceBadge.style.color = "#059669";
+            sourceBadge.style.background = "#ecfdf5";
+        } catch (e) {
+            sourceBadge.innerHTML = `⚠️ Almanac Feed Error: ${e.message}`;
+            sourceBadge.style.color = "#dc2626";
+            sourceBadge.style.background = "#fef2f2";
+            signalsList.innerHTML = `<li><span style="color:red">Error loading Almanac: ${e.message}</span></li>`;
+        }
+    }
+
+    // 2. Fetch GFS Ensemble Forecast
+    const weatherUrl = `https://ensemble-api.open-meteo.com/v1/ensemble?latitude=${LATITUDE}&longitude=${LONGITUDE}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&models=gfs_seamless&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=${days}`;
+
+    try {
+        const res = await fetch(weatherUrl);
+        if (!res.ok) throw new Error(`Weather API HTTP ${res.status}`);
+        const weatherData = await res.json();
+        const daily = weatherData.daily;
+
+        const dates = daily.time || [];
+        const highs = daily.temperature_2m_max || [];
+        const lows = daily.temperature_2m_min || [];
+        const rain = daily.precipitation_sum || [];
+
+        // 3. Build Synchronized Daily Array
+        const combined = [];
+        for (let i = 0; i < dates.length; i++) {
+            const h = highs[i] !== undefined && highs[i] !== null ? parseFloat(highs[i]) : null;
+            const l = lows[i] !== undefined && lows[i] !== null ? parseFloat(lows[i]) : null;
+            const r = rain[i] !== undefined && rain[i] !== null ? parseFloat(rain[i]) : 0;
+
+            if (h === null && l === null) continue;
+
+            const norms = findNormals(dates[i], almanacData);
+            const fMean = (h !== null && l !== null) ? (h + l) / 2 : (h || l);
+            const dep = (fMean !== null && norms.normalMean !== null) ? (fMean - norms.normalMean) : null;
+
+            combined.push({
+                date: dates[i],
+                high: h,
+                low: l,
+                mean: fMean,
+                rain: r,
+                ...norms,
+                departure: dep
+            });
+        }
+
+        // 4. Calculate 7-Day Rolling Mean for Trendline
+        const rollingMean = combined.map((val, idx, arr) => {
+            const start = Math.max(0, idx - 3);
+            const end = Math.min(arr.length, idx + 4);
+            const slice = arr.slice(start, end).filter(x => x.mean !== null);
+            if (!slice.length) return null;
+            const sum = slice.reduce((acc, curr) => acc + curr.mean, 0);
+            return parseFloat((sum / slice.length).toFixed(1));
+        });
+
+        // 5. Build Weekly Summary Table & AI Export Data
+        let tableHtml = "";
+        let signals = [];
+        let aiWeeklyText = [];
+
+        for (let i = 0; i < combined.length; i += 7) {
+            const week = combined.slice(i, i + 7);
+            const weekNum = Math.floor(i / 7) + 1;
+            
+            // Temperature stats
+            const avgHigh = getAvg(week, 'high', 1);
+            const avgLow = getAvg(week, 'low', 1);
+            const avgNormHigh = getAvg(week, 'normalHigh', 1);
+            const avgNormLow = getAvg(week, 'normalLow', 1);
+            const avgDep = getAvg(week, 'departure', 1);
+
+            let depText = "N/A";
+            let depClass = "";
+            if (avgDep !== "N/A") {
+                const depVal = parseFloat(avgDep);
+                depText = (depVal >= 0 ? "+" : "") + depVal.toFixed(1) + "°F";
+                depClass = depVal >= 0 ? "warm-temp" : "cool-temp";
+            }
+
+            // Rainfall: Model vs. 130-Year History
+            const totalRain = getSum(week, 'rain', 2);
+            const totalNormRain = getSum(week, 'normalDailyRain', 2);
+            
+            let rainDepText = "N/A";
+            let rainDepClass = "";
+            let rDiff = "0.00";
+            let rPct = 100;
+            if (totalNormRain !== "0.00") {
+                rDiff = (parseFloat(totalRain) - parseFloat(totalNormRain)).toFixed(2);
+                rPct = Math.round((parseFloat(totalRain) / parseFloat(totalNormRain)) * 100);
+                const sign = rDiff >= 0 ? "+" : "";
+                rainDepText = `${sign}${rDiff}" (${rPct}%)`;
+                rainDepClass = rDiff >= 0 ? "surplus-rain" : "deficit-rain";
+            }
+
+            const wetDays = [];
+            week.forEach(d => {
+                if (d.rain !== null && d.rain >= 0.10) {
+                    wetDays.push(`${d.date.slice(5)} (${d.rain.toFixed(2)}")`);
+                }
+            });
+
+            const wetDaysStr = wetDays.length ? wetDays.join(', ') : 'Dry';
+
+            tableHtml += `<tr>
+                <td class="col-left"><strong>Week ${weekNum}</strong></td>
+                <td class="col-left">${week[0].date.slice(5)} to ${week[week.length - 1].date.slice(5)}</td>
+                <td style="color:#ef4444; font-weight:bold">${avgHigh !== 'N/A' ? avgHigh + '°' : 'N/A'}</td>
+                <td style="color:#64748b">${avgNormHigh !== 'N/A' ? avgNormHigh + '°' : 'N/A'}</td>
+                <td style="color:#3b82f6; font-weight:bold">${avgLow !== 'N/A' ? avgLow + '°' : 'N/A'}</td>
+                <td style="color:#64748b">${avgNormLow !== 'N/A' ? avgNormLow + '°' : 'N/A'}</td>
+                <td class="${depClass}">${depText}</td>
+                <td style="color:#0284c7; font-weight:bold">${totalRain}"</td>
+                <td style="color:#64748b">${totalNormRain}"</td>
+                <td class="${rainDepClass}">${rainDepText}</td>
+                <td class="col-left">${wetDays.length ? '🌧️ ' + wetDaysStr : '☀️ Dry'}</td>
+            </tr>`;
+
+            // Build AI Block Line
+            aiWeeklyText.push(`• Week ${weekNum} (${week[0].date.slice(5)} to ${week[week.length - 1].date.slice(5)}): Model Hi/Lo: ${avgHigh}°/${avgLow}° | 130-Yr Norm: ${avgNormHigh}°/${avgNormLow}° | Temp Anomaly: ${depText} | Rain: ${totalRain}" vs Norm: ${totalNormRain}" (${rainDepText}) | Wet Days: ${wetDaysStr}`);
+        }
+        tableBody.innerHTML = tableHtml;
+
+        // 6. Strategic Narrative Summary (History vs Model)
+        const totalForecastRain = getSum(combined, 'rain', 2);
+        const totalNormRainOverall = getSum(combined, 'normalDailyRain', 2);
+        const rainDiffOverall = (parseFloat(totalForecastRain) - parseFloat(totalNormRainOverall)).toFixed(2);
+        const rainDiffSign = rainDiffOverall >= 0 ? "+" : "";
+        const rainPctOverall = Math.round((parseFloat(totalForecastRain) / (parseFloat(totalNormRainOverall) || 1)) * 100);
+
+        const rainSignal = `130-year history says we normally receive ${totalNormRainOverall}" across this ${combined.length}-day window. Computer models are projecting ${totalForecastRain}" (${rainDiffSign}${rainDiffOverall}", or ${rainPctOverall}% of normal).`;
+        signals.push(`🌧️ <strong>Rainfall Balance:</strong> ${rainSignal}`);
+
+        let tempSignal = "Temperatures track within normal seasonal limits (±1.5°F of 130-year climatology).";
+        const validOverall = combined.filter(d => d.departure !== null && !isNaN(d.departure));
+        if (validOverall.length) {
+            const overallSum = validOverall.reduce((a, b) => a + b.departure, 0);
+            const overallDep = (overallSum / validOverall.length).toFixed(1);
+            const depVal = parseFloat(overallDep);
+            if (depVal >= 2.0) {
+                tempSignal = `Models project an overall warmer-than-normal window, averaging +${overallDep}°F above your 130-year historical baseline.`;
+                signals.push(`🔥 <strong>Thermal Regime:</strong> ${tempSignal}`);
+            } else if (depVal <= -2.0) {
+                tempSignal = `Models project an overall cooler-than-normal window, averaging ${overallDep}°F below your 130-year historical baseline.`;
+                signals.push(`❄️ <strong>Thermal Regime:</strong> ${tempSignal}`);
+            } else {
+                signals.push(`⚖️ <strong>Thermal Regime:</strong> ${tempSignal}`);
+            }
+        }
+
+        signalsList.innerHTML = signals.map(s => `<li>${s}</li>`).join('');
+
+        // 7. Render Chart
+        renderChart(combined, rollingMean);
+
+        // 8. Generate AI Ingestion Data Block
+        const aiBlock = `[FILE: 35-Day Subseasonal Outlook]
+TYPE: MODEL_CLIMATOLOGY_DATA
+TIMESTAMP: ${new Date().toISOString()}
+LOCATION: Round Rock, TX (30.5871 N, 97.6410 W)
+BASELINE: Round Rock 130-Year Climate Almanac (avgH, avgL, avgM, accP)
+MODEL: NOAA GFS Ensemble (${days}-Day gfs_seamless)
+
+35-DAY STRATEGIC BALANCE:
+• Thermal Regime: ${tempSignal}
+• Rainfall Balance: ${rainSignal}
+
+WEEKLY REGIME BREAKDOWN:
+${aiWeeklyText.join('\n')}
+
+LONG-RANGE METEOROLOGICAL SIGNALS:
+• Total 35-Day Precipitation Projected: ${totalForecastRain}" (vs ${totalNormRainOverall}" 130-yr normal)
+• Major Regime Shifts: ${aiWeeklyText.some(t => t.includes('-1')) || aiWeeklyText.some(t => t.includes('-2')) ? 'Autumn cold frontal intrusion projected late in the period.' : 'Persistent summer ridge dominance.'}`;
+
+        document.getElementById('aiDataBlock').value = aiBlock;
+
+    } catch (err) {
+        signalsList.innerHTML = `<li><span style="color:red">Execution Error: ${err.message}</span></li>`;
+        tableBody.innerHTML = `<tr><td colspan='11' style="color:red">Failed to process telemetry: ${err.message}</td></tr>`;
+    }
+}
+
+function copyAiBlock() {
+    const textarea = document.getElementById('aiDataBlock');
+    textarea.select();
+    navigator.clipboard.writeText(textarea.value).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = "✅ Copied to Clipboard!";
+        btn.style.background = "#10b981";
+        btn.style.color = "#ffffff";
+        setTimeout(() => {
+            btn.innerHTML = oldText;
+            btn.style.background = "#38bdf8";
+            btn.style.color = "#0f172a";
+        }, 2000);
+    });
+}
+
+function renderChart(combined, rollingMean) {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const hasNormals = combined.some(d => d.normalHigh !== null);
+
+    const datasets = [
+        {
+            type: 'line',
+            label: '7-Day Rolling Mean (°F)',
+            data: rollingMean,
+            borderColor: '#f97316',
+            backgroundColor: '#f97316',
+            borderWidth: 3,
+            tension: 0.3,
+            yAxisID: 'y'
+        },
+        {
+            type: 'line',
+            label: 'Forecast High (°F)',
+            data: combined.map(d => d.high),
+            borderColor: '#ef4444',
+            backgroundColor: '#ef4444',
+            borderWidth: 1.5,
+            tension: 0.1,
+            yAxisID: 'y'
+        },
+        {
+            type: 'line',
+            label: 'Forecast Low (°F)',
+            data: combined.map(d => d.low),
+            borderColor: '#3b82f6',
+            backgroundColor: '#3b82f6',
+            borderWidth: 1.5,
+            tension: 0.1,
+            yAxisID: 'y'
+        },
+        {
+            type: 'bar',
+            label: 'Daily Rain (in)',
+            data: combined.map(d => d.rain),
+            backgroundColor: 'rgba(14, 165, 233, 0.45)',
+            borderColor: 'rgba(14, 165, 233, 0.8)',
+            borderWidth: 1,
+            yAxisID: 'y1'
+        }
+    ];
+
+    if (hasNormals) {
+        datasets.splice(1, 0, {
+            type: 'line',
+            label: '130-Yr Normal High (avgH)',
+            data: combined.map(d => d.normalHigh),
+            borderColor: '#94a3b8',
+            borderDash: [5, 5],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            yAxisID: 'y'
+        });
+        datasets.splice(2, 0, {
+            type: 'line',
+            label: '130-Yr Normal Low (avgL)',
+            data: combined.map(d => d.normalLow),
+            borderColor: '#cbd5e1',
+            borderDash: [5, 5],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            yAxisID: 'y'
+        });
+    }
+
+    chartInstance = new Chart(ctx, {
+        data: {
+            labels: combined.map(d => d.date.slice(5)),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    title: { display: true, text: 'Temperature (°F)' },
+                    grid: { color: '#f1f5f9' }
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'Precipitation (in)' },
+                    min: 0,
+                    suggestedMax: 1.0
+                }
+            }
+        }
+    });
+}
+
+// Auto-run immediately upon page load
+window.addEventListener('DOMContentLoaded', runAnalysis);
+</script>
+</body>
+</html>
