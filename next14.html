@@ -41,56 +41,20 @@
         .high-temp { color:#b91c1c; font-weight:800; font-size:18px; }
         .low-temp { color:#1d4ed8; font-weight:800; font-size:18px; }
         
+        .delta-above { color:#dc2626; font-weight:800; font-size:16px; }
+        .delta-below { color:#2563eb; font-weight:800; font-size:16px; }
+        .delta-equal { color:#475569; font-weight:700; font-size:16px; }
+
+        .conf-high { color:#16a34a; font-weight:800; font-size:15px; }
+        .conf-mod { color:#d97706; font-weight:800; font-size:15px; }
+        .conf-low { color:#dc2626; font-weight:800; font-size:15px; }
+
         .rec-h { color:#991b1b; font-weight:700; font-size:18px; }
         .rec-l { color:#1e40af; font-weight:700; font-size:18px; }
         .rec-yr { font-size:14px; color:#64748b; font-weight: normal; }
         
         .gust-high { color:#dc2626; font-weight:800; }
         .wind-dir { color:#1e3a8a; font-weight:800; font-size: 16px; }
-        
-        /* AI INSTRUCTION & DATA PAYLOAD BOX */
-        .ai-directive-box {
-            background: #1e293b;
-            color: #f8fafc;
-            margin: 25px 20px;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 6px solid #3b82f6;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-        .ai-directive-box h3 { color: #60a5fa; margin-bottom: 12px; font-size: 1.1em; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
-        .ai-directive-box p { margin-bottom: 15px; }
-        .ai-data-payload {
-            background: #0f172a;
-            color: #38bdf8;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            border: 1px solid #334155;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-        
-        .copy-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 700;
-            border-radius: 6px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: background 0.2s;
-        }
-        .copy-btn:hover { background: #1d4ed8; }
-        .copy-btn:active { background: #1e40af; }
 
         .info-footer { padding:20px 25px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#64748b; }
         #status { text-align:center; padding:120px; font-weight:bold; font-size: 1.2em; color:#1e3a8a; animation: pulse 2s infinite; }
@@ -98,9 +62,11 @@
     </style>
 </head>
 <body>
+
 <div class="source-banner">
     Forecast Engine: <span>Visual Crossing GFS</span> &nbsp;&nbsp;|&nbsp;&nbsp; Archive Authority: <span>Jim's 130-Year VC Records</span>
 </div>
+
 <div class="container">
     <div id="status">📡 STANDBY: INTERROGATING VISUAL CROSSING SERVERS...</div>
     
@@ -111,21 +77,18 @@
                 <thead><tr id="head1"></tr></thead>
                 <tbody id="body1"></tbody>
             </table>
+
+            <div class="table-title">Extended Outlook – Days 8–14</div>
             <table id="table2">
                 <thead><tr id="head2"></tr></thead>
                 <tbody id="body2"></tbody>
             </table>
 
-            <!-- AI INSTRUCTION & DYNAMIC 7-DAY DATA PAYLOAD BLOCK WITH COPY BUTTON -->
-            <div class="ai-directive-box">
-                <h3>
-                    <span>AI Processing & Data Stack Directive</span>
-                    <button id="copyAllBtn" class="copy-btn" type="button">📋 Copy Instructions & Data</button>
-                </h3>
-                <p><b>Instruction:</b> Use Jim's Official Ground Truth Forecast as your primary narrative engine for ranges, rain probabilities, and general trends. Cross-reference Data Source B (Visual Crossing). If Data Source B shows significantly higher heat indices or differing moisture/wind profiles, blend that reality into your descriptions of afternoon comfort or heat safety without overriding Jim's core temperature ranges.</p>
-                <p style="margin-bottom: 8px;"><b>Embedded Visual Crossing Data Payload (Next 7 Days):</b></p>
-                <div id="aiDataPayload" class="ai-data-payload">Loading live 7-day data payload for AI ingestion...</div>
-            </div>
+            <div class="table-title">Your Hourly Forecast</div>
+            <table id="tableHourly">
+                <thead><tr id="headHourly"></tr></thead>
+                <tbody id="bodyHourly"></tbody>
+            </table>
         </div>
     </div>
     
@@ -134,19 +97,34 @@
         <span id="lastUpdate"></span>
     </div>
 </div>
+
 <script>
     const LAT = 30.5871;
     const LON = -97.641;
     const VC_API_KEY = "556ZX74XKT3VBMGFNX626Q9JJ";
     const ALMANAC_JSON_URL = "https://JimEgan2025.github.io/almanac.json";
     let almanacData = {};
-    let rawPayloadText = "";
 
     const getWindDir = deg => ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
+    
     function getWeatherUI(icon) {
-        const mapping = {"clear-day":{icon:"☀️",desc:"Clear"},"partly-cloudy-day":{icon:"⛅",desc:"Partly Cloudy"},"cloudy":{icon:"☁️",desc:"Overcast"},"rain":{icon:"🌧️",desc:"Rain"},"showers-day":{icon:"🌦️",desc:"Showers"},"thunder-rain":{icon:"⛈️",desc:"Thunderstorms"}};
+        const mapping = {"clear-day":{icon:"☀️",desc:"Clear"},"clear-night":{icon:"🌙",desc:"Clear"},"partly-cloudy-day":{icon:"⛅",desc:"Partly Cloudy"},"partly-cloudy-night":{icon:"☁️",desc:"Partly Cloudy"},"cloudy":{icon:"☁️",desc:"Overcast"},"rain":{icon:"🌧️",desc:"Rain"},"showers-day":{icon:"🌦️",desc:"Showers"},"thunder-rain":{icon:"⛈️",desc:"Thunderstorms"}};
         return mapping[icon] || {icon:"☁️", desc: icon || "Cloudy"};
     }
+
+    function calculateConfidence(day, dayIdx) {
+        const precip = day.precipprob || 0;
+        const cloud = day.cloudcover || 0;
+        
+        if (dayIdx >= 8) {
+            if (precip > 50 || cloud > 75) return `<span class="conf-low">LOW (35%)</span>`;
+            return `<span class="conf-mod">MOD (60%)</span>`;
+        }
+        if (precip > 60) return `<span class="conf-low">LOW (45%)</span>`;
+        if (precip > 25 || cloud > 60) return `<span class="conf-mod">MOD (75%)</span>`;
+        return `<span class="conf-high">HIGH (90%)</span>`;
+    }
+
     async function sourceAlmanac() {
         try {
             const response = await fetch(ALMANAC_JSON_URL);
@@ -154,17 +132,32 @@
             return true;
         } catch (err) { return false; }
     }
+
     function createRows(container, days, start, count) {
         const rowConfigs = [
+            {name:"Forecast Confidence", label:"Model Reliability", getData:i => calculateConfidence(days[i], i)},
             {name:"Conditions", label:"Sky / Emoji", getData:i => {
                 const ui = getWeatherUI(days[i].icon || "");
                 return `<span style="font-size:2.8em">${ui.icon}</span><br><b>${ui.desc}</b>`;
             }},
             {name:"Temperatures", label:"High / Low (°F)", getData:i => 
-                 `<span class="high-temp">${Math.round(days[i].tempmax)}°</span> / <span class="low-temp">${Math.round(days[i].tempmin)}°</span>`
+                `<span class="high-temp">${Math.round(days[i].tempmax)}°</span> / <span class="low-temp">${Math.round(days[i].tempmin)}°</span>`
             },
+            {name:"Variance vs Avg", label:"Mean vs 130-Yr Norm", getData:i => {
+                const mmdd = days[i].datetime.slice(5);
+                const h = almanacData[mmdd];
+                if (!h || h.avgH === undefined || h.avgL === undefined) return "--";
+                
+                const fcstMean = (days[i].tempmax + days[i].tempmin) / 2;
+                const histMean = (h.avgH + h.avgL) / 2;
+                const diff = Math.round(fcstMean - histMean);
+                
+                if (diff > 0) return `<span class="delta-above">+${diff}° F</span>`;
+                if (diff < 0) return `<span class="delta-below">${diff}° F</span>`;
+                return `<span class="delta-equal">ON AVG</span>`;
+            }},
             {name:"Feels Like", label:"Apparent High / Low", getData:i => 
-                 `${Math.round(days[i].feelslikemax)}° / ${Math.round(days[i].feelslikemin)}°`
+                `${Math.round(days[i].feelslikemax)}° / ${Math.round(days[i].feelslikemin)}°`
             },
             {name:"Historical Records", label:"Jim's 130-Yr Records", getData:i => {
                 const mmdd = days[i].datetime.slice(5);
@@ -178,7 +171,7 @@
                 return h ? `${h.avgH}° / ${h.avgL}°` : "--";
             }},
             {name:"Precipitation", label:"Prob / Amount (Inches)", getData:i => 
-                 `<b>${Math.round(days[i].precipprob || 0)}%</b><br>${(days[i].precip || 0).toFixed(2)}"`
+                `<b>${Math.round(days[i].precipprob || 0)}%</b><br>${(days[i].precip || 0).toFixed(2)}"`
             },
             {name:"Winds", label:"Dir | Speed | Gust", getData:i => {
                 const speed = Math.round(days[i].windspeed || 0);
@@ -187,9 +180,10 @@
                 return `<span class="wind-dir">${dir}</span><br>${speed} / <span class="${gust > 25 ? 'gust-high' : ''}">G${gust}</span>`;
             }},
             {name:"Humidity", label:"Average (%)", getData:i => 
-                 `<span class="humidity-val">${Math.round(days[i].humidity || 0)}%</span>`
+                `<span class="humidity-val">${Math.round(days[i].humidity || 0)}%</span>`
             }
         ];
+
         container.innerHTML = "";
         rowConfigs.forEach(row => {
             const tr = document.createElement("tr");
@@ -203,59 +197,49 @@
         });
     }
 
-    function buildAiPayload(days) {
-        const next7 = [];
-        for (let i = 1; i <= 7; i++) {
-            if (days[i]) {
-                next7.push({
-                    date: days[i].datetime,
-                    condition: days[i].conditions || days[i].icon,
-                    tempMax: Math.round(days[i].tempmax),
-                    tempMin: Math.round(days[i].tempmin),
-                    feelsLikeMax: Math.round(days[i].feelslikemax),
-                    feelsLikeMin: Math.round(days[i].feelslikemin),
-                    precipProb: Math.round(days[i].precipprob || 0),
-                    precipAmt: (days[i].precip || 0).toFixed(2),
-                    windSpeed: Math.round(days[i].windspeed || 0),
-                    windGust: Math.round(days[i].windgust || 0),
-                    windDir: getWindDir(days[i].winddir || 0),
-                    humidity: Math.round(days[i].humidity || 0)
-                });
+    function createHourlyRows(container, hourlyList) {
+        const rowConfigs = [
+            {name:"Conditions", label:"Sky / Emoji", getData:h => {
+                const ui = getWeatherUI(h.icon || "");
+                return `<span style="font-size:2.2em">${ui.icon}</span><br><b>${ui.desc}</b>`;
+            }},
+            {name:"Temperature", label:"Degrees (°F)", getData:h => 
+                `<span class="high-temp">${Math.round(h.temp)}°</span>`
+            },
+            {name:"Feels Like", label:"Apparent Temp", getData:h => 
+                `${Math.round(h.feelslike)}°`
+            },
+            {name:"Precipitation", label:"Prob / Amount", getData:h => 
+                `<b>${Math.round(h.precipprob || 0)}%</b><br>${(h.precip || 0).toFixed(2)}"`
+            },
+            {name:"Winds", label:"Dir | Speed | Gust", getData:h => {
+                const speed = Math.round(h.windspeed || 0);
+                const gust = Math.round(h.windgust || 0);
+                const dir = getWindDir(h.winddir || 0);
+                return `<span class="wind-dir">${dir}</span><br>${speed} / <span class="${gust > 25 ? 'gust-high' : ''}">G${gust}</span>`;
+            }},
+            {name:"Humidity", label:"Relative (%)", getData:h => 
+                `<span class="humidity-val">${Math.round(h.humidity || 0)}%</span>`
             }
-        }
-        
-        rawPayloadText = JSON.stringify(next7, null, 2);
-        document.getElementById('aiDataPayload').innerText = rawPayloadText;
-    }
+        ];
 
-    function initCopyButton() {
-        const btn = document.getElementById('copyAllBtn');
-        btn.addEventListener('click', () => {
-            const instructionText = "AI Adjustment Directive: Use Jim's Official Ground Truth Forecast as your primary narrative engine for ranges, rain probabilities, and general trends. Cross-reference Data Source B (Visual Crossing). If Data Source B shows significantly higher heat indices or differing moisture/wind profiles, blend that reality into your descriptions of afternoon comfort or heat safety without overriding Jim's core temperature ranges.";
-            const fullTextToCopy = `${instructionText}\n\nVisual Crossing Data Payload (Next 7 Days):\n${rawPayloadText}`;
-            
-            if (!rawPayloadText) {
-                alert("Data payload is still loading. Please wait a moment.");
-                return;
-            }
-
-            navigator.clipboard.writeText(fullTextToCopy).then(() => {
-                btn.innerText = "✅ Copied to Clipboard!";
-                btn.style.background = "#16a34a";
-                setTimeout(() => {
-                    btn.innerText = "📋 Copy Instructions & Data";
-                    btn.style.background = "#2563eb";
-                }, 2500);
-            }).catch(err => {
-                alert("Failed to copy text: " + err);
+        container.innerHTML = "";
+        rowConfigs.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td class="param-name"><div>${row.name}</div><span class="param-label">${row.label}</span></td>`;
+            hourlyList.forEach(h => {
+                const td = document.createElement("td");
+                td.innerHTML = row.getData(h);
+                tr.appendChild(td);
             });
+            container.appendChild(tr);
         });
     }
 
     async function init() {
         await sourceAlmanac();
         try {
-            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&include=days&key=${VC_API_KEY}&contentType=json`;
+            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}?unitGroup=us&include=days,hours&key=${VC_API_KEY}&contentType=json`;
             const res = await fetch(url);
             const data = await res.json();
             const days = data.days || [];
@@ -276,8 +260,39 @@
             renderHeader("head2", 8, 7);
             createRows(document.getElementById("body2"), days, 8, 7);
 
-            buildAiPayload(days);
-            initCopyButton();
+            // PROCESS HOURLY DATA FOR NEXT 16 HOURS
+            const currentHour = new Date().getHours();
+            const hourlyList = [];
+            
+            // Collect hours remaining today
+            if (days[0] && days[0].hours) {
+                days[0].hours.forEach(h => {
+                    const hTime = parseInt(h.datetime.split(":")[0], 10);
+                    if (hTime >= currentHour) hourlyList.push(h);
+                });
+            }
+            // Collect remaining hours from tomorrow if needed to reach 16 hours
+            if (hourlyList.length < 16 && days[1] && days[1].hours) {
+                const needed = 16 - hourlyList.length;
+                for (let i = 0; i < needed; i++) {
+                    if (days[1].hours[i]) hourlyList.push(days[1].hours[i]);
+                }
+            }
+            
+            // Limit explicitly to 16 hours
+            const next16Hours = hourlyList.slice(0, 16);
+
+            // Render Hourly Table Headers
+            const headHourly = document.getElementById("headHourly");
+            headHourly.innerHTML = "<th>Hour / Time</th>";
+            next16Hours.forEach(h => {
+                const hourNum = parseInt(h.datetime.split(":")[0], 10);
+                const ampm = hourNum >= 12 ? 'PM' : 'AM';
+                const formattedHour = (hourNum % 12 || 12) + ' ' + ampm;
+                headHourly.innerHTML += `<th><div class="day-col">${formattedHour}</div></th>`;
+            });
+
+            createHourlyRows(document.getElementById("bodyHourly"), next16Hours);
 
             document.getElementById("status").style.display = "none";
             document.getElementById("mainContent").style.display = "block";
