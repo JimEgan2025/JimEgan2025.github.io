@@ -64,7 +64,7 @@
 <body>
 
 <div class="source-banner">
-    Forecast Engine: <span>Visual Crossing GFS</span> &nbsp;&nbsp;|&nbsp;&nbsp; Archive Authority: <span>Jim's 130-Year VC Records</span>
+    Forecast Engine: <span>Visual Crossing GFS</span> &nbsp;&nbsp;|&nbsp;&nbsp; Archive Authority: <span>130-Year Vizcaya Records</span>
 </div>
 
 <div class="container">
@@ -93,7 +93,7 @@
     </div>
     
     <div class="info-footer">
-        <span>Location: Round Rock, TX | Source: Visual Crossing Timeline API</span>
+        <span>Location: Vizcaya, Round Rock, TX | Source: Visual Crossing Timeline API</span>
         <span id="lastUpdate"></span>
     </div>
 </div>
@@ -156,16 +156,13 @@
                 if (diff < 0) return `<span class="delta-below">${diff}° F</span>`;
                 return `<span class="delta-equal">ON AVG</span>`;
             }},
-            {name:"Feels Like", label:"Apparent High / Low", getData:i => 
-                `${Math.round(days[i].feelslikemax)}° / ${Math.round(days[i].feelslikemin)}°`
-            },
-            {name:"Historical Records", label:"Jim's 130-Yr Records", getData:i => {
+            {name:"Historical Records", label:"130-Yr Records", getData:i => {
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 if (!h) return "--";
                 return `<div class="rec-h">${h.recH}° <span class="rec-yr">(${h.recHY})</span></div><div class="rec-l">${h.recL}° <span class="rec-yr">(${h.recLY})</span></div>`;
             }},
-            {name:"Historical Averages", label:"Jim's 130-Yr Averages", getData:i => {
+            {name:"Historical Averages", label:"130-Yr Averages", getData:i => {
                 const mmdd = days[i].datetime.slice(5);
                 const h = almanacData[mmdd];
                 return h ? `${h.avgH}° / ${h.avgL}°` : "--";
@@ -205,9 +202,6 @@
             }},
             {name:"Temperature", label:"Degrees (°F)", getData:h => 
                 `<span class="high-temp">${Math.round(h.temp)}°</span>`
-            },
-            {name:"Feels Like", label:"Apparent Temp", getData:h => 
-                `${Math.round(h.feelslike)}°`
             },
             {name:"Precipitation", label:"Prob / Amount", getData:h => 
                 `<b>${Math.round(h.precipprob || 0)}%</b><br>${(h.precip || 0).toFixed(2)}"`
