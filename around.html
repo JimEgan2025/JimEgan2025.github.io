@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Texas Live Weather Dashboard</title>
+    <!-- Tailwind CSS for clean styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboard" class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b pb-4 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Central Texas, Williamson County Current Weather</h1>
+                <div id="timestamp" class="text-sm text-gray-500 font-medium mt-1">Loading local time...</div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center py-12 text-gray-500 font-semibold text-lg">
+            Fetching live weather data...
+        </div>
+
+        <!-- Error Panel -->
+        <div id="error-message" class="text-center py-12 text-red-500 font-semibold text-lg hidden">
+            Failed to load weather data. Please verify your connection and try again.
+        </div>
+
+        <!-- Weather Table -->
+        <div id="table-container" class="overflow-x-auto hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th data-column="name" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors rounded-tl-md">
+                            Town <span id="sort-name" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="temp" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors">
+                            Temp <span id="sort-temp" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="feelsLike" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors">
+                            Feels Like <span id="sort-feelsLike" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="humidity" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors">
+                            Humidity <span id="sort-humidity" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="windSpeed" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors">
+                            Wind <span id="sort-windSpeed" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="rain" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors">
+                            Rain (1h) <span id="sort-rain" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                        <th data-column="condition" class="sortable px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-200 transition-colors rounded-tr-md">
+                            Condition <span id="sort-condition" class="text-blue-600 font-bold ml-1"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="weather-rows" class="bg-white divide-y divide-gray-200">
+                    <!-- Data rows injected dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // EMBEDDED API KEY
+            const API_KEY = "1e6b41c22ab05679125cfa1d5792621a";
+
+            const towns = [
+                { name: "Georgetown", lat: 30.6383, lon: -97.6780 },
+                { name: "Round Rock", lat: 30.5083, lon: -97.6789 },
+                { name: "Cedar Park", lat: 30.5066, lon: -97.8303 },
+                { name: "Leander", lat: 30.5788, lon: -97.8531 },
+                { name: "Liberty Hill", lat: 30.6644, lon: -97.9228 },
+                { name: "Taylor", lat: 30.5708, lon: -97.4094 },
+                { name: "Hutto", lat: 30.5427, lon: -97.5467 },
+                { name: "Florence", lat: 30.8427, lon: -97.7942 },
+                { name: "Granger", lat: 30.7188, lon: -97.4422 },
+                { name: "Jarrell", lat: 30.8266, lon: -97.6067 },
+                { name: "Weir", lat: 30.6358, lon: -97.5856 },
+                { name: "Thrall", lat: 30.5891, lon: -97.2847 },
+                { name: "Walburg", lat: 30.7257, lon: -97.5861 },
+                { name: "Sun City", lat: 30.6869, lon: -97.7122 },
+                { name: "Jollyville", lat: 30.4430, lon: -97.7781 }
+            ];
+
+            let currentWeatherData = [];
+            let sortColumn = 'name'; 
+            let sortAscending = true; 
+
+            function show(id) { document.getElementById(id).classList.remove('hidden'); }
+            function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+            function getWindDirection(deg) {
+                if (deg === undefined) return "S";
+                const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+                return directions[Math.round(deg / 22.5) % 16];
+            }
+
+            function updateTimestamp() {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+                document.getElementById('timestamp').textContent = "As of " + new Date().toLocaleDateString('en-US', options);
+            }
+
+            // Fetch Execution
+            async function fetchWeatherData(apiKey) {
+                hide('table-container');
+                hide('error-message');
+                show('dashboard');
+                show('loading');
+
+                try {
+                    const promises = towns.map(async (town) => {
+                        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${town.lat}&lon=${town.lon}&units=imperial&appid=${apiKey}`;
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error();
+                        const data = await response.json();
+                        
+                        let rainInches = 0;
+                        if (data.rain && data.rain['1h']) {
+                            rainInches = Number((data.rain['1h'] * 0.0393701).toFixed(2));
+                        } else if (data.rain && data.rain['3h']) {
+                            rainInches = Number(((data.rain['3h'] / 3) * 0.0393701).toFixed(2));
+                        }
+                        
+                        return {
+                            name: town.name,
+                            temp: Math.round(data.main.temp),
+                            feelsLike: Math.round(data.main.feels_like),
+                            humidity: data.main.humidity,
+                            windSpeed: Math.round(data.wind.speed),
+                            windDir: getWindDirection(data.wind.deg),
+                            rain: rainInches,
+                            condition: data.weather[0].main
+                        };
+                    });
+
+                    currentWeatherData = await Promise.all(promises);
+                    
+                    // Sort alphabetically by default on initial render
+                    sortData('name', true);
+                    updateTimestamp();
+                } catch (error) {
+                    hide('loading');
+                    show('error-message');
+                }
+            }
+
+            // Dynamic Sorting Engine
+            function sortData(columnProp, forceDirection = null) {
+                if (forceDirection !== null) {
+                    sortColumn = columnProp;
+                    sortAscending = forceDirection;
+                } else {
+                    if (sortColumn === columnProp) {
+                        sortAscending = !sortAscending;
+                    } else {
+                        sortColumn = columnProp;
+                        sortAscending = true;
+                    }
+                }
+
+                currentWeatherData.sort((a, b) => {
+                    let valA = a[columnProp];
+                    let valB = b[columnProp];
+
+                    if (valA === undefined) valA = 0;
+                    if (valB === undefined) valB = 0;
+
+                    if (typeof valA === 'string') {
+                        return sortAscending ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else {
+                        return sortAscending ? valA - valB : valB - valA;
+                    }
+                });
+
+                renderTable(currentWeatherData);
+                renderSortIndicators();
+            }
+
+            function renderSortIndicators() {
+                document.querySelectorAll('th.sortable span').forEach(span => { span.textContent = ''; });
+                const activeSpan = document.getElementById(`sort-${sortColumn}`);
+                if (activeSpan) {
+                    activeSpan.textContent = sortAscending ? '▲' : '▼';
+                }
+            }
+
+            function renderTable(data) {
+                const tbody = document.getElementById('weather-rows');
+                tbody.innerHTML = '';
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition-colors duration-150';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${item.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.temp}°F</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.feelsLike}°F</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.humidity}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.windDir} ${item.windSpeed} mph</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.rain > 0 ? item.rain + ' in' : '0.00 in'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">${item.condition}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                hide('loading');
+                show('table-container');
+            }
+
+            // Wire up header click listeners
+            document.querySelectorAll('th.sortable').forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-column');
+                    sortData(column);
+                });
+            });
+
+            // Execute immediately on load
+            fetchWeatherData(API_KEY);
+        })();
+    </script>
+</body>
+</html>
