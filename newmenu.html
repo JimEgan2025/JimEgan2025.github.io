@@ -23,7 +23,7 @@
     }
 
     body {
-      font-family: 'Segoe UI', Roboto, Arial;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       background: var(--bg-dark);
       color: var(--text-main);
       height: 100vh;
@@ -65,6 +65,7 @@
       border: 1px solid var(--border);
       color: white;
       margin-top: 10px;
+      border-radius: 4px;
     }
 
     .tabs {
@@ -78,6 +79,8 @@
       color: var(--accent);
       margin: 18px 0 6px;
       font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .tab {
@@ -89,7 +92,9 @@
       color: var(--text-dim);
       cursor: pointer;
       text-align: left;
-      font-size: 18px;
+      font-size: 16px;
+      border-radius: 4px;
+      transition: background 0.15s ease, color 0.15s ease;
     }
 
     .tab:hover {
@@ -103,7 +108,7 @@
       font-weight: bold;
     }
 
-    /* MAIN */
+    /* MAIN CONTENT */
     .main {
       flex: 1;
       display: flex;
@@ -119,13 +124,18 @@
       justify-content: space-between;
       padding: 0 15px;
     }
-    
+
     .topbar-left {
       display: flex;
       align-items: center;
       gap: 15px;
     }
-    
+
+    #title {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
     #asOfTime {
       font-size: 14px;
       color: var(--text-dim);
@@ -144,6 +154,8 @@
       padding: 6px 10px;
       font-size: 14px;
       cursor: pointer;
+      border-radius: 4px;
+      transition: border-color 0.15s ease;
     }
 
     .btn:hover {
@@ -183,8 +195,15 @@
       position: absolute;
       top: 0;
       left: 0;
-      /* Animation for smooth zooming */
       transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+
+    #imgView {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: black;
     }
   </style>
 </head>
@@ -195,12 +214,13 @@
   <div class="sidebar">
     <div class="header-area">
       <div class="header">WEATHER OPS CENTER</div>
-      <input class="search-box" id="tabSearch" placeholder="Search...">
+      <input class="search-box" id="tabSearch" placeholder="Search tabs...">
     </div>
-    
+        
     <div class="tabs">
       <div class="group-label">Core Operations</div>
       <button class="tab active" data-url="https://jimegan2025.github.io/index.html" data-title="Home">Home</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/master.html" data-title="Master Ops">Master Ops</button>
       <button class="tab" data-url="https://www.weatherlink.com/embeddablePage/show/d318c2a4245b47fa955bd8f9ed3b22c2/summary" data-title="Station Summary">Station Summary</button>
       <button class="tab" data-url="https://jimegan2025.github.io/next14.html" data-title="Alternate Forecast">Main Forecast</button>
       <button class="tab" data-url="https://jimegan2025.github.io/leadforecast.html" data-title="Main Forecast">Alternate Forecast</button>
@@ -209,31 +229,29 @@
 
       <div class="group-label">Forecasts</div>
       <button class="tab" data-url="https://jimegan2025.github.io/360dash.html" data-title="360 Hour Forecast">360 Hour Forecast</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/next10days.html" data-title="Next 10 Days">Next 240 Hours</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/newspc.html" data-title="SPC Forecast">SPC Forecast</button>
       <button class="tab" data-url="https://jimegan2025.github.io/texasdash" data-title="NWS Offices">NWS Offices</button>
       <button class="tab" data-url="https://jimegan2025.github.io/nowcast.html" data-title="NowCast">NowCast</button>
 
       <div class="group-label">Data</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/command.html" data-title="Command">Short/Long Term View</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Master Radar">Texas Extremes</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead">Overhead Analysis</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newmodelcompare.html" data-title="Model Compare">Model Compare</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/lookahead.html" data-title="Look Ahead">Look Ahead</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/around.html" data-title="Around">Around</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Texas Extremes">Texas Extremes</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead Analysis">Overhead Analysis</button>
       
-
       <div class="group-label">Radar & Severe</div>
       <button class="tab" data-url="https://staticbaronwebapps.velocityweather.com/digitial_wx/widgets/mapv2/index.html?initjson=/digitial_wx/widgets/dcms/26f8a917-6849-45c5-bb15-4fd8e1adb40b/live/init.json#6/30.515/-97.669" data-title="Baron Radar">Baron Radar</button>
-      
       <button class="tab" data-url="https://jimegan2025.github.io/sky.html" data-title="NWS National Radar">NWS Radar</button>
       <button class="tab" data-url="https://jimegan2025.github.io/txradar.html" data-title="TX Radar">Texas NWS Individual Radars</button>
       <button class="tab" data-url="https://jimegan2025.github.io/textravel.html" data-title="Texas Travel">Texas Travel</button>
-      <button class="tab" data-url="https://jimegan2025.github.io/alerts.html" data-title="Alerts">Texas Alerts</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/alerts.html" data-title="Texas Alerts">Texas Alerts</button>
 
       <div class="group-label">Meters</div>
       <button class="tab" data-url="https://jimegan2025.github.io/muggyMeter.html" data-title="Muggy Meter">Muggy Meter</button>
       <button class="tab" data-url="https://jimegan2025.github.io/rainMeter.html" data-title="Rain Meter">Rain Meter</button>
 
       <div class="group-label">Tropical</div>
-      <button class="tab" data-url="https://jimegan2025.github.io/tropical.html" data-title="Tropical">Gulf Support Index</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/tropical.html" data-title="Gulf Support Index">Gulf Support Index</button>
       <button class="tab" data-url="https://www.nhc.noaa.gov/text/MIATWDAT.shtml" data-title="NHC Discussion">NHC Discussion</button>
       <button class="tab" data-url="https://www.cpc.ncep.noaa.gov/products/precip/CWlink/ghaz/gth_full.png" data-title="Global Tropical Hazards Outlook">Global Tropical Hazards Outlook</button>
     </div>
@@ -253,11 +271,11 @@
         <button class="btn" id="btnPopOut">Pop Out</button>
       </div>
     </div>
-    
+        
     <div class="viewer">
       <div id="frameContainer">
         <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
-        <img id="imgView" style="display:none;width:100%;height:100%;object-fit:contain;background:black;" />
+        <img id="imgView" />
       </div>
     </div>
   </div>
@@ -265,11 +283,8 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- Global State ---
     let currentScale = 1;
 
-    // --- Utility Functions ---
     function updateTime() {
       const now = new Date();
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -289,7 +304,7 @@
     function refresh() {
       const iframe = document.getElementById('frame');
       const img = document.getElementById('imgView');
-      
+            
       if (img.style.display !== 'none') {
         const base = img.src.split('?')[0];
         img.src = base + '?cachebust=' + Date.now();
@@ -313,16 +328,9 @@
       const img = document.getElementById('imgView');
       const currentUrl = img.style.display !== 'none' ? img.src : iframe.src;
 
-      const instructions = `You are interacting with Weather Ops Center | Pro.
-Active Operational View: ${currentTitle}
-Target Resource URL: ${currentUrl}
-Timestamp: ${new Date().toLocaleString()}
-
-Directive: Please analyze the current weather operations view and context for Round Rock, TX. Provide professional meteorological insights, operational review, or data breakdown corresponding to this active view.`;
-
-      // Attempt to fetch iframe content if same-origin, otherwise fallback to URL/metadata instructions
-      let payloadText = instructions;
+      const instructions = `You are interacting with Weather Ops Center | Pro. Active Operational View: ${currentTitle} Target Resource URL: ${currentUrl} Timestamp: ${new Date().toLocaleString()} Directive: Please analyze the current weather operations view and context for Round Rock, TX. Provide professional meteorological insights, operational review, or data breakdown corresponding to this active view.`;
       
+      let payloadText = instructions;            
       if (img.style.display === 'none') {
         try {
           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -355,7 +363,6 @@ Directive: Please analyze the current weather operations view and context for Ro
       });
     }
 
-    // Applies CSS scale to the iframe so large pages fit in the window
     function applyZoom(scale) {
       const frame = document.getElementById('frame');
       const btnFit = document.getElementById('btnFit');
@@ -378,33 +385,26 @@ Directive: Please analyze the current weather operations view and context for Ro
 
     function toggleFit() {
       if (currentScale === 1) {
-        applyZoom(0.75); // 75% zoom
+        applyZoom(0.75);
       } else if (currentScale === 0.75) {
-        applyZoom(0.5);  // 50% zoom
+        applyZoom(0.5);
       } else {
-        applyZoom(1);    // Back to normal
+        applyZoom(1);
       }
     }
 
-    // --- Event Listeners ---
-    
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', function() {
         const url = this.getAttribute('data-url');
         const title = this.getAttribute('data-title');
 
-        // Update active class
         tabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
+        this.classList.add('active');                
         
-        // Update Title
         document.getElementById('title').innerText = title;
-
-        // Reset Zoom on new tab
         applyZoom(1);
 
-        // Route to Image or Iframe
         const iframe = document.getElementById('frame');
         const img = document.getElementById('imgView');
 
@@ -418,8 +418,7 @@ Directive: Please analyze the current weather operations view and context for Ro
           img.src = '';
           iframe.style.display = 'block';
           iframe.src = url;
-        }
-        
+        }                
         updateTime();
       });
     });
@@ -430,11 +429,9 @@ Directive: Please analyze the current weather operations view and context for Ro
     document.getElementById('btnCopyAI').addEventListener('click', copyForAI);
     document.getElementById('tabSearch').addEventListener('keyup', filterTabs);
 
-    // --- Initialization ---
     updateTime();
-    setInterval(refresh, 300000); // 5 minutes
+    setInterval(refresh, 300000);
   });
 </script>
-
 </body>
 </html>
