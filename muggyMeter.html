@@ -22,9 +22,7 @@
             --muggy: #ef4444;
             --oppressive: #a855f7;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000;
@@ -33,7 +31,6 @@
             display: flex;
             justify-content: center;
         }
-
         .canvas {
             width: 1080px;
             background-color: var(--bg);
@@ -42,7 +39,6 @@
             position: relative;
             overflow: hidden;
         }
-
         /* BRAND HEADER */
         .brand-header {
             display: flex;
@@ -65,7 +61,6 @@
             text-transform: uppercase;
             letter-spacing: 5px;
         }
-
         .station-box { text-align: right; }
         .station-id {
             font-size: 22px;
@@ -77,7 +72,6 @@
             display: inline-block;
             border: 1px solid var(--border);
         }
-
         /* SUMMARY BOX */
         #summary-card {
             margin-bottom: 30px;
@@ -91,20 +85,18 @@
             font-weight: 700;
             line-height: 1.3;
         }
-
         /* THE CHART */
         .chart-container {
             background: var(--card-bg);
             border-radius: 30px;
-            padding: 45px 30px 20px 30px;
+            padding: 60px 30px 20px 30px;
             border: 1px solid #334155;
             position: relative;
         }
-
         /* Metric Indicator Label */
         .metric-indicator {
             position: absolute;
-            top: 15px;
+            top: 20px;
             left: 180px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
@@ -115,13 +107,11 @@
             border-radius: 4px;
             text-transform: uppercase;
         }
-
         .chart-viewport {
-            height: 450px;
+            height: 460px;
             position: relative;
             display: flex;
         }
-
         .y-axis {
             width: 150px;
             display: flex;
@@ -130,18 +120,16 @@
             padding-right: 15px;
             z-index: 10;
         }
-
         .y-label {
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
         }
-
         .zones {
             position: absolute;
             inset: 0 0 0 150px;
@@ -152,7 +140,6 @@
         .z-sticky { background: rgba(245, 158, 11, 0.03); }
         .z-muggy { background: rgba(239, 68, 68, 0.05); }
         .z-oppressive { background: rgba(168, 85, 247, 0.07); }
-
         .bars-stage {
             position: relative;
             z-index: 20;
@@ -161,7 +148,6 @@
             justify-content: space-around;
             align-items: flex-end;
         }
-
         .bar-col {
             flex: 1;
             height: 100%;
@@ -171,7 +157,6 @@
             align-items: center;
             position: relative;
         }
-
         .bar {
             width: 60px;
             border-radius: 12px 12px 4px 4px;
@@ -179,7 +164,6 @@
             transition: height 1s ease-out;
             background: #475569;
         }
-
         .bar-val {
             position: absolute;
             top: -45px;
@@ -188,12 +172,10 @@
             font-weight: 900;
             font-size: 30px;
         }
-
         .bar.is-peak {
             box-shadow: 0 0 40px currentColor;
             z-index: 30;
         }
-        
         .peak-label {
             position: absolute;
             top: -75px;
@@ -205,7 +187,6 @@
             border-radius: 4px;
             text-transform: uppercase;
         }
-
         .x-axis {
             height: 100px;
             display: flex;
@@ -215,7 +196,6 @@
         .date-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .day-name { font-weight: 900; font-size: 24px; color: #fff; }
         .day-date { font-size: 14px; font-weight: 600; color: var(--text-muted); }
-
         .footer {
             margin-top: 30px;
             display: flex;
@@ -225,7 +205,6 @@
             font-size: 14px;
             letter-spacing: 1px;
         }
-
         .live-tag {
             display: flex;
             align-items: center;
@@ -237,7 +216,6 @@
     </style>
 </head>
 <body>
-
 <div class="canvas">
     <div class="brand-header">
         <div class="brand-left">
@@ -251,51 +229,44 @@
             </div>
         </div>
     </div>
-
     <div id="summary-card">
         <div id="summary-text">Calculating moisture levels...</div>
     </div>
-
     <div class="chart-container">
         <div class="metric-indicator">Metric: Max Daily Dew Point (°F)</div>
         <div class="chart-viewport">
             <div class="y-axis">
-                <div class="y-label" style="height: 20%;">30-40° DRY</div>
-                <div class="y-label" style="height: 20%;">40-50° NICE</div>
-                <div class="y-label" style="height: 20%;">50-60° COMFY</div>
-                <div class="y-label" style="height: 10%;">60-65° STICKY</div>
-                <div class="y-label" style="height: 10%;">65-70° MUGGY</div>
-                <div class="y-label" style="height: 20%; color:var(--oppressive)">70°+ OPPRESSIVE</div>
+                <div class="y-label" style="height: 17.24%;">30-40° DRY</div>
+                <div class="y-label" style="height: 17.24%;">40-50° NICE</div>
+                <div class="y-label" style="height: 17.24%;">50-60° COMFY</div>
+                <div class="y-label" style="height: 8.62%;">60-65° STICKY</div>
+                <div class="y-label" style="height: 8.62%;">65-70° MUGGY</div>
+                <div class="y-label" style="height: 31.04%; color:var(--oppressive)">70°+ OPPRESSIVE</div>
             </div>
-
             <div class="zones">
-                <div class="zone" style="height: 20%;"></div>
-                <div class="zone" style="height: 20%;"></div>
-                <div class="zone" style="height: 20%;"></div>
-                <div class="zone z-sticky" style="height: 10%;"></div>
-                <div class="zone z-muggy" style="height: 10%;"></div>
-                <div class="zone z-oppressive" style="height: 20%;"></div>
+                <div class="zone" style="height: 17.24%;"></div>
+                <div class="zone" style="height: 17.24%;"></div>
+                <div class="zone" style="height: 17.24%;"></div>
+                <div class="zone z-sticky" style="height: 8.62%;"></div>
+                <div class="zone z-muggy" style="height: 8.62%;"></div>
+                <div class="zone z-oppressive" style="height: 31.04%;"></div>
             </div>
-
             <div class="bars-stage" id="barsStage"></div>
         </div>
         <div class="x-axis" id="xAxis"></div>
     </div>
-
     <div class="footer">
         <div>VIZCAYA WEATHER SERVICES</div>
         <div>UPDATED: <span id="update-time">--:--</span></div>
     </div>
 </div>
-
 <script>
     const CONFIG = {
         lat: 30.5097,
         lon: -97.6921,
         minDP: 30, 
-        maxDP: 80  
+        maxDP: 88 // Extended scale ceiling to 88°F to guarantee proper 1-to-1 alignment with built-in headroom for values
     };
-
     function getComfort(dp) {
         if (dp < 50) return { label: 'CRISP / DRY', color: 'var(--dry)' };
         if (dp < 60) return { label: 'PLEASANT', color: 'var(--pleasant)' };
@@ -303,7 +274,6 @@
         if (dp < 70) return { label: 'MUGGY', color: 'var(--muggy)' };
         return { label: 'OPPRESSIVE', color: 'var(--oppressive)' };
     }
-
     async function fetchData() {
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/gfs?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&daily=dew_point_2m_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=10`);
@@ -313,7 +283,6 @@
             document.getElementById('summary-text').textContent = "DATA OFFLINE";
         }
     }
-
     function render(daily) {
         const stage = document.getElementById('barsStage');
         const x = document.getElementById('xAxis');
@@ -328,19 +297,20 @@
             const comfort = getComfort(dp);
             const dateObj = new Date(time + 'T00:00:00');
             const dayName = dateObj.toLocaleDateString('en-US', {weekday: 'short'});
-            
+                        
+            // True linear scaling matching the proportional Y-axis zone heights (range 30° to 88°F)
             let pct = ((dp - CONFIG.minDP) / (CONFIG.maxDP - CONFIG.minDP)) * 100;
             pct = Math.max(8, Math.min(100, pct)); 
 
             const col = document.createElement('div');
             col.className = 'bar-col';
-            
+
             const isPeak = i === maxIndex;
-            
+
             col.innerHTML = `
                 ${isPeak ? '<div class="peak-label">Highest</div>' : ''}
                 <div class="bar ${isPeak ? 'is-peak' : ''}" 
-                     style="height: ${pct}%; background-color: ${comfort.color}; color: ${comfort.color}">
+                      style="height: ${pct}%; background-color: ${comfort.color}; color: ${comfort.color}">
                     <div class="bar-val">${Math.round(dp)}°</div>
                 </div>
             `;
@@ -357,16 +327,14 @@
 
         const peakComfort = getComfort(maxVal);
         const peakDay = maxIndex === 0 ? "Today" : new Date(daily.time[maxIndex] + 'T00:00:00').toLocaleDateString('en-US', {weekday: 'long'});
-        
+
         document.getElementById('summary-card').style.borderLeftColor = peakComfort.color;
         document.getElementById('summary-text').innerHTML = 
             `Atmospheric moisture peaks on ${peakDay} with a <span style="color:${peakComfort.color}">${peakComfort.label}</span> dew point of ${Math.round(maxVal)}°.`;
-        
+
         document.getElementById('update-time').textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
-
     fetchData();
 </script>
-
 </body>
 </html>
