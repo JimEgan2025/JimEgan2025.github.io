@@ -7,26 +7,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   :root { 
-    --primary: #ffcc00; 
-    --bg: #020617; 
-    --panel: #0f172a; 
-    --border: #1e293b; 
-    --text: #f8fafc;
-    --danger: #ef4444;
+     --primary: #ffcc00; 
+     --bg: #020617; 
+     --panel: #0f172a; 
+     --border: #1e293b; 
+     --text: #f8fafc;
+    --danger: #ef4444; 
   }
-
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-  
+  * { box-sizing: border-box; } 
+  html, body { height: 100%; margin: 0; padding: 0; background: var(--bg); overflow: hidden; display: flex; align-items: center; justify-content: center; } 
   #command-container { 
     display: flex; 
-    width: 1400px; 
-    height: 900px; 
-    border: 4px solid var(--border);
+    width: 100vw; 
+    height: 100vh; 
+    border: none;
     position: relative;
-    box-shadow: 0 0 60px rgba(0,0,0,0.9);
-  }
-  
+  } 
   #sidebar, #right-panel { 
     width: 280px; 
     height: 100%; 
@@ -35,12 +31,13 @@
     flex-direction: column; 
     border-color: var(--border); 
     border-style: solid;
-    z-index: 2000;
-  }
-  #sidebar { border-right-width: 3px; }
-  #right-panel { border-left-width: 3px; }
-  
+    z-index: 2000; 
+  } 
+  #sidebar { border-right-width: 3px; } 
+  #right-panel { border-left-width: 3px; } 
   #map { flex: 1; height: 100%; background: #000; z-index: 1; }
+  
+  .dark-osm { filter: brightness(0.7) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
 
   header { 
     background: #000; 
@@ -52,11 +49,9 @@
     position: absolute; 
     top: 0; left: 280px; right: 280px; 
     z-index: 3000; 
-    height: 65px;
-  }
-  
-  header h1 { margin: 0; font-size: 22px; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
-  
+    height: 65px; 
+  } 
+  header h1 { margin: 0; font-size: 22px; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; } 
   .section-title { 
     font-size: 12px; 
     text-transform: uppercase; 
@@ -65,210 +60,211 @@
     font-weight: 900; 
     letter-spacing: 1px;
     background: rgba(0,0,0,0.3);
-    border-bottom: 1px solid var(--border);
-  }
-  
-  .control-group { padding: 10px 20px; }
-  label { display: flex; align-items: center; margin: 12px 0; cursor: pointer; font-size: 13px; font-weight: 700; color: #cbd5e1; }
-  input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; accent-color: var(--primary); }
-  
+    border-bottom: 1px solid var(--border); 
+  } 
+  .control-group { padding: 10px 20px; } 
+  label { display: flex; align-items: center; margin: 12px 0; cursor: pointer; font-size: 13px; font-weight: 700; color: #cbd5e1; } 
+  input[type="checkbox"] { width: 18px; height: 18px; margin-right: 12px; accent-color: var(--primary); } 
   .btn-focus { 
     background: var(--primary); color: #000; border: none; 
     padding: 10px 20px; border-radius: 4px; 
-    font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase;
+    font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; 
   }
-
-  #alert-list { padding: 15px; flex-grow: 1; overflow-y: auto; background: #020617; }
+  #alert-list { padding: 15px; flex-grow: 1; overflow-y: auto; background: #020617; } 
   .alert-card { 
     background: #1e293b; padding: 15px; margin-bottom: 12px; border-radius: 6px; border-left: 5px solid var(--primary);
-    cursor: pointer; transition: background 0.2s;
-  }
-  .alert-card:hover { background: #334155; }
-  .alert-card.Extreme, .alert-card.Severe { border-left-color: var(--danger); background: #450a0a; }
-  
-  .alert-card span { display: block; font-size: 14px; font-weight: 900; margin-bottom: 4px; color: #fff; line-height: 1.2; }
-  .alert-card small { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
-  
+  } 
+  .alert-card.Extreme, .alert-card.Severe { border-left-color: var(--danger); background: #450a0a; } 
+  .alert-card span { display: block; font-size: 14px; font-weight: 900; margin-bottom: 4px; color: #fff; line-height: 1.2; } 
+  .alert-card small { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; } 
   #as-of { font-weight: 800; font-family: monospace; color: var(--primary); font-size: 14px; }
-
-  /* Tactical Pulse Animation for Alert Clicking */
-  @keyframes pulse-red {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(4); opacity: 0; }
-  }
-  .pulse-marker {
-    width: 20px; height: 20px; background: red; border-radius: 50%;
-    animation: pulse-red 1.5s infinite;
-  }
 </style>
 </head>
 <body>
-
-<div id="command-container">
-    <header>
-      <h1>Texas Weather Command</h1>
-      <button class="btn-focus" onclick="focusVizcaya()">Focus: Vizcaya</button>
-      <div id="as-of">INITIALIZING...</div>
+<div id="command-container"> 
+    <header> 
+      <h1>Texas Weather Command</h1> 
+      <button class="btn-focus" onclick="focusVizcaya()">Focus: Vizcaya</button> 
+      <div id="as-of">INITIALIZING...</div> 
     </header>
-
-    <div id="sidebar">
-      <div style="height:65px;"></div>
-      <div class="section-title">Atmospheric Overlays</div>
-      <div class="control-group">
-        <label><input type="checkbox" id="radar" checked> Live NEXRAD Radar</label>
-        <label><input type="checkbox" id="sat"> GOES-16 IR Satellite</label>
-      </div>
-      <div class="section-title">SPC Risk Levels</div>
-      <div class="control-group">
-        <label><input type="checkbox" id="spc1" checked> Day 1 Outlook</label>
-        <label><input type="checkbox" id="spc2"> Day 2 Outlook</label>
-        <label><input type="checkbox" id="wwa" checked> Watches & Warnings</label>
-      </div>
-      <div class="section-title">SPC Legend</div>
-      <div style="padding: 20px;">
-        <div style="height:10px; width:100%; display:flex; border-radius:5px; overflow:hidden;">
-            <div style="flex:1; background:#c0e8c0"></div>
-            <div style="flex:1; background:#f6e38b"></div>
-            <div style="flex:1; background:#ffbc7b"></div>
-            <div style="flex:1; background:#ff8a8a"></div>
-            <div style="flex:1; background:#ff6060"></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:5px; font-weight:900; color:#94a3b8;">
-            <span>MRGL</span><span>SLGT</span><span>ENH</span><span>MDT</span><span>HIGH</span>
-        </div>
-      </div>
+    <div id="sidebar"> 
+      <div style="height:65px;"></div> 
+      <div class="section-title">Atmospheric Overlays</div> 
+      <div class="control-group"> 
+        <label><input type="checkbox" id="radar" checked> Live NEXRAD Radar</label> 
+        <label><input type="checkbox" id="sat"> GOES-16 IR Satellite</label> 
+      </div> 
+      <div class="section-title">Risk Layers</div> 
+      <div class="control-group"> 
+        <label><input type="checkbox" id="wwa" checked> Watches & Warnings</label> 
+      </div> 
     </div>
-
     <div id="map"></div>
-
-    <div id="right-panel">
-      <div style="height:65px;"></div>
-      <div class="section-title">Tactical Alert Feed</div>
-      <div id="alert-list"></div>
+    <div id="right-panel"> 
+      <div style="height:65px;"></div> 
+      <div class="section-title">Tactical Alert Feed</div> 
+      <div id="alert-list"></div> 
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
-
 <script>
 const VIZ_LAT = 30.5871, VIZ_LON = -97.6410;
-let clickMarker = null;
 
 // 1. Initialize Map
 const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([31.2, -99.5], 6);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  className: 'dark-osm'
+}).addTo(map);
 
-// 2. Panes
-map.createPane('topLabels'); map.getPane('topLabels').style.zIndex = 650;
-map.createPane('brightBorders'); map.getPane('brightBorders').style.zIndex = 640;
-map.createPane('tacticalDot'); map.getPane('tacticalDot').style.zIndex = 700;
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { pane: 'topLabels' }).addTo(map);
-L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/reference/State_Boundaries/MapServer', layers: [0], pane: 'brightBorders' }).addTo(map);
-L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/reference/County_Boundaries/MapServer', layers: [0], pane: 'brightBorders', opacity: 0.3 }).addTo(map);
-
-// 3. Vizcaya Dot
-const vizcayaDot = L.circleMarker([VIZ_LAT, VIZ_LON], {
-    radius: 9, fillColor: "#ffcc00", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1, pane: 'tacticalDot'
+// 2. Vizcaya Dot
+const vizcayaDot = L.circleMarker([VIZ_LAT, VIZ_LON], { 
+    radius: 9, fillColor: "#ffcc00", color: "#fff", weight: 3, opacity: 1, fillOpacity: 1, pane: 'overlayPane'
 }).addTo(map).bindPopup("<b>VIZCAYA CENTER</b>");
 
 function focusVizcaya() { 
-    if(clickMarker) map.removeLayer(clickMarker);
     map.flyTo([VIZ_LAT, VIZ_LON], 10); 
     vizcayaDot.openPopup();
 }
 
-// 4. Weather Layers
-const layers = {
-  radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', {
-    layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.8, zIndex: 100
+// 3. Weather Layers
+const layers = { 
+  radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', { 
+    layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.8, zIndex: 100 
   }).addTo(map),
-  sat: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', {
-    layers: 'conus_ir_4km', format: 'image/png', transparent: true, opacity: 0.5, zIndex: 90
+  
+  sat: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/goes/conus_ir.cgi', { 
+    layers: 'conus_ir_4km', format: 'image/png', transparent: true, opacity: 0.5, zIndex: 90 
   }),
-  wwa: L.esri.featureLayer({
-    url: 'https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer/1',
-    style: f => {
-      const e = f.properties.event.toLowerCase();
-      if (e.includes('tornado')) return { color: '#ff0000', weight: 5, fillOpacity: 0.4 };
-      if (e.includes('severe')) return { color: '#ff6600', weight: 4, fillOpacity: 0.3 };
-      return { color: '#ffcc00', weight: 2, fillOpacity: 0.2 };
-    }
-  }).addTo(map),
-  spc1: L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', layers: [1], opacity: 0.4 }).addTo(map),
-  spc2: L.esri.dynamicMapLayer({ url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', layers: [9], opacity: 0.4 })
+
+  wwa: L.layerGroup() 
 };
 
-document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-  checkbox.onchange = () => {
+let cachedCountiesData = null;
+
+async function loadWarningPolygons() {
+  try {
+    // Fetch active alerts and Texas county boundaries concurrently
+    const [alertRes, countyRes] = await Promise.all([
+      fetch('https://api.weather.gov/alerts/active?area=TX', { headers: { 'User-Agent': 'VizcayaTactical/1.0' } }),
+      cachedCountiesData ? Promise.resolve(cachedCountiesData) : fetch('https://raw.githubusercontent.com/Cincome/tx.geojson/master/counties/tx_counties.geojson').then(r => r.json())
+    ]);
+
+    if (!cachedCountiesData) cachedCountiesData = countyRes;
+    const alertData = await alertRes.json();
+
+    layers.wwa.clearLayers();
+
+    // 1. Map Polygon-based warnings (Tornado, Severe Storm, Flash Flood)
+    if (alertData.features) {
+      const stormPolygons = L.geoJSON(alertData, {
+        filter: f => f.geometry !== null,
+        style: f => {
+          const e = (f.properties.event || '').toLowerCase();
+          if (e.includes('tornado')) return { color: '#ff0000', weight: 4, fillOpacity: 0.3 };
+          if (e.includes('severe thunderstorm')) return { color: '#ff6600', weight: 3, fillOpacity: 0.2 };
+          if (e.includes('flood')) return { color: '#0055ff', weight: 3, fillOpacity: 0.25 };
+          return { color: '#ffcc00', weight: 2, fillOpacity: 0.15 };
+        },
+        onEachFeature: (f, layer) => {
+          if (f.properties && f.properties.event) {
+            layer.bindPopup(`<b>${f.properties.event}</b><br><small>${f.properties.areaDesc || ''}</small>`);
+          }
+        }
+      });
+      layers.wwa.addLayer(stormPolygons);
+    }
+
+    // 2. Map Zone/County-based advisories (Heat Advisories, SWS, etc.) by matching county names
+    if (cachedCountiesData && alertData.features) {
+      // Build a map of county name -> highest priority alert color/event
+      const countyAlerts = {};
+      alertData.features.forEach(f => {
+        if (f.geometry === null && f.properties && f.properties.areaDesc) {
+          const event = (f.properties.event || '').toLowerCase();
+          let color = '#38bdf8'; // Default advisory light blue
+          if (event.includes('heat') || event.includes('excessive heat')) color = '#ff7f00'; // Orange
+          else if (event.includes('statement') || event.includes('sws')) color = '#eab308'; // Gold
+
+          // areaDesc is usually a semicolon-separated list of county names (e.g., "Travis; Williamson")
+          const counties = f.properties.areaDesc.split(';');
+          counties.forEach(cName => {
+            const cleanName = cName.trim().replace(/County/gi, '').trim().toLowerCase();
+            if (cleanName) {
+              countyAlerts[cleanName] = { event: f.properties.event, color: color };
+            }
+          });
+        }
+      });
+
+      const countyZoneLayer = L.geoJSON(cachedCountiesData, {
+        style: f => {
+          const name = (f.properties.NAME || f.properties.name || '').toLowerCase();
+          const match = countyAlerts[name];
+          if (match) {
+            return { color: match.color, weight: 1.5, fillColor: match.color, fillOpacity: 0.3 };
+          }
+          // Default unalerted counties remain invisible/transparent border
+          return { stroke: false, fill: false };
+        },
+        onEachFeature: (f, layer) => {
+          const name = (f.properties.NAME || f.properties.name || '');
+          const cleanName = name.toLowerCase();
+          const match = countyAlerts[cleanName];
+          if (match) {
+            layer.bindPopup(`<b>${match.event}</b><br><small>${name} County</small>`);
+          }
+        }
+      });
+      layers.wwa.addLayer(countyZoneLayer);
+    }
+
+    if (document.getElementById('wwa').checked) {
+      layers.wwa.addTo(map);
+    }
+  } catch (err) {
+    console.warn("Could not load warning polygons/counties", err);
+  }
+}
+
+loadWarningPolygons();
+setInterval(loadWarningPolygons, 300000);
+
+document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => { 
+  checkbox.onchange = () => { 
     const layer = layers[checkbox.id];
-    checkbox.checked ? map.addLayer(layer) : map.removeLayer(layer);
+    if (!layer) return;
+    checkbox.checked ? map.addLayer(layer) : map.removeLayer(layer); 
   };
 });
 
-// 5. BULLETPROOF ALERT SCANNER
-function calculateAlertCenter(f) {
-    // 1. Try to get center from geometry
-    if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0) {
-        try {
-            const tempLayer = L.geoJSON(f);
-            return tempLayer.getBounds().getCenter();
-        } catch(e) { console.warn("Geom parse failed, using fallback"); }
-    }
-
-    // 2. Coastal Fallback (Search for keywords in description)
-    const area = (f.properties.areaDesc || "").toLowerCase();
-    if (area.includes("galveston") || area.includes("coast")) return { lat: 29.3, lng: -94.8 };
-    if (area.includes("corpus") || area.includes("nueces")) return { lat: 27.8, lng: -97.4 };
-    if (area.includes("brownsville") || area.includes("cameron")) return { lat: 25.9, lng: -97.5 };
-    if (area.includes("matagorda")) return { lat: 28.7, lng: -96.0 };
-    if (area.includes("houston") || area.includes("harris")) return { lat: 29.7, lng: -95.3 };
-    if (area.includes("dallas") || area.includes("tarrant")) return { lat: 32.7, lng: -96.8 };
-    if (area.includes("amarillo") || area.includes("potter")) return { lat: 35.2, lng: -101.8 };
-    
-    // 3. Ultimate Fallback: Heart of Texas (instead of NW San Antonio)
-    return { lat: 31.4, lng: -99.3 };
-}
-
-function zoomToAlert(lat, lng, eventTitle) {
-    if(clickMarker) map.removeLayer(clickMarker);
-    
-    // Pulse effect at destination
-    clickMarker = L.marker([lat, lng], {
-        icon: L.divIcon({ className: 'pulse-marker', iconSize: [20, 20] })
-    }).addTo(map);
-
-    map.flyTo([lat, lng], 8, { duration: 1.5 });
-}
-
-async function updateAlerts() {
-  const list = document.getElementById('alert-list');
-  try {
-    const response = await fetch('https://api.weather.gov/alerts/active?area=TX', {
-        headers: { 'User-Agent': 'VizcayaTactical/1.0' }
-    });
-    const data = await response.json();
+async function updateAlerts() { 
+  const list = document.getElementById('alert-list'); 
+  try { 
+    const response = await fetch('https://api.weather.gov/alerts/active?area=TX', { 
+        headers: { 'User-Agent': 'VizcayaTactical/1.0' } 
+    }); 
+    const data = await response.json(); 
     document.getElementById('as-of').innerText = new Date().toLocaleTimeString();
 
-    if (!data.features?.length) {
-      list.innerHTML = '<div style="color:#64748b; padding:20px; text-align:center;">NO ACTIVE ALERTS</div>';
-      return;
+    if (!data.features?.length) { 
+      list.innerHTML = '<div style="color:#64748b; padding:20px; text-align:center;">NO ACTIVE ALERTS</div>'; 
+      return; 
     }
 
-    list.innerHTML = data.features.slice(0, 30).map(f => {
-      const p = f.properties;
-      const center = calculateAlertCenter(f);
-      return `
-        <div class="alert-card ${p.severity}" onclick="zoomToAlert(${center.lat}, ${center.lng}, '${p.event}')">
-          <span>${p.event}</span>
-          <small>${p.areaDesc.split(';')[0]}</small>
-        </div>
-      `;
-    }).join('');
-  } catch (e) {
-    list.innerHTML = '<div style="color:red; padding:20px;">SYNC ERROR</div>';
-  }
+    list.innerHTML = data.features.slice(0, 30).map(f => { 
+      const p = f.properties; 
+      return ` 
+        <div class="alert-card ${p.severity}"> 
+          <span>${p.event}</span> 
+          <small>${(p.areaDesc || '').split(';')[0]}</small> 
+        </div> 
+      `; 
+    }).join(''); 
+  } catch (e) { 
+    list.innerHTML = '<div style="color:red; padding:20px;">SYNC ERROR</div>'; 
+  } 
 }
 
 updateAlerts();
