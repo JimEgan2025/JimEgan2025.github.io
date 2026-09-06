@@ -92,11 +92,14 @@
       <div class="section-title">Atmospheric Overlays</div> 
       <div class="control-group"> 
         <label><input type="checkbox" id="radar" checked> Live NEXRAD Radar</label> 
+        <label><input type="checkbox" id="radarLoop"> Animate Radar Loop</label> 
         <label><input type="checkbox" id="sat"> GOES-16 IR Satellite</label> 
       </div> 
       <div class="section-title">Risk Layers</div> 
       <div class="control-group"> 
         <label><input type="checkbox" id="wwa" checked> Watches & Warnings</label> 
+        <label><input type="checkbox" id="spc1"> SPC Day 1 Outlook</label> 
+        <label><input type="checkbox" id="spc2"> SPC Day 2 Outlook</label> 
       </div> 
     </div>
     <div id="map"></div>
@@ -108,6 +111,7 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
 <script>
 const VIZ_LAT = 30.5871, VIZ_LON = -97.6410;
 
@@ -128,7 +132,19 @@ function focusVizcaya() {
     vizcayaDot.openPopup();
 }
 
-// 3. Weather Layers
+// 3. Radar Loop Frames Preloaded for Smooth Opacity Cycling
+const radarLoopLayers = [
+  L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m20m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 100 }),
+  L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m15m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 100 }),
+  L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m10m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 100 }),
+  L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m05m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 100 }),
+  L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 100 })
+];
+
+let radarAnimIndex = 0;
+let radarAnimInterval = null;
+
+// 4. Weather Layers
 const layers = { 
   radar: L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', { 
     layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, opacity: 0.8, zIndex: 100 
@@ -138,34 +154,69 @@ const layers = {
     layers: 'conus_ir_4km', format: 'image/png', transparent: true, opacity: 0.5, zIndex: 90 
   }),
 
-  wwa: L.layerGroup() 
+  wwa: L.layerGroup(),
+
+  spc1: L.esri.dynamicMapLayer({ 
+    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
+    layers: [1], 
+    opacity: 0.6,
+    zIndex: 110
+  }),
+
+  spc2: L.esri.dynamicMapLayer({ 
+    url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer', 
+    layers: [9], 
+    opacity: 0.6,
+    zIndex: 105
+  })
 };
 
-let cachedCountiesData = null;
+// Smooth Radar Loop Control Logic via Opacity Blending
+document.getElementById('radarLoop').onchange = (e) => {
+  const looping = e.target.checked;
+  if (looping) {
+    if (map.hasLayer(layers.radar)) {
+      map.removeLayer(layers.radar);
+      document.getElementById('radar').checked = false;
+    }
+    // Preload all layers to map with 0 opacity so tiles are already cached & rendered
+    radarLoopLayers.forEach(l => {
+      l.setOpacity(0);
+      if (!map.hasLayer(l)) l.addTo(map);
+    });
+
+    radarAnimIndex = 0;
+    radarLoopLayers[radarAnimIndex].setOpacity(0.8);
+
+    radarAnimInterval = setInterval(() => {
+      radarLoopLayers[radarAnimIndex].setOpacity(0);
+      radarAnimIndex = (radarAnimIndex + 1) % radarLoopLayers.length;
+      radarLoopLayers[radarAnimIndex].setOpacity(0.8);
+    }, 450);
+  } else {
+    clearInterval(radarAnimInterval);
+    radarLoopLayers.forEach(l => {
+      l.setOpacity(0);
+      if (map.hasLayer(l)) map.removeLayer(l);
+    });
+  }
+};
 
 async function loadWarningPolygons() {
   try {
-    // Fetch active alerts and Texas county boundaries concurrently
-    const [alertRes, countyRes] = await Promise.all([
-      fetch('https://api.weather.gov/alerts/active?area=TX', { headers: { 'User-Agent': 'VizcayaTactical/1.0' } }),
-      cachedCountiesData ? Promise.resolve(cachedCountiesData) : fetch('https://raw.githubusercontent.com/Cincome/tx.geojson/master/counties/tx_counties.geojson').then(r => r.json())
-    ]);
-
-    if (!cachedCountiesData) cachedCountiesData = countyRes;
-    const alertData = await alertRes.json();
-
-    layers.wwa.clearLayers();
-
-    // 1. Map Polygon-based warnings (Tornado, Severe Storm, Flash Flood)
-    if (alertData.features) {
-      const stormPolygons = L.geoJSON(alertData, {
-        filter: f => f.geometry !== null,
+    const res = await fetch('https://api.weather.gov/alerts/active?area=TX', {
+      headers: { 'User-Agent': 'VizcayaTactical/1.0' }
+    });
+    const data = await res.json();
+    if (data.features) {
+      const geoLayer = L.geoJSON(data, {
         style: f => {
           const e = (f.properties.event || '').toLowerCase();
           if (e.includes('tornado')) return { color: '#ff0000', weight: 4, fillOpacity: 0.3 };
           if (e.includes('severe thunderstorm')) return { color: '#ff6600', weight: 3, fillOpacity: 0.2 };
-          if (e.includes('flood')) return { color: '#0055ff', weight: 3, fillOpacity: 0.25 };
-          return { color: '#ffcc00', weight: 2, fillOpacity: 0.15 };
+          if (e.includes('heat') || e.includes('excessive heat')) return { color: '#ff7f00', weight: 2, fillOpacity: 0.25 };
+          if (e.includes('special weather statement')) return { color: '#eab308', weight: 2, fillOpacity: 0.15 };
+          return { color: '#38bdf8', weight: 2, fillOpacity: 0.15 }; 
         },
         onEachFeature: (f, layer) => {
           if (f.properties && f.properties.event) {
@@ -173,58 +224,14 @@ async function loadWarningPolygons() {
           }
         }
       });
-      layers.wwa.addLayer(stormPolygons);
-    }
-
-    // 2. Map Zone/County-based advisories (Heat Advisories, SWS, etc.) by matching county names
-    if (cachedCountiesData && alertData.features) {
-      // Build a map of county name -> highest priority alert color/event
-      const countyAlerts = {};
-      alertData.features.forEach(f => {
-        if (f.geometry === null && f.properties && f.properties.areaDesc) {
-          const event = (f.properties.event || '').toLowerCase();
-          let color = '#38bdf8'; // Default advisory light blue
-          if (event.includes('heat') || event.includes('excessive heat')) color = '#ff7f00'; // Orange
-          else if (event.includes('statement') || event.includes('sws')) color = '#eab308'; // Gold
-
-          // areaDesc is usually a semicolon-separated list of county names (e.g., "Travis; Williamson")
-          const counties = f.properties.areaDesc.split(';');
-          counties.forEach(cName => {
-            const cleanName = cName.trim().replace(/County/gi, '').trim().toLowerCase();
-            if (cleanName) {
-              countyAlerts[cleanName] = { event: f.properties.event, color: color };
-            }
-          });
-        }
-      });
-
-      const countyZoneLayer = L.geoJSON(cachedCountiesData, {
-        style: f => {
-          const name = (f.properties.NAME || f.properties.name || '').toLowerCase();
-          const match = countyAlerts[name];
-          if (match) {
-            return { color: match.color, weight: 1.5, fillColor: match.color, fillOpacity: 0.3 };
-          }
-          // Default unalerted counties remain invisible/transparent border
-          return { stroke: false, fill: false };
-        },
-        onEachFeature: (f, layer) => {
-          const name = (f.properties.NAME || f.properties.name || '');
-          const cleanName = name.toLowerCase();
-          const match = countyAlerts[cleanName];
-          if (match) {
-            layer.bindPopup(`<b>${match.event}</b><br><small>${name} County</small>`);
-          }
-        }
-      });
-      layers.wwa.addLayer(countyZoneLayer);
-    }
-
-    if (document.getElementById('wwa').checked) {
-      layers.wwa.addTo(map);
+      layers.wwa.clearLayers();
+      layers.wwa.addLayer(geoLayer);
+      if (document.getElementById('wwa').checked) {
+        layers.wwa.addTo(map);
+      }
     }
   } catch (err) {
-    console.warn("Could not load warning polygons/counties", err);
+    console.warn("Could not load warning polygons", err);
   }
 }
 
@@ -232,9 +239,18 @@ loadWarningPolygons();
 setInterval(loadWarningPolygons, 300000);
 
 document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => { 
+  if (checkbox.id === 'radarLoop') return;
   checkbox.onchange = () => { 
     const layer = layers[checkbox.id];
     if (!layer) return;
+    if (checkbox.checked && checkbox.id === 'radar' && document.getElementById('radarLoop').checked) {
+      document.getElementById('radarLoop').checked = false;
+      clearInterval(radarAnimInterval);
+      radarLoopLayers.forEach(l => {
+        l.setOpacity(0);
+        if (map.hasLayer(l)) map.removeLayer(l);
+      });
+    }
     checkbox.checked ? map.addLayer(layer) : map.removeLayer(layer); 
   };
 });
