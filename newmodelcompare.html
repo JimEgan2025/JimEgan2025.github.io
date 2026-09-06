@@ -276,7 +276,7 @@
 
         #consensusChart {
             width: 100%;
-            height: 330px;
+            height: 560px; /* Increased height as requested */
             display: block;
         }
 
@@ -536,7 +536,7 @@
                             <th style="width: 7%;">NAM Conus</th>
                             <th style="width: 7%;">GEM Regional</th>
                             <th style="width: 7%;">GEM Global</th>
-                            <th style="width: 7%;">ICON Seamless</th>
+                            <th style="width: 7%;">ICON seamless</th>
                             <th style="width: 5%;" class="calc-col">Prob</th>
                             <th style="width: 7%;" class="calc-col">Average</th>
                             <th style="width: 6%;" class="calc-col">Min</th>
@@ -567,12 +567,18 @@
         </div>
     </div>
 
+    <!-- Include Chart.js and Chart.js Data Labels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script>
+        Chart.register(ChartDataLabels);
+
         const lat = 30.5871;
         const lon = -97.641;
 
         const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         let lastChartData = null;
+        let consensusChartInstance = null;
 
         function updateClock() {
             const now = new Date();
@@ -585,6 +591,13 @@
             if (event.key === "Enter") {
                 event.preventDefault();
                 fetchWeatherModels();
+            }
+        });
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedKey = localStorage.getItem("vcKey");
+            if (savedKey) {
+                document.getElementById("vcKeyInput").value = savedKey;
             }
         });
 
@@ -643,6 +656,19 @@
             "icon_seamless": "icon_seamless"
         };
 
+        const modelDisplayNames = {
+            "ecmwf_ifs025": "ECMWF IFS",
+            "ecmwf_aifs025_single": "ECMWF AIFS",
+            "gfs_seamless": "GFS Seamless",
+            "ncep_nbm_conus": "NBM Blend",
+            "gem_seamless": "GEM Seamless",
+            "gfs_graphcast025": "Graphcast AI",
+            "ncep_nam_conus": "NAM Conus",
+            "gem_regional": "GEM Regional",
+            "gem_global": "GEM Global",
+            "icon_seamless": "ICON Seamless"
+        };
+
         async function fetchWeatherModels() {
             try {
                 const vcKeyInput = document.getElementById('vcKeyInput');
@@ -657,7 +683,6 @@
                     }
                 }
 
-                // 8 days requested so we can cleanly start tomorrow (Day 1 through Day 7)
                 const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max&hourly=temperature_2m,apparent_temperature,precipitation,wind_speed_10m,wind_gusts_10m&models=ecmwf_ifs025,ecmwf_aifs025_single,gfs_seamless,ncep_nbm_conus,gem_seamless,gfs_graphcast025,ncep_nam_conus,gem_regional,gem_global,icon_seamless&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8`;
                 const omResponse = await fetch(openMeteoUrl);
                 const omData = await omResponse.json();
@@ -770,64 +795,37 @@
                 "icon_seamless"
             ];
 
-            const datasets = {
-                times: daily.time,
-                tempMax: models.map(m => findKey("temperature_2m_max", m)),
-                tempMin: models.map(m => findKey("temperature_2m_min", m)),
-                appMax: models.map(m => findKey("apparent_temperature_max", m)),
-                appMin: models.map(m => findKey("apparent_temperature_min", m)),
-                precip: models.map(m => findKey("precipitation_sum", m)),
-                prob: models.map(m => findKey("precipitation_probability_max", m)),
-                windMax: models.map(m => findKey("wind_speed_10m_max", m)),
-                windGust: models.map(m => findKey("wind_gusts_10m_max", m))
-            };
+            const startIndex = 1;
+            const numDays = 7;
+            const dates = daily.time.slice(startIndex, startIndex + numDays);
 
-            const getVal = (dataset, mIndex, dayIndex, dateStr) => {
-                const arr = dataset[mIndex];
+            let tempHtmlDetailed = "";
+            let apparentHtmlDetailed = "";
+            let windHtmlDetailed = "";
+            let precipHtmlDetailed = "";
 
-                if (arr && arr[dayIndex] !== null && arr[dayIndex] !== undefined) {
-                    return arr[dayIndex];
-                }
+            let summaryTempHtml = "";
+            let summaryApparentHtml = "";
+            let summaryWindHtml = "";
+            let summaryPrecipHtml = "";
 
-                const model = models[mIndex];
-                const aggregated = aggregateHourlyForDate(hourly, model, dateStr);
-                if (aggregated) {
-                    if (dataset === datasets.tempMax) return aggregated.maxTemp;
-                    if (dataset === datasets.tempMin) return aggregated.minTemp;
-                    if (dataset === datasets.appMax) return aggregated.maxApp;
-                    if (dataset === datasets.appMin) return aggregated.minApp;
-                    if (dataset === datasets.precip) return aggregated.precipSum;
-                    if (dataset === datasets.windMax) return aggregated.maxWind;
-                    if (dataset === datasets.windGust) return aggregated.maxGust;
-                }
-                return null;
-            };
+            let chartLabels = [];
+            let chartHighTemps = [];
+            let chartApparentTemps = [];
+            let reportTextLines = [];
 
-            let tempRowsHTML = "";
-            let apparentRowsHTML = "";
-            let windRowsHTML = "";
-            let precipRowsHTML = "";
+            reportTextLines.push("=== VIZCAYA WEATHER CONSENSUS & MODEL COMPARISON ===");
+            reportTextLines.push(`Location: Georgetown, TX (${lat}, ${lon})`);
+            reportTextLines.push(`Generated: ${new Date().toLocaleString()}`);
+            reportTextLines.push("");
 
-            let summaryTempHTML = "";
-            let summaryApparentHTML = "";
-            let summaryWindHTML = "";
-            let summaryPrecipHTML = "";
+            for (let i = 0; i < dates.length; i++) {
+                const dateStr = dates[i];
+                const dateObj = new Date(dateStr + "T00:00:00");
+                const dayName = daysOfWeek[dateObj.getDay()];
+                const formattedDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
 
-            let aiDataPack = "[FILE: Multi-Model Variance Analysis]\nTYPE: MODEL_SPREAD\n\n";
-            aiDataPack += "Vizcaya 7-Day Model Comparison & Ensemble Spread\n";
-            aiDataPack += `Location: Georgetown / Round Rock, TX (30.587, -97.641)\n\n`;
-
-            const chartDays = [];
-            const chartHighs = [];
-            const chartApparent = [];
-
-            // Start loop at 1 (tomorrow) through Day 7 (index 7)
-            const totalDays = Math.min(datasets.times.length, 8);
-
-            for (let i = 1; i < totalDays; i++) {
-                const dateStr = datasets.times[i];
-                const dObj = new Date(dateStr + "T00:00:00");
-                const dayName = daysOfWeek[dObj.getDay()];
+                chartLabels.push(`${dayName} ${formattedDate}`);
 
                 let vcDay = null;
                 if (vcData && vcData.days) {
@@ -835,295 +833,366 @@
                 }
 
                 // --- TEMPERATURES ---
-                const tMaxVals = models.map((_, mIdx) => getVal(datasets.tempMax, mIdx, i, dateStr)).filter(v => v !== null);
-                const tMinVals = models.map((_, mIdx) => getVal(datasets.tempMin, mIdx, i, dateStr)).filter(v => v !== null);
-                
-                const avgMax = tMaxVals.length ? (tMaxVals.reduce((a, b) => a + b, 0) / tMaxVals.length) : null;
-                const avgMin = tMinVals.length ? (tMinVals.reduce((a, b) => a + b, 0) / tMinVals.length) : null;
-                const overallAvgTemp = (avgMax !== null && avgMin !== null) ? ((avgMax + avgMin) / 2).toFixed(1) : "-";
-
-                const probVals = models.map((_, mIdx) => getVal(datasets.prob, mIdx, i, dateStr)).filter(v => v !== null);
-                const avgProb = probVals.length ? Math.round(probVals.reduce((a, b) => a + b, 0) / probVals.length) : 0;
-
-                const precipVals = models.map((_, mIdx) => getVal(datasets.precip, mIdx, i, dateStr)).filter(v => v !== null);
-                const avgPrecip = precipVals.length ? (precipVals.reduce((a, b) => a + b, 0) / precipVals.length) : 0;
-                const minPrecip = precipVals.length ? Math.min(...precipVals) : 0;
-                const maxPrecip = precipVals.length ? Math.max(...precipVals) : 0;
-
-                // Detailed Temp Row
-                tempRowsHTML += `<tr>`;
-                tempRowsHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                tempRowsHTML += `<td class="vc-col">${vcDay ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}°` : '<span class="pending-text">N/A</span>'}</td>`;
-                
-                for (let mIdx = 0; mIdx < models.length; mIdx++) {
-                    const mx = getVal(datasets.tempMax, mIdx, i, dateStr);
-                    const mn = getVal(datasets.tempMin, mIdx, i, dateStr);
-                    tempRowsHTML += `<td>${mx !== null ? `${Math.round(mx)}°` : '-'}/${mn !== null ? `${Math.round(mn)}°` : '-'}</td>`;
+                let vcTempStr = `<span class="pending-text">${vcData ? 'N/A' : 'VC Key Needed'}</span>`;
+                let vcMaxT = null, vcMinT = null;
+                if (vcDay) {
+                    vcMaxT = vcDay.tempmax;
+                    vcMinT = vcDay.tempmin;
+                    vcTempStr = `${Math.round(vcMaxT)}° / ${Math.round(vcMinT)}°`;
                 }
-                tempRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
-                tempRowsHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
-                tempRowsHTML += `<td class="calc-col">${minPrecip.toFixed(2)}" - ${maxPrecip.toFixed(2)}"</td>`;
-                tempRowsHTML += `<td class="calc-col">${overallAvgTemp}°</td>`;
-                tempRowsHTML += `</tr>`;
 
-                // Summary Temp Row
-                const tempRangeStr = (avgMax !== null && avgMin !== null) ? `${Math.round(avgMin)}° — ${Math.round(avgMax)}°` : "-";
-                summaryTempHTML += `<tr>`;
-                summaryTempHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                summaryTempHTML += `<td class="vc-col">${vcDay ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}°` : '-'}</td>`;
-                summaryTempHTML += `<td class="calc-col">${overallAvgTemp}°</td>`;
-                summaryTempHTML += `<td class="calc-col">${tempRangeStr}</td>`;
-                summaryTempHTML += `<td class="calc-col">${avgProb}%</td>`;
-                summaryTempHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
-                summaryTempHTML += `</tr>`;
+                let tempVals = [];
+                let modelTempCells = "";
+                models.forEach(m => {
+                    const maxArr = findKey("temperature_2m_max", m);
+                    const minArr = findKey("temperature_2m_min", m);
+                    const origIdx = daily.time.indexOf(dateStr);
+                    let mMax = maxArr && origIdx !== -1 ? maxArr[origIdx] : null;
+                    let mMin = minArr && origIdx !== -1 ? minArr[origIdx] : null;
+
+                    if ((mMax === null || mMin === null) && hourly) {
+                        const agg = aggregateHourlyForDate(hourly, m, dateStr);
+                        if (agg) {
+                            if (mMax === null) mMax = agg.maxTemp;
+                            if (mMin === null) mMin = agg.minTemp;
+                        }
+                    }
+
+                    if (mMax !== null && mMin !== null) {
+                        tempVals.push({ max: mMax, min: mMin });
+                        modelTempCells += `<td>${Math.round(mMax)}°/${Math.round(mMin)}°</td>`;
+                    } else {
+                        modelTempCells += `<td>-</td>`;
+                    }
+                });
+
+                if (vcMaxT !== null && vcMinT !== null) {
+                    tempVals.push({ max: vcMaxT, min: vcMinT });
+                }
+
+                let avgMaxTemp = tempVals.length > 0 ? tempVals.reduce((acc, v) => acc + v.max, 0) / tempVals.length : 0;
+                let avgMinTemp = tempVals.length > 0 ? tempVals.reduce((acc, v) => acc + v.min, 0) / tempVals.length : 0;
+                let allMaxs = tempVals.map(v => v.max);
+                let allMins = tempVals.map(v => v.min);
+                let rangeMax = allMaxs.length > 0 ? `${Math.round(Math.min(...allMaxs))}° - ${Math.round(Math.max(...allMaxs))}°` : "-";
+                let rangeMin = allMins.length > 0 ? `${Math.round(Math.min(...allMins))}° - ${Math.round(Math.max(...allMins))}°` : "-";
+
+                chartHighTemps.push(Math.round(avgMaxTemp));
 
                 // --- APPARENT TEMPERATURES ---
-                const appMaxVals = models.map((_, mIdx) => getVal(datasets.appMax, mIdx, i, dateStr)).filter(v => v !== null);
-                const appMinVals = models.map((_, mIdx) => getVal(datasets.appMin, mIdx, i, dateStr)).filter(v => v !== null);
-                const avgAppMax = appMaxVals.length ? (appMaxVals.reduce((a, b) => a + b, 0) / appMaxVals.length) : null;
-                const avgAppMin = appMinVals.length ? (appMinVals.reduce((a, b) => a + b, 0) / appMinVals.length) : null;
-
-                apparentRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                apparentRowsHTML += `<td class="vc-col">${vcDay && vcDay.feelslikemax !== undefined ? `${Math.round(vcDay.feelslikemax)}° / ${Math.round(vcDay.feelslikemin)}°` : '-'}</td>`;
-                for (let mIdx = 0; mIdx < models.length; mIdx++) {
-                    const amx = getVal(datasets.appMax, mIdx, i, dateStr);
-                    const amn = getVal(datasets.appMin, mIdx, i, dateStr);
-                    apparentRowsHTML += `<td>${amx !== null ? `${Math.round(amx)}°` : '-'}/${amn !== null ? `${Math.round(amn)}°` : '-'}</td>`;
+                let vcAppStr = `<span class="pending-text">${vcData ? 'N/A' : 'VC Key Needed'}</span>`;
+                let vcMaxApp = null, vcMinApp = null;
+                if (vcDay) {
+                    vcMaxApp = vcDay.feelslikemax !== undefined ? vcDay.feelslikemax : vcDay.feelslike;
+                    vcMinApp = vcDay.feelslikemin !== undefined ? vcDay.feelslikemin : vcDay.feelslike;
+                    vcAppStr = `${Math.round(vcMaxApp)}° / ${Math.round(vcMinApp)}°`;
                 }
-                apparentRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
-                apparentRowsHTML += `<td class="calc-col">${avgAppMax !== null ? Math.round(avgAppMax) : '-'}° / ${avgAppMin !== null ? Math.round(avgAppMin) : '-'}°</td>`;
-                apparentRowsHTML += `<td class="calc-col">${appMinVals.length ? Math.round(Math.min(...appMinVals)) : '-'}°</td>`;
-                apparentRowsHTML += `<td class="calc-col">${appMaxVals.length ? Math.round(Math.max(...appMaxVals)) : '-'}°</td>`;
-                apparentRowsHTML += `<td class="calc-col">${(appMaxVals.length && appMinVals.length) ? (Math.max(...appMaxVals) - Math.min(...appMinVals)) + '°' : '-'}</td>`;
-                apparentRowsHTML += `</tr>`;
 
-                summaryApparentHTML += `<tr>`;
-                summaryApparentHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                summaryApparentHTML += `<td class="vc-col">${vcDay && vcDay.feelslikemax !== undefined ? `${Math.round(vcDay.feelslikemax)}° / ${Math.round(vcDay.feelslikemin)}°` : '-'}</td>`;
-                summaryApparentHTML += `<td class="calc-col">${avgAppMax !== null ? Math.round(avgAppMax) : '-'}° / ${avgAppMin !== null ? Math.round(avgAppMin) : '-'}°</td>`;
-                summaryApparentHTML += `<td class="calc-col">${appMinVals.length ? Math.round(Math.min(...appMinVals)) : '-'}° to ${appMaxVals.length ? Math.round(Math.max(...appMaxVals)) : '-'}°</td>`;
-                summaryApparentHTML += `<td class="calc-col">${avgProb}%</td>`;
-                summaryApparentHTML += `</tr>`;
+                let appVals = [];
+                let modelAppCells = "";
+                models.forEach(m => {
+                    const maxArr = findKey("apparent_temperature_max", m);
+                    const minArr = findKey("apparent_temperature_min", m);
+                    const origIdx = daily.time.indexOf(dateStr);
+                    let mMax = maxArr && origIdx !== -1 ? maxArr[origIdx] : null;
+                    let mMin = minArr && origIdx !== -1 ? minArr[origIdx] : null;
+
+                    if ((mMax === null || mMin === null) && hourly) {
+                        const agg = aggregateHourlyForDate(hourly, m, dateStr);
+                        if (agg) {
+                            if (mMax === null) mMax = agg.maxApp;
+                            if (mMin === null) mMin = agg.minApp;
+                        }
+                    }
+
+                    if (mMax !== null && mMin !== null) {
+                        appVals.push({ max: mMax, min: mMin });
+                        modelAppCells += `<td>${Math.round(mMax)}°/${Math.round(mMin)}°</td>`;
+                    } else {
+                        modelAppCells += `<td>-</td>`;
+                    }
+                });
+
+                if (vcMaxApp !== null && vcMinApp !== null) {
+                    appVals.push({ max: vcMaxApp, min: vcMinApp });
+                }
+
+                let avgAppMax = appVals.length > 0 ? appVals.reduce((acc, v) => acc + v.max, 0) / appVals.length : 0;
+                let avgAppMin = appVals.length > 0 ? appVals.reduce((acc, v) => acc + v.min, 0) / appVals.length : 0;
+                let allAppMaxs = appVals.map(v => v.max);
+                let allAppMins = appVals.map(v => v.min);
+                let appRangeMax = allAppMaxs.length > 0 ? `${Math.round(Math.min(...allAppMaxs))}° - ${Math.round(Math.max(...allAppMaxs))}°` : "-";
+                let appRangeMin = allAppMins.length > 0 ? `${Math.round(Math.min(...allAppMins))}° - ${Math.round(Math.max(...allAppMins))}°` : "-";
+
+                chartApparentTemps.push(Math.round(avgAppMax));
 
                 // --- WINDS & GUSTS ---
-                const windVals = models.map((_, mIdx) => getVal(datasets.windMax, mIdx, i, dateStr)).filter(v => v !== null);
-                const gustVals = models.map((_, mIdx) => getVal(datasets.windGust, mIdx, i, dateStr)).filter(v => v !== null);
-                const avgWind = windVals.length ? (windVals.reduce((a, b) => a + b, 0) / windVals.length) : null;
-                const avgGust = gustVals.length ? (gustVals.reduce((a, b) => a + b, 0) / gustVals.length) : null;
-
-                windRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                windRowsHTML += `<td class="vc-col">${vcDay && vcDay.windspeed !== undefined ? `${Math.round(vcDay.windspeed)} / ${Math.round(vcDay.windgust || 0)} mph` : '-'}</td>`;
-                for (let mIdx = 0; mIdx < models.length; mIdx++) {
-                    const w = getVal(datasets.windMax, mIdx, i, dateStr);
-                    const g = getVal(datasets.windGust, mIdx, i, dateStr);
-                    windRowsHTML += `<td>${w !== null ? Math.round(w) : '-'}/${g !== null ? Math.round(g) : '-'}</td>`;
+                let vcWindStr = `<span class="pending-text">${vcData ? 'N/A' : 'VC Key Needed'}</span>`;
+                let vcWind = null, vcGust = null;
+                if (vcDay) {
+                    vcWind = vcDay.windspeed;
+                    vcGust = vcDay.windgust;
+                    vcWindStr = `${Math.round(vcWind)} mph${vcGust ? ' / ' + Math.round(vcGust) + ' g' : ''}`;
                 }
-                windRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
-                windRowsHTML += `<td class="calc-col">${avgWind !== null ? Math.round(avgWind) : '-'} / ${avgGust !== null ? Math.round(avgGust) : '-'} mph</td>`;
-                windRowsHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.min(...windVals)) : '-'} mph</td>`;
-                windRowsHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.max(...windVals)) : '-'} mph</td>`;
-                windRowsHTML += `<td class="calc-col">${windVals.length ? (Math.max(...windVals) - Math.min(...windVals)) + ' mph' : '-'}</td>`;
-                windRowsHTML += `</tr>`;
 
-                summaryWindHTML += `<tr>`;
-                summaryWindHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                summaryWindHTML += `<td class="vc-col">${vcDay && vcDay.windspeed !== undefined ? `${Math.round(vcDay.windspeed)} / ${Math.round(vcDay.windgust || 0)} mph` : '-'}</td>`;
-                summaryWindHTML += `<td class="calc-col">${avgWind !== null ? Math.round(avgWind) : '-'} / ${avgGust !== null ? Math.round(avgGust) : '-'} mph</td>`;
-                summaryWindHTML += `<td class="calc-col">${windVals.length ? Math.round(Math.min(...windVals)) : '-'} to ${windVals.length ? Math.round(Math.max(...windVals)) : '-'} mph</td>`;
-                summaryWindHTML += `<td class="calc-col">${avgProb}%</td>`;
-                summaryWindHTML += `</tr>`;
+                let windVals = [];
+                let modelWindCells = "";
+                models.forEach(m => {
+                    const windArr = findKey("wind_speed_10m_max", m);
+                    const origIdx = daily.time.indexOf(dateStr);
+                    let mWind = windArr && origIdx !== -1 ? windArr[origIdx] : null;
 
-                // --- PRECIPITATION AMOUNT ---
-                precipRowsHTML += `<tr><td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                precipRowsHTML += `<td class="vc-col">${vcDay && vcDay.precip !== undefined ? `${vcDay.precip}"` : '0.00"'}</td>`;
-                for (let mIdx = 0; mIdx < models.length; mIdx++) {
-                    const p = getVal(datasets.precip, mIdx, i, dateStr);
-                    precipRowsHTML += `<td>${p !== null ? p.toFixed(2) : '0.00'}"</td>`;
+                    if (mWind === null && hourly) {
+                        const agg = aggregateHourlyForDate(hourly, m, dateStr);
+                        if (agg) mWind = agg.maxWind;
+                    }
+
+                    if (mWind !== null) {
+                        windVals.push(mWind);
+                        modelWindCells += `<td>${Math.round(mWind)} mph</td>`;
+                    } else {
+                        modelWindCells += `<td>-</td>`;
+                    }
+                });
+
+                if (vcWind !== null) windVals.push(vcWind);
+                let avgWind = windVals.length > 0 ? windVals.reduce((a, b) => a + b, 0) / windVals.length : 0;
+                let minWind = windVals.length > 0 ? Math.min(...windVals) : 0;
+                let maxWind = windVals.length > 0 ? Math.max(...windVals) : 0;
+
+                // --- PRECIPITATION ---
+                let vcPrecipProb = vcDay && vcDay.precipprob !== undefined ? vcDay.precipprob : null;
+                let vcPrecipSum = vcDay && vcDay.precip !== undefined ? vcDay.precip : null;
+                let vcPrecipStr = `<span class="pending-text">${vcData ? 'N/A' : 'VC Key Needed'}</span>`;
+                if (vcDay) {
+                    vcPrecipStr = `${vcPrecipSum !== null ? vcPrecipSum.toFixed(2) + '"' : '0.00"'} (${vcPrecipProb !== null ? Math.round(vcPrecipProb) + '%' : '-%'})`;
                 }
-                precipRowsHTML += `<td class="calc-col">${avgProb}%</td>`;
-                precipRowsHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
-                precipRowsHTML += `<td class="calc-col">${minPrecip.toFixed(2)}"</td>`;
-                precipRowsHTML += `<td class="calc-col">${maxPrecip.toFixed(2)}"</td>`;
-                precipRowsHTML += `<td class="calc-col">${(maxPrecip - minPrecip).toFixed(2)}"</td>`;
-                precipRowsHTML += `</tr>`;
 
-                summaryPrecipHTML += `<tr>`;
-                summaryPrecipHTML += `<td class="date-col">${dateStr}</td><td>${dayName}</td>`;
-                summaryPrecipHTML += `<td class="vc-col">${vcDay && vcDay.precip !== undefined ? `${vcDay.precip}"` : '0.00"'}</td>`;
-                summaryPrecipHTML += `<td class="calc-col">${avgPrecip.toFixed(2)}"</td>`;
-                summaryPrecipHTML += `<td class="calc-col">${minPrecip.toFixed(2)}" — ${maxPrecip.toFixed(2)}"</td>`;
-                summaryPrecipHTML += `<td class="calc-col">${avgProb}%</td>`;
-                summaryPrecipHTML += `</tr>`;
+                const probArr = daily.precipitation_probability_max;
+                const sumArr = daily.precipitation_sum;
+                const origIdx = daily.time.indexOf(dateStr);
+                let omProb = probArr && origIdx !== -1 ? probArr[origIdx] : null;
+                let omSum = sumArr && origIdx !== -1 ? sumArr[origIdx] : null;
 
-                // Side-by-side Visual Crossing vs Multi-Model Consensus AI Export
-                const vcStr = (vcDay && vcDay.tempmax !== undefined) ? `${Math.round(vcDay.tempmax)}° / ${Math.round(vcDay.tempmin)}° (Feels ${Math.round(vcDay.feelslikemax)}°)` : 'N/A';
-                aiDataPack += `Date: ${dateStr} (${dayName}) | Visual Crossing: ${vcStr} | Multi-Model Consensus: ${Math.round(avgMax)}° / ${Math.round(avgMin)}° (Feels ${Math.round(avgAppMax)}°) | Rain: ${avgPrecip.toFixed(2)}" (${avgProb}%) | Wind: ${Math.round(avgWind)} mph (Gusts ${Math.round(avgGust)} mph)\n`;
+                let precipVals = [];
+                let modelPrecipCells = "";
+                models.forEach(m => {
+                    const precipArr = findKey("precipitation_sum", m);
+                    let mPrec = precipArr && origIdx !== -1 ? precipArr[origIdx] : null;
+                    if (mPrec === null && hourly) {
+                        const agg = aggregateHourlyForDate(hourly, m, dateStr);
+                        if (agg) mPrec = agg.precipSum;
+                    }
+                    if (mPrec !== null) {
+                        precipVals.push(mPrec);
+                        modelPrecipCells += `<td>${mPrec.toFixed(2)}"</td>`;
+                    } else {
+                        modelPrecipCells += `<td>-</td>`;
+                    }
+                });
 
-                // Collect for 7-day chart
-                chartDays.push(`${dayName} ${dObj.getMonth()+1}/${dObj.getDate()}`);
-                chartHighs.push(Math.round(avgMax));
-                chartApparent.push(Math.round(avgAppMax));
+                if (vcPrecipSum !== null) precipVals.push(vcPrecipSum);
+                let avgPrecip = precipVals.length > 0 ? precipVals.reduce((a, b) => a + b, 0) / precipVals.length : 0;
+                let minPrecip = precipVals.length > 0 ? Math.min(...precipVals) : 0;
+                let maxPrecip = precipVals.length > 0 ? Math.max(...precipVals) : 0;
+                let probDisplay = omProb !== null ? `${Math.round(omProb)}%` : (vcPrecipProb !== null ? `${Math.round(vcPrecipProb)}%` : "-");
+
+                // --- BUILD TABLES & REPORT ---
+                tempHtmlDetailed += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcTempStr}</td>
+                    ${modelTempCells}
+                    <td class="calc-col">${probDisplay}</td>
+                    <td class="calc-col">${avgPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${minPrecip.toFixed(2)}" - ${maxPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${Math.round(avgMaxTemp)}°/${Math.round(avgMinTemp)}°</td>
+                </tr>`;
+
+                apparentHtmlDetailed += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcAppStr}</td>
+                    ${modelAppCells}
+                    <td class="calc-col">${probDisplay}</td>
+                    <td class="calc-col">${Math.round(avgAppMax)}°/${Math.round(avgAppMin)}°</td>
+                    <td class="calc-col">${Math.round(Math.min(...allAppMins))}°</td>
+                    <td class="calc-col">${Math.round(Math.max(...allAppMaxs))}°</td>
+                    <td class="calc-col">${Math.round(Math.min(...allAppMins))}° - ${Math.round(Math.max(...allAppMaxs))}°</td>
+                </tr>`;
+
+                windHtmlDetailed += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcWindStr}</td>
+                    ${modelWindCells}
+                    <td class="calc-col">${probDisplay}</td>
+                    <td class="calc-col">${Math.round(avgWind)} mph</td>
+                    <td class="calc-col">${Math.round(minWind)} mph</td>
+                    <td class="calc-col">${Math.round(maxWind)} mph</td>
+                    <td class="calc-col">${Math.round(minWind)} - ${Math.round(maxWind)} mph</td>
+                </tr>`;
+
+                precipHtmlDetailed += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcPrecipStr}</td>
+                    ${modelPrecipCells}
+                    <td class="calc-col">${probDisplay}</td>
+                    <td class="calc-col">${avgPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${minPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${maxPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${minPrecip.toFixed(2)}" - ${maxPrecip.toFixed(2)}"</td>
+                </tr>`;
+
+                summaryTempHtml += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcTempStr}</td>
+                    <td class="calc-col">${Math.round(avgMaxTemp)}° / ${Math.round(avgMinTemp)}°</td>
+                    <td class="calc-col">High: ${rangeMax}<br>Low: ${rangeMin}</td>
+                    <td class="calc-col">${probDisplay}</td>
+                    <td class="calc-col">${avgPrecip.toFixed(2)}"</td>
+                </tr>`;
+
+                summaryApparentHtml += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcAppStr}</td>
+                    <td class="calc-col">${Math.round(avgAppMax)}° / ${Math.round(avgAppMin)}°</td>
+                    <td class="calc-col">Max: ${appRangeMax}<br>Min: ${appRangeMin}</td>
+                    <td class="calc-col">${probDisplay}</td>
+                </tr>`;
+
+                summaryWindHtml += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcWindStr}</td>
+                    <td class="calc-col">${Math.round(avgWind)} mph</td>
+                    <td class="calc-col">${Math.round(minWind)} - ${Math.round(maxWind)} mph</td>
+                    <td class="calc-col">${probDisplay}</td>
+                </tr>`;
+
+                summaryPrecipHtml += `<tr>
+                    <td class="date-col">${formattedDate}</td>
+                    <td><b>${dayName}</b></td>
+                    <td class="vc-col">${vcPrecipStr}</td>
+                    <td class="calc-col">${avgPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${minPrecip.toFixed(2)}" - ${maxPrecip.toFixed(2)}"</td>
+                    <td class="calc-col">${probDisplay}</td>
+                </tr>`;
+
+                reportTextLines.push(`Date: ${formattedDate} (${dayName})`);
+                reportTextLines.push(`- Consensus High/Low Temp: ${Math.round(avgMaxTemp)}°F / ${Math.round(avgMinTemp)}°F (Spread: ${rangeMax})`);
+                reportTextLines.push(`- Consensus Feels Like: ${Math.round(avgAppMax)}°F / ${Math.round(avgAppMin)}°F`);
+                reportTextLines.push(`- Rain Probability: ${probDisplay} | Avg Amount: ${avgPrecip.toFixed(2)}"`);
+                reportTextLines.push(`- Visual Crossing: ${vcDay ? Math.round(vcMaxT) + '°/' + Math.round(vcMinT) + '°' : 'N/A'}`);
+                reportTextLines.push("");
             }
 
-            document.getElementById("temp-tbody").innerHTML = tempRowsHTML;
-            document.getElementById("apparent-tbody").innerHTML = apparentRowsHTML;
-            document.getElementById("wind-tbody").innerHTML = windRowsHTML;
-            document.getElementById("precip-tbody").innerHTML = precipRowsHTML;
+            document.getElementById("temp-tbody").innerHTML = tempHtmlDetailed;
+            document.getElementById("apparent-tbody").innerHTML = apparentHtmlDetailed;
+            document.getElementById("wind-tbody").innerHTML = windHtmlDetailed;
+            document.getElementById("precip-tbody").innerHTML = precipHtmlDetailed;
 
-            document.getElementById("summary-temp-tbody").innerHTML = summaryTempHTML;
-            document.getElementById("summary-apparent-tbody").innerHTML = summaryApparentHTML;
-            document.getElementById("summary-wind-tbody").innerHTML = summaryWindHTML;
-            document.getElementById("summary-precip-tbody").innerHTML = summaryPrecipHTML;
+            document.getElementById("summary-temp-tbody").innerHTML = summaryTempHtml;
+            document.getElementById("summary-apparent-tbody").innerHTML = summaryApparentHtml;
+            document.getElementById("summary-wind-tbody").innerHTML = summaryWindHtml;
+            document.getElementById("summary-precip-tbody").innerHTML = summaryPrecipHtml;
 
-            document.getElementById("ai-report-box").value = aiDataPack;
+            document.getElementById("ai-report-box").value = reportTextLines.join("\n");
 
-            lastChartData = { days: chartDays, highs: chartHighs, apparent: chartApparent };
+            lastChartData = { labels: chartLabels, highTemps: chartHighTemps, apparentTemps: chartApparentTemps };
             renderConsensusChart(lastChartData);
         }
 
         function renderConsensusChart(data) {
-            const canvas = document.getElementById('consensusChart');
-            if (!canvas || !data || !data.days || data.days.length === 0) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = 330 * dpr;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const width = rect.width;
-            const height = 330;
-            ctx.clearRect(0, 0, width, height);
-
-            const padLeft = 55, padRight = 35, padTop = 60, padBottom = 45;
-            const chartW = width - padLeft - padRight;
-            const chartH = height - padTop - padBottom;
-
-            const allVals = [...data.highs, ...data.apparent];
-            const minVal = Math.floor(Math.min(...allVals) / 5) * 5 - 5;
-            const maxVal = Math.ceil(Math.max(...allVals) / 5) * 5 + 5;
-
-            // Legend
-            ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
-            ctx.textAlign = 'left';
-            
-            // High Temp Legend (Royal Blue)
-            ctx.fillStyle = '#2563eb';
-            ctx.beginPath();
-            ctx.arc(padLeft + 10, 25, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillText('Consensus High Temperature (°)', padLeft + 25, 29);
-
-            // Heat Index Legend (Amber)
-            ctx.fillStyle = '#ea580c';
-            ctx.beginPath();
-            ctx.arc(padLeft + 280, 25, 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillText('Consensus Feels Like / Heat Index (°)', padLeft + 295, 29);
-
-            // Grid Lines & Y Axis Labels
-            ctx.strokeStyle = '#e2e8f0';
-            ctx.lineWidth = 1;
-            ctx.fillStyle = '#64748b';
-            ctx.font = '12px -apple-system, system-ui, sans-serif';
-            ctx.textAlign = 'right';
-
-            const steps = 5;
-            for (let i = 0; i <= steps; i++) {
-                const val = minVal + (i * (maxVal - minVal) / steps);
-                const y = padTop + chartH - (i * chartH / steps);
-                
-                ctx.beginPath();
-                ctx.moveTo(padLeft, y);
-                ctx.lineTo(width - padRight, y);
-                ctx.stroke();
-
-                ctx.fillText(`${Math.round(val)}°`, padLeft - 10, y + 4);
+            const ctx = document.getElementById('consensusChart').getContext('2d');
+            if (consensusChartInstance) {
+                consensusChartInstance.destroy();
             }
 
-            const stepX = chartW / (data.days.length - 1);
-            const getX = (idx) => padLeft + idx * stepX;
-            const getY = (val) => padTop + chartH - ((val - minVal) / (maxVal - minVal)) * chartH;
-
-            // Draw Heat Index Line (Amber)
-            ctx.strokeStyle = '#ea580c';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            data.apparent.forEach((val, idx) => {
-                const x = getX(idx);
-                const y = getY(val);
-                if (idx === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-
-            // Draw High Temp Line (Royal Blue)
-            ctx.strokeStyle = '#2563eb';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            data.highs.forEach((val, idx) => {
-                const x = getX(idx);
-                const y = getY(val);
-                if (idx === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-
-            // Draw Points and Values
-            data.days.forEach((day, idx) => {
-                const x = getX(idx);
-                const yHi = getY(data.highs[idx]);
-                const yApp = getY(data.apparent[idx]);
-
-                // Heat Index Point & Value Badge
-                ctx.fillStyle = '#ea580c';
-                ctx.beginPath();
-                ctx.arc(x, yApp, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#9a3412';
-                ctx.fillText(`${data.apparent[idx]}°`, x, yApp - 10);
-
-                // High Temp Point & Value Badge
-                ctx.fillStyle = '#2563eb';
-                ctx.beginPath();
-                ctx.arc(x, yHi, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.font = 'bold 13px -apple-system, system-ui, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#1e40af';
-                ctx.fillText(`${data.highs[idx]}°`, x, yHi + 20);
-
-                // Date Label
-                ctx.fillStyle = '#334155';
-                ctx.font = 'bold 12px -apple-system, system-ui, sans-serif';
-                ctx.fillText(day, x, height - 15);
+            consensusChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Consensus High Temp (°F)',
+                            data: data.highTemps,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Consensus Heat Index / Feels Like (°F)',
+                            data: data.apparentTemps,
+                            borderColor: '#047857',
+                            backgroundColor: 'rgba(4, 120, 87, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 30 // Adds breathing room at the top so data labels don't collide with the legend
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                    weight: '600'
+                                },
+                                boxWidth: 14,
+                                boxHeight: 14
+                            }
+                        },
+                        datalabels: {
+                            align: 'top',
+                            anchor: 'end',
+                            formatter: (value) => `${value}°`,
+                            font: {
+                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                weight: '700',
+                                size: 12
+                            },
+                            color: '#1e293b',
+                            padding: 6
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: '#e2e8f0'
+                            },
+                            ticks: {
+                                padding: 10
+                            },
+                            // Gracefully expand upper scale bound to give extra overhead room for labels
+                            grace: '10%'
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
             });
         }
 
-        window.addEventListener('resize', () => {
-            if (lastChartData) renderConsensusChart(lastChartData);
-        });
-
-        window.onload = function() {
-            let vcKey = localStorage.getItem("vcKey");
-            
-            if (!vcKey) {
-                vcKey = prompt("Please enter your Visual Crossing API Key to sync all boards:");
-                if (vcKey) {
-                    vcKey = vcKey.trim();
-                    localStorage.setItem("vcKey", vcKey);
-                }
-            }
-            
-            if (vcKey) {
-                document.getElementById('vcKeyInput').value = vcKey;
-            }
-            
-            fetchWeatherModels();
-        };
+        fetchWeatherModels();
     </script>
 </body>
 </html>
