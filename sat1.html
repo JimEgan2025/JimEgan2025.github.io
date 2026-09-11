@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOES-19 Southern Plains Meteorological Dashboard</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 26px;
+            color: #ffffff;
+            margin-bottom: 25px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            max-width: 1450px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            width: 440px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .card h3 {
+            font-size: 17px;
+            text-align: left;
+            margin: 0 0 12px 5px;
+            color: #4da6ff;
+        }
+        .card img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>GOES-19 Southern Plains — GLM & ABI Sectors</h1>
+
+    <div class="container">
+        <!-- GLM Flash Extent Density -->
+        <div class="card">
+            <h3>GLM Flash Extent Density</h3>
+            <img src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/sp/EXTENT3/1200x1200.jpg" alt="GOES-19 GLM Flash Extent Density - Southern Plains">
+        </div>
+
+        <!-- ABI Band 09 (Mid-Level Water Vapor) -->
+        <div class="card">
+            <h3>Water Vapor (Band 09)</h3>
+            <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/09/1200x1200.jpg" alt="GOES-19 ABI Band 09 Water Vapor - Southern Plains">
+        </div>
+
+        <!-- ABI Band 14 (Shortwave/Clean IR) -->
+        <div class="card">
+            <h3>Infrared (Band 14)</h3>
+            <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/sp/14/1200x1200.jpg" alt="GOES-19 ABI Band 14 Infrared - Southern Plains">
+        </div>
+    </div>
+
+</body>
+</html>
