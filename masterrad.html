@@ -2,23 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Station Monitor - Master Control v10</title>
+    <title>Station Monitor - Master Control v15</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; }
         #map { height: 100vh; width: 100%; background: #050505; }
-        
+                
         /* Popup & UI Styling */
         .alert-header { color: #ff3b3b; font-weight: 800; border-bottom: 2px solid #333; margin-bottom: 8px; text-transform: uppercase; font-size: 14px; }
         .time-label { font-weight: bold; color: #94a3b8; font-size: 11px; text-transform: uppercase; }
         .desc-text { background: #1e293b; padding: 12px; border-radius: 6px; margin-top: 10px; font-style: italic; font-size: 12px; border-left: 4px solid #FFD700; color: #e2e8f0; max-height: 180px; overflow-y: auto; line-height: 1.5; }
-        
-        .ui-panel { background: rgba(15, 23, 42, 0.95); color: white; padding: 15px; border-radius: 12px; width: 210px; font-size: 11px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .ui-panel label { font-weight: 800; color: #94a3b8; letter-spacing: 1px; display: block; margin-bottom: 8px; }
-        input[type=range] { width: 100%; accent-color: #FFD700; cursor: pointer; margin-bottom: 15px; }
+                
+        .ui-panel { background: rgba(15, 23, 42, 0.95); color: white; padding: 15px; border-radius: 12px; width: 230px; font-size: 11px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .ui-panel label.section-title { font-weight: 800; color: #94a3b8; letter-spacing: 1px; display: block; margin-bottom: 8px; margin-top: 12px; }
+        .ui-panel label.section-title:first-child { margin-top: 0; }
+        .ui-panel label.checkbox-label { display: flex; align-items: center; cursor: pointer; margin-bottom: 6px; color: #e2e8f0; font-size: 12px; font-weight: 500; }
+        .ui-panel input[type=checkbox] { accent-color: #3b82f6; margin-right: 8px; cursor: pointer; width: 14px; height: 14px; }
+        input[type=range] { width: 100%; accent-color: #FFD700; cursor: pointer; margin-bottom: 10px; }
         button { width: 100%; background: #1e3a8a; color: white; border: 1px solid #3b82f6; padding: 8px; cursor: pointer; margin-top: 8px; font-weight: bold; border-radius: 6px; transition: 0.2s; }
         button:hover { background: #2563eb; }
-        
+                
         .leaflet-popup-content-wrapper { background: #0f172a; color: white; border: 1px solid #334155; }
         .leaflet-popup-tip { background: #0f172a; }
     </style>
@@ -28,15 +31,19 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+<!-- Esri Leaflet Plugin for native ArcGIS REST FeatureLayer support -->
+<script src="https://unpkg.com/esri-leaflet@3.0.19/dist/esri-leaflet.js"></script>
 <script>
     var stationPos = [30.5871, -97.641];
     var map = L.map('map', {zoomControl: false}).setView(stationPos, 7);
 
-    // 1. BASE MAP (Dark)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+    // 1. BASE MAP (Dark) with Authenticated CARTO Token
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png?key=cb1_3hfy_1_fa3161d3e2d8aa8456a8c5c7', {
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(map);
 
-    // 2. STATE OUTLINES
+    // 2. STATE & COUNTY OUTLINES
     var stateBorders = L.layerGroup().addTo(map);
     fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
         .then(res => res.json())
@@ -46,18 +53,97 @@
             }).addTo(stateBorders);
         });
 
-    // 3. WEATHER LAYERS
+    var countyBorders = L.layerGroup().addTo(map);
+    var countyGeoJsonLayer = null;
+    fetch('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json')
+        .then(res => res.json())
+        .then(data => {
+            var txCounties = {
+                type: "FeatureCollection",
+                features: data.features.filter(f => f.id && f.id.startsWith('48'))
+            };
+            countyGeoJsonLayer = L.geoJson(txCounties, {
+                style: { color: "#38bdf8", weight: 0.5, opacity: 0.4, fill: false, interactive: false }
+            });
+            countyBorders.addLayer(countyGeoJsonLayer);
+        });
+
+    // 3. WEATHER LAYERS & LOOPING NEXRAD
     var radar = L.tileLayer.wms('https://opengeo.ncep.noaa.gov/geoserver/conus/conus_bref_qcd/ows', { 
-        layers: 'conus_bref_qcd', format: 'image/png', transparent: true, opacity: 0.7, zIndex: 500
+        layers: 'conus_bref_qcd', format: 'image/png', transparent: true, opacity: 0.7, zIndex: 500 
     }).addTo(map);
 
-    var fireRisk = L.tileLayer.wms('https://mapservices.weather.noaa.gov/vector/services/fire_weather/SPC_firewx/MapServer/WMSServer', { 
-        layers: '1', format: 'image/png', transparent: true, opacity: 0.5 
-    });
+    const radarLoopLayers = [
+      L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m20m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 500 }),
+      L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m15m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 500 }),
+      L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m10m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 500 }),
+      L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913-m05m/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 500 }),
+      L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', { opacity: 0, transparent: true, maxZoom: 19, zIndex: 500 })
+    ];
+    let radarAnimIndex = 0;
+    let radarAnimInterval = null;
+    let isLooping = false;
 
     var warnings = L.tileLayer.wms('https://mapservices.weather.noaa.gov/eventdriven/services/WWA/watch_warn_adv/MapServer/WMSServer', { 
         layers: '0', format: 'image/png', transparent: true, opacity: 0.4 
     }).addTo(map);
+
+    // Styling Helper for Risk Polygons (SPC & WPC)
+    function getRiskColor(label) {
+        switch (label) {
+            case 'TSTM': return '#008000'; // Green
+            case 'MRGL': return '#00ff00'; // Light Green
+            case 'SLGT': return '#ffff00'; // Yellow
+            case 'ENH':  return '#ffa500'; // Orange
+            case 'MDT':  return '#ff0000'; // Red
+            case 'HIGH': return '#ff00ff'; // Magenta
+            default:     return '#888888';
+        }
+    }
+
+    // SPC Feature Layers
+    var spc1 = L.esri.featureLayer({
+        url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/1',
+        style: function (feature) {
+            var cat = feature.properties.LABEL || feature.properties.DN;
+            var col = getRiskColor(cat);
+            return { color: col, weight: 2, fillOpacity: 0.35, fillColor: col };
+        }
+    });
+
+    var spc2 = L.esri.featureLayer({
+        url: 'https://mapservices.weather.noaa.gov/vector/rest/services/outlooks/SPC_wx_outlks/MapServer/9',
+        style: function (feature) {
+            var cat = feature.properties.LABEL || feature.properties.DN;
+            var col = getRiskColor(cat);
+            return { color: col, weight: 2, fillOpacity: 0.35, fillColor: col };
+        }
+    });
+
+    // WPC Excessive Rainfall Outlook (ERO) Feature Layers
+    var wpc1 = L.esri.featureLayer({
+        url: 'https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/0',
+        style: function (feature) {
+            var cat = feature.properties.OUTLOOK || feature.properties.DN;
+            var col = getRiskColor(cat);
+            return { color: col, weight: 2, fillOpacity: 0.35, fillColor: col };
+        }
+    });
+
+    var wpc2 = L.esri.featureLayer({
+        url: 'https://mapservices.weather.noaa.gov/vector/rest/services/hazards/wpc_precip_hazards/MapServer/1',
+        style: function (feature) {
+            var cat = feature.properties.OUTLOOK || feature.properties.DN;
+            var col = getRiskColor(cat);
+            return { color: col, weight: 2, fillOpacity: 0.35, fillColor: col };
+        }
+    });
+
+    // Popups
+    spc1.bindPopup(layer => `<b>SPC Day 1 Outlook</b><br>Risk: ${layer.feature.properties.LABEL || 'N/A'}`);
+    spc2.bindPopup(layer => `<b>SPC Day 2 Outlook</b><br>Risk: ${layer.feature.properties.LABEL || 'N/A'}`);
+    wpc1.bindPopup(layer => `<b>WPC Day 1 Excessive Rainfall</b><br>Risk: ${layer.feature.properties.OUTLOOK || 'N/A'}`);
+    wpc2.bindPopup(layer => `<b>WPC Day 2 Excessive Rainfall</b><br>Risk: ${layer.feature.properties.OUTLOOK || 'N/A'}`);
 
     // 4. RANGE RINGS
     var rings = L.layerGroup().addTo(map);
@@ -66,62 +152,177 @@
     });
 
     // 5. CITY LABELS (Forced to Top)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { zIndex: 1000 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png?key=cb1_3hfy_1_fa3161d3e2d8aa8456a8c5c7', { 
+        subdomains: 'abcd',
+        maxZoom: 19,
+        zIndex: 1000 
+    }).addTo(map);
 
     // 6. STATION MARKER
     var goldDot = L.circleMarker(stationPos, { radius: 8, fillColor: "#FFD700", color: "#fff", weight: 2, fillOpacity: 1, zIndexOffset: 2000 }).addTo(map);
     goldDot.bindPopup("<b style='color:#000'>VIZCAYA STATION</b>");
 
-    // 7. TOGGLE CONTROLS
-    var overlays = {
-        "📡 NEXRAD Radar": radar,
-        "🔥 SPC Fire Risk": fireRisk,
-        "⚠️ NWS Warnings": warnings,
-        "🗺️ State Borders": stateBorders,
-        "⭕ Range Rings": rings
-    };
-    L.control.layers(null, overlays, { collapsed: false, position: 'topright' }).addTo(map);
-
-    // 8. UI PANEL
+    // 7. UNIFIED CONTROL PANEL
     var ui = L.control({position: 'bottomright'});
     ui.onAdd = function() {
         var div = L.DomUtil.create('div', 'ui-panel');
         div.innerHTML = `
-            <label>RADAR INTENSITY</label>
+            <label class="section-title">LAYERS</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-radar" checked> 📡 Radar</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-anim-radar"> 🔄 Animated Radar</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-alerts" checked> ⚠️ Alerts</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-spc1"> ⚡ SPC Day 1</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-spc2"> ⚡ SPC Day 2</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-wpc1"> 🌧️ WPC Day 1 ERO</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-wpc2"> 🌧️ WPC Day 2 ERO</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-states" checked> 🗺️ State Borders</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-counties" checked> 郡 Texas Counties</label>
+            <label class="checkbox-label"><input type="checkbox" id="toggle-rings" checked> ⭕ Range Rings</label>
+
+            <label class="section-title">CONTROLS</label>
+            <label style="color:#94a3b8; font-size:10px; display:block; margin-bottom:4px;">RADAR INTENSITY</label>
             <input type="range" min="0" max="1" step="0.1" value="0.7" id="opac">
             <button onclick="map.setView(stationPos, 10)">📍 CENTER ON VIZCAYA</button>
-            <button onclick="map.setView([35.2, -101.8], 6)">🔭 PAN TO PANHANDLE</button>
         `;
         L.DomEvent.disableClickPropagation(div);
         return div;
     };
     ui.addTo(map);
 
-    document.addEventListener('input', function(e) {
-        if(e.target.id === 'opac') radar.setOpacity(e.target.value);
-    });
+    // 8. ROBUST DIRECT EVENT LISTENERS FOR CONTROLS & TOGGLES
+    setTimeout(() => {
+        document.getElementById('toggle-radar').addEventListener('change', function() {
+            if (this.checked) {
+                if (isLooping) {
+                    document.getElementById('toggle-anim-radar').checked = false;
+                    document.getElementById('toggle-anim-radar').dispatchEvent(new Event('change'));
+                }
+                if (!map.hasLayer(radar)) radar.addTo(map);
+            } else {
+                if (map.hasLayer(radar)) map.removeLayer(radar);
+            }
+        });
+
+        document.getElementById('toggle-anim-radar').addEventListener('change', function() {
+            if (this.checked) {
+                isLooping = true;
+                if (map.hasLayer(radar)) map.removeLayer(radar);
+                document.getElementById('toggle-radar').checked = false;
+                radarAnimIndex = 0;
+                radarLoopLayers.forEach(l => { l.setOpacity(0); if (!map.hasLayer(l)) l.addTo(map); });
+                var curOp = parseFloat(document.getElementById('opac').value) || 0.7;
+                radarLoopLayers[radarAnimIndex].setOpacity(curOp);
+                radarAnimInterval = setInterval(() => {
+                    radarLoopLayers[radarAnimIndex].setOpacity(0);
+                    radarAnimIndex = (radarAnimIndex + 1) % radarLoopLayers.length;
+                    radarLoopLayers[radarAnimIndex].setOpacity(parseFloat(document.getElementById('opac').value) || 0.7);
+                }, 500);
+            } else {
+                isLooping = false;
+                clearInterval(radarAnimInterval);
+                radarLoopLayers.forEach(l => { l.setOpacity(0); if (map.hasLayer(l)) map.removeLayer(l); });
+                document.getElementById('toggle-radar').checked = true;
+                if (!map.hasLayer(radar)) radar.addTo(map);
+            }
+        });
+
+        document.getElementById('toggle-alerts').addEventListener('change', function() {
+            if (this.checked) { if (!map.hasLayer(warnings)) warnings.addTo(map); }
+            else { if (map.hasLayer(warnings)) map.removeLayer(warnings); }
+        });
+
+        document.getElementById('toggle-spc1').addEventListener('change', function() {
+            if (this.checked) {
+                if (!map.hasLayer(spc1)) spc1.addTo(map);
+                spc1.setWhere('1=1');
+            } else {
+                if (map.hasLayer(spc1)) map.removeLayer(spc1);
+                spc1.setWhere('1=0');
+            }
+        });
+
+        document.getElementById('toggle-spc2').addEventListener('change', function() {
+            if (this.checked) {
+                if (!map.hasLayer(spc2)) spc2.addTo(map);
+                spc2.setWhere('1=1');
+            } else {
+                if (map.hasLayer(spc2)) map.removeLayer(spc2);
+                spc2.setWhere('1=0');
+            }
+        });
+
+        document.getElementById('toggle-wpc1').addEventListener('change', function() {
+            if (this.checked) {
+                if (!map.hasLayer(wpc1)) wpc1.addTo(map);
+                wpc1.setWhere('1=1');
+            } else {
+                if (map.hasLayer(wpc1)) map.removeLayer(wpc1);
+                wpc1.setWhere('1=0');
+            }
+        });
+
+        document.getElementById('toggle-wpc2').addEventListener('change', function() {
+            if (this.checked) {
+                if (!map.hasLayer(wpc2)) wpc2.addTo(map);
+                wpc2.setWhere('1=1');
+            } else {
+                if (map.hasLayer(wpc2)) map.removeLayer(wpc2);
+                wpc2.setWhere('1=0');
+            }
+        });
+
+        document.getElementById('toggle-states').addEventListener('change', function() {
+            if (this.checked) { if (!map.hasLayer(stateBorders)) stateBorders.addTo(map); }
+            else { if (map.hasLayer(stateBorders)) map.removeLayer(stateBorders); }
+        });
+
+        document.getElementById('toggle-counties').addEventListener('change', function() {
+            if (this.checked) { 
+                if (!map.hasLayer(countyBorders)) countyBorders.addTo(map);
+                if (countyGeoJsonLayer && !countyBorders.hasLayer(countyGeoJsonLayer)) countyBorders.addLayer(countyGeoJsonLayer);
+            } else { 
+                if (map.hasLayer(countyBorders)) map.removeLayer(countyBorders);
+                if (countyGeoJsonLayer && countyBorders.hasLayer(countyGeoJsonLayer)) countyBorders.removeLayer(countyGeoJsonLayer);
+            }
+        });
+
+        document.getElementById('toggle-rings').addEventListener('change', function() {
+            if (this.checked) { if (!map.hasLayer(rings)) rings.addTo(map); }
+            else { if (map.hasLayer(rings)) map.removeLayer(rings); }
+        });
+
+        document.getElementById('opac').addEventListener('input', function() {
+            var val = parseFloat(this.value);
+            radar.setOpacity(val);
+            radarLoopLayers.forEach(l => { if (map.hasLayer(l)) l.setOpacity(val); });
+        });
+    }, 100);
 
     // 9. POINT-CLICK INTELLIGENCE
     map.on('click', function(e) {
         var popup = L.popup().setLatLng(e.latlng).setContent("<span style='color:#94a3b8'>Interrogating NWS Alerts...</span>").openOn(map);
-        fetch(`https://api.weather.gov/alerts/active?point=${e.latlng.lat.toFixed(4)},${e.latlng.lng.toFixed(4)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.features && data.features.length > 0) {
-                    const alert = data.features[0].properties;
-                    const onset = new Date(alert.onset).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-                    const expires = new Date(alert.ends || alert.expires).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-                    popup.setContent(`
-                        <div class="alert-header">${alert.event}</div>
-                        <div style="margin-bottom:5px;"><span class="time-label">Onset:</span> ${onset}</div>
-                        <div><span class="time-label">Expires:</span> ${expires}</div>
-                        <div class="desc-text">${alert.headline || alert.description}</div>
-                    `);
-                } else { popup.setContent("<b style='color:#10b981'>✅ NO ACTIVE HAZARDS</b><br><small style='color:#94a3b8'>Point clear of NWS warnings.</small>"); }
-            })
-            .catch(() => popup.setContent("API Error."));
+        fetch(`https://api.weather.gov/alerts/active?point=${e.latlng.lat.toFixed(4)},${e.latlng.lng.toFixed(4)}`, {
+            headers: { 'User-Agent': '(vizcayametrics.com, admin@vizcayametrics.com)' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.features && data.features.length > 0) {
+                const alert = data.features[0].properties;
+                const onset = new Date(alert.onset).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                const expires = new Date(alert.ends || alert.expires).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                popup.setContent(`
+                    <div class="alert-header">${alert.event}</div>
+                    <div style="margin-bottom:5px;"><span class="time-label">Onset:</span> ${onset}</div>
+                    <div><span class="time-label">Expires:</span> ${expires}</div>
+                    <div class="desc-text">${alert.headline || alert.description}</div>
+                `);
+            } else { 
+                popup.setContent("<b style='color:#10b981'>✅ NO ACTIVE HAZARDS</b><br><small style='color:#94a3b8'>Point clear of NWS warnings.</small>"); 
+            }
+        })
+        .catch(() => popup.setContent("API Error."));
     });
-
 </script>
+
 </body>
 </html>
