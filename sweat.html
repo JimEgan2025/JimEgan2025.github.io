@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWEAT Index Calculator with Reference Guide</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --cyan: #58a6ff;
+            --green: #3fb950;
+            --yellow: #d29922;
+            --orange: #f0883e;
+            --red: #f85149;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .card {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 550px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .coords {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .score-box {
+            text-align: center;
+            padding: 18px 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 14px;
+        }
+
+        .score-title {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-value {
+            font-size: 3.4rem;
+            font-weight: 800;
+            margin: 2px 0;
+            color: var(--cyan);
+        }
+
+        .threat-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .grid-col {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .col-title {
+            font-size: 0.74rem;
+            color: var(--cyan);
+            font-weight: 600;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            margin-bottom: 4px;
+        }
+
+        .metric span:first-child {
+            color: var(--text-muted);
+        }
+
+        .breakdown {
+            font-size: 0.78rem;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+        }
+
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2.5px 0;
+        }
+
+        button {
+            width: 100%;
+            background-color: #238636;
+            border: 1px solid rgba(240,246,252,0.1);
+            color: #fff;
+            padding: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+
+        button:hover {
+            background-color: #2ea043;
+        }
+
+        .timestamp {
+            text-align: center;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        /* --- CHEAT SHEET / REFERENCE BOX --- */
+        .reference-box {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.76rem;
+        }
+
+        .ref-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--cyan);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 4px;
+        }
+
+        .ref-row {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+
+        .ref-tag {
+            font-weight: 700;
+            border-radius: 3px;
+            padding: 1px 6px;
+            display: inline-block;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .tag-green  { background: rgba(63, 185, 80, 0.15);  color: var(--green);  }
+        .tag-yellow { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+        .tag-orange { background: rgba(240, 136, 62, 0.15); color: var(--orange); }
+        .tag-red    { background: rgba(248, 81, 73, 0.15);  color: var(--red);    }
+
+        .ref-desc {
+            color: var(--text-main);
+            line-height: 1.3;
+            padding-left: 6px;
+        }
+
+        .ref-rules {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        .ref-rules span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <div>
+            <h1>SWEAT Index Monitor</h1>
+            <div class="coords">Vizcaya / Round Rock (30.5871°N, 97.6410°W)</div>
+        </div>
+        <div id="status-dot" style="font-size: 0.8rem; color: var(--green);">● Live</div>
+    </div>
+
+    <div class="score-box">
+        <div class="score-title">Severe Weather Threat Score</div>
+        <div class="score-value" id="sweat-display">---</div>
+        <div class="threat-badge" id="threat-badge">INITIALIZING...</div>
+    </div>
+
+    <div class="grid">
+        <div class="grid-col">
+            <div class="col-title">850 mb Level (~5,000 FT)</div>
+            <div class="metric"><span>Temp:</span><span id="t850">--</span></div>
+            <div class="metric"><span>Dewpoint:</span><span id="td850">--</span></div>
+            <div class="metric"><span>Wind:</span><span id="wind850">--</span></div>
+        </div>
+        <div class="grid-col">
+            <div class="col-title">500 mb Level (~18,000 FT)</div>
+            <div class="metric"><span>Temp:</span><span id="t500">--</span></div>
+            <div class="metric"><span>Wind:</span><span id="wind500">--</span></div>
+            <div class="metric"><span>Total Totals:</span><span id="tt-val">--</span></div>
+        </div>
+    </div>
+
+    <div class="breakdown">
+        <div class="breakdown-row" style="color: var(--cyan); font-weight: 600; margin-bottom: 2px;">
+            <span>Miller (1972) Formula Breakdown</span>
+            <span>Pts</span>
+        </div>
+        <div class="breakdown-row"><span>Moisture: 12 × D850</span><span id="term-d850">0</span></div>
+        <div class="breakdown-row"><span>Instability: 20 × (TT - 49)</span><span id="term-tt">0</span></div>
+        <div class="breakdown-row"><span>Wind Speed: (2 × f850) + f500</span><span id="term-wind">0</span></div>
+        <div class="breakdown-row"><span>Directional Shear Term</span><span id="term-shear">0</span></div>
+    </div>
+
+    <button id="btn-fetch" type="button">Refresh Sounding</button>
+    <div class="timestamp" id="updated-time">Click button to calculate</div>
+
+    <!-- CHEAT SHEET / REFERENCE GUIDE -->
+    <div class="reference-box">
+        <div class="ref-header">
+            <span>SWEAT Operational Cheat Sheet</span>
+            <span>AFGWC / SPC</span>
+        </div>
+
+        <div class="ref-row">
+            <div><span class="ref-tag tag-green">&lt; 200</span></div>
+            <div class="ref-desc"><strong>Minimal / Garden Variety:</strong> Ordinary showers or weak sub-severe storms only.</div>
+        </div>
+        <div class="ref-row">
+            <div><span class="ref-tag tag-yellow">200–299</span></div>
+            <div class="ref-desc"><strong>Marginal / Pulse:</strong> Severe storms rare; microburst wind risk if DCAPE is high.</div>
+        </div>
+        <div class="ref-row">
+            <div><span class="ref-tag tag-orange">300–399</span></div>
+            <div class="ref-desc"><strong>Moderate Severe:</strong> Organized multicells, large hail, and damaging winds possible.</div>
+        </div>
+        <div class="ref-row">
+            <div><span class="ref-tag tag-red">400+</span></div>
+            <div class="ref-desc"><strong>High / Tornadic:</strong> Supercells and tornado potential favored. (Rare above 600).</div>
+        </div>
+
+        <div class="ref-rules">
+            <span>Shear Gate Rule:</span> The 125-point directional shear bonus is <strong>forced to 0</strong> unless <em>both</em> 850mb and 500mb winds are ≥ 15 kt, winds veer with height, and directions fall within 130°–250° (850mb) and 210°–310° (500mb).
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const LAT = 30.5871;
+    const LON = -97.6410;
+
+    function calculateAndRender(t850, td850, wspd850, wdir850, t500, wspd500, wdir500, timeLabel) {
+        // 1. 850mb Dewpoint Term
+        const d850Term = td850 > 0 ? 12 * td850 : 0;
+
+        // 2. Total Totals (TT) Term
+        const tt = t850 + td850 - (2 * t500);
+        const ttTerm = tt > 49 ? 20 * (tt - 49) : 0;
+
+        // 3. Wind Speed Term
+        const windTerm = (2 * wspd850) + wspd500;
+
+        // 4. Directional Shear Term
+        let shearTerm = 0;
+        const deltaDir = wdir500 - wdir850;
+
+        if (
+            wdir850 >= 130 && wdir850 <= 250 &&
+            wdir500 >= 210 && wdir500 <= 310 &&
+            deltaDir > 0 &&
+            wspd850 >= 15 && wspd500 >= 15
+        ) {
+            const sinVal = Math.sin((deltaDir * Math.PI) / 180);
+            shearTerm = 125 * (sinVal + 0.2);
+        }
+
+        const totalSweat = d850Term + ttTerm + windTerm + shearTerm;
+
+        // Update Values
+        document.getElementById('sweat-display').innerText = Math.round(totalSweat);
+        document.getElementById('t850').innerText = t850.toFixed(1) + "°C";
+        document.getElementById('td850').innerText = td850.toFixed(1) + "°C";
+        document.getElementById('wind850').innerText = Math.round(wspd850) + " kt @ " + Math.round(wdir850) + "°";
+
+        document.getElementById('t500').innerText = t500.toFixed(1) + "°C";
+        document.getElementById('wind500').innerText = Math.round(wspd500) + " kt @ " + Math.round(wdir500) + "°";
+        document.getElementById('tt-val').innerText = tt.toFixed(1);
+
+        document.getElementById('term-d850').innerText = "+" + Math.round(d850Term);
+        document.getElementById('term-tt').innerText = "+" + Math.round(ttTerm);
+        document.getElementById('term-wind').innerText = "+" + Math.round(windTerm);
+        document.getElementById('term-shear').innerText = "+" + Math.round(shearTerm);
+
+        // Styling Badge
+        const badge = document.getElementById('threat-badge');
+        const display = document.getElementById('sweat-display');
+
+        if (totalSweat < 200) {
+            badge.innerText = "MINIMAL SEVERE THREAT";
+            badge.style.background = "#1f3b23";
+            badge.style.color = "var(--green)";
+            display.style.color = "var(--green)";
+        } else if (totalSweat < 300) {
+            badge.innerText = "LOW / PULSE STORM RISK";
+            badge.style.background = "#3d3215";
+            badge.style.color = "var(--yellow)";
+            display.style.color = "var(--yellow)";
+        } else if (totalSweat < 400) {
+            badge.innerText = "MODERATE / SEVERE POSSIBLE";
+            badge.style.background = "#4a2318";
+            badge.style.color = "var(--orange)";
+            display.style.color = "var(--orange)";
+        } else {
+            badge.innerText = "HIGH RISK / TORNADIC POTENTIAL";
+            badge.style.background = "#49181d";
+            badge.style.color = "var(--red)";
+            display.style.color = "var(--red)";
+        }
+
+        document.getElementById('updated-time').innerText = "Sounding: " + timeLabel;
+    }
+
+    async function loadData() {
+        const btn = document.getElementById('btn-fetch');
+        btn.innerText = "Fetching Sounding...";
+        btn.disabled = true;
+
+        const url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&hourly=temperature_850hPa,dew_point_850hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_500hPa,wind_speed_500hPa,wind_direction_500hPa&wind_speed_unit=kn&timezone=auto";
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("API rejected");
+            const data = await res.json();
+            const h = data.hourly;
+
+            const now = new Date();
+            let idx = 0;
+            let minDiff = Infinity;
+            for (let i = 0; i < h.time.length; i++) {
+                const diff = Math.abs(now - new Date(h.time[i]));
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    idx = i;
+                }
+            }
+
+            calculateAndRender(
+                h.temperature_850hPa[idx],
+                h.dew_point_850hPa[idx],
+                h.wind_speed_850hPa[idx],
+                h.wind_direction_850hPa[idx],
+                h.temperature_500hPa[idx],
+                h.wind_speed_500hPa[idx],
+                h.wind_direction_500hPa[idx],
+                h.time[idx].replace('T', ' ') + " (Live NWP)"
+            );
+        } catch (e) {
+            // Fallback for sandboxes blocking external fetch
+            calculateAndRender(
+                22.1, 16.2, 4.5, 175,
+                -5.6, 6.0, 230,
+                "Stratos State Anchor (Sandbox Mode)"
+            );
+        } finally {
+            btn.innerText = "Refresh Sounding";
+            btn.disabled = false;
+        }
+    }
+
+    document.getElementById('btn-fetch').addEventListener('click', loadData);
+    loadData();
+})();
+</script>
+
+</body>
+</html>
