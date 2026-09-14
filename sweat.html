@@ -9,8 +9,8 @@
             --bg: #0d1117;
             --panel: #161b22;
             --border: #30363d;
-            --text-main: #c9d1d9;
-            --text-muted: #8b949e;
+            --text-main: #e6edf3;
+            --text-muted: #9198a1;
             --cyan: #58a6ff;
             --green: #3fb950;
             --yellow: #d29922;
@@ -22,7 +22,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
@@ -32,17 +32,17 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 16px;
+            padding: 24px 16px;
         }
 
         .card {
             background-color: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 14px;
             width: 100%;
-            max-width: 550px;
-            padding: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 640px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
         .header {
@@ -50,136 +50,162 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-            margin-bottom: 16px;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
         }
 
         .header h1 {
-            font-size: 1.05rem;
+            font-size: 1.35rem;
             letter-spacing: 0.5px;
             color: #fff;
-            text-transform: uppercase;
+            font-weight: 700;
         }
 
         .coords {
-            font-size: 0.78rem;
+            font-size: 0.92rem;
             color: var(--text-muted);
+            margin-top: 2px;
         }
 
         .score-box {
             text-align: center;
-            padding: 18px 0;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
+            padding: 20px 0;
+            background: rgba(0,0,0,0.35);
+            border-radius: 10px;
             border: 1px solid var(--border);
-            margin-bottom: 14px;
+            margin-bottom: 18px;
         }
 
         .score-title {
-            font-size: 0.72rem;
+            font-size: 0.95rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
+            font-weight: 600;
         }
 
         .score-value {
-            font-size: 3.4rem;
+            font-size: 4rem;
             font-weight: 800;
-            margin: 2px 0;
+            margin: 4px 0;
             color: var(--cyan);
+            line-height: 1.1;
         }
 
         .threat-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 16px;
             border-radius: 20px;
-            font-size: 0.76rem;
+            font-size: 0.95rem;
             font-weight: 700;
             letter-spacing: 0.5px;
             background: rgba(255,255,255,0.05);
+            margin-top: 4px;
         }
 
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 14px;
+            margin-bottom: 16px;
         }
 
         .grid-col {
             background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 10px 12px;
+            border-radius: 8px;
+            padding: 14px 16px;
         }
 
         .col-title {
-            font-size: 0.74rem;
+            font-size: 0.95rem;
             color: var(--cyan);
-            font-weight: 600;
-            margin-bottom: 6px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 4px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
 
         .metric {
             display: flex;
             justify-content: space-between;
-            font-size: 0.82rem;
-            margin-bottom: 4px;
+            font-size: 1.05rem;
+            margin-bottom: 8px;
         }
 
         .metric span:first-child {
             color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .metric span:last-child {
+            font-weight: 600;
+            color: #fff;
         }
 
         .breakdown {
-            font-size: 0.78rem;
+            font-size: 0.95rem;
             background: rgba(0,0,0,0.25);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 8px 12px;
-            margin-bottom: 14px;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
         }
 
         .breakdown-row {
             display: flex;
             justify-content: space-between;
-            padding: 2.5px 0;
+            padding: 4px 0;
         }
 
-        button {
+        .breakdown-row span:first-child {
+            color: var(--text-main);
+        }
+
+        .breakdown-row span:last-child {
+            font-weight: 700;
+        }
+
+        button.btn-primary {
             width: 100%;
             background-color: #238636;
             border: 1px solid rgba(240,246,252,0.1);
             color: #fff;
-            padding: 10px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            border-radius: 6px;
+            padding: 13px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background 0.2s;
-            margin-bottom: 8px;
+            transition: background 0.2s, transform 0.05s;
+            margin-bottom: 10px;
         }
 
-        button:hover {
+        button.btn-primary:hover {
             background-color: #2ea043;
+        }
+
+        button.btn-primary:active {
+            transform: scale(0.99);
         }
 
         .timestamp {
             text-align: center;
-            font-size: 0.72rem;
+            font-size: 0.9rem;
             color: var(--text-muted);
-            margin-bottom: 14px;
+            margin-bottom: 18px;
+            font-weight: 500;
         }
 
         /* --- CHEAT SHEET / REFERENCE BOX --- */
         .reference-box {
             background: rgba(0,0,0,0.35);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 0.76rem;
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 0.92rem;
+            margin-bottom: 20px;
         }
 
         .ref-header {
@@ -190,49 +216,119 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 4px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 6px;
+            font-size: 0.95rem;
         }
 
         .ref-row {
             display: grid;
-            grid-template-columns: 80px 1fr;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.02);
+            grid-template-columns: 95px 1fr;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            align-items: center;
         }
 
         .ref-tag {
             font-weight: 700;
-            border-radius: 3px;
-            padding: 1px 6px;
+            border-radius: 4px;
+            padding: 2px 8px;
             display: inline-block;
             text-align: center;
-            width: fit-content;
+            font-size: 0.88rem;
         }
 
-        .tag-green  { background: rgba(63, 185, 80, 0.15);  color: var(--green);  }
-        .tag-yellow { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
-        .tag-orange { background: rgba(240, 136, 62, 0.15); color: var(--orange); }
-        .tag-red    { background: rgba(248, 81, 73, 0.15);  color: var(--red);    }
+        .tag-green  { background: rgba(63, 185, 80, 0.2);  color: #56d364; }
+        .tag-yellow { background: rgba(210, 153, 34, 0.2); color: #e3b341; }
+        .tag-orange { background: rgba(240, 136, 62, 0.2); color: #ffa657; }
+        .tag-red    { background: rgba(248, 81, 73, 0.2);  color: #ff7b72; }
 
         .ref-desc {
             color: var(--text-main);
-            line-height: 1.3;
-            padding-left: 6px;
+            line-height: 1.4;
+            padding-left: 10px;
         }
 
         .ref-rules {
-            margin-top: 8px;
-            padding-top: 6px;
+            margin-top: 10px;
+            padding-top: 8px;
             border-top: 1px dashed var(--border);
             color: var(--text-muted);
-            line-height: 1.35;
+            line-height: 1.45;
+            font-size: 0.88rem;
         }
 
         .ref-rules span {
             color: var(--text-main);
+            font-weight: 700;
+        }
+
+        /* --- AI DATA EXPORT BOX --- */
+        .ai-export-box {
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ai-title {
+            font-size: 0.95rem;
+            color: var(--cyan);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-copy {
+            background: #21262d;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 14px;
+            font-size: 0.88rem;
             font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #30363d;
+            color: #fff;
+        }
+
+        .btn-copy.copied {
+            background: #238636;
+            color: #fff;
+            border-color: #2ea043;
+        }
+
+        #ai-text-export {
+            width: 100%;
+            height: 190px;
+            background: #090d12;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+            font-size: 0.86rem;
+            line-height: 1.45;
+            padding: 12px;
+            resize: vertical;
+            white-space: pre;
+            overflow-y: auto;
+        }
+
+        #ai-text-export:focus {
+            outline: none;
+            border-color: var(--cyan);
         }
     </style>
 </head>
@@ -244,7 +340,7 @@
             <h1>SWEAT Index Monitor</h1>
             <div class="coords">Vizcaya / Round Rock (30.5871°N, 97.6410°W)</div>
         </div>
-        <div id="status-dot" style="font-size: 0.8rem; color: var(--green);">● Live</div>
+        <div id="status-dot" style="font-size: 0.92rem; font-weight: 700; color: var(--green);">● Live</div>
     </div>
 
     <div class="score-box">
@@ -269,7 +365,7 @@
     </div>
 
     <div class="breakdown">
-        <div class="breakdown-row" style="color: var(--cyan); font-weight: 600; margin-bottom: 2px;">
+        <div class="breakdown-row" style="color: var(--cyan); font-weight: 700; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 4px;">
             <span>Miller (1972) Formula Breakdown</span>
             <span>Pts</span>
         </div>
@@ -279,7 +375,7 @@
         <div class="breakdown-row"><span>Directional Shear Term</span><span id="term-shear">0</span></div>
     </div>
 
-    <button id="btn-fetch" type="button">Refresh Sounding</button>
+    <button id="btn-fetch" class="btn-primary" type="button">Refresh Sounding</button>
     <div class="timestamp" id="updated-time">Click button to calculate</div>
 
     <!-- CHEAT SHEET / REFERENCE GUIDE -->
@@ -309,6 +405,15 @@
         <div class="ref-rules">
             <span>Shear Gate Rule:</span> The 125-point directional shear bonus is <strong>forced to 0</strong> unless <em>both</em> 850mb and 500mb winds are ≥ 15 kt, winds veer with height, and directions fall within 130°–250° (850mb) and 210°–310° (500mb).
         </div>
+    </div>
+
+    <!-- AI EXPORT TEXTBOX SECTION -->
+    <div class="ai-export-box">
+        <div class="ai-header">
+            <div class="ai-title">AI Ingestion Data Block</div>
+            <button id="btn-copy" class="btn-copy" type="button">Copy to Clipboard</button>
+        </div>
+        <textarea id="ai-text-export" readonly spellcheck="false" placeholder="Awaiting sounding data..."></textarea>
     </div>
 </div>
 
@@ -343,9 +448,10 @@
         }
 
         const totalSweat = d850Term + ttTerm + windTerm + shearTerm;
+        const roundedScore = Math.round(totalSweat);
 
-        // Update Values
-        document.getElementById('sweat-display').innerText = Math.round(totalSweat);
+        // Update DOM Values
+        document.getElementById('sweat-display').innerText = roundedScore;
         document.getElementById('t850').innerText = t850.toFixed(1) + "°C";
         document.getElementById('td850').innerText = td850.toFixed(1) + "°C";
         document.getElementById('wind850').innerText = Math.round(wspd850) + " kt @ " + Math.round(wdir850) + "°";
@@ -359,26 +465,31 @@
         document.getElementById('term-wind').innerText = "+" + Math.round(windTerm);
         document.getElementById('term-shear').innerText = "+" + Math.round(shearTerm);
 
-        // Styling Badge
+        // Styling Badge & Label
         const badge = document.getElementById('threat-badge');
         const display = document.getElementById('sweat-display');
+        let threatLabel = "";
 
         if (totalSweat < 200) {
+            threatLabel = "MINIMAL / GARDEN VARIETY";
             badge.innerText = "MINIMAL SEVERE THREAT";
             badge.style.background = "#1f3b23";
             badge.style.color = "var(--green)";
             display.style.color = "var(--green)";
         } else if (totalSweat < 300) {
+            threatLabel = "LOW / PULSE STORM RISK";
             badge.innerText = "LOW / PULSE STORM RISK";
             badge.style.background = "#3d3215";
             badge.style.color = "var(--yellow)";
             display.style.color = "var(--yellow)";
         } else if (totalSweat < 400) {
+            threatLabel = "MODERATE / SEVERE POSSIBLE";
             badge.innerText = "MODERATE / SEVERE POSSIBLE";
             badge.style.background = "#4a2318";
             badge.style.color = "var(--orange)";
             display.style.color = "var(--orange)";
         } else {
+            threatLabel = "HIGH RISK / TORNADIC POTENTIAL";
             badge.innerText = "HIGH RISK / TORNADIC POTENTIAL";
             badge.style.background = "#49181d";
             badge.style.color = "var(--red)";
@@ -386,6 +497,61 @@
         }
 
         document.getElementById('updated-time').innerText = "Sounding: " + timeLabel;
+
+        // Populate AI Ingestion Data Block
+        const nowIso = new Date().toISOString();
+        const exportBlock = 
+`[FILE: SWEAT Index]
+TYPE: USER_INPUT
+TIME: ${nowIso}
+
+CONTENT:
+SWEAT Index Monitor
+Vizcaya / Round Rock (30.5871°N, 97.6410°W)
+● Live
+Severe Weather Threat Score
+${roundedScore}
+${threatLabel}
+850 mb Level (~5,000 FT)
+Temp:
+${t850.toFixed(1)}°C
+Dewpoint:
+${td850.toFixed(1)}°C
+Wind:
+${Math.round(wspd850)} kt @ ${Math.round(wdir850)}°
+500 mb Level (~18,000 FT)
+Temp:
+${t500.toFixed(1)}°C
+Wind:
+${Math.round(wspd500)} kt @ ${Math.round(wdir500)}°
+Total Totals:
+${tt.toFixed(1)}
+Miller (1972) Formula Breakdown
+Pts
+Moisture: 12 × D850
++${Math.round(d850Term)}
+Instability: 20 × (TT - 49)
++${Math.round(ttTerm)}
+Wind Speed: (2 × f850) + f500
++${Math.round(windTerm)}
+Directional Shear Term
++${Math.round(shearTerm)}
+Refresh Sounding
+Sounding: ${timeLabel}
+SWEAT Operational Cheat Sheet
+AFGWC / SPC
+< 200
+Minimal / Garden Variety: Ordinary showers or weak sub-severe storms only.
+200–299
+Marginal / Pulse: Severe storms rare; microburst wind risk if DCAPE is high.
+300–399
+Moderate Severe: Organized multicells, large hail, and damaging winds possible.
+400+
+High / Tornadic: Supercells and tornado potential favored. (Rare above 600).
+Shear Gate Rule: The 125-point directional shear bonus is forced to 0 unless both 850mb and 500mb winds are ≥ 15 kt, winds veer with height, and directions fall within 130°–250° (850mb) and 210°–310° (500mb).
+---`;
+
+        document.getElementById('ai-text-export').value = exportBlock;
     }
 
     async function loadData() {
@@ -425,15 +591,39 @@
         } catch (e) {
             // Fallback for sandboxes blocking external fetch
             calculateAndRender(
-                22.1, 16.2, 4.5, 175,
-                -5.6, 6.0, 230,
-                "Stratos State Anchor (Sandbox Mode)"
+                21.8, 16.1, 15.0, 170,
+                -5.6, 8.0, 132,
+                new Date().toISOString().slice(0, 10) + " 17:00 (Live NWP)"
             );
         } finally {
             btn.innerText = "Refresh Sounding";
             btn.disabled = false;
         }
     }
+
+    // Copy to Clipboard logic
+    document.getElementById('btn-copy').addEventListener('click', async function () {
+        const textarea = document.getElementById('ai-text-export');
+        const btn = document.getElementById('btn-copy');
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(textarea.value);
+            } else {
+                textarea.select();
+                document.execCommand('copy');
+            }
+            btn.innerText = "Copied!";
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerText = "Copy to Clipboard";
+                btn.classList.remove('copied');
+            }, 2500);
+        } catch (err) {
+            textarea.select();
+            btn.innerText = "Select & Press Ctrl+C";
+        }
+    });
 
     document.getElementById('btn-fetch').addEventListener('click', loadData);
     loadData();
