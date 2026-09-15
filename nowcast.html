@@ -218,7 +218,7 @@
             <p>Georgetown, TX (30.587, -97.641) — Real-Time Gridded loop & county Alerts</p>
         </header>
 
-        <div id="status" style="text-align: center; color: var(--text-muted); font-size: 16px;">📡 Ingesting weather instruments, regional loops, and climate almanac...</div>
+        <div id="status" style="text-align: center; color: var(--text-muted); font-size: 16px;">📡 Ingesting weather instruments, sounding levels, and climate almanac...</div>
         <main id="nowcast-content" style="display: none;">
             
             <!-- DYNAMIC SUMMARY BANNER -->
@@ -235,11 +235,11 @@
             <!-- LIVE TACTICAL GRIP CENTER (RADAR & SATELLITE LOOPS) -->
             <div class="section-title">🛰️ Gridded Observation Center (GOES-16 & NEXRAD Radar)</div>
             <div class="map-grid">
-                <!-- PANEL A: GOES-16 Infrared/Visible Satellite Loop -->
+                <!-- PANEL A: GOES-16 Satellite Loop -->
                 <div class="map-card">
                     <iframe src="https://embed.windy.com/embed2.html?lat=30.5871&lon=-97.641&zoom=6&level=surface&overlay=satellite&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=30.5871&detailLon=-97.641&metricWind=default&metricTemp=default"></iframe>
                 </div>
-                <!-- PANEL B: NEXRAD Radar Loop (100-Mile Reflectivity) -->
+                <!-- PANEL B: NEXRAD Radar Loop -->
                 <div class="map-card">
                     <iframe src="https://embed.windy.com/embed2.html?lat=30.5871&lon=-97.641&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=30.5871&detailLon=-97.641&metricWind=default&metricTemp=default&radarRange=-1"></iframe>
                 </div>
@@ -383,29 +383,51 @@
             return "🌡️";
         }
 
-        // Approximate SWEAT Index estimation formula using available surface/wind metrics
-        function calculateSWEAT(tF, tdF, windSpdKnots, windDirDeg, upperWindSpdKnots = 40, upperWindDirDeg = 260) {
-            const tdC = (tdF - 32) * 5/9;
-            const tC = (tF - 32) * 5/9;
-            
-            let term1 = Math.max(0, tdC * 12);
-            let term2 = Math.max(0, 20 * Math.max(0, (tC - tdC) - 9));
-            let term3 = 2 * windSpdKnots;
-            let term4 = upperWindSpdKnots;
-            
-            let shear = Math.abs(upperWindDirDeg - windDirDeg);
-            if (shear > 180) shear = 360 - shear;
-            let term5 = (windDirDeg >= 130 && windDirDeg <= 250 && upperWindDirDeg >= 210 && upperWindDirDeg <= 310 && upperWindSpdKnots >= 15 && windSpdKnots >= 15) ? (Math.sin((upperWindDirDeg - windDirDeg) * Math.PI / 180) * 125 + 125) : 0;
-            
-            let sweat = term1 + term2 + term3 + term4 + term5;
-            return Math.min(Math.max(Math.round(sweat), 50), 600);
+        // --- OFFICIAL MILLER (1972) SWEAT FORMULA USING 850MB & 500MB SOUNDING DATA ---
+        function calculateSWEAT(t850F, td850F, wspd850Mph, wdir850, t500F, wspd500Mph, wdir500) {
+            // Convert temperatures to Celsius
+            const t850C = (t850F - 32) * 5 / 9;
+            const td850C = (td850F - 32) * 5 / 9;
+            const t500C = (t500F - 32) * 5 / 9;
+
+            // Convert wind speeds to knots
+            const wspd850Kt = wspd850Mph * 0.868976;
+            const wspd500Kt = wspd500Mph * 0.868976;
+
+            // 1. 850mb Dewpoint Term
+            const d850Term = td850C > 0 ? 12 * td850C : 0;
+
+            // 2. Total Totals (TT) Term
+            const tt = t850C + td850C - (2 * t500C);
+            const ttTerm = tt > 49 ? 20 * (tt - 49) : 0;
+
+            // 3. Wind Speed Term
+            const windTerm = (2 * wspd850Kt) + wspd500Kt;
+
+            // 4. Directional Shear Term (With Strict Miller Gates)
+            let shearTerm = 0;
+            const deltaDir = wdir500 - wdir850;
+
+            if (
+                wdir850 >= 130 && wdir850 <= 250 &&
+                wdir500 >= 210 && wdir500 <= 310 &&
+                deltaDir > 0 &&
+                wspd850Kt >= 15 && wspd500Kt >= 15
+            ) {
+                const sinVal = Math.sin((deltaDir * Math.PI) / 180);
+                shearTerm = 125 * (sinVal + 0.2);
+            }
+
+            const total = d850Term + ttTerm + windTerm + shearTerm;
+            return Math.max(0, Math.round(total));
         }
 
+        // Standard SPC / AFW Severity Scale
         function getSweatDescription(sweat) {
-            if (sweat >= 400) return "Extreme Severe Threat";
-            if (sweat >= 300) return "Significant Severe Potential";
-            if (sweat >= 200) return "Moderate Instability";
-            return "Stable / Low Risk";
+            if (sweat >= 400) return "High Risk / Tornadic";
+            if (sweat >= 300) return "Moderate / Severe Possible";
+            if (sweat >= 200) return "Marginal / Pulse Risk";
+            return "Minimal / Garden Variety";
         }
 
         // Official NOAA NWS Rothfusz Regression Equation
@@ -474,9 +496,17 @@
 
         async function fetchNowcast() {
             try {
+                // Requested mandatory sounding layers: 850hPa & 500hPa for authentic SWEAT calculations
+                const upperAirParams = 'temperature_850hPa,dew_point_850hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_500hPa,wind_speed_500hPa,wind_direction_500hPa';
+                const weatherUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') + 
+                    '&longitude=' + lons.join(',') + 
+                    '&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,weather_code,dew_point_2m' +
+                    '&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,cloud_cover,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m,' + upperAirParams + 
+                    '&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago';
+
                 const [almanacRes, weatherRes] = await Promise.all([
                     fetch('https://jimegan2025.github.io/almanac.json'),
-                    fetch('https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') + '&longitude=' + lons.join(',') + '&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m,weather_code,dew_point_2m&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,cloud_cover,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago'),
+                    fetch(weatherUrl),
                     fetchNWSAlerts()
                 ]);
 
@@ -501,20 +531,36 @@
             const todayDateStr = chicagoTimeStr.substring(0, 10);
             const mmdd = todayDateStr.slice(5);
 
-            // --- 1. LIVE OBSERVATIONS & INSTABILITY ---
+            // Determine active hour index from hourly timeline
+            const currentHourISO = chicagoTimeStr.substring(0, 13).replace(' ', 'T') + ':00';
+            const lastHourOfTodayISO = todayDateStr + 'T23:00';
+            const currentDateObj = new Date(currentHourISO);
+
+            let startIndex = hourly.time.findIndex(t => Math.abs(currentDateObj - new Date(t)) < 1800000);
+            if (startIndex === -1) startIndex = 0;
+
+            let endIndex = hourly.time.findIndex(t => Math.abs(new Date(lastHourOfTodayISO) - new Date(t)) < 1800000);
+            if (endIndex === -1) endIndex = Math.min(startIndex + 12, hourly.time.length - 1);
+
+            // --- 1. LIVE OBSERVATIONS & SOUNDING INSTABILITY ---
             const obsTemp = Math.round(current.temperature_2m);
             const obsHum = current.relative_humidity_2m;
-            const obsDew = current.dew_point_2m || (obsTemp - ((100 - obsHum) / 5));
-            const obsWindSpdMph = current.wind_speed_10m;
-            const obsWindSpdKnots = obsWindSpdMph * 0.868976;
-            const obsWindDir = current.wind_direction_10m;
 
             document.getElementById("live-temp").innerText = obsTemp + "°F";
             document.getElementById("live-humidity").innerText = obsHum + "%";
             document.getElementById("live-heat-index").innerText = getHeatIndex(obsTemp, obsHum) + "°F";
 
-            const currentCape = hourly.cape ? hourly.cape[0] || 0 : 0;
-            const currentSweat = calculateSWEAT(obsTemp, obsDew, obsWindSpdKnots, obsWindDir);
+            // Live CAPE & authentic SWEAT pulled from the active hour's upper-air data
+            const currentCape = hourly.cape ? hourly.cape[startIndex] || 0 : 0;
+            const currentSweat = calculateSWEAT(
+                hourly.temperature_850hPa[startIndex],
+                hourly.dew_point_850hPa[startIndex],
+                hourly.wind_speed_850hPa[startIndex],
+                hourly.wind_direction_850hPa[startIndex],
+                hourly.temperature_500hPa[startIndex],
+                hourly.wind_speed_500hPa[startIndex],
+                hourly.wind_direction_500hPa[startIndex]
+            );
 
             document.getElementById("live-instability").innerText = Math.round(currentCape) + " J/kg";
             document.getElementById("live-sweat").innerText = currentSweat;
@@ -555,19 +601,8 @@
             document.getElementById("regional-tbody").innerHTML = regionalHTML;
 
             // --- 4. HOURLY TIMELINE ---
-            const currentHourISO = chicagoTimeStr.substring(0, 13).replace(' ', 'T') + ':00';
-            const lastHourOfTodayISO = todayDateStr + 'T23:00';
-            const currentDateObj = new Date(currentHourISO);
-
-            let startIndex = hourly.time.findIndex(t => Math.abs(currentDateObj - new Date(t)) < 1800000);
-            if (startIndex === -1) startIndex = 0;
-
-            let endIndex = hourly.time.findIndex(t => Math.abs(new Date(lastHourOfTodayISO) - new Date(t)) < 1800000);
-            if (endIndex === -1) endIndex = Math.min(startIndex + 12, hourly.time.length - 1);
-
             const h_temp = hourly.temperature_2m;
             const h_rh = hourly.relative_humidity_2m;
-            const h_dew = hourly.dew_point_2m || h_temp.map(t => t - 5);
             const h_pop = hourly.precipitation_probability;
             const h_precip = hourly.precipitation;
             const h_cloud = hourly.cloud_cover;
@@ -588,7 +623,6 @@
 
                 const temp = h_temp[i];
                 const rh = h_rh[i];
-                const dew = h_dew[i];
                 const pop = h_pop[i];
                 const rain = h_precip[i];
                 const cloud = h_cloud[i];
@@ -597,7 +631,17 @@
                 const windDir = h_wind_dir[i];
                 const windGust = h_wind_gust[i];
 
-                const sweatVal = calculateSWEAT(temp, dew, windSpdMph * 0.868976, windDir);
+                // Accurate sounding calculation per hour
+                const sweatVal = calculateSWEAT(
+                    hourly.temperature_850hPa[i],
+                    hourly.dew_point_850hPa[i],
+                    hourly.wind_speed_850hPa[i],
+                    hourly.wind_direction_850hPa[i],
+                    hourly.temperature_500hPa[i],
+                    hourly.wind_speed_500hPa[i],
+                    hourly.wind_direction_500hPa[i]
+                );
+
                 const isPrecipSpike = rain >= 0.05;
                 const rowClass = isPrecipSpike ? ' class="precip-spike"' : '';
 
@@ -608,6 +652,8 @@
                 if (pop > maxPop) maxPop = pop;
                 conditionCounts[nwsLabel] = (conditionCounts[nwsLabel] || 0) + 1;
 
+                const sweatColor = sweatVal >= 400 ? '#f87171' : (sweatVal >= 300 ? '#fb923c' : (sweatVal >= 200 ? '#facc15' : '#38bdf8'));
+
                 tbodyHTML += '<tr' + rowClass + '>' +
                     '<td class="time-col">' + timeLabel + '</td>' +
                     '<td>' + Math.round(temp) + '°F</td>' +
@@ -616,7 +662,7 @@
                     '<td>' + pop + '%</td>' +
                     '<td>' + rain.toFixed(2) + '"</td>' +
                     '<td style="font-weight: bold; color: ' + (cape > 1000 ? '#f87171' : '#cbd5e1') + ';">' + Math.round(cape) + '</td>' +
-                    '<td style="font-weight: bold; color: ' + (sweatVal > 300 ? '#f87171' : (sweatVal > 200 ? '#facc15' : '#38bdf8')) + ';">' + sweatVal + '</td>' +
+                    '<td style="font-weight: bold; color: ' + sweatColor + ';">' + sweatVal + '</td>' +
                     '<td style="text-align: left;">' +
                         '<span class="condition-emoji">' + emoji + '</span>' +
                         '<span class="condition-text">' + nwsLabel + '</span>' +
