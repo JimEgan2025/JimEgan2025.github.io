@@ -5,23 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vizcaya Climate Almanac - Master Copy</title>
     <style>
-        :root { --bg: #0f0f0f; --card: #1a1a1a; --accent: #d4a017; --blue: #007bff; --text: #e0e0e0; --dim: #888; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1000px; }
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 1.5rem; color: var(--blue); }
-        select { background: #222; color: #fff; border: 1px solid #444; padding: 10px; font-size: 1rem; border-radius: 4px; width: 100%; max-width: 300px; cursor: pointer; margin-bottom: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 8px; border-top: 4px solid #444; }
+        :root { 
+            --bg: #f4f6f9; 
+            --card: #ffffff; 
+            --card-border: #cbd5e1;
+            --accent: #b45309; 
+            --blue: #0284c7;   
+            --text: #0f172a;   
+            --dim: #475569;    
+        }
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 24px; 
+            display: flex; 
+            justify-content: center; 
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 1000px; 
+        }
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--card-border); 
+            padding-bottom: 15px; 
+            margin-bottom: 24px; 
+        }
+        h1 { 
+            margin: 0; 
+            font-size: 1.75rem; 
+            font-weight: 700;
+            color: var(--blue); 
+            letter-spacing: 0.3px;
+        }
+        select { 
+            background: var(--card); 
+            color: var(--text); 
+            border: 1px solid var(--card-border); 
+            padding: 12px 16px; 
+            font-size: 1.05rem; 
+            font-weight: 600;
+            border-radius: 6px; 
+            width: 100%; 
+            max-width: 300px; 
+            cursor: pointer; 
+            margin-bottom: 24px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        select:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        }
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 24px;
+        }
+        .card { 
+            background: var(--card); 
+            padding: 24px; 
+            border-radius: 10px; 
+            border: 1px solid var(--card-border);
+            border-top: 5px solid #94a3b8; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
         .card.temp { border-top-color: var(--accent); }
         .card.rain { border-top-color: var(--blue); }
-        .card h3 { margin: 0 0 10px 0; font-size: 0.8rem; color: var(--dim); text-transform: uppercase; }
-        .big-val { font-size: 2.2rem; font-weight: bold; margin-bottom: 10px; color: #fff; }
-        .big-val span { font-size: 1rem; color: var(--dim); font-weight: normal; }
-        .row { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #2a2a2a; font-size: 0.85rem; }
-        .label { color: var(--dim); }
-        .val { font-weight: bold; color: #ff9999; }
-        .yr { color: #555; font-size: 0.7rem; margin-left: 4px; }
+        .card h3 { 
+            margin: 0 0 12px 0; 
+            font-size: 0.85rem; 
+            letter-spacing: 0.8px;
+            color: var(--dim); 
+            text-transform: uppercase; 
+            font-weight: 700;
+        }
+        .big-val { 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            margin-bottom: 14px; 
+            color: #020617; 
+            letter-spacing: -0.5px;
+        }
+        .big-val span { 
+            font-size: 1.1rem; 
+            color: var(--dim); 
+            font-weight: 600; 
+            margin-left: 2px;
+        }
+        .row { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 8px 0; 
+            border-top: 1px solid #e2e8f0; 
+            font-size: 0.95rem; 
+        }
+        .label { 
+            color: var(--dim); 
+            font-weight: 600;
+        }
+        .val { 
+            font-weight: 700; 
+            color: #b91c1c; 
+        }
+        .yr { 
+            color: #334155; 
+            font-size: 0.8rem; 
+            font-weight: 600;
+            margin-left: 6px; 
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+        }
+        .extremes-banner {
+            background: #1e293b;
+            color: #ffffff;
+            padding: 20px 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            text-align: center;
+        }
+        .extremes-banner div div:first-child {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .extremes-banner div div:last-child {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body>
@@ -30,9 +159,9 @@
     <header>
         <div>
             <h1 id="displayTitle">Climate Records</h1>
-            <div style="font-size: 0.8rem; color: #666;">130-Year History (Built-in Data)</div>
+            <div style="font-size: 0.85rem; color: #475569; font-weight: 600;">130-Year History (Master Records)</div>
         </div>
-        <div style="text-align:right; color:#888; font-size:0.8rem">VIZCAYA STATION</div>
+        <div style="text-align:right; color:#475569; font-size:0.85rem; font-weight:700;">VIZCAYA STATION</div>
     </header>
 
     <select id="monthSelect" onchange="updateDisplay(this.value)">
@@ -52,126 +181,124 @@
     </select>
 
     <div id="statsGrid" class="stats-grid"></div>
+    <div id="extremesBanner"></div>
 </div>
 
 <script>
-    // DATA IS HARDCODED HERE SO NO FETCH IS NEEDED
     const climateData = {
         "01_january": {
-            "average_temp": { "mean": 48.9, "record_max_avg": 59.0, "record_max_year": 1952, "record_min_avg": 40.0, "record_min_year": 1930 },
-            "average_high": { "mean": 60.6, "record_max": 72.0, "record_max_year": 1923, "record_min": 49.0, "record_min_year": 1979 },
-            "average_low":  { "mean": 37.1, "record_max": 48.0, "record_max_year": 1952, "record_min": 25.0, "record_min_year": 1918 },
-            "rainfall":     { "mean": 2.11, "record_wettest": 10.10, "record_wettest_year": 1968, "record_driest": 0.00, "record_driest_year": 1971 }
+            "mean_temp": 48.2, "warmest_yr": 59.0, "warmest_yr_num": 1952, "coldest_yr": 40.0, "coldest_yr_num": 1930,
+            "norm_high": 60.2, "norm_low": 36.2,
+            "rainfall": 2.11, "wettest_yr": 10.10, "wettest_yr_num": 1968, "driest_yr": 0.00, "driest_yr_num": 1971,
+            "absolute_max": 89, "absolute_max_yr": "1911", "absolute_min": 0, "absolute_min_yr": "1949"
         },
         "02_february": {
-            "average_temp": { "mean": 52.4, "record_max_avg": 61.0, "record_max_year": 2017, "record_min_avg": 41.0, "record_min_year": 1899 },
-            "average_high": { "mean": 64.4, "record_max": 75.0, "record_max_year": 1976, "record_min": 53.0, "record_min_year": 1899 },
-            "average_low":  { "mean": 40.3, "record_max": 52.0, "record_max_year": 1957, "record_min": 29.0, "record_min_year": 1899 },
-            "rainfall":     { "mean": 2.29, "record_wettest": 8.68, "record_wettest_year": 1992, "record_driest": 0.01, "record_driest_year": 1916 }
+            "mean_temp": 52.4, "warmest_yr": 61.0, "warmest_yr_num": 2017, "coldest_yr": 41.0, "coldest_yr_num": 1899,
+            "norm_high": 61.5, "norm_low": 39.8,
+            "rainfall": 2.29, "wettest_yr": 8.68, "wettest_yr_num": 1992, "driest_yr": 0.01, "driest_yr_num": 1916,
+            "absolute_max": 98, "absolute_max_yr": "1904, 1996", "absolute_min": -1, "absolute_min_yr": "1899"
         },
         "03_march": {
-            "average_temp": { "mean": 60.0, "record_max_avg": 71.0, "record_max_year": 1907, "record_min_avg": 49.0, "record_min_year": 1915 },
-            "average_high": { "mean": 72.3, "record_max": 84.0, "record_max_year": 1907, "record_min": 60.0, "record_min_year": 1915 },
-            "average_low":  { "mean": 47.7, "record_max": 58.0, "record_max_year": 1907, "record_min": 37.0, "record_min_year": 2014 },
-            "rainfall":     { "mean": 2.33, "record_wettest": 7.16, "record_wettest_year": 2001, "record_driest": 0.00, "record_driest_year": 1904 }
+            "mean_temp": 60.0, "warmest_yr": 71.0, "warmest_yr_num": 1907, "coldest_yr": 49.0, "coldest_yr_num": 1915,
+            "norm_high": 71.2, "norm_low": 47.5,
+            "rainfall": 2.33, "wettest_yr": 7.16, "wettest_yr_num": 2001, "driest_yr": 0.00, "driest_yr_num": 1904,
+            "absolute_max": 97, "absolute_max_yr": "1946, 1991, 1971", "absolute_min": 5, "absolute_min_yr": "2016"
         },
         "04_april": {
-            "average_temp": { "mean": 67.3, "record_max_avg": 75.0, "record_max_year": 1925, "record_min_avg": 61.0, "record_min_year": 1997 },
-            "average_high": { "mean": 79.1, "record_max": 88.0, "record_max_year": 1925, "record_min": 70.0, "record_min_year": 1997 },
-            "average_low":  { "mean": 55.4, "record_max": 65.0, "record_max_year": 1967, "record_min": 49.0, "record_min_year": 2018 },
-            "rainfall":     { "mean": 3.37, "record_wettest": 11.58, "record_wettest_year": 1997, "record_driest": 0.13, "record_driest_year": 2012 }
+            "mean_temp": 67.3, "warmest_yr": 75.0, "warmest_yr_num": 1925, "coldest_yr": 61.0, "coldest_yr_num": 1997,
+            "norm_high": 78.0, "norm_low": 54.2,
+            "rainfall": 3.37, "wettest_yr": 11.58, "wettest_yr_num": 1997, "driest_yr": 0.13, "driest_yr_num": 2012,
+            "absolute_max": 102, "absolute_max_yr": "1963", "absolute_min": 25, "absolute_min_yr": "1920"
         },
         "05_may": {
-            "average_temp": { "mean": 74.5, "record_max_avg": 79.6, "record_max_year": 2022, "record_min_avg": 67.0, "record_min_year": 2016 },
-            "average_high": { "mean": 85.5, "record_max": 97.9, "record_max_year": 2022, "record_min": 79.0, "record_min_year": 1907 },
-            "average_low":  { "mean": 63.6, "record_max": 70.0, "record_max_year": 1902, "record_min": 54.0, "record_min_year": 2016 },
-            "rainfall":     { "mean": 4.39, "record_wettest": 14.83, "record_wettest_year": 2015, "record_driest": 0.69, "record_driest_year": 1960 }
+            "mean_temp": 74.5, "warmest_yr": 79.6, "warmest_yr_num": 2022, "coldest_yr": 67.0, "coldest_yr_num": 2016,
+            "norm_high": 84.5, "norm_low": 62.1,
+            "rainfall": 4.39, "wettest_yr": 14.83, "wettest_yr_num": 2015, "driest_yr": 0.69, "driest_yr_num": 1960,
+            "absolute_max": 104, "absolute_max_yr": "1925", "absolute_min": 37, "absolute_min_yr": "2016"
         },
         "06_june": {
-            "average_temp": { "mean": 81.1, "record_max_avg": 87.0, "record_max_year": 1925, "record_min_avg": 74.0, "record_min_year": 1995 },
-            "average_high": { "mean": 92.1, "record_max": 100.0, "record_max_year": 1925, "record_min": 86.0, "record_min_year": 1983 },
-            "average_low":  { "mean": 69.9, "record_max": 74.1, "record_max_year": 2024, "record_min": 59.0, "record_min_year": 1995 },
-            "rainfall":     { "mean": 3.31, "record_wettest": 10.93, "record_wettest_year": 1919, "record_driest": 0.00, "record_driest_year": 1967 }
+            "mean_temp": 81.1, "warmest_yr": 87.0, "warmest_yr_num": 1925, "coldest_yr": 74.0, "coldest_yr_num": 1995,
+            "norm_high": 91.0, "norm_low": 69.5,
+            "rainfall": 3.31, "wettest_yr": 10.93, "wettest_yr_num": 1919, "driest_yr": 0.00, "driest_yr_num": 1967,
+            "absolute_max": 108, "absolute_max_yr": "1980", "absolute_min": 44, "absolute_min_yr": "1995"
         },
         "07_july": {
-            "average_temp": { "mean": 84.0, "record_max_avg": 89.0, "record_max_year": 2011, "record_min_avg": 79.0, "record_min_year": 2007 },
-            "average_high": { "mean": 95.7, "record_max": 102.0, "record_max_year": 1978, "record_min": 88.0, "record_min_year": 2004 },
-            "average_low":  { "mean": 72.3, "record_max": 77.2, "record_max_year": 2022, "record_min": 69.0, "record_min_year": 2004 },
-            "rainfall":     { "mean": 2.06, "record_wettest": 10.49, "record_wettest_year": 2007, "record_driest": 0.00, "record_driest_year": 1913 }
+            "mean_temp": 84.0, "warmest_yr": 89.0, "warmest_yr_num": 2011, "coldest_yr": 79.0, "coldest_yr_num": 2007,
+            "norm_high": 94.5, "norm_low": 72.0,
+            "rainfall": 2.06, "wettest_yr": 10.49, "wettest_yr_num": 2007, "driest_yr": 0.00, "driest_yr_num": 1913,
+            "absolute_max": 113, "absolute_max_yr": "1917", "absolute_min": 56, "absolute_min_yr": "1995"
         },
         "08_august": {
-            "average_temp": { "mean": 84.3, "record_max_avg": 90.0, "record_max_year": 2011, "record_min_avg": 77.0, "record_min_year": 2004 },
-            "average_high": { "mean": 96.6, "record_max": 104.0, "record_max_year": 2011, "record_min": 88.0, "record_min_year": 2004 },
-            "average_low":  { "mean": 72.1, "record_max": 77.0, "record_max_year": 2011, "record_min": 66.0, "record_min_year": 2004 },
-            "rainfall":     { "mean": 2.05, "record_wettest": 14.00, "record_wettest_year": 2016, "record_driest": 0.00, "record_driest_year": 1902 }
+            "mean_temp": 84.3, "warmest_yr": 90.0, "warmest_yr_num": 2011, "coldest_yr": 77.0, "coldest_yr_num": 2004,
+            "norm_high": 95.0, "norm_low": 71.8,
+            "rainfall": 2.05, "wettest_yr": 14.00, "wettest_yr_num": 2016, "driest_yr": 0.00, "driest_yr_num": 1902,
+            "absolute_max": 112, "absolute_max_yr": "1909", "absolute_min": 41, "absolute_min_yr": "2022"
         },
         "09_september": {
-            "average_temp": { "mean": 78.7, "record_max_avg": 84.3, "record_max_year": 2023, "record_min_avg": 73.0, "record_min_year": 1974 },
-            "average_high": { "mean": 90.5, "record_max": 98.0, "record_max_year": 1977, "record_min": 84.0, "record_min_year": 1974 },
-            "average_low":  { "mean": 66.8, "record_max": 73.3, "record_max_year": 2023, "record_min": 58.0, "record_min_year": 1979 },
-            "rainfall":     { "mean": 3.54, "record_wettest": 17.75, "record_wettest_year": 2010, "record_driest": 0.02, "record_driest_year": 2011 }
+            "mean_temp": 78.7, "warmest_yr": 84.3, "warmest_yr_num": 2023, "coldest_yr": 73.0, "coldest_yr_num": 1974,
+            "norm_high": 89.0, "norm_low": 66.5,
+            "rainfall": 3.54, "wettest_yr": 17.75, "wettest_yr_num": 2010, "driest_yr": 0.02, "driest_yr_num": 2011,
+            "absolute_max": 111, "absolute_max_yr": "2000", "absolute_min": 31, "absolute_min_yr": "1982"
         },
         "10_october": {
-            "average_temp": { "mean": 69.3, "record_max_avg": 76.0, "record_max_year": 1976, "record_min_avg": 61.0, "record_min_year": 1976 },
-            "average_high": { "mean": 81.9, "record_max": 90.0, "record_max_year": 1934, "record_min": 73.0, "record_min_year": 1976 },
-            "average_low":  { "mean": 56.6, "record_max": 65.0, "record_max_year": 2004, "record_min": 47.0, "record_min_year": 1917 },
-            "rainfall":     { "mean": 3.43, "record_wettest": 11.66, "record_wettest_year": 2010, "record_driest": 0.00, "record_driest_year": 2009 }
+            "mean_temp": 69.3, "warmest_yr": 76.0, "warmest_yr_num": 1976, "coldest_yr": 61.0, "coldest_yr_num": 1976,
+            "norm_high": 79.5, "norm_low": 56.0,
+            "rainfall": 3.43, "wettest_yr": 11.66, "wettest_yr_num": 2010, "driest_yr": 0.00, "driest_yr_num": 2009,
+            "absolute_max": 102, "absolute_max_yr": "1938, 2024", "absolute_min": 23, "absolute_min_yr": "1980"
         },
         "11_november": {
-            "average_temp": { "mean": 58.5, "record_max_avg": 68.0, "record_max_year": 1927, "record_min_avg": 51.0, "record_min_year": 1959 },
-            "average_high": { "mean": 70.4, "record_max": 80.0, "record_max_year": 1927, "record_min": 62.0, "record_min_year": 1993 },
-            "average_low":  { "mean": 46.5, "record_max": 56.0, "record_max_year": 1927, "record_min": 38.0, "record_min_year": 1911 },
-            "rainfall":     { "mean": 2.61, "record_wettest": 11.42, "record_wettest_year": 1902, "record_driest": 0.00, "record_driest_year": 1903 }
+            "mean_temp": 58.5, "warmest_yr": 68.0, "warmest_yr_num": 1927, "coldest_yr": 51.0, "coldest_yr_num": 1959,
+            "norm_high": 69.0, "norm_low": 45.8,
+            "rainfall": 2.61, "wettest_yr": 11.42, "wettest_yr_num": 1902, "driest_yr": 0.00, "driest_yr_num": 1903,
+            "absolute_max": 97, "absolute_max_yr": "1903", "absolute_min": 13, "absolute_min_yr": "1911"
         },
         "12_december": {
-            "average_temp": { "mean": 50.7, "record_max_avg": 61.0, "record_max_year": 2021, "record_min_avg": 40.0, "record_min_year": 1989 },
-            "average_high": { "mean": 62.2, "record_max": 74.0, "record_max_year": 1933, "record_min": 49.0, "record_min_year": 1914 },
-            "average_low":  { "mean": 39.3, "record_max": 57.5, "record_max_year": 2024, "record_min": 28.0, "record_min_year": 1989 },
-            "rainfall":     { "mean": 2.52, "record_wettest": 14.87, "record_wettest_year": 1913, "record_driest": 0.01, "record_driest_year": 1950 }
+            "mean_temp": 50.7, "warmest_yr": 61.0, "warmest_yr_num": 2021, "coldest_yr": 40.0, "coldest_yr_num": 1989,
+            "norm_high": 61.5, "norm_low": 38.9,
+            "rainfall": 2.52, "wettest_yr": 14.87, "wettest_yr_num": 1913, "driest_yr": 0.01, "driest_yr_num": 1950,
+            "absolute_max": 88, "absolute_max_yr": "1977", "absolute_min": -2, "absolute_min_yr": "1989"
         },
         "annual": {
-            "average_temp": { "mean": 67.5, "record_max_avg": 70.6, "record_max_year": 1933, "record_min_avg": 63.6, "record_min_year": 1983 },
-            "average_high": { "mean": 79.2, "record_max": 83.1, "record_max_year": 1933, "record_min": 75.9, "record_min_year": 1983 },
-            "average_low":  { "mean": 55.6, "record_max": 60.9, "record_max_year": 2023, "record_min": 51.5, "record_min_year": 1983 },
-            "rainfall":     { "mean": 34.02, "record_wettest": 60.03, "record_wettest_year": 1919, "record_driest": 13.23, "record_driest_year": 1917 }
+            "mean_temp": 67.5, "warmest_yr": 70.6, "warmest_yr_num": 1933, "coldest_yr": 63.6, "coldest_yr_num": 1983,
+            "norm_high": 79.2, "norm_low": 55.6,
+            "rainfall": 34.0, "wettest_yr": 60.0, "wettest_yr_num": 1919, "driest_yr": 13.2, "driest_yr_num": 1917,
+            "absolute_max": 113, "absolute_max_yr": "1917 (July)", "absolute_min": -2, "absolute_min_yr": "1989 (Dec)"
         }
     };
 
     function updateDisplay(key) {
         const d = climateData[key];
         const grid = document.getElementById('statsGrid');
+        const banner = document.getElementById('extremesBanner');
         
         document.getElementById('displayTitle').innerText = (key === 'annual') ? "ANNUAL CLIMATE SUMMARY" : key.split('_')[1].toUpperCase() + " CLIMATE RECORDS";
 
         grid.innerHTML = `
             <div class="card temp">
                 <h3>Average Temperature</h3>
-                <div class="big-val">${d.average_temp.mean}<span>°F</span></div>
-                <div class="row"><span class="label">Record High</span><span><span class="val">${d.average_temp.record_max_avg}°</span><span class="yr">${d.average_temp.record_max_year}</span></span></div>
-                <div class="row"><span class="label">Record Low</span><span><span class="val" style="color:#99ccff">${d.average_temp.record_min_avg}°</span><span class="yr">${d.average_temp.record_min_year}</span></span></div>
+                <div class="big-val">${d.mean_temp}<span>°F</span></div>
+                <div class="row"><span class="label">Warmest Year</span><span><span class="val">${d.warmest_yr}°</span><span class="yr">${d.warmest_yr_num}</span></span></div>
+                <div class="row"><span class="label">Coldest Year</span><span><span class="val" style="color:#0284c7">${d.coldest_yr}°</span><span class="yr">${d.coldest_yr_num}</span></span></div>
             </div>
             <div class="card temp">
-                <h3>Average Highs</h3>
-                <div class="big-val">${d.average_high.mean}<span>°F</span></div>
-                <div class="row"><span class="label">Extreme High</span><span><span class="val">${d.average_high.record_max}°</span><span class="yr">${d.average_high.record_max_year}</span></span></div>
-                <div class="row"><span class="label">Lowest High</span><span><span class="val" style="color:#99ccff">${d.average_high.record_min}°</span><span class="yr">${d.average_high.record_min_year}</span></span></div>
-            </div>
-            <div class="card temp">
-                <h3>Average Lows</h3>
-                <div class="big-val">${d.average_low.mean}<span>°F</span></div>
-                <div class="row"><span class="label">Highest Low</span><span><span class="val">${d.average_low.record_max}°</span><span class="yr">${d.average_low.record_max_year}</span></span></div>
-                <div class="row"><span class="label">Extreme Low</span><span><span class="val" style="color:#99ccff">${d.average_low.record_min}°</span><span class="yr">${d.average_low.record_min_year}</span></span></div>
+                <h3>Normal High & Low</h3>
+                <div class="big-val" style="margin-bottom: 0;">${d.norm_high}° / ${d.norm_low}°</div>
             </div>
             <div class="card rain">
                 <h3>Average Rainfall</h3>
-                <div class="big-val">${d.rainfall.mean}<span>"</span></div>
-                <div class="row"><span class="label">Wettest</span><span><span class="val" style="color:#99ff99">${d.rainfall.record_wettest}"</span><span class="yr">${d.rainfall.record_wettest_year}</span></span></div>
-                <div class="row"><span class="label">Driest</span><span><span class="val" style="color:#ffcc99">${d.rainfall.record_driest}"</span><span class="yr">${d.rainfall.record_driest_year}</span></span></div>
+                <div class="big-val">${d.rainfall}<span>"</span></div>
+                <div class="row"><span class="label">Wettest</span><span><span class="val" style="color:#16a34a">${d.wettest_yr}"</span><span class="yr">${d.wettest_yr_num}</span></span></div>
+                <div class="row"><span class="label">Driest</span><span><span class="val" style="color:#d97706">${d.driest_yr}"</span><span class="yr">${d.driest_yr_num}</span></span></div>
             </div>
+        `;
+
+        banner.style.display = 'flex';
+        banner.innerHTML = `
+            <div><div>All-Time Record High</div><div>${d.absolute_max}°F <span style="font-size:0.85rem; color:#94a3b8; font-weight:500;">(${d.absolute_max_yr})</span></div></div>
+            <div><div>All-Time Record Low</div><div>${d.absolute_min}°F <span style="font-size:0.85rem; color:#94a3b8; font-weight:500;">(${d.absolute_min_yr})</span></div></div>
         `;
     }
 
-    // Auto-detect current month on load
     window.onload = function() {
         const monthList = ["01_january","02_february","03_march","04_april","05_may","06_june","07_july","08_august","09_september","10_october","11_november","12_december"];
         const currentMonth = monthList[new Date().getMonth()];
