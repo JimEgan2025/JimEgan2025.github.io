@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizcaya Weather Precipitation Isolation</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --border-focus: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --vc-bg: #ecfdf5;
+            --vc-text: #047857;
+            --vc-border: #a7f3d0;
+            --header-dark: #1e293b;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            line-height: 1.4;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            width: 100%;
+            max-width: 1180px;
+            transition: max-width 0.2s ease;
+        }
+        .container.full-width {
+            max-width: 100% !important;
+        }
+        header {
+            background: var(--card-bg);
+            padding: 24px 28px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+        .controls-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        input {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 9px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.2s;
+        }
+        input:focus {
+            background-color: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .time-badge {
+            background-color: #f1f5f9;
+            color: var(--header-dark);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            font-feature-settings: "tnum";
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .nav-btn {
+            background-color: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .nav-btn:hover {
+            color: var(--text-main);
+            background-color: #f8fafc;
+        }
+        .nav-btn.active {
+            background-color: var(--header-dark);
+            color: #ffffff;
+            border-color: var(--header-dark);
+            box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.15);
+        }
+        .section-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--header-dark);
+            margin-bottom: 12px;
+            margin-top: 35px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+        .table-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 13.5px;
+        }
+        #detailed-view table {
+            min-width: 1450px;
+        }
+        #summary-view table {
+            font-size: 14.5px;
+            min-width: 100%;
+        }
+        #summary-view th, #summary-view td {
+            padding: 13px 15px;
+        }
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #summary-view th {
+            font-size: 12px;
+        }
+        tr:hover {
+            background-color: #f8fafc;
+        }
+        td.date-col {
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .vc-col {
+            background-color: var(--vc-bg) !important;
+            color: var(--vc-text) !important;
+            font-weight: 700;
+        }
+        th.vc-header {
+            background-color: #065f46 !important;
+            color: #ffffff !important;
+            border-color: #047857 !important;
+        }
+        .calc-col {
+            background-color: var(--accent-light) !important;
+            color: var(--accent) !important;
+            font-weight: 700;
+        }
+        tr.total-row {
+            background-color: #f1f5f9;
+            font-weight: 800;
+            border-top: 2px solid var(--border);
+        }
+        tr.total-row td {
+            color: var(--header-dark);
+        }
+        tr.total-row .vc-col {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+        }
+        tr.total-row .calc-col {
+            background-color: #dbeafe !important;
+            color: #1e40af !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <header>
+            <div>
+                <h1>Vizcaya Weather Precipitation Isolation</h1>
+                <div class="subtitle">Georgetown, TX (30.587, -97.641) — 7-Day Precipitation Model Comparison</div>
+            </div>
+            <div class="controls-row">
+                <input type="text" id="vcKeyInput" placeholder="Visual Crossing API Key" style="width: 200px;">
+                <button type="button" onclick="fetchWeatherModels()">Sync Models</button>
+                <div class="time-badge" id="live-time">12:30:00 PM</div>
+            </div>
+        </header>
+
+        <div class="nav-tabs">
+            <button type="button" id="btn-summary" class="nav-btn active" onclick="switchView('summary')">Precipitation Summary (7-Day)</button>
+            <button type="button" id="btn-detailed" class="nav-btn" onclick="switchView('detailed')">Full Precipitation Model Details</button>
+        </div>
+
+        <!-- VIEW A: SUMMARY PAGE -->
+        <div id="summary-view">
+            <div class="section-title">Precipitation Amount & Probabilities (7-Day Consensus)</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 12%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th class="vc-header" style="width: 20%;">Visual Crossing (VC)</th>
+                            <th style="width: 20%;" class="calc-col">Consensus Avg Rain</th>
+                            <th style="width: 25%;" class="calc-col">Rain Spread Range</th>
+                            <th style="width: 15%;" class="calc-col">Rain Prob</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-precip-tbody">
+                        <tr><td colspan="6" style="padding: 35px; color: #64748b;">Fetching rain summaries...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW B: DETAILED MODEL PAGE -->
+        <div id="detailed-view" style="display: none;">
+            <div class="section-title">Precipitation Amount (Inches) — Full Model Variances</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 8%;">Date</th>
+                            <th style="width: 5%;">Day</th>
+                            <th class="vc-header" style="width: 10%;">Visual Crossing (VC)</th>
+                            <th style="width: 7%;">ECMWF IFS</th>
+                            <th style="width: 7%;">ECMWF AIFS (AI)</th>
+                            <th style="width: 7%;">GFS Seamless</th>
+                            <th style="width: 7%;">NBM Blend</th>
+                            <th style="width: 7%;">GEM Seamless</th>
+                            <th style="width: 7%;">Graphcast AI</th>
+                            <th style="width: 7%;">NAM Conus</th>
+                            <th style="width: 7%;">GEM Regional</th>
+                            <th style="width: 7%;">GEM Global</th>
+                            <th style="width: 7%;">ICON seamless</th>
+                            <th style="width: 5%;" class="calc-col">Prob</th>
+                            <th style="width: 7%;" class="calc-col">Average</th>
+                            <th style="width: 6%;" class="calc-col">Min</th>
+                            <th style="width: 6%;" class="calc-col">Max</th>
+                            <th style="width: 6%;" class="calc-col">Range</th>
+                        </tr>
+                    </thead>
+                    <tbody id="precip-tbody">
+                        <tr><td colspan="18" style="padding: 35px; color: #64748b;">Fetching 7-day rain models...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var lat = 30.5871;
+        var lon = -97.641;
+        var daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        function updateClock() {
+            var now = new Date();
+            document.getElementById('live-time').innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        document.getElementById("vcKeyInput").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                fetchWeatherModels();
+            }
+        });
+
+        window.addEventListener("DOMContentLoaded", function() {
+            var savedKey = localStorage.getItem("vcKey");
+            if (savedKey) {
+                document.getElementById("vcKeyInput").value = savedKey;
+            }
+            fetchWeatherModels();
+        });
+
+        function switchView(viewName) {
+            var container = document.getElementById('main-container');
+            var summaryTab = document.getElementById('btn-summary');
+            var detailedTab = document.getElementById('btn-detailed');
+            var summaryView = document.getElementById('summary-view');
+            var detailedView = document.getElementById('detailed-view');
+
+            if (viewName === 'detailed') {
+                summaryView.style.display = 'none';
+                detailedView.style.display = 'block';
+                container.classList.add('full-width');
+                summaryTab.classList.remove('active');
+                detailedTab.classList.add('active');
+            } else {
+                summaryView.style.display = 'block';
+                detailedView.style.display = 'none';
+                container.classList.remove('full-width');
+                summaryTab.classList.add('active');
+                detailedTab.classList.remove('active');
+            }
+        }
+
+        var modelKeywords = {
+            "ecmwf_ifs025": "ecmwf_ifs025",
+            "ecmwf_aifs025_single": "aifs",
+            "gfs_seamless": "gfs_seamless",
+            "ncep_nbm_conus": "ncep_nbm_conus",
+            "gem_seamless": "gem_seamless",
+            "gfs_graphcast025": "graphcast",
+            "ncep_nam_conus": "ncep_nam_conus",
+            "gem_regional": "gem_regional",
+            "gem_global": "gem_global",
+            "icon_seamless": "icon_seamless"
+        };
+
+        var modelList = [
+            "ecmwf_ifs025",
+            "ecmwf_aifs025_single",
+            "gfs_seamless",
+            "ncep_nbm_conus",
+            "gem_seamless",
+            "gfs_graphcast025",
+            "ncep_nam_conus",
+            "gem_regional",
+            "gem_global",
+            "icon_seamless"
+        ];
+
+        function fetchWeatherModels() {
+            var vcKeyInput = document.getElementById('vcKeyInput');
+            var vcKey = vcKeyInput.value.trim();
+
+            if (vcKey) {
+                localStorage.setItem("vcKey", vcKey);
+            } else {
+                vcKey = localStorage.getItem("vcKey") || "";
+                if (vcKey) {
+                    vcKeyInput.value = vcKey;
+                }
+            }
+
+            var group1 = modelList.slice(0, 5).join(",");
+            var group2 = modelList.slice(5).join(",");
+
+            var url1 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation_probability&models=" + group1 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
+            var url2 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation_probability&models=" + group2 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
+
+            Promise.all([fetch(url1), fetch(url2)])
+                .then(function(responses) {
+                    return Promise.all([responses[0].json(), responses[1].json()]);
+                })
+                .then(function(data) {
+                    var data1 = data[0];
+                    var data2 = data[1];
+
+                    if (data1.error) throw new Error(data1.reason || "Error in Group 1 models request");
+                    if (data2.error) throw new Error(data2.reason || "Error in Group 2 models request");
+
+                    var omData = {
+                        daily: Object.assign({}, data1.daily || {}, data2.daily || {}),
+                        hourly: Object.assign({}, data1.hourly || {}, data2.hourly || {}),
+                        rawDaily1: data1.daily || {}
+                    };
+
+                    if (!omData.daily.time) {
+                        throw new Error("Failed to parse daily time series from Open-Meteo response.");
+                    }
+
+                    if (vcKey) {
+                        var vcUrl = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" + lat + "," + lon + "?unitGroup=us&key=" + vcKey + "&contentType=json";
+                        fetch(vcUrl)
+                            .then(function(vcResponse) {
+                                if (vcResponse.ok) {
+                                    return vcResponse.json();
+                                }
+                                return null;
+                            })
+                            .then(function(vcData) {
+                                renderPrecipDashboard(omData, vcData);
+                            })
+                            .catch(function(e) {
+                                console.warn("Visual Crossing failed to fetch: ", e);
+                                renderPrecipDashboard(omData, null);
+                            });
+                    } else {
+                        renderPrecipDashboard(omData, null);
+                    }
+                })
+                .catch(function(error) {
+                    var errHTML = '<tr><td colspan="18" style="padding: 35px; color: #dc2626; font-weight: bold;">Error syncing weather models: ' + error.message + '</td></tr>';
+                    document.getElementById("precip-tbody").innerHTML = errHTML;
+                    document.getElementById("summary-precip-tbody").innerHTML = errHTML;
+                });
+        }
+
+        function aggregateHourlyForDate(hourly, modelName, targetDateStr) {
+            if (!hourly || !hourly.time) return null;
+            var keys = Object.keys(hourly);
+            var keyword = modelKeywords[modelName] || modelName;
+            var precipKey = keys.find(function(k) {
+                return k.startsWith('precipitation') && !k.includes('probability') && k.toLowerCase().includes(keyword.toLowerCase());
+            });
+            var precipSum = 0;
+            var hasPrecipData = false;
+
+            for (var j = 0; j < hourly.time.length; j++) {
+                if (hourly.time[j].startsWith(targetDateStr)) {
+                    if (precipKey && hourly[precipKey] && hourly[precipKey][j] !== null && hourly[precipKey][j] !== undefined) {
+                        precipSum += hourly[precipKey][j];
+                        hasPrecipData = true;
+                    }
+                }
+            }
+            return hasPrecipData ? precipSum : null;
+        }
+
+        function aggregateHourlyProbForDate(hourly, targetDateStr) {
+            if (!hourly || !hourly.time) return null;
+            var keys = Object.keys(hourly);
+            var probKey = keys.find(function(k) {
+                return k.startsWith('precipitation_probability');
+            });
+            if (!probKey || !hourly[probKey]) return null;
+
+            var maxProb = 0;
+            var found = false;
+            for (var j = 0; j < hourly.time.length; j++) {
+                if (hourly.time[j].startsWith(targetDateStr)) {
+                    var val = hourly[probKey][j];
+                    if (val !== null && val !== undefined) {
+                        if (val > maxProb) maxProb = val;
+                        found = true;
+                    }
+                }
+            }
+            return found ? Math.round(maxProb) : null;
+        }
+
+        function renderPrecipDashboard(omData, vcData) {
+            var daily = omData.daily;
+            var hourly = omData.hourly;
+            var rawDaily1 = omData.rawDaily1;
+            var keys = Object.keys(daily);
+
+            function findKey(prefix, modelName) {
+                var keyword = modelKeywords[modelName] || modelName;
+                var matchedKey = keys.find(function(k) {
+                    return k.startsWith(prefix) && k.toLowerCase().includes(keyword.toLowerCase());
+                });
+                return matchedKey ? daily[matchedKey] : null;
+            }
+
+            var detailedRows = [];
+            var summaryRows = [];
+
+            var vcTotal = 0;
+            var vcCount = 0;
+            var modelTotals = new Array(modelList.length).fill(0);
+            var consensusAvgTotal = 0;
+            var consensusAvgCount = 0;
+            var probSum = 0;
+            var probCount = 0;
+
+            for (var i = 0; i < 7; i++) {
+                if (!daily.time || !daily.time[i]) continue;
+                var currDateStr = daily.time[i];
+                var parsedDateObj = new Date(currDateStr + "T00:00:00");
+                var dayName = daysOfWeek[parsedDateObj.getDay()];
+                var formattedDate = (parsedDateObj.getMonth() + 1) + "/" + parsedDateObj.getDate();
+
+                var vcPrecip = "-";
+                var vcValNum = null;
+                if (vcData && vcData.days && vcData.days[i]) {
+                    var d = vcData.days[i];
+                    if (d.precip !== undefined && d.precip !== null) {
+                        vcValNum = d.precip;
+                        vcTotal += vcValNum;
+                        vcCount++;
+                        vcPrecip = vcValNum.toFixed(2) + '"';
+                    } else {
+                        vcPrecip = '0.00"';
+                        vcValNum = 0;
+                        vcTotal += 0;
+                        vcCount++;
+                    }
+                }
+
+                var probArr = rawDaily1.precipitation_probability_max;
+                var probValNum = null;
+                if (probArr && probArr[i] !== undefined && probArr[i] !== null) {
+                    probValNum = Math.round(probArr[i]);
+                } else {
+                    probValNum = aggregateHourlyProbForDate(hourly, currDateStr);
+                }
+
+                if (probValNum !== null && probValNum !== undefined) {
+                    probSum += probValNum;
+                    probCount++;
+                }
+                var probVal = probValNum !== null ? probValNum + '%' : "-";
+
+                var modelVals = [];
+                var modelCells = [];
+
+                modelList.forEach(function(m, mIndex) {
+                    var val = null;
+                    var dailyArr = findKey("precipitation_sum", m);
+                    if (dailyArr && dailyArr[i] !== undefined && dailyArr[i] !== null) {
+                        val = dailyArr[i];
+                    } else {
+                        val = aggregateHourlyForDate(hourly, m, currDateStr);
+                    }
+
+                    if (val !== null && val !== undefined) {
+                        modelVals.push(val);
+                        modelTotals[mIndex] += val;
+                        modelCells.push(val.toFixed(2) + '"');
+                    } else {
+                        modelCells.push("-");
+                    }
+                });
+
+                var avgP = "-";
+                var minP = "-";
+                var maxP = "-";
+                var rangeP = "-";
+
+                if (modelVals.length > 0) {
+                    var sum = modelVals.reduce(function(a, b) { return a + b; }, 0);
+                    var avg = sum / modelVals.length;
+                    var min = Math.min.apply(null, modelVals);
+                    var max = Math.max.apply(null, modelVals);
+
+                    consensusAvgTotal += avg;
+                    consensusAvgCount++;
+
+                    avgP = avg.toFixed(2) + '"';
+                    minP = min.toFixed(2) + '"';
+                    maxP = max.toFixed(2) + '"';
+                    rangeP = min.toFixed(2) + '" - ' + max.toFixed(2) + '"';
+                }
+
+                detailedRows.push({
+                    date: formattedDate,
+                    day: dayName,
+                    vc: vcPrecip,
+                    models: modelCells,
+                    prob: probVal,
+                    avg: avgP,
+                    min: minP,
+                    max: maxP,
+                    range: rangeP
+                });
+
+                summaryRows.push({
+                    date: formattedDate,
+                    day: dayName,
+                    vc: vcPrecip,
+                    avg: avgP,
+                    range: rangeP,
+                    prob: probVal
+                });
+            }
+
+            var vcTotalStr = vcCount > 0 ? vcTotal.toFixed(2) + '" total' : "-";
+            var consensusAvgTotalStr = consensusAvgCount > 0 ? consensusAvgTotal.toFixed(2) + '" total' : "-";
+            var avgProbStr = probCount > 0 ? "Avg: " + Math.round(probSum / probCount) + "%" : "-";
+
+            var detailedModelTotals = [];
+            modelList.forEach(function(m, mIndex) {
+                var tVal = modelTotals[mIndex];
+                detailedModelTotals.push(tVal > 0 ? tVal.toFixed(2) + '" total' : '0.00"');
+            });
+
+            var detailedTbody = document.getElementById("precip-tbody");
+            var summaryTbody = document.getElementById("summary-precip-tbody");
+            detailedTbody.innerHTML = "";
+            summaryTbody.innerHTML = "";
+
+            detailedRows.forEach(function(row) {
+                var tr = document.createElement("tr");
+                
+                var tdDate = document.createElement("td");
+                tdDate.className = "date-col";
+                tdDate.innerText = row.date;
+                tr.appendChild(tdDate);
+
+                var tdDay = document.createElement("td");
+                var bDay = document.createElement("b");
+                bDay.innerText = row.day;
+                tdDay.appendChild(bDay);
+                tr.appendChild(tdDay);
+
+                var tdVc = document.createElement("td");
+                tdVc.className = "vc-col";
+                tdVc.innerText = row.vc;
+                tr.appendChild(tdVc);
+
+                row.models.forEach(function(mVal) {
+                    var tdM = document.createElement("td");
+                    tdM.innerText = mVal;
+                    tr.appendChild(tdM);
+                });
+
+                var tdProb = document.createElement("td");
+                tdProb.className = "calc-col";
+                tdProb.innerText = row.prob;
+                tr.appendChild(tdProb);
+
+                var tdAvg = document.createElement("td");
+                tdAvg.className = "calc-col";
+                tdAvg.innerText = row.avg;
+                tr.appendChild(tdAvg);
+
+                var tdMin = document.createElement("td");
+                tdMin.className = "calc-col";
+                tdMin.innerText = row.min;
+                tr.appendChild(tdMin);
+
+                var tdMax = document.createElement("td");
+                tdMax.className = "calc-col";
+                tdMax.innerText = row.max;
+                tr.appendChild(tdMax);
+
+                var tdRange = document.createElement("td");
+                tdRange.className = "calc-col";
+                tdRange.innerText = row.range;
+                tr.appendChild(tdRange);
+
+                detailedTbody.appendChild(tr);
+            });
+
+            // Detailed Total Row
+            var trTot = document.createElement("tr");
+            trTot.className = "total-row";
+            
+            var tdTotDate = document.createElement("td");
+            tdTotDate.className = "date-col";
+            tdTotDate.innerText = "7-Day Total";
+            trTot.appendChild(tdTotDate);
+
+            var tdTotDash1 = document.createElement("td");
+            tdTotDash1.innerText = "-";
+            trTot.appendChild(tdTotDash1);
+
+            var tdTotVc = document.createElement("td");
+            tdTotVc.className = "vc-col";
+            tdTotVc.innerText = vcTotalStr;
+            trTot.appendChild(tdTotVc);
+
+            detailedModelTotals.forEach(function(totVal) {
+                var tdTotM = document.createElement("td");
+                tdTotM.innerText = totVal;
+                trTot.appendChild(tdTotM);
+            });
+
+            var tdTotProb = document.createElement("td");
+            tdTotProb.className = "calc-col";
+            tdTotProb.innerText = avgProbStr;
+            trTot.appendChild(tdTotProb);
+
+            var tdTotAvg = document.createElement("td");
+            tdTotAvg.className = "calc-col";
+            tdTotAvg.innerText = consensusAvgTotalStr;
+            trTot.appendChild(tdTotAvg);
+
+            var tdTotSpan = document.createElement("td");
+            tdTotSpan.className = "calc-col";
+            tdTotSpan.colSpan = 3;
+            tdTotSpan.innerText = "-";
+            trTot.appendChild(tdTotSpan);
+
+            detailedTbody.appendChild(trTot);
+
+            // Summary Rows
+            summaryRows.forEach(function(row) {
+                var tr = document.createElement("tr");
+
+                var tdDate = document.createElement("td");
+                tdDate.className = "date-col";
+                tdDate.innerText = row.date;
+                tr.appendChild(tdDate);
+
+                var tdDay = document.createElement("td");
+                var bDay = document.createElement("b");
+                bDay.innerText = row.day;
+                tdDay.appendChild(bDay);
+                tr.appendChild(tdDay);
+
+                var tdVc = document.createElement("td");
+                tdVc.className = "vc-col";
+                tdVc.innerText = row.vc;
+                tr.appendChild(tdVc);
+
+                var tdAvg = document.createElement("td");
+                tdAvg.className = "calc-col";
+                tdAvg.innerText = row.avg;
+                tr.appendChild(tdAvg);
+
+                var tdRange = document.createElement("td");
+                tdRange.className = "calc-col";
+                tdRange.innerText = row.range;
+                tr.appendChild(tdRange);
+
+                var tdProb = document.createElement("td");
+                tdProb.className = "calc-col";
+                tdProb.innerText = row.prob;
+                tr.appendChild(tdProb);
+
+                summaryTbody.appendChild(tr);
+            });
+
+            // Summary Total Row
+            var trSumTot = document.createElement("tr");
+            trSumTot.className = "total-row";
+
+            var tdSumTotDate = document.createElement("td");
+            tdSumTotDate.className = "date-col";
+            tdSumTotDate.innerText = "7-Day Total";
+            trSumTot.appendChild(tdSumTotDate);
+
+            var tdSumTotDash = document.createElement("td");
+            tdSumTotDash.innerText = "-";
+            trSumTot.appendChild(tdSumTotDash);
+
+            var tdSumTotVc = document.createElement("td");
+            tdSumTotVc.className = "vc-col";
+            tdSumTotVc.innerText = vcTotalStr;
+            trSumTot.appendChild(tdSumTotVc);
+
+            var tdSumTotAvg = document.createElement("td");
+            tdSumTotAvg.className = "calc-col";
+            tdSumTotAvg.innerText = consensusAvgTotalStr;
+            trSumTot.appendChild(tdSumTotAvg);
+
+            var tdSumTotDash2 = document.createElement("td");
+            tdSumTotDash2.className = "calc-col";
+            tdSumTotDash2.innerText = "-";
+            trSumTot.appendChild(tdSumTotDash2);
+
+            var tdSumTotProb = document.createElement("td");
+            tdSumTotProb.className = "calc-col";
+            tdSumTotProb.innerText = avgProbStr;
+            trSumTot.appendChild(tdSumTotProb);
+
+            summaryTbody.appendChild(trSumTot);
+        }
+    </script>
+</body>
+</html>
