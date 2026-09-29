@@ -120,6 +120,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
         }
         .nav-btn {
             background-color: var(--card-bg);
@@ -180,12 +181,12 @@
         #detailed-view table {
             min-width: 1450px;
         }
-        #summary-view table {
-            font-size: 14.5px;
+        #summary-view table, #timing-view table {
+            font-size: 14px;
             min-width: 100%;
         }
-        #summary-view th, #summary-view td {
-            padding: 13px 15px;
+        #summary-view th, #summary-view td, #timing-view th, #timing-view td {
+            padding: 12px 14px;
         }
         th, td {
             padding: 10px 12px;
@@ -200,7 +201,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        #summary-view th {
+        #summary-view th, #timing-view th {
             font-size: 12px;
         }
         tr:hover {
@@ -225,6 +226,24 @@
             background-color: var(--accent-light) !important;
             color: var(--accent) !important;
             font-weight: 700;
+        }
+        .rain-active {
+            background-color: #eff6ff !important;
+            color: #1e40af !important;
+            font-weight: 700;
+        }
+        .rain-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .dry-badge {
+            color: var(--text-muted);
+            font-weight: 500;
         }
         tr.total-row {
             background-color: #f1f5f9;
@@ -260,6 +279,7 @@
 
         <div class="nav-tabs">
             <button type="button" id="btn-summary" class="nav-btn active" onclick="switchView('summary')">Precipitation Summary (7-Day)</button>
+            <button type="button" id="btn-timing" class="nav-btn" onclick="switchView('timing')">Rain Timing & Windows</button>
             <button type="button" id="btn-detailed" class="nav-btn" onclick="switchView('detailed')">Full Precipitation Model Details</button>
         </div>
 
@@ -285,7 +305,29 @@
             </div>
         </div>
 
-        <!-- VIEW B: DETAILED MODEL PAGE -->
+        <!-- VIEW B: TIMING WINDOWS PAGE -->
+        <div id="timing-view" style="display: none;">
+            <div class="section-title">Hourly Rain Windows & Peak Intensities</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 15%;">Date</th>
+                            <th style="width: 8%;">Day</th>
+                            <th style="width: 28%;">Precipitation Window (Start - End)</th>
+                            <th style="width: 17%;" class="calc-col">Peak Rain Hour</th>
+                            <th style="width: 16%;" class="calc-col">Max Hourly Rate</th>
+                            <th style="width: 16%;" class="calc-col">Max Probability</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timing-precip-tbody">
+                        <tr><td colspan="6" style="padding: 35px; color: #64748b;">Analyzing rain timing windows...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VIEW C: DETAILED MODEL PAGE -->
         <div id="detailed-view" style="display: none;">
             <div class="section-title">Precipitation Amount (Inches) — Full Model Variances</div>
             <div class="table-container">
@@ -350,22 +392,30 @@
         function switchView(viewName) {
             var container = document.getElementById('main-container');
             var summaryTab = document.getElementById('btn-summary');
+            var timingTab = document.getElementById('btn-timing');
             var detailedTab = document.getElementById('btn-detailed');
             var summaryView = document.getElementById('summary-view');
+            var timingView = document.getElementById('timing-view');
             var detailedView = document.getElementById('detailed-view');
 
+            summaryView.style.display = 'none';
+            timingView.style.display = 'none';
+            detailedView.style.display = 'none';
+            summaryTab.classList.remove('active');
+            timingTab.classList.remove('active');
+            detailedTab.classList.remove('active');
+            container.classList.remove('full-width');
+
             if (viewName === 'detailed') {
-                summaryView.style.display = 'none';
                 detailedView.style.display = 'block';
                 container.classList.add('full-width');
-                summaryTab.classList.remove('active');
                 detailedTab.classList.add('active');
+            } else if (viewName === 'timing') {
+                timingView.style.display = 'block';
+                timingTab.classList.add('active');
             } else {
                 summaryView.style.display = 'block';
-                detailedView.style.display = 'none';
-                container.classList.remove('full-width');
                 summaryTab.classList.add('active');
-                detailedTab.classList.remove('active');
             }
         }
 
@@ -411,8 +461,8 @@
             var group1 = modelList.slice(0, 5).join(",");
             var group2 = modelList.slice(5).join(",");
 
-            var url1 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation_probability&models=" + group1 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
-            var url2 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation_probability&models=" + group2 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
+            var url1 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation,precipitation_probability&models=" + group1 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
+            var url2 = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=precipitation_sum,precipitation_probability_max&hourly=precipitation,precipitation_probability&models=" + group2 + "&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=8";
 
             Promise.all([fetch(url1), fetch(url2)])
                 .then(function(responses) {
@@ -459,6 +509,7 @@
                     var errHTML = '<tr><td colspan="18" style="padding: 35px; color: #dc2626; font-weight: bold;">Error syncing weather models: ' + error.message + '</td></tr>';
                     document.getElementById("precip-tbody").innerHTML = errHTML;
                     document.getElementById("summary-precip-tbody").innerHTML = errHTML;
+                    document.getElementById("timing-precip-tbody").innerHTML = errHTML;
                 });
         }
 
@@ -505,6 +556,104 @@
             return found ? Math.round(maxProb) : null;
         }
 
+        function formatHourString(isoString) {
+            if (!isoString) return "";
+            var parts = isoString.split("T");
+            if (parts.length < 2) return isoString;
+            var timePart = parts[1];
+            var hourNum = parseInt(timePart.split(":")[0], 10);
+            if (isNaN(hourNum)) return timePart;
+            var ampm = hourNum >= 12 ? "PM" : "AM";
+            var formattedHour = hourNum % 12;
+            if (formattedHour === 0) formattedHour = 12;
+            return formattedHour + " " + ampm;
+        }
+
+        function analyzeTimingForDate(hourly, targetDateStr) {
+            if (!hourly || !hourly.time) return { window: "Dry / No Rain", peakHour: "-", peakRate: "-", maxProb: "-" };
+
+            var keys = Object.keys(hourly);
+            var precipKey = keys.find(function(k) {
+                return k.startsWith('precipitation') && !k.includes('probability');
+            });
+            var probKey = keys.find(function(k) {
+                return k.startsWith('precipitation_probability');
+            });
+
+            var dayHours = [];
+            for (var j = 0; j < hourly.time.length; j++) {
+                if (hourly.time[j].startsWith(targetDateStr)) {
+                    var pVal = (precipKey && hourly[precipKey]) ? (hourly[precipKey][j] || 0) : 0;
+                    var prVal = (probKey && hourly[probKey]) ? (hourly[probKey][j] || 0) : 0;
+                    dayHours.push({
+                        timeStr: hourly.time[j],
+                        precip: pVal,
+                        prob: prVal
+                    });
+                }
+            }
+
+            if (dayHours.length === 0) return { window: "Dry / No Rain", peakHour: "-", peakRate: "-", maxProb: "-" };
+
+            var activeIndices = [];
+            for (var i = 0; i < dayHours.length; i++) {
+                if (dayHours[i].precip > 0.005 || dayHours[i].prob >= 35) {
+                    activeIndices.push(i);
+                }
+            }
+
+            var windowStr = "Dry All Day";
+            if (activeIndices.length > 0) {
+                var startIdx = activeIndices[0];
+                var endIdx = activeIndices[activeIndices.length - 1];
+                var startTime = formatHourString(dayHours[startIdx].timeStr);
+                var endHourNum = parseInt(dayHours[endIdx].timeStr.split("T")[1].split(":")[0], 10) + 1;
+                var endFormatted = formatHourString(dayHours[endIdx].timeStr.split("T")[0] + "T" + (endHourNum < 10 ? "0" : "") + endHourNum + ":00");
+                windowStr = startTime + " - " + endFormatted;
+                if (startIdx === endIdx) {
+                    windowStr = "~ " + startTime;
+                }
+            } else {
+                var maxPChk = 0;
+                for (var k = 0; k < dayHours.length; k++) {
+                    if (dayHours[k].prob > maxPChk) maxPChk = dayHours[k].prob;
+                }
+                if (maxPChk >= 25) {
+                    windowStr = "Low-end scattered chance";
+                }
+            }
+
+            var maxP = -1;
+            var peakObj = null;
+            var maxProbVal = 0;
+            for (var h = 0; h < dayHours.length; h++) {
+                if (dayHours[h].precip > maxP) {
+                    maxP = dayHours[h].precip;
+                    peakObj = dayHours[h];
+                }
+                if (dayHours[h].prob > maxProbVal) {
+                    maxProbVal = dayHours[h].prob;
+                }
+            }
+
+            var peakHourStr = "-";
+            var peakRateStr = "-";
+            if (peakObj && maxP > 0.001) {
+                peakHourStr = formatHourString(peakObj.timeStr);
+                peakRateStr = maxP.toFixed(2) + '" / hr';
+            } else if (maxProbVal >= 35) {
+                peakHourStr = "Uncertain peak";
+                peakRateStr = '< 0.05" / hr';
+            }
+
+            return {
+                window: windowStr,
+                peakHour: peakHourStr,
+                peakRate: peakRateStr,
+                maxProb: maxProbVal > 0 ? maxProbVal + "%" : "-"
+            };
+        }
+
         function renderPrecipDashboard(omData, vcData) {
             var daily = omData.daily;
             var hourly = omData.hourly;
@@ -521,6 +670,7 @@
 
             var detailedRows = [];
             var summaryRows = [];
+            var timingRows = [];
 
             var vcTotal = 0;
             var vcCount = 0;
@@ -567,6 +717,8 @@
                     probCount++;
                 }
                 var probVal = probValNum !== null ? probValNum + '%' : "-";
+
+                var timingInfo = analyzeTimingForDate(hourly, currDateStr);
 
                 var modelVals = [];
                 var modelCells = [];
@@ -629,6 +781,15 @@
                     range: rangeP,
                     prob: probVal
                 });
+
+                timingRows.push({
+                    date: formattedDate,
+                    day: dayName,
+                    window: timingInfo.window,
+                    peakHour: timingInfo.peakHour,
+                    peakRate: timingInfo.peakRate,
+                    maxProb: timingInfo.maxProb
+                });
             }
 
             var vcTotalStr = vcCount > 0 ? vcTotal.toFixed(2) + '" total' : "-";
@@ -643,176 +804,82 @@
 
             var detailedTbody = document.getElementById("precip-tbody");
             var summaryTbody = document.getElementById("summary-precip-tbody");
+            var timingTbody = document.getElementById("timing-precip-tbody");
+            
             detailedTbody.innerHTML = "";
             summaryTbody.innerHTML = "";
+            timingTbody.innerHTML = "";
 
             detailedRows.forEach(function(row) {
                 var tr = document.createElement("tr");
-                
-                var tdDate = document.createElement("td");
-                tdDate.className = "date-col";
-                tdDate.innerText = row.date;
-                tr.appendChild(tdDate);
-
-                var tdDay = document.createElement("td");
-                var bDay = document.createElement("b");
-                bDay.innerText = row.day;
-                tdDay.appendChild(bDay);
-                tr.appendChild(tdDay);
-
-                var tdVc = document.createElement("td");
-                tdVc.className = "vc-col";
-                tdVc.innerText = row.vc;
-                tr.appendChild(tdVc);
-
-                row.models.forEach(function(mVal) {
-                    var tdM = document.createElement("td");
-                    tdM.innerText = mVal;
-                    tr.appendChild(tdM);
-                });
-
-                var tdProb = document.createElement("td");
-                tdProb.className = "calc-col";
-                tdProb.innerText = row.prob;
-                tr.appendChild(tdProb);
-
-                var tdAvg = document.createElement("td");
-                tdAvg.className = "calc-col";
-                tdAvg.innerText = row.avg;
-                tr.appendChild(tdAvg);
-
-                var tdMin = document.createElement("td");
-                tdMin.className = "calc-col";
-                tdMin.innerText = row.min;
-                tr.appendChild(tdMin);
-
-                var tdMax = document.createElement("td");
-                tdMax.className = "calc-col";
-                tdMax.innerText = row.max;
-                tr.appendChild(tdMax);
-
-                var tdRange = document.createElement("td");
-                tdRange.className = "calc-col";
-                tdRange.innerText = row.range;
-                tr.appendChild(tdRange);
-
+                var tdDate = document.createElement("td"); tdDate.className = "date-col"; tdDate.innerText = row.date; tr.appendChild(tdDate);
+                var tdDay = document.createElement("td"); var bDay = document.createElement("b"); bDay.innerText = row.day; tdDay.appendChild(bDay); tr.appendChild(tdDay);
+                var tdVc = document.createElement("td"); tdVc.className = "vc-col"; tdVc.innerText = row.vc; tr.appendChild(tdVc);
+                row.models.forEach(function(mVal) { var tdM = document.createElement("td"); tdM.innerText = mVal; tr.appendChild(tdM); });
+                var tdProb = document.createElement("td"); tdProb.className = "calc-col"; tdProb.innerText = row.prob; tr.appendChild(tdProb);
+                var tdAvg = document.createElement("td"); tdAvg.className = "calc-col"; tdAvg.innerText = row.avg; tr.appendChild(tdAvg);
+                var tdMin = document.createElement("td"); tdMin.className = "calc-col"; tdMin.innerText = row.min; tr.appendChild(tdMin);
+                var tdMax = document.createElement("td"); tdMax.className = "calc-col"; tdMax.innerText = row.max; tr.appendChild(tdMax);
+                var tdRange = document.createElement("td"); tdRange.className = "calc-col"; tdRange.innerText = row.range; tr.appendChild(tdRange);
                 detailedTbody.appendChild(tr);
             });
 
-            // Detailed Total Row
-            var trTot = document.createElement("tr");
-            trTot.className = "total-row";
-            
-            var tdTotDate = document.createElement("td");
-            tdTotDate.className = "date-col";
-            tdTotDate.innerText = "7-Day Total";
-            trTot.appendChild(tdTotDate);
-
-            var tdTotDash1 = document.createElement("td");
-            tdTotDash1.innerText = "-";
-            trTot.appendChild(tdTotDash1);
-
-            var tdTotVc = document.createElement("td");
-            tdTotVc.className = "vc-col";
-            tdTotVc.innerText = vcTotalStr;
-            trTot.appendChild(tdTotVc);
-
-            detailedModelTotals.forEach(function(totVal) {
-                var tdTotM = document.createElement("td");
-                tdTotM.innerText = totVal;
-                trTot.appendChild(tdTotM);
-            });
-
-            var tdTotProb = document.createElement("td");
-            tdTotProb.className = "calc-col";
-            tdTotProb.innerText = avgProbStr;
-            trTot.appendChild(tdTotProb);
-
-            var tdTotAvg = document.createElement("td");
-            tdTotAvg.className = "calc-col";
-            tdTotAvg.innerText = consensusAvgTotalStr;
-            trTot.appendChild(tdTotAvg);
-
-            var tdTotSpan = document.createElement("td");
-            tdTotSpan.className = "calc-col";
-            tdTotSpan.colSpan = 3;
-            tdTotSpan.innerText = "-";
-            trTot.appendChild(tdTotSpan);
-
+            var trTot = document.createElement("tr"); trTot.className = "total-row";
+            var tdTotDate = document.createElement("td"); tdTotDate.className = "date-col"; tdTotDate.innerText = "7-Day Total"; trTot.appendChild(tdTotDate);
+            var tdTotDash1 = document.createElement("td"); tdTotDash1.innerText = "-"; trTot.appendChild(tdTotDash1);
+            var tdTotVc = document.createElement("td"); tdTotVc.className = "vc-col"; tdTotVc.innerText = vcTotalStr; trTot.appendChild(tdTotVc);
+            detailedModelTotals.forEach(function(totVal) { var tdTotM = document.createElement("td"); tdTotM.innerText = totVal; trTot.appendChild(tdTotM); });
+            var tdTotProb = document.createElement("td"); tdTotProb.className = "calc-col"; tdTotProb.innerText = avgProbStr; trTot.appendChild(tdTotProb);
+            var tdTotAvg = document.createElement("td"); tdTotAvg.className = "calc-col"; tdTotAvg.innerText = consensusAvgTotalStr; trTot.appendChild(tdTotAvg);
+            var tdTotSpan = document.createElement("td"); tdTotSpan.className = "calc-col"; tdTotSpan.colSpan = 3; tdTotSpan.innerText = "-"; trTot.appendChild(tdTotSpan);
             detailedTbody.appendChild(trTot);
 
-            // Summary Rows
             summaryRows.forEach(function(row) {
                 var tr = document.createElement("tr");
-
-                var tdDate = document.createElement("td");
-                tdDate.className = "date-col";
-                tdDate.innerText = row.date;
-                tr.appendChild(tdDate);
-
-                var tdDay = document.createElement("td");
-                var bDay = document.createElement("b");
-                bDay.innerText = row.day;
-                tdDay.appendChild(bDay);
-                tr.appendChild(tdDay);
-
-                var tdVc = document.createElement("td");
-                tdVc.className = "vc-col";
-                tdVc.innerText = row.vc;
-                tr.appendChild(tdVc);
-
-                var tdAvg = document.createElement("td");
-                tdAvg.className = "calc-col";
-                tdAvg.innerText = row.avg;
-                tr.appendChild(tdAvg);
-
-                var tdRange = document.createElement("td");
-                tdRange.className = "calc-col";
-                tdRange.innerText = row.range;
-                tr.appendChild(tdRange);
-
-                var tdProb = document.createElement("td");
-                tdProb.className = "calc-col";
-                tdProb.innerText = row.prob;
-                tr.appendChild(tdProb);
-
+                var tdDate = document.createElement("td"); tdDate.className = "date-col"; tdDate.innerText = row.date; tr.appendChild(tdDate);
+                var tdDay = document.createElement("td"); var bDay = document.createElement("b"); bDay.innerText = row.day; tdDay.appendChild(bDay); tr.appendChild(tdDay);
+                var tdVc = document.createElement("td"); tdVc.className = "vc-col"; tdVc.innerText = row.vc; tr.appendChild(tdVc);
+                var tdAvg = document.createElement("td"); tdAvg.className = "calc-col"; tdAvg.innerText = row.avg; tr.appendChild(tdAvg);
+                var tdRange = document.createElement("td"); tdRange.className = "calc-col"; tdRange.innerText = row.range; tr.appendChild(tdRange);
+                var tdProb = document.createElement("td"); tdProb.className = "calc-col"; tdProb.innerText = row.prob; tr.appendChild(tdProb);
                 summaryTbody.appendChild(tr);
             });
 
-            // Summary Total Row
-            var trSumTot = document.createElement("tr");
-            trSumTot.className = "total-row";
-
-            var tdSumTotDate = document.createElement("td");
-            tdSumTotDate.className = "date-col";
-            tdSumTotDate.innerText = "7-Day Total";
-            trSumTot.appendChild(tdSumTotDate);
-
-            var tdSumTotDash = document.createElement("td");
-            tdSumTotDash.innerText = "-";
-            trSumTot.appendChild(tdSumTotDash);
-
-            var tdSumTotVc = document.createElement("td");
-            tdSumTotVc.className = "vc-col";
-            tdSumTotVc.innerText = vcTotalStr;
-            trSumTot.appendChild(tdSumTotVc);
-
-            var tdSumTotAvg = document.createElement("td");
-            tdSumTotAvg.className = "calc-col";
-            tdSumTotAvg.innerText = consensusAvgTotalStr;
-            trSumTot.appendChild(tdSumTotAvg);
-
-            var tdSumTotDash2 = document.createElement("td");
-            tdSumTotDash2.className = "calc-col";
-            tdSumTotDash2.innerText = "-";
-            trSumTot.appendChild(tdSumTotDash2);
-
-            var tdSumTotProb = document.createElement("td");
-            tdSumTotProb.className = "calc-col";
-            tdSumTotProb.innerText = avgProbStr;
-            trSumTot.appendChild(tdSumTotProb);
-
+            var trSumTot = document.createElement("tr"); trSumTot.className = "total-row";
+            var tdSumTotDate = document.createElement("td"); tdSumTotDate.className = "date-col"; tdSumTotDate.innerText = "7-Day Total"; trSumTot.appendChild(tdSumTotDate);
+            var tdSumTotDash = document.createElement("td"); tdSumTotDash.innerText = "-"; trSumTot.appendChild(tdSumTotDash);
+            var tdSumTotVc = document.createElement("td"); tdSumTotVc.className = "vc-col"; tdSumTotVc.innerText = vcTotalStr; trSumTot.appendChild(tdSumTotVc);
+            var tdSumTotAvg = document.createElement("td"); tdSumTotAvg.className = "calc-col"; tdSumTotAvg.innerText = consensusAvgTotalStr; trSumTot.appendChild(tdSumTotAvg);
+            var tdSumTotDash2 = document.createElement("td"); tdSumTotDash2.className = "calc-col"; tdSumTotDash2.innerText = "-"; trSumTot.appendChild(tdSumTotDash2);
+            var tdSumTotProb = document.createElement("td"); tdSumTotProb.className = "calc-col"; tdSumTotProb.innerText = avgProbStr; trSumTot.appendChild(tdSumTotProb);
             summaryTbody.appendChild(trSumTot);
+
+            timingRows.forEach(function(row) {
+                var tr = document.createElement("tr");
+                var tdDate = document.createElement("td"); tdDate.className = "date-col"; tdDate.innerText = row.date; tr.appendChild(tdDate);
+                var tdDay = document.createElement("td"); var bDay = document.createElement("b"); bDay.innerText = row.day; tdDay.appendChild(bDay); tr.appendChild(tdDay);
+                
+                var tdWindow = document.createElement("td");
+                if (row.window.includes("-") || row.window.includes("~")) {
+                    var span = document.createElement("span");
+                    span.className = "rain-badge";
+                    span.innerText = row.window;
+                    tdWindow.appendChild(span);
+                    tr.className = "rain-active";
+                } else {
+                    var span = document.createElement("span");
+                    span.className = "dry-badge";
+                    span.innerText = row.window;
+                    tdWindow.appendChild(span);
+                }
+                tr.appendChild(tdWindow);
+
+                var tdPeakH = document.createElement("td"); tdPeakH.className = "calc-col"; tdPeakH.innerText = row.peakHour; tr.appendChild(tdPeakH);
+                var tdPeakR = document.createElement("td"); tdPeakR.className = "calc-col"; tdPeakR.innerText = row.peakRate; tr.appendChild(tdPeakR);
+                var tdMaxP = document.createElement("td"); tdMaxP.className = "calc-col"; tdMaxP.innerText = row.maxProb; tr.appendChild(tdMaxP);
+
+                timingTbody.appendChild(tr);
+            });
         }
     </script>
 </body>
