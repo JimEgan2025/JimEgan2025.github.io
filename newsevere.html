@@ -3,80 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VizcayaWX Complete Live Threat Meter & Reference Guide</title>
+    <title>VizcayaWX Live Sounding & Threat Dashboard</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
             color: #212529;
             margin: 0;
-            padding: 20px;
+            padding: 30px 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
         }
-        .card {
+        .container {
+            width: 100%;
+            max-width: 1050px;
             background-color: #ffffff;
             border: 1px solid #dcdfe6;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 580px;
-            padding: 24px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            border-radius: 14px;
+            padding: 36px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
         }
         .header {
             text-align: center;
-            border-bottom: 1px solid #e4e7ed;
-            padding-bottom: 16px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #e4e7ed;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
         }
         .header h1 {
-            margin: 0 0 6px 0;
-            font-size: 20px;
+            margin: 0 0 8px 0;
+            font-size: 28px;
             color: #1a1a1a;
             letter-spacing: 0.5px;
         }
         .header p {
             margin: 0;
-            font-size: 13px;
+            font-size: 15px;
             color: #606266;
         }
         .alert-badge {
             background-color: #fffaf0;
             border: 1px solid #fbd38d;
             color: #dd6b20;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: 10px;
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 16px;
+            margin-bottom: 28px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .metric-group {
-            margin-bottom: 16px;
+        
+        /* Grid Layout for Wide Blog View */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .metric-card {
+            background-color: #fdfdfe;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
         .metric-label {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
             color: #2c3e50;
         }
         .metric-value {
             color: #dd6b20;
             font-family: monospace;
-            font-size: 15px;
+            font-size: 18px;
         }
         .progress-bar {
             background-color: #e4e7ed;
             border-radius: 6px;
-            height: 10px;
+            height: 12px;
             overflow: hidden;
             width: 100%;
+            margin-bottom: 8px;
         }
         .progress-fill {
             height: 100%;
@@ -84,29 +98,29 @@
             border-radius: 6px;
         }
         .description {
-            font-size: 12px;
+            font-size: 13px;
             color: #606266;
-            margin-top: 4px;
+            margin: 0;
         }
+
         .cheatsheet-box {
             background-color: #f8f9fa;
             border: 1px solid #e4e7ed;
-            border-radius: 8px;
-            padding: 14px;
-            margin-top: 16px;
-            font-size: 12px;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 14px;
             color: #4a5568;
         }
         .cheatsheet-title {
             font-weight: bold;
             color: #2d3748;
-            margin-bottom: 8px;
-            font-size: 13px;
+            margin-bottom: 12px;
+            font-size: 16px;
             border-bottom: 1px solid #e4e7ed;
-            padding-bottom: 4px;
+            padding-bottom: 6px;
         }
         .cheat-row {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
         }
@@ -114,18 +128,18 @@
             font-weight: bold;
             font-family: monospace;
             color: #2b6cb0;
-            min-width: 115px;
+            min-width: 125px;
         }
         .breakdown-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 8px;
-            font-size: 12px;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 13px;
         }
         .breakdown-item {
             background: #fff;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
         }
@@ -137,151 +151,234 @@
         .highlight-row {
             background-color: #fffaf0;
             border-left: 3px solid #dd6b20;
-            padding-left: 6px;
-            margin-left: -6px;
-            margin-right: -6px;
-            padding-right: 6px;
+            padding-left: 8px;
+            margin-left: -8px;
+            margin-right: -8px;
+            padding-right: 8px;
             border-radius: 4px;
         }
         .shear-rule {
-            margin-top: 10px;
-            padding-top: 8px;
+            margin-top: 12px;
+            padding-top: 10px;
             border-top: 1px dashed #cbd5e0;
             font-style: italic;
             color: #718096;
-            font-size: 11px;
+            font-size: 13px;
         }
         .footer {
             text-align: center;
-            border-top: 1px solid #e4e7ed;
-            padding-top: 14px;
-            margin-top: 16px;
-            font-size: 12px;
+            border-top: 2px solid #e4e7ed;
+            padding-top: 20px;
+            margin-top: 30px;
+            font-size: 14px;
             color: #718096;
+            grid-column: span 2;
+        }
+
+        /* Responsive collapse for mobile */
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            .container {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
     <div class="header">
-        <h1>VIZCAYA COMPLETE LIVE SOUNDING & THREAT METER</h1>
+        <h1>VIZCAYA LIVE SOUNDING & THREAT DASHBOARD</h1>
         <p>Miller (1972) Formula Engine | @vizcayawx</p>
     </div>
 
-    <div class="alert-badge" id="overall-status">
+    <div class="alert-badge">
         🟠 SEVERE WEATHER THREAT SCORE: 399 (MODERATE / SEVERE POSSIBLE)
     </div>
 
-    <!-- SWEAT / THREAT SCORE -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>🌪️ Severe Weather Threat Score (SWEAT)</span>
-            <span class="metric-value">399</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
-        <div class="description">Moderate Severe threshold: Organized multicells, hail, and damaging winds possible.</div>
+    <!-- METRICS GRID -->
+    <div class="grid-2">
 
-        <!-- MILLER BREAKDOWN BOX -->
-        <div class="cheatsheet-box" style="margin-top: 12px; background: #ffffff;">
-            <div class="cheatsheet-title">⚙️ Miller (1972) Formula Breakdown</div>
-            <div style="font-size: 12px; margin-bottom: 6px; color: #4a5568;">
-                <strong>850 mb Level (~5,000 FT):</strong> Temp: 20.3° | Dewpoint: 18.0° | Wind: 19 kt @ 170°<br>
-                <strong>500 mb Level (~18,000 FT):</strong> Temp: -4.7° | Wind: 25 kt @ 219°<br>
-                <strong>Total Totals:</strong> 47.7
+        <!-- SWEAT / THREAT SCORE (Full Width) -->
+        <div class="metric-card full-width">
+            <div class="metric-label">
+                <span>🌪️ Severe Weather Threat Score (SWEAT)</span>
+                <span class="metric-value">399</span>
             </div>
-            <div class="breakdown-grid">
-                <div class="breakdown-item">
-                    <strong>Moisture</strong> 12 × D850: <strong>+216 pts</strong>
+            <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
+            <div class="description">Moderate Severe threshold: Organized multicells, hail, and damaging winds possible.</div>
+
+            <!-- MILLER BREAKDOWN BOX -->
+            <div class="cheatsheet-box" style="margin-top: 16px; background: #ffffff;">
+                <div class="cheatsheet-title">⚙️ Miller (1972) Formula Breakdown</div>
+                <div style="font-size: 14px; margin-bottom: 8px; color: #4a5568;">
+                    <strong>850 mb Level (~5,000 FT):</strong> Temp: 20.3° | Dewpoint: 18.0° | Wind: 19 kt @ 170°<br>
+                    <strong>500 mb Level (~18,000 FT):</strong> Temp: -4.7° | Wind: 25 kt @ 219°<br>
+                    <strong>Total Totals:</strong> 47.7
                 </div>
-                <div class="breakdown-item">
-                    <strong>Instability</strong> 20 × (TT - 49): <strong>+0 pts</strong>
-                </div>
-                <div class="breakdown-item">
-                    <strong>Wind Speed</strong> (2×f850) + f500: <strong>+63 pts</strong>
-                </div>
-                <div class="breakdown-item">
-                    <strong>Directional Shear</strong> Term: <strong>+119 pts</strong>
+                <div class="breakdown-grid">
+                    <div class="breakdown-item">
+                        <strong>Moisture</strong> 12 × D850: <strong>+216 pts</strong>
+                    </div>
+                    <div class="breakdown-item">
+                        <strong>Instability</strong> 20 × (TT - 49): <strong>+0 pts</strong>
+                    </div>
+                    <div class="breakdown-item">
+                        <strong>Wind Speed</strong> (2×f850) + f500: <strong>+63 pts</strong>
+                    </div>
+                    <div class="breakdown-item">
+                        <strong>Directional Shear</strong> Term: <strong>+119 pts</strong>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- CAPE -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>⚡ Surface CAPE (Instability Fuel)</span>
-            <span class="metric-value">2,307 J/kg</span>
+        <!-- CAPE -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>⚡ Surface CAPE (Instability Fuel)</span>
+                <span class="metric-value">2,307 J/kg</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 85%;"></div></div>
+            <div class="description">Moderately unstable buoyant energy driving vertical updrafts.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 85%;"></div></div>
-        <div class="description">Moderately unstable buoyant energy driving vertical updrafts.</div>
-    </div>
 
-    <!-- CIN -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>🔓 Surface CIN (Atmospheric Cap)</span>
-            <span class="metric-value">0 J/kg</span>
+        <!-- CIN -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>🔓 Surface CIN (Atmospheric Cap)</span>
+                <span class="metric-value">0 J/kg</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 10%;"></div></div>
+            <div class="description">Zero inhibition; the atmospheric lid is completely removed.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 10%;"></div></div>
-        <div class="description">Zero inhibition; the atmospheric lid is completely removed.</div>
-    </div>
 
-    <!-- PWAT -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>🌊 Precipitable Water (PWAT Moisture)</span>
-            <span class="metric-value">2.31"</span>
+        <!-- PWAT -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>🌊 Precipitable Water (PWAT Moisture)</span>
+                <span class="metric-value">2.31"</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+            <div class="description">Tropical moisture firehose fueling active Flood Watches.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
-        <div class="description">Tropical moisture firehose fueling active Flood Watches.</div>
-    </div>
 
-    <!-- DCAPE -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>💨 DCAPE (Downdraft Wind Fuel)</span>
-            <span class="metric-value">1,024 J/kg</span>
+        <!-- DCAPE -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>💨 DCAPE (Downdraft Wind Fuel)</span>
+                <span class="metric-value">1,024 J/kg</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+            <div class="description">Extreme downdraft potential capable of severe microburst winds.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
-        <div class="description">Extreme downdraft potential capable of severe microburst winds.</div>
-    </div>
 
-    <!-- STORM TOPS -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>☁️ Storm Tops (Cloud Top Height / EL)</span>
-            <span class="metric-value">58,541 FT</span>
+        <!-- STORM TOPS -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>☁️ Storm Tops (Cloud Top Height / EL)</span>
+                <span class="metric-value">58,541 FT</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
+            <div class="description">Towering convective depth reaching nearly 11 miles high.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
-        <div class="description">Towering convective depth reaching nearly 11 miles high.</div>
-    </div>
 
-    <!-- HAIL POTENTIAL -->
-    <div class="metric-group">
-        <div class="metric-label">
-            <span>🧊 Hail Potential (Car Protection Index)</span>
-            <span class="metric-value">Moderate to Severe</span>
+        <!-- HAIL POTENTIAL -->
+        <div class="metric-card">
+            <div class="metric-label">
+                <span>🧊 Hail Potential (Car Protection Index)</span>
+                <span class="metric-value">Moderate to Severe</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+            <div class="description">Updraft strength supports potential for small to quarter-size hail.</div>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
-        <div class="description">Updraft strength supports potential for small to quarter-size hail.</div>
-    </div>
 
-    <!-- ================= RESTORED CHEATSHEET SECTIONS ================= -->
+    </div> <!-- END METRICS GRID -->
 
-    <!-- CAPE SCALE -->
-    <div class="cheatsheet-box">
-        <div class="cheatsheet-title">⚡ CAPE Scale (Instability Fuel)</div>
-        <div class="cheat-row"><span class="cheat-range">0 J/kg</span> <span>Stable</span></div>
-        <div class="cheat-row"><span class="cheat-range">1 – 1,000</span> <span>Slight / Marginally Unstable</span></div>
-        <div class="cheat-row highlight-row"><span class="cheat-range">1,000 – 2,500</span> <span><strong>Moderately Unstable</strong> (Current: 2,307 J/kg)</span></div>
-        <div class="cheat-row"><span class="cheat-range">2,500 – 3,500</span> <span>Very Unstable</span></div>
-        <div class="cheat-row"><span class="cheat-range">3,500+</span> <span>Extremely Unstable</span></div>
-    </div>
+    <!-- ================= CHEATSHEETS GRID ================= -->
+    <div class="grid-2" style="margin-top: 24px;">
 
-    <!-- CIN SCALE -->
-    <div class="cheatsheet-box">
-        <div class="cheatsheet-title">🔓 CIN Scale (Atmospheric Cap / Lid)</div>
-        <div class="cheat-row highlight-row"><span class="cheat-range">0 J/kg</span> <span><strong>No Cap / Uninhibited</strong> (Current: 0 J/kg — Lid Open)</span></div>
-        <div class="cheat-row"><span class="cheat-range">-1 to -50</span> <span>Weak Cap (Easily broken by lifting mechanisms)</span></div>
-        <div cl
+        <!-- CAPE SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">⚡ CAPE Scale (Instability Fuel)</div>
+            <div class="cheat-row"><span class="cheat-range">0 J/kg</span> <span>Stable</span></div>
+            <div class="cheat-row"><span class="cheat-range">1 – 1,000</span> <span>Slight / Marginally Unstable</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">1,000 – 2,500</span> <span><strong>Moderately Unstable</strong> (Current: 2,307 J/kg)</span></div>
+            <div class="cheat-row"><span class="cheat-range">2,500 – 3,500</span> <span>Very Unstable</span></div>
+            <div class="cheat-row"><span class="cheat-range">3,500+</span> <span>Extremely Unstable</span></div>
+        </div>
+
+        <!-- CIN SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">🔓 CIN Scale (Atmospheric Cap / Lid)</div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">0 J/kg</span> <span><strong>No Cap / Uninhibited</strong> (Current: 0 J/kg — Lid Open)</span></div>
+            <div class="cheat-row"><span class="cheat-range">-1 to -50</span> <span>Weak Cap (Easily broken by lift)</span></div>
+            <div class="cheat-row"><span class="cheat-range">-50 to -200</span> <span>Moderate Cap (Requires strong lift)</span></div>
+            <div class="cheat-row"><span class="cheat-range">-200+</span> <span>Strong Cap (Suppression / Locked)</span></div>
+        </div>
+
+        <!-- PWAT SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">🌊 PWAT Scale (Moisture Depth)</div>
+            <div class="cheat-row"><span class="cheat-range">&lt; 0.75"</span> <span>Dry / Below Normal</span></div>
+            <div class="cheat-row"><span class="cheat-range">0.75" – 1.25"</span> <span>Normal Baseline Moisture</span></div>
+            <div class="cheat-row"><span class="cheat-range">1.25" – 1.75"</span> <span>Above Normal / Humid</span></div>
+            <div class="cheat-row"><span class="cheat-range">1.75" – 2.25"</span> <span>Very Moist / Heavy Rain Risk</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">2.25"+</span> <span><strong>Tropical Firehose</strong> (Current: 2.31" — Extreme Flood)</span></div>
+        </div>
+
+        <!-- DCAPE SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">💨 DCAPE Scale (Downdraft Potential)</div>
+            <div class="cheat-row"><span class="cheat-range">&lt; 300 J/kg</span> <span>Low Downdraft Potential</span></div>
+            <div class="cheat-row"><span class="cheat-range">300 – 600</span> <span>Moderate Downdraft Risk</span></div>
+            <div class="cheat-row"><span class="cheat-range">600 – 1,000</span> <span>High Downdraft / Gust Risk</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">1,000+ J/kg</span> <span><strong>Extreme Microburst Fuel</strong> (Current: 1,024)</span></div>
+        </div>
+
+        <!-- STORM TOPS SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">☁️ Storm Tops Scale (Cloud Top Height)</div>
+            <div class="cheat-row"><span class="cheat-range">&lt; 20,000 FT</span> <span>Ordinary Shallow Convection</span></div>
+            <div class="cheat-row"><span class="cheat-range">20k – 40k FT</span> <span>Strong Mature Thunderstorms</span></div>
+            <div class="cheat-row"><span class="cheat-range">40k – 50k FT</span> <span>Severe / Supercell Potential</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">50,000+ FT</span> <span><strong>Extreme Updrafts</strong> (Current: 58,541 FT)</span></div>
+        </div>
+
+        <!-- HAIL SIZE SCALE -->
+        <div class="cheatsheet-box">
+            <div class="cheatsheet-title">🧊 Hail Size & Vehicle Protection Guide</div>
+            <div class="cheat-row"><span class="cheat-range">&lt; 0.50"</span> <span>Pea to Marble (No vehicle damage)</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">0.75" – 1.00"</span> <span><strong>Penny to Quarter</strong> (Marginal — Move Cars Inside!)</span></div>
+            <div class="cheat-row"><span class="cheat-range">1.25" – 1.75"</span> <span>Half Dollar to Golf Ball (Glass / Dent Risk)</span></div>
+            <div class="cheat-row"><span class="cheat-range">2.00"+</span> <span>Hen Egg to Baseball+ (Destructive Hail)</span></div>
+        </div>
+
+        <!-- SWEAT SCALE (Full Width) -->
+        <div class="cheatsheet-box full-width">
+            <div class="cheatsheet-title">📖 SWEAT Operational Reference (AFGWC / SPC Scale)</div>
+            <div class="cheat-row"><span class="cheat-range">&lt; 200</span> <span>Minimal / Garden Variety (Ordinary showers)</span></div>
+            <div class="cheat-row"><span class="cheat-range">200–299</span> <span>Marginal / Pulse (Severe rare; microburst risk)</span></div>
+            <div class="cheat-row highlight-row"><span class="cheat-range">300–399</span> <span><strong>Moderate Severe</strong> (Multicells, hail, damaging winds — Current: 399)</span></div>
+            <div class="cheat-row"><span class="cheat-range">400+</span> <span>High / Tornadic (Supercells favored)</span></div>
+            
+            <div class="shear-rule">
+                <strong>Shear Gate Rule:</strong> The 125-point directional shear bonus forces to 0 unless both 850mb (≥15kt, 130°–250°) and 500mb (≥15kt, 210°–310°) winds veer with height.
+            </div>
+        </div>
+
+        <div class="footer">
+            VizcayaWX Standalone & Model Engine • Round Rock, TX (30.5871°N, 97.6410°W)
+        </div>
+
+    </div> <!-- END CHEATSHEETS GRID -->
+
+</div>
+
+</body>
+</html>
