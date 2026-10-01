@@ -96,6 +96,7 @@
             height: 100%;
             background: linear-gradient(90deg, #ed8936, #dd6b20);
             border-radius: 6px;
+            transition: width 0.5s ease;
         }
         .description {
             font-size: 13px;
@@ -175,7 +176,6 @@
             grid-column: span 2;
         }
 
-        /* Responsive collapse for mobile */
         @media (max-width: 768px) {
             .grid-2 {
                 grid-template-columns: 1fr;
@@ -197,8 +197,8 @@
         <p>Miller (1972) Formula Engine | @vizcayawx</p>
     </div>
 
-    <div class="alert-badge">
-        🟠 SEVERE WEATHER THREAT SCORE: 399 (MODERATE / SEVERE POSSIBLE)
+    <div class="alert-badge" id="overall-status">
+        🟠 LIVE THREAT MONITOR: SYNCHRONIZING...
     </div>
 
     <!-- METRICS GRID -->
@@ -208,31 +208,31 @@
         <div class="metric-card full-width">
             <div class="metric-label">
                 <span>🌪️ Severe Weather Threat Score (SWEAT)</span>
-                <span class="metric-value">399</span>
+                <span class="metric-value" id="val-sweat">399</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
-            <div class="description">Moderate Severe threshold: Organized multicells, hail, and damaging winds possible.</div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-sweat" style="width: 80%;"></div></div>
+            <div class="description" id="desc-sweat">Moderate Severe threshold: Organized multicells, hail, and damaging winds possible.</div>
 
             <!-- MILLER BREAKDOWN BOX -->
             <div class="cheatsheet-box" style="margin-top: 16px; background: #ffffff;">
                 <div class="cheatsheet-title">⚙️ Miller (1972) Formula Breakdown</div>
-                <div style="font-size: 14px; margin-bottom: 8px; color: #4a5568;">
-                    <strong>850 mb Level (~5,000 FT):</strong> Temp: 20.3° | Dewpoint: 18.0° | Wind: 19 kt @ 170°<br>
-                    <strong>500 mb Level (~18,000 FT):</strong> Temp: -4.7° | Wind: 25 kt @ 219°<br>
+                <div style="font-size: 14px; margin-bottom: 8px; color: #4a5568;" id="miller-inputs">
+                    <strong>850 mb Level (~5,000 FT):</strong> Temp: 20.3°C | Dewpoint: 18.0°C | Wind: 19 kt @ 170°<br>
+                    <strong>500 mb Level (~18,000 FT):</strong> Temp: -4.7°C | Wind: 25 kt @ 219°<br>
                     <strong>Total Totals:</strong> 47.7
                 </div>
-                <div class="breakdown-grid">
+                <div class="breakdown-grid" id="miller-grid">
                     <div class="breakdown-item">
-                        <strong>Moisture</strong> 12 × D850: <strong>+216 pts</strong>
+                        <strong>Moisture</strong> 12 × D850: <strong id="m-moist">+216 pts</strong>
                     </div>
                     <div class="breakdown-item">
-                        <strong>Instability</strong> 20 × (TT - 49): <strong>+0 pts</strong>
+                        <strong>Instability</strong> 20 × (TT - 49): <strong id="m-inst">+0 pts</strong>
                     </div>
                     <div class="breakdown-item">
-                        <strong>Wind Speed</strong> (2×f850) + f500: <strong>+63 pts</strong>
+                        <strong>Wind Speed</strong> (2×f850) + f500: <strong id="m-wind">+63 pts</strong>
                     </div>
                     <div class="breakdown-item">
-                        <strong>Directional Shear</strong> Term: <strong>+119 pts</strong>
+                        <strong>Directional Shear</strong> Term: <strong id="m-shear">+119 pts</strong>
                     </div>
                 </div>
             </div>
@@ -242,9 +242,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>⚡ Surface CAPE (Instability Fuel)</span>
-                <span class="metric-value">2,307 J/kg</span>
+                <span class="metric-value" id="val-cape">2,307 J/kg</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 85%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-cape" style="width: 85%;"></div></div>
             <div class="description">Moderately unstable buoyant energy driving vertical updrafts.</div>
         </div>
 
@@ -252,9 +252,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>🔓 Surface CIN (Atmospheric Cap)</span>
-                <span class="metric-value">0 J/kg</span>
+                <span class="metric-value" id="val-cin">0 J/kg</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 10%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-cin" style="width: 10%;"></div></div>
             <div class="description">Zero inhibition; the atmospheric lid is completely removed.</div>
         </div>
 
@@ -262,9 +262,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>🌊 Precipitable Water (PWAT Moisture)</span>
-                <span class="metric-value">2.31"</span>
+                <span class="metric-value" id="val-pwat">2.31"</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-pwat" style="width: 90%;"></div></div>
             <div class="description">Tropical moisture firehose fueling active Flood Watches.</div>
         </div>
 
@@ -272,9 +272,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>💨 DCAPE (Downdraft Wind Fuel)</span>
-                <span class="metric-value">1,024 J/kg</span>
+                <span class="metric-value" id="val-dcape">1,024 J/kg</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-dcape" style="width: 90%;"></div></div>
             <div class="description">Extreme downdraft potential capable of severe microburst winds.</div>
         </div>
 
@@ -282,9 +282,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>☁️ Storm Tops (Cloud Top Height / EL)</span>
-                <span class="metric-value">58,541 FT</span>
+                <span class="metric-value" id="val-tops">58,541 FT</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-tops" style="width: 95%;"></div></div>
             <div class="description">Towering convective depth reaching nearly 11 miles high.</div>
         </div>
 
@@ -292,9 +292,9 @@
         <div class="metric-card">
             <div class="metric-label">
                 <span>🧊 Hail Potential (Car Protection Index)</span>
-                <span class="metric-value">Moderate to Severe</span>
+                <span class="metric-value" id="val-hail">Moderate to Severe</span>
             </div>
-            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-hail" style="width: 75%;"></div></div>
             <div class="description">Updraft strength supports potential for small to quarter-size hail.</div>
         </div>
 
@@ -373,12 +373,93 @@
         </div>
 
         <div class="footer">
-            VizcayaWX Standalone & Model Engine • Round Rock, TX (30.5871°N, 97.6410°W)
+            VizcayaWX Live Open-Meteo & Miller Engine • Round Rock, TX (30.5871°N, 97.6410°W)
         </div>
 
     </div> <!-- END CHEATSHEETS GRID -->
 
 </div>
+
+<script>
+    // LIVE OPEN-METEO & MILLER SWEAT CALCULATION ENGINE
+    async function fetchLiveThreats() {
+        try {
+            const lat = 30.5871;
+            const lon = -97.6410;
+            
+            // Fetch live pressure-level variables and surface CAPE from Open-Meteo in knots
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_850hPa,dew_point_850hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_500hPa,wind_speed_500hPa,wind_direction_500hPa,cape&wind_speed_unit=kn`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error("API network error");
+            
+            const data = await response.json();
+            const cur = data.current;
+
+            if (!cur) throw new Error("No current data payload");
+
+            // 1. CAPE Update
+            const capeVal = Math.round(cur.cape || 0);
+            document.getElementById('val-cape').innerText = capeVal.toLocaleString() + " J/kg";
+            document.getElementById('bar-cape').style.width = Math.min(100, (capeVal / 3500) * 100) + "%";
+
+            // 2. Extract Miller Formula Variables
+            const T850 = cur.temperature_850hPa; 
+            const Td850 = cur.dew_point_850hPa;  
+            const T500 = cur.temperature_500hPa; 
+            const f850 = cur.wind_speed_850hPa;    
+            const dir850 = cur.wind_direction_850hPa; 
+            const f500 = cur.wind_speed_500hPa;    
+            const dir500 = cur.wind_direction_500hPa; 
+
+            // Calculate Total Totals (TT) = (T850 - T500) + (Td850 - T500)
+            const TT = (T850 - T500) + (Td850 - T500);
+
+            // Miller (1972) Formula Breakdown:
+            const termMoisture = 12 * Math.max(0, Td850);
+            const termInstability = 20 * Math.max(0, TT - 49);
+            const termWindSpeed = (2 * f850) + f500;
+
+            let termShear = 0;
+            const dirCheck850 = (dir850 >= 130 && dir850 <= 250);
+            const dirCheck500 = (dir500 >= 210 && dir500 <= 310);
+            const speedCheck = (f850 >= 15 && f500 >= 15);
+            const veeringCheck = (dir500 > dir850);
+
+            if (dirCheck850 && dirCheck500 && speedCheck && veeringCheck) {
+                termShear = 125 * (Math.sin((dir500 - dir850) * Math.PI / 180) + 0.2);
+            }
+
+            const totalSWEAT = Math.round(termMoisture + termInstability + termWindSpeed + termShear);
+
+            // Update UI Elements
+            document.getElementById('val-sweat').innerText = totalSWEAT;
+            document.getElementById('bar-sweat').style.width = Math.min(100, (totalSWEAT / 500) * 100) + "%";
+            document.getElementById('desc-sweat').innerText = `Live Calculated via Miller Formula (TT: ${TT.toFixed(1)}, 850Td: ${Td850}°C)`;
+            document.getElementById('overall-status').innerText = `🟠 SEVERE WEATHER THREAT SCORE: ${totalSWEAT} (MODERATE / SEVERE POSSIBLE)`;
+
+            // Update Breakdown Box
+            document.getElementById('miller-inputs').innerHTML = `
+                <strong>850 mb Level (~5,000 FT):</strong> Temp: ${T850}°C | Dewpoint: ${Td850}°C | Wind: ${Math.round(f850)} kt @ ${Math.round(dir850)}°<br>
+                <strong>500 mb Level (~18,000 FT):</strong> Temp: ${T500}°C | Wind: ${Math.round(f500)} kt @ ${Math.round(dir500)}°<br>
+                <strong>Total Totals:</strong> ${TT.toFixed(1)}
+            `;
+            document.getElementById('m-moist').innerText = `+${Math.round(termMoisture)} pts`;
+            document.getElementById('m-inst').innerText = `+${Math.round(termInstability)} pts`;
+            document.getElementById('m-wind').innerText = `+${Math.round(termWindSpeed)} pts`;
+            document.getElementById('m-shear').innerText = `+${Math.round(termShear)} pts`;
+
+            console.log("Live Open-Meteo & Miller synchronization successful.");
+
+        } catch (error) {
+            console.warn("Using offline fallback telemetry:", error);
+        }
+    }
+
+    // Run live calculation on load and refresh every 10 minutes
+    fetchLiveThreats();
+    setInterval(fetchLiveThreats, 600000);
+</script>
 
 </body>
 </html>
