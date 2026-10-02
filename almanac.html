@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>130-Year Weather Almanac</title>
+    <title>130-Year Weather Almanac - Vizcaya</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 900px;
             margin: 40px auto;
             padding: 0 20px;
             background-color: #f9f9f9;
@@ -21,14 +21,14 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        input, button, textarea {
+        input, select, button {
             padding: 10px;
             font-size: 16px;
             margin-right: 10px;
+            margin-bottom: 10px;
             box-sizing: border-box;
         }
         input { width: 150px; }
-        textarea { width: 100%; height: 120px; font-family: monospace; margin-top: 10px; }
         button {
             background-color: #3498db;
             color: white;
@@ -37,141 +37,199 @@
             cursor: pointer;
         }
         button:hover { background-color: #2980b9; }
-        .record-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+        .master-copy-btn {
+            background-color: #27ae60;
+            color: white;
+            font-size: 16px;
+            padding: 12px 20px;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .master-copy-btn:hover { background-color: #219653; }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; }
         }
         .record-date { font-weight: bold; color: #e74c3c; font-size: 1.1em; }
-        ul { padding-left: 20px; }
+        ul { padding-left: 20px; line-height: 1.8; }
     </style>
 </head>
 <body>
 
-    <h1>130-Year Weather Almanac</h1>
+    <h1 id="stationTitle">130-Year Weather Almanac</h1>
     
-    <div class="card">
-        <h3>Search Historical Metrics</h3>
-        <label for="dateInput">Enter Month & Day (MM-DD):</label><br><br>
-        <input type="text" id="dateInput" placeholder="MM-DD">
-        <button onclick="searchAlmanac()">Search</button>
-    </div>
-
-    <div id="results">
-        <p>Connecting to GitHub Pages to load almanac data...</p>
-    </div>
-
-    <!-- AI Data Stacker Section -->
-    <div class="card">
-        <h3>AI Data Stacker</h3>
-        <p style="font-size: 0.9em; color: #666;">Use this section to format new entries for your JSON stack. Enter details or ask AI for a date block, paste it below, and click format.</p>
-        <label for="aiInputBox">Paste raw AI JSON snippet:</label>
-        <textarea id="aiInputBox" placeholder='{"recH": "85", "recHY": "2010", "recL": "30", "recLY": "1950", "avgH": 65, "avgL": 40, "avgM": "52", "accP": "0.10"}'></textarea>
-        <div style="margin-top: 10px;">
-            <input type="text" id="targetDateKey" placeholder="Date (MM-DD)" style="width: 130px;">
-            <button onclick="formatForStack()">Format & Copy JSON</button>
+    <div class="grid-container">
+        <!-- Daily Search Card -->
+        <div class="card">
+            <h3>Daily Historical Search</h3>
+            <label for="dateInput">Month & Day (MM-DD):</label><br>
+            <input type="text" id="dateInput" placeholder="MM-DD">
+            <button onclick="searchAlmanac()">Search Day</button>
+            <div id="dailyResults" style="margin-top: 15px;">Loading daily data...</div>
         </div>
-        <pre id="stackOutput" style="background:#f1f1f1; padding:10px; margin-top:10px; display:none; overflow-x:auto;"></pre>
+
+        <!-- Monthly Climatology Card -->
+        <div class="card">
+            <h3>Monthly Climatology</h3>
+            <label for="monthSelect">Select Month:</label><br>
+            <select id="monthSelect" onchange="displayMonthly()">
+                <option value="01_january">January</option>
+                <option value="02_february">February</option>
+                <option value="03_march">March</option>
+                <option value="04_april">April</option>
+                <option value="05_may">May</option>
+                <option value="06_june">June</option>
+                <option value="07_july">July</option>
+                <option value="08_august">August</option>
+                <option value="09_september">September</option>
+                <option value="10_october" selected>October</option>
+                <option value="11_november">November</option>
+                <option value="12_december">December</option>
+            </select>
+            <div id="monthlyResults" style="margin-top: 15px;">Loading monthly data...</div>
+        </div>
+    </div>
+
+    <!-- Master Copy Button Card -->
+    <div class="card" style="text-align: center;">
+        <button class="master-copy-btn" onclick="copyCombinedData()">📋 Copy Both Daily & Monthly Data for AI</button>
     </div>
 
     <script>
-        let almanacData = {};
-        const ALMANAC_URL = "https://jimegan2025.github.io/almanac.json";
+        let almanacDaily = {};
+        let almanacMonthlyData = {};
+        
+        const DAILY_URL = "https://jimegan2025.github.io/almanac.json";
+        const MONTHLY_URL = "https://jimegan2025.github.io/almanac_monthly.json"; 
 
-        async function loadAlmanac() {
-            const resultsDiv = document.getElementById("results");
-            
-            // Automatically get today's date in MM-DD format
+        async function initAlmanac() {
             const today = new Date();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             const todayStr = `${mm}-${dd}`;
             
             document.getElementById("dateInput").value = todayStr;
-            document.getElementById("targetDateKey").value = todayStr;
+
+            const monthNames = ["01_january", "02_february", "03_march", "04_april", "05_may", "06_june", "07_july", "08_august", "09_september", "10_october", "11_november", "12_december"];
+            const currentMonthKey = monthNames[today.getMonth()];
+            document.getElementById("monthSelect").value = currentMonthKey;
 
             try {
-                const response = await fetch(ALMANAC_URL);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                almanacData = await response.json();
-                
-                // Automatically run search for today's date upon successful load
-                searchAlmanac();
+                const [dailyRes, monthlyRes] = await Promise.all([
+                    fetch(DAILY_URL),
+                    fetch(MONTHLY_URL).catch(() => null)
+                ]);
+
+                if (dailyRes.ok) {
+                    almanacDaily = await dailyRes.json();
+                    searchAlmanac();
+                } else {
+                    document.getElementById("dailyResults").innerHTML = `<p style="color: red;">Failed to load daily almanac.</p>`;
+                }
+
+                if (monthlyRes && monthlyRes.ok) {
+                    const monthlyJson = await monthlyRes.json();
+                    if (monthlyJson.station_metadata) {
+                        document.getElementById("stationTitle").textContent = `${monthlyJson.station_metadata.name} Weather Almanac (${monthlyJson.station_metadata.period_of_record})`;
+                    }
+                    almanacMonthlyData = monthlyJson.monthly_data || {};
+                    displayMonthly();
+                } else {
+                    document.getElementById("monthlyResults").innerHTML = `<p style="color: red;">Monthly data file not found.</p>`;
+                }
+
             } catch (error) {
-                resultsDiv.innerHTML = `<p style="color: red;">Error loading data: ${error.message}.</p>`;
+                console.error("Error loading almanac files:", error);
             }
         }
 
         function searchAlmanac() {
             const query = document.getElementById("dateInput").value.trim();
-            const resultsDiv = document.getElementById("results");
+            const resultsDiv = document.getElementById("dailyResults");
             
-            if (!query) {
-                resultsDiv.innerHTML = "<p>Please enter a date to search.</p>";
+            if (!query || !almanacDaily[query]) {
+                resultsDiv.innerHTML = `<p>No daily record found for "${query}".</p>`;
                 return;
             }
 
-            if (!almanacData || Object.keys(almanacData).length === 0) {
-                resultsDiv.innerHTML = "<p style='color: red;'>Data is still loading or not loaded properly.</p>";
-                return;
-            }
-
-            const record = almanacData[query];
-
-            if (!record) {
-                resultsDiv.innerHTML = `<p>No records found for "${query}". Please use MM-DD format (e.g., 10-02).</p>`;
-                return;
-            }
-
-            let html = `
-                <h3>Historical Records for ${query}:</h3>
-                <div class="record-card">
-                    <div class="record-date">Date: ${query}</div>
-                    <ul style="line-height: 1.8; margin-top: 10px;">
-                        ${record.avgH !== undefined ? `<li><strong>Average High:</strong> ${record.avgH}°F</li>` : ''}
-                        ${record.avgL !== undefined ? `<li><strong>Average Low:</strong> ${record.avgL}°F</li>` : ''}
-                        ${record.avgM !== undefined ? `<li><strong>Average Mean:</strong> ${record.avgM}°F</li>` : ''}
-                        ${record.recH !== undefined ? `<li><strong>Record High:</strong> ${record.recH}°F (in${record.recHY || 'N/A'})</li>` : ''}
-                        ${record.recL !== undefined ? `<li><strong>Record Low:</strong> ${record.recL}°F (in${record.recLY || 'N/A'})</li>` : ''}
-                        ${record.accP !== undefined ? `<li><strong>Accumulated Precipitation:</strong> ${record.accP} in</li>` : ''}
-                    </ul>
-                    <details style="margin-top: 15px; color: #666;">
-                        <summary>View Raw JSON Data</summary>
-                        <pre style="background:#f1f1f1; padding:10px; margin-top:5px; overflow-x:auto;">${JSON.stringify(record, null, 2)}</pre>
-                    </details>
-                </div>
+            const record = almanacDaily[query];
+            resultsDiv.innerHTML = `
+                <div class="record-date">Date: ${query}</div>
+                <ul>
+                    ${record.avgH !== undefined ? `<li><strong>Average High:</strong> ${record.avgH}°F</li>` : ''}
+                    ${record.avgL !== undefined ? `<li><strong>Average Low:</strong> ${record.avgL}°F</li>` : ''}
+                    ${record.avgM !== undefined ? `<li><strong>Average Mean:</strong> ${record.avgM}°F</li>` : ''}
+                    ${record.recH !== undefined ? `<li><strong>Record High:</strong> ${record.recH}°F (${record.recHY})</li>` : ''}
+                    ${record.recL !== undefined ? `<li><strong>Record Low:</strong> ${record.recL}°F (${record.recLY})</li>` : ''}
+                    ${record.accP !== undefined ? `<li><strong>Precipitation:</strong> ${record.accP} in</li>` : ''}
+                </ul>
             `;
-            resultsDiv.innerHTML = html;
         }
 
-        function formatForStack() {
-            const rawText = document.getElementById("aiInputBox").value.trim();
-            const dateKey = document.getElementById("targetDateKey").value.trim() || "01-01";
-            const outputPre = document.getElementById("stackOutput");
+        function displayMonthly() {
+            const selectedKey = document.getElementById("monthSelect").value;
+            const resultsDiv = document.getElementById("monthlyResults");
 
-            try {
-                // Parse the user's input to ensure valid JSON
-                const parsedObj = JSON.parse(rawText);
-                
-                // Construct the exact stack snippet matching your JSON format
-                const formattedSnippet = `    "${dateKey}": ${JSON.stringify(parsedObj, null, 4)},`;
-                
-                outputPre.style.display = "block";
-                outputPre.textContent = formattedSnippet;
-
-                // Automatically copy to clipboard for convenience
-                navigator.clipboard.writeText(formattedSnippet).then(() => {
-                    alert("Formatted JSON snippet copied to clipboard ready to add to your stack!");
-                });
-            } catch (e) {
-                alert("Invalid JSON format. Please make sure your pasted text is valid JSON.");
+            if (!almanacMonthlyData[selectedKey]) {
+                resultsDiv.innerHTML = `<p>Monthly data unavailable.</p>`;
+                return;
             }
+
+            const m = almanacMonthlyData[selectedKey];
+            resultsDiv.innerHTML = `
+                <ul>
+                    <li><strong>Avg Temp (Mean):</strong> ${m.average_temp.mean}°F (Max Avg: ${m.average_temp.record_max_avg}°F in ${m.average_temp.record_max_year})</li>
+                    <li><strong>Avg High:</strong> ${m.average_high.mean}°F (Record Max: ${m.average_high.record_max}°F in ${m.average_high.record_max_year})</li>
+                    <li><strong>Avg Low:</strong> ${m.average_low.mean}°F (Record Min: ${m.average_low.record_min}°F in ${m.average_low.record_min_year})</li>
+                    <li><strong>Rainfall Mean:</strong> ${m.rainfall.mean} in (Wettest: ${m.rainfall.record_wettest} in in ${m.rainfall.record_wettest_year})</li>
+                </ul>
+            `;
         }
 
-        loadAlmanac();
+        function copyCombinedData() {
+            const query = document.getElementById("dateInput").value.trim();
+            const record = almanacDaily[query];
+            
+            const selectedKey = document.getElementById("monthSelect").value;
+            const monthDropdown = document.getElementById("monthSelect");
+            const monthDisplayName = monthDropdown.options[monthDropdown.selectedIndex].text;
+            const m = almanacMonthlyData[selectedKey];
+
+            if (!record || !m) {
+                alert("Please ensure both daily and monthly data are loaded before copying.");
+                return;
+            }
+
+            const combinedText = 
+`=== DAILY HISTORICAL SEARCH (${query}) ===
+- Average High: ${record.avgH !== undefined ? record.avgH + '°F' : 'N/A'}
+- Average Low: ${record.avgL !== undefined ? record.avgL + '°F' : 'N/A'}
+- Average Mean: ${record.avgM !== undefined ? record.avgM + '°F' : 'N/A'}
+- Record High: ${record.recH !== undefined ? record.recH + '°F (' + record.recHY + ')' : 'N/A'}
+- Record Low: ${record.recL !== undefined ? record.recL + '°F (' + record.recLY + ')' : 'N/A'}
+- Precipitation: ${record.accP !== undefined ? record.accP + ' in' : 'N/A'}
+
+=== MONTHLY CLIMATOLOGY (${monthDisplayName}) ===
+- Avg Temp (Mean): ${m.average_temp.mean}°F (Max Avg: ${m.average_temp.record_max_avg}°F in ${m.average_temp.record_max_year})
+- Avg High: ${m.average_high.mean}°F (Record Max: ${m.average_high.record_max}°F in ${m.average_high.record_max_year})
+- Avg Low: ${m.average_low.mean}°F (Record Min: ${m.average_low.record_min}°F in ${m.average_low.record_min_year})
+- Rainfall Mean: ${m.rainfall.mean} in (Wettest: ${m.rainfall.record_wettest} in in ${m.rainfall.record_wettest_year})`;
+
+            navigator.clipboard.writeText(combinedText).then(() => {
+                alert("Combined daily and monthly data copied to clipboard!");
+            }).catch(err => {
+                console.error("Failed to copy: ", err);
+            });
+        }
+
+        initAlmanac();
     </script>
 </body>
 </html>
