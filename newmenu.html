@@ -14,13 +14,11 @@
       --text-dim: #9ca3af;
       --border: #374151;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       background: var(--bg-dark);
@@ -28,13 +26,11 @@
       height: 100vh;
       overflow: hidden;
     }
-
     .dashboard {
       display: flex;
       height: 100vh;
       width: 100vw;
     }
-
     /* SIDEBAR */
     .sidebar {
       width: 280px;
@@ -43,12 +39,10 @@
       display: flex;
       flex-direction: column;
     }
-
     .header-area {
       padding: 15px;
       border-bottom: 1px solid var(--border);
     }
-
     .header {
       font-weight: 800;
       color: var(--accent);
@@ -56,7 +50,6 @@
       font-size: 16px;
       letter-spacing: 2px;
     }
-
     .search-box {
       width: 100%;
       padding: 8px;
@@ -66,13 +59,11 @@
       margin-top: 10px;
       border-radius: 4px;
     }
-
     .tabs {
       flex: 1;
       overflow-y: auto;
       padding: 12px;
     }
-
     .group-label {
       font-size: 14px;
       color: var(--accent);
@@ -81,7 +72,6 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-
     .tab {
       width: 100%;
       padding: 10px 12px;
@@ -95,25 +85,21 @@
       border-radius: 4px;
       transition: background 0.15s ease, color 0.15s ease;
     }
-
     .tab:hover {
       background: var(--bg-card);
       color: white;
     }
-
     .tab.active {
       background: var(--accent);
       color: black;
       font-weight: bold;
     }
-
     /* MAIN CONTENT */
     .main {
       flex: 1;
       display: flex;
       flex-direction: column;
     }
-
     .topbar {
       height: 60px;
       background: var(--bg-sidebar);
@@ -123,29 +109,24 @@
       justify-content: space-between;
       padding: 0 15px;
     }
-
     .topbar-left {
       display: flex;
       align-items: center;
       gap: 15px;
     }
-
     #title {
       font-weight: 600;
       font-size: 18px;
     }
-
     #asOfTime {
       font-size: 14px;
       color: var(--text-dim);
       font-style: italic;
     }
-
     .btn-group {
       display: flex;
       gap: 8px;
     }
-
     .btn {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -156,22 +137,18 @@
       border-radius: 4px;
       transition: border-color 0.15s ease;
     }
-
     .btn:hover {
       border-color: var(--accent);
     }
-
     .btn-copy {
       background: #2563eb;
       border-color: #3b82f6;
       font-weight: 700;
     }
-
     .btn-copy:hover {
       background: #1d4ed8;
       border-color: #60a5fa;
     }
-
     /* VIEWER */
     .viewer {
       flex: 1;
@@ -179,14 +156,12 @@
       background: black;
       overflow: hidden;
     }
-
     #frameContainer {
       width: 100%;
       height: 100%;
       position: relative;
       overflow: hidden;
     }
-
     #frame {
       width: 100%;
       height: 100%;
@@ -196,7 +171,6 @@
       left: 0;
       transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
-
     #imgView {
       display: none;
       width: 100%;
@@ -214,7 +188,7 @@
       <div class="header">WEATHER OPS CENTER</div>
       <input class="search-box" id="tabSearch" placeholder="Search tabs...">
     </div>
-            
+                
     <div class="tabs">
       <div class="group-label">Core Operations</div>
       <button class="tab active" data-url="https://jimegan2025.github.io/index.html" data-title="Home">Home</button>
@@ -227,6 +201,11 @@
       <button class="tab" data-url="https://jimegan2025.github.io/leadforecast.html" data-title="Alternate Forecast">Alternate Forecast</button>
       <button class="tab" data-url="https://jimegan2025.github.io/360dash.html" data-title="360 Hour Forecast">360 Hour Forecast</button>
       <button class="tab" data-url="https://jimegan2025.github.io/texasdash" data-title="NWS Offices">NWS Offices</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/index.html" data-title="Index">Index</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/nowcast.html" data-title="Nowcast">Nowcast</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/centexwarn.html" data-title="CenTex Warn">CenTex Warn</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newspc.html" data-title="SPC Outlook">SPC Outlook</button>
+      <button class="tab" data-url="https://jimegan2025.github.io/newsevere.html" data-title="Severe Analysis">Severe Analysis</button>
       <button class="tab" data-url="https://jimegan2025.github.io/newmodelcompare.html" data-title="Model Compare">Model Compare</button>
       <button class="tab" data-url="https://jimegan2025.github.io/lookahead.html" data-title="Look Ahead">Look Ahead</button>
 
@@ -234,7 +213,7 @@
       <button class="tab" data-url="https://jimegan2025.github.io/around.html" data-title="Around">Around</button>
       <button class="tab" data-url="https://jimegan2025.github.io/textemps.html" data-title="Texas Extremes">Texas Extremes</button>
       <button class="tab" data-url="https://jimegan2025.github.io/newoverhead.html" data-title="Overhead Analysis">Overhead Analysis</button>
-            
+                  
       <div class="group-label">Radar & Severe</div>
       <button class="tab" data-url="https://jimegan2025.github.io/masterradar.html" data-title="Master Radar">Master Radar</button>
       <button class="tab" data-url="https://jimegan2025.github.io/masterrad.html" data-title="Texas Radar">Texas Radar</button>
@@ -269,7 +248,7 @@
         <button class="btn" id="btnPopOut">Pop Out</button>
       </div>
     </div>
-            
+                
     <div class="viewer">
       <div id="frameContainer">
         <iframe id="frame" src="https://jimegan2025.github.io/index.html"></iframe>
@@ -291,18 +270,18 @@
 
     function isImageUrl(url) {
       const cleanUrl = url.split('?')[0].toLowerCase();
-      return cleanUrl.endsWith('.png') ||
-              cleanUrl.endsWith('.jpg') ||
-              cleanUrl.endsWith('.jpeg') ||
-              cleanUrl.endsWith('.gif') ||
-              cleanUrl.endsWith('.webp') ||
-              cleanUrl.endsWith('.svg');
+      return cleanUrl.endsWith('.png') || 
+             cleanUrl.endsWith('.jpg') || 
+             cleanUrl.endsWith('.jpeg') || 
+             cleanUrl.endsWith('.gif') || 
+             cleanUrl.endsWith('.webp') || 
+             cleanUrl.endsWith('.svg');
     }
 
     function refresh() {
       const iframe = document.getElementById('frame');
       const img = document.getElementById('imgView');
-                  
+                        
       if (img.style.display !== 'none') {
         const base = img.src.split('?')[0];
         img.src = base + '?cachebust=' + Date.now();
@@ -326,10 +305,9 @@
       const img = document.getElementById('imgView');
       const currentUrl = img.style.display !== 'none' ? img.src : iframe.src;
 
-      const instructions = `You are interacting with Weather Ops Center | Pro. Active Operational View: ${currentTitle} Target Resource URL: ${currentUrl} Timestamp: ${new Date().toLocaleString()} Directive: Please analyze the current weather operations view and context for Round Rock, TX. Provide professional meteorological insights, operational review, or data breakdown corresponding to this active view.`;
-            
-      let payloadText = instructions;
-                  
+      const instructions = `You are interacting with Weather Ops Center | Pro. Active Operational View: ${currentTitle} Target Resource URL: ${currentUrl} Timestamp: ${new Date().toLocaleString()} Directive: Please analyze the current weather operations view and context for Round Rock, TX. Provide professional meteorological insights, operational review, or data breakdown corresponding to this active view.`;                  
+      let payloadText = instructions;                        
+
       if (img.style.display === 'none') {
         try {
           const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -399,8 +377,8 @@
         const title = this.getAttribute('data-title');
 
         tabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-                                
+        this.classList.add('active');                                        
+
         document.getElementById('title').innerText = title;
         applyZoom(1);
 
@@ -417,8 +395,8 @@
           img.src = '';
           iframe.style.display = 'block';
           iframe.src = url;
-        }
-                        
+        }                                
+
         updateTime();
       });
     });
