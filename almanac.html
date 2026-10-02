@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>130-Year Weather Almanac</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 { color: #2c3e50; }
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        input, button, textarea {
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            box-sizing: border-box;
+        }
+        input { width: 150px; }
+        textarea { width: 100%; height: 120px; font-family: monospace; margin-top: 10px; }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #2980b9; }
+        .record-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        .record-date { font-weight: bold; color: #e74c3c; font-size: 1.1em; }
+        ul { padding-left: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>130-Year Weather Almanac</h1>
+    
+    <div class="card">
+        <h3>Search Historical Metrics</h3>
+        <label for="dateInput">Enter Month & Day (MM-DD):</label><br><br>
+        <input type="text" id="dateInput" placeholder="MM-DD">
+        <button onclick="searchAlmanac()">Search</button>
+    </div>
+
+    <div id="results">
+        <p>Connecting to GitHub Pages to load almanac data...</p>
+    </div>
+
+    <!-- AI Data Stacker Section -->
+    <div class="card">
+        <h3>AI Data Stacker</h3>
+        <p style="font-size: 0.9em; color: #666;">Use this section to format new entries for your JSON stack. Enter details or ask AI for a date block, paste it below, and click format.</p>
+        <label for="aiInputBox">Paste raw AI JSON snippet:</label>
+        <textarea id="aiInputBox" placeholder='{"recH": "85", "recHY": "2010", "recL": "30", "recLY": "1950", "avgH": 65, "avgL": 40, "avgM": "52", "accP": "0.10"}'></textarea>
+        <div style="margin-top: 10px;">
+            <input type="text" id="targetDateKey" placeholder="Date (MM-DD)" style="width: 130px;">
+            <button onclick="formatForStack()">Format & Copy JSON</button>
+        </div>
+        <pre id="stackOutput" style="background:#f1f1f1; padding:10px; margin-top:10px; display:none; overflow-x:auto;"></pre>
+    </div>
+
+    <script>
+        let almanacData = {};
+        const ALMANAC_URL = "https://jimegan2025.github.io/almanac.json";
+
+        async function loadAlmanac() {
+            const resultsDiv = document.getElementById("results");
+            
+            // Automatically get today's date in MM-DD format
+            const today = new Date();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${mm}-${dd}`;
+            
+            document.getElementById("dateInput").value = todayStr;
+            document.getElementById("targetDateKey").value = todayStr;
+
+            try {
+                const response = await fetch(ALMANAC_URL);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                almanacData = await response.json();
+                
+                // Automatically run search for today's date upon successful load
+                searchAlmanac();
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error loading data: ${error.message}.</p>`;
+            }
+        }
+
+        function searchAlmanac() {
+            const query = document.getElementById("dateInput").value.trim();
+            const resultsDiv = document.getElementById("results");
+            
+            if (!query) {
+                resultsDiv.innerHTML = "<p>Please enter a date to search.</p>";
+                return;
+            }
+
+            if (!almanacData || Object.keys(almanacData).length === 0) {
+                resultsDiv.innerHTML = "<p style='color: red;'>Data is still loading or not loaded properly.</p>";
+                return;
+            }
+
+            const record = almanacData[query];
+
+            if (!record) {
+                resultsDiv.innerHTML = `<p>No records found for "${query}". Please use MM-DD format (e.g., 10-02).</p>`;
+                return;
+            }
+
+            let html = `
+                <h3>Historical Records for ${query}:</h3>
+                <div class="record-card">
+                    <div class="record-date">Date: ${query}</div>
+                    <ul style="line-height: 1.8; margin-top: 10px;">
+                        ${record.avgH !== undefined ? `<li><strong>Average High:</strong> ${record.avgH}°F</li>` : ''}
+                        ${record.avgL !== undefined ? `<li><strong>Average Low:</strong> ${record.avgL}°F</li>` : ''}
+                        ${record.avgM !== undefined ? `<li><strong>Average Mean:</strong> ${record.avgM}°F</li>` : ''}
+                        ${record.recH !== undefined ? `<li><strong>Record High:</strong> ${record.recH}°F (in${record.recHY || 'N/A'})</li>` : ''}
+                        ${record.recL !== undefined ? `<li><strong>Record Low:</strong> ${record.recL}°F (in${record.recLY || 'N/A'})</li>` : ''}
+                        ${record.accP !== undefined ? `<li><strong>Accumulated Precipitation:</strong> ${record.accP} in</li>` : ''}
+                    </ul>
+                    <details style="margin-top: 15px; color: #666;">
+                        <summary>View Raw JSON Data</summary>
+                        <pre style="background:#f1f1f1; padding:10px; margin-top:5px; overflow-x:auto;">${JSON.stringify(record, null, 2)}</pre>
+                    </details>
+                </div>
+            `;
+            resultsDiv.innerHTML = html;
+        }
+
+        function formatForStack() {
+            const rawText = document.getElementById("aiInputBox").value.trim();
+            const dateKey = document.getElementById("targetDateKey").value.trim() || "01-01";
+            const outputPre = document.getElementById("stackOutput");
+
+            try {
+                // Parse the user's input to ensure valid JSON
+                const parsedObj = JSON.parse(rawText);
+                
+                // Construct the exact stack snippet matching your JSON format
+                const formattedSnippet = `    "${dateKey}": ${JSON.stringify(parsedObj, null, 4)},`;
+                
+                outputPre.style.display = "block";
+                outputPre.textContent = formattedSnippet;
+
+                // Automatically copy to clipboard for convenience
+                navigator.clipboard.writeText(formattedSnippet).then(() => {
+                    alert("Formatted JSON snippet copied to clipboard ready to add to your stack!");
+                });
+            } catch (e) {
+                alert("Invalid JSON format. Please make sure your pasted text is valid JSON.");
+            }
+        }
+
+        loadAlmanac();
+    </script>
+</body>
+</html>
