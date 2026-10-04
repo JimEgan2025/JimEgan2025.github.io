@@ -1,374 +1,137 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VizcayaWX Live Sounding & Threat Dashboard</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #212529;
-            margin: 0;
-            padding: 30px 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 1050px;
-            background-color: #ffffff;
-            border: 1px solid #dcdfe6;
-            border-radius: 14px;
-            padding: 36px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #e4e7ed;
-            padding-bottom: 20px;
-            margin-bottom: 24px;
-        }
-        .header h1 {
-            margin: 0 0 8px 0;
-            font-size: 28px;
-            color: #1a1a1a;
-            letter-spacing: 0.5px;
-        }
-        .header p {
-            margin: 0;
-            font-size: 15px;
-            color: #606266;
-        }
-        .alert-badge {
-            background-color: #fffaf0;
-            border: 1px solid #fbd38d;
-            color: #dd6b20;
-            padding: 14px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 28px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        .full-width {
-            grid-column: span 2;
-        }
-        .metric-card {
-            background-color: #fdfdfe;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .metric-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-        .metric-value {
-            color: #dd6b20;
-            font-family: monospace;
-            font-size: 18px;
-        }
-        .progress-bar {
-            background-color: #e4e7ed;
-            border-radius: 6px;
-            height: 12px;
-            overflow: hidden;
-            width: 100%;
-            margin-bottom: 8px;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ed8936, #dd6b20);
-            border-radius: 6px;
-            transition: width 0.5s ease;
-        }
-        .description {
-            font-size: 13px;
-            color: #606266;
-            margin: 0;
-        }
-        .cheatsheet-box {
-            background-color: #f8f9fa;
-            border: 1px solid #e4e7ed;
-            border-radius: 10px;
-            padding: 20px;
-            font-size: 14px;
-            color: #4a5568;
-        }
-        .cheatsheet-title {
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 12px;
-            font-size: 16px;
-            border-bottom: 1px solid #e4e7ed;
-            padding-bottom: 6px;
-        }
-        .cheat-row {
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .cheat-range {
-            font-weight: bold;
-            font-family: monospace;
-            color: #2b6cb0;
-            min-width: 125px;
-        }
-        .breakdown-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-        .breakdown-item {
-            background: #fff;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-        }
-        .breakdown-item strong {
-            color: #2b6cb0;
-            display: block;
-            margin-bottom: 2px;
-        }
-        .highlight-row {
-            background-color: #fffaf0 !important;
-            border-left: 3px solid #dd6b20 !important;
-            padding-left: 8px;
-            margin-left: -8px;
-            margin-right: -8px;
-            padding-right: 8px;
-            border-radius: 4px;
-        }
-        .shear-rule {
-            margin-top: 12px;
-            padding-top: 10px;
-            border-top: 1px dashed #cbd5e0;
-            font-style: italic;
-            color: #718096;
-            font-size: 13px;
-        }
-        .footer {
-            text-align: center;
-            border-top: 2px solid #e4e7ed;
-            padding-top: 20px;
-            margin-top: 30px;
-            font-size: 14px;
-            color: #718096;
-            grid-column: span 2;
-        }
-        @media (max-width: 768px) {
-            .grid-2 { grid-template-columns: 1fr; }
-            .full-width { grid-column: span 1; }
-            .container { padding: 20px; }
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-    <div class="header">
-        <h1>VIZCAYA LIVE SOUNDING & THREAT DASHBOARD</h1>
-        <p>Fully Dynamic Open-Meteo & Miller (1972) Engine | @vizcayawx</p>
-    </div>
-
-    <div class="alert-badge" id="overall-status">
-        🟠 LIVE THREAT MONITOR: FETCHING LIVE ATMOSPHERIC TELEMETRY...
-    </div>
-
-    <!-- METRICS GRID -->
-    <div class="grid-2">
-        <!-- SWEAT / THREAT SCORE -->
-        <div class="metric-card full-width">
-            <div class="metric-label">
-                <span>🌪️ Severe Weather Threat Score (SWEAT)</span>
+<!DOCTYPE html><html lang="en"><head>    <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>VizcayaWX Live Sounding & Threat Dashboard</title>    <style>        body {            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;            background-color: #f0f2f5;            color: #212529;            margin: 0;            padding: 30px 20px;            display: flex;            justify-content: center;        }        .container {            width: 100%;            max-width: 1050px;            background-color: #ffffff;            border: 1px solid #dcdfe6;            border-radius: 14px;            padding: 36px;            box-shadow: 0 8px 30px rgba(0,0,0,0.08);        }        .header {            text-align: center;            border-bottom: 2px solid #e4e7ed;            padding-bottom: 20px;            margin-bottom: 24px;        }        .header h1 {            margin: 0 0 8px 0;            font-size: 28px;            color: #1a1a1a;            letter-spacing: 0.5px;        }        .header p {            margin: 0;            font-size: 15px;            color: #606266;        }        .alert-badge {            background-color: #fffaf0;            border: 1px solid #fbd38d;            color: #dd6b20;            padding: 14px;            border-radius: 10px;            text-align: center;            font-weight: bold;            font-size: 16px;            margin-bottom: 28px;            text-transform: uppercase;            letter-spacing: 1px;        }        .grid-2 {            display: grid;            grid-template-columns: 1fr 1fr;            gap: 20px;        }        .full-width {            grid-column: span 2;        }        .metric-card {            background-color: #fdfdfe;            border: 1px solid #e2e8f0;            border-radius: 10px;            padding: 20px;            box-shadow: 0 2px 8px rgba(0,0,0,0.02);        }        .metric-label {            display: flex;            justify-content: space-between;            font-size: 16px;            font-weight: 700;            margin-bottom: 8px;            color: #2c3e50;        }        .metric-value {            color: #dd6b20;            font-family: monospace;            font-size: 18px;        }        .progress-bar {            background-color: #e4e7ed;            border-radius: 6px;            height: 12px;            overflow: hidden;            width: 100%;            margin-bottom: 8px;        }        .progress-fill {            height: 100%;            background: linear-gradient(90deg, #ed8936, #dd6b20);            border-radius: 6px;            transition: width 0.5s ease;        }        .description {            font-size: 13px;            color: #606266;            margin: 0;        }        .cheatsheet-box {            background-color: #f8f9fa;            border: 1px solid #e4e7ed;            border-radius: 10px;            padding: 20px;            font-size: 14px;            color: #4a5568;        }        .cheatsheet-title {            font-weight: bold;            color: #2d3748;            margin-bottom: 12px;            font-size: 16px;            border-bottom: 1px solid #e4e7ed;            padding-bottom: 6px;            display: flex;            justify-content: space-between;            align-items: center;        }        .cheat-row {            margin-bottom: 8px;            display: flex;            justify-content: space-between;        }        .cheat-range {            font-weight: bold;            font-family: monospace;            color: #2b6cb0;            min-width: 125px;        }        .breakdown-grid {            display: grid;            grid-template-columns: 1fr 1fr;            gap: 10px;            margin-top: 10px;            font-size: 13px;        }        .breakdown-item {            background: #fff;            padding: 10px;            border: 1px solid #e2e8f0;            border-radius: 6px;        }        .breakdown-item strong {            color: #2b6cb0;            display: block;            margin-bottom: 2px;        }        .highlight-row {            background-color: #fffaf0 !important;            border-left: 3px solid #dd6b20 !important;            padding-left: 8px;            margin-left: -8px;            margin-right: -8px;            padding-right: 8px;            border-radius: 4px;        }        .shear-rule {            margin-top: 12px;            padding-top: 10px;            border-top: 1px dashed #cbd5e0;            font-style: italic;            color: #718096;            font-size: 13px;        }        .copy-btn {            background-color: #3182ce;            color: white;            border: none;            padding: 6px 12px;            border-radius: 6px;            font-size: 12px;            font-weight: 600;            cursor: pointer;            transition: background 0.2s;        }        .copy-btn:hover { background-color: #2b6cb0; }        .ai-textarea {            width: 100%;            height: 140px;            font-family: monospace;            font-size: 12px;            padding: 10px;            border: 1px solid #cbd5e0;            border-radius: 6px;            background-color: #fff;            color: #2d3748;            box-sizing: border-box;            resize: vertical;        }        .footer {            text-align: center;            border-top: 2px solid #e4e7ed;            padding-top: 20px;            margin-top: 30px;            font-size: 14px;            color: #718096;            grid-column: span 2;        }        @media (max-width: 768px) {            .grid-2 { grid-template-columns: 1fr; }            .full-width { grid-column: span 1; }            .container { padding: 20px; }        }    </style></head><body><div class="container">    <div class="header">        <h1>VIZCAYA LIVE SOUNDING & THREAT DASHBOARD</h1>        <p>Fully Dynamic Open-Meteo & Miller (1972) Engine | @vizcayawx</p>    </div>
+    <div class="alert-badge" id="overall-status">        🟠 LIVE THREAT MONITOR: FETCHING LIVE ATMOSPHERIC TELEMETRY...    </div>
+    <!-- METRICS GRID -->    <div class="grid-2">        <!-- SWEAT / THREAT SCORE -->        <div class="metric-card full-width">            <div class="metric-label">                <span>🌪️ Severe Weather Threat Score (SWEAT)</span>
                 <span class="metric-value" id="val-sweat">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-sweat" style="width: 0%;"></div></div>
             <div class="description" id="desc-sweat">Awaiting live telemetry synchronization...</div>
-            
-            <div class="cheatsheet-box" style="margin-top: 16px; background: #ffffff;">
-                <div class="cheatsheet-title">⚙️ Miller (1972) Formula Breakdown</div>
-                <div style="font-size: 14px; margin-bottom: 8px; color: #4a5568;" id="miller-inputs">
-                    Fetching pressure levels...
-                </div>
-                <div class="breakdown-grid">
-                    <div class="breakdown-item"><strong>Moisture</strong> 12 × D850: <strong id="m-moist">--</strong></div>
-                    <div class="breakdown-item"><strong>Instability</strong> 20 × (TT - 49): <strong id="m-inst">--</strong></div>
-                    <div class="breakdown-item"><strong>Wind Speed</strong> (2×f850) + f500: <strong id="m-wind">--</strong></div>
-                    <div class="breakdown-item"><strong>Directional Shear</strong> Term: <strong id="m-shear">--</strong></div>
-                </div>
-            </div>
         </div>
 
-        <!-- CAPE -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>⚡ Surface CAPE (Instability Fuel)</span>
+        <!-- SOUNDING CHART CARD -->        <div class="metric-card full-width">            <div class="metric-label">                <span>📈 Vertical Sounding Profile (Temp & Dewpoint)</span>
+                <span class="metric-value" style="font-size: 14px; color: #4a5568;" id="sounding-status">Loading profile...</span>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center;">                <canvas id="soundingCanvas" style="width: 100%; max-width: 960px; height: 320px;"></canvas>            </div>
+            <div class="description" style="margin-top: 8px;">Profiles temperature (red) and dewpoint (blue) across isobaric vertical levels from 1000 hPa to 300 hPa.</div>
+        </div>
+
+        <!-- CAPE -->        <div class="metric-card">            <div class="metric-label">                <span>⚡ Surface CAPE (Instability Fuel)</span>
                 <span class="metric-value" id="val-cape">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-cape" style="width: 0%;"></div></div>
             <div class="description" id="desc-cape">Evaluating buoyancy profile...</div>
         </div>
-
-        <!-- CIN -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>🔓 Surface CIN (Atmospheric Cap)</span>
+        <!-- CIN -->        <div class="metric-card">            <div class="metric-label">                <span>🔓 Surface CIN (Atmospheric Cap)</span>
                 <span class="metric-value" id="val-cin">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-cin" style="width: 0%;"></div></div>
             <div class="description" id="desc-cin">Evaluating convective inhibition...</div>
         </div>
-
-        <!-- PWAT -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>🌊 Precipitable Water (PWAT Moisture)</span>
+        <!-- PWAT -->        <div class="metric-card">            <div class="metric-label">                <span>🌊 Precipitable Water (PWAT Moisture)</span>
                 <span class="metric-value" id="val-pwat">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-pwat" style="width: 0%;"></div></div>
             <div class="description" id="desc-pwat">Querying total column water vapor...</div>
         </div>
-
-        <!-- DCAPE -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>💨 DCAPE (Downdraft Wind Fuel)</span>
+        <!-- DCAPE -->        <div class="metric-card">            <div class="metric-label">                <span>💨 DCAPE (Downdraft Wind Fuel)</span>
                 <span class="metric-value" id="val-dcape">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-dcape" style="width: 0%;"></div></div>
             <div class="description" id="desc-dcape">Calculating low-level lapse rates...</div>
         </div>
-
-        <!-- STORM TOPS -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>☁️ Storm Tops (Cloud Top Height / EL)</span>
+        <!-- STORM TOPS -->        <div class="metric-card">            <div class="metric-label">                <span>☁️️ Storm Tops (Cloud Top Height / EL)</span>
                 <span class="metric-value" id="val-tops">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-tops" style="width: 0%;"></div></div>
             <div class="description" id="desc-tops">Deriving equilibrium level heights...</div>
         </div>
-
-        <!-- HAIL POTENTIAL -->
-        <div class="metric-card">
-            <div class="metric-label">
-                <span>🧊 Hail Potential (Car Protection Index)</span>
+        <!-- HAIL POTENTIAL -->        <div class="metric-card">            <div class="metric-label">                <span>🧊 Hail Potential (Car Protection Index)</span>
                 <span class="metric-value" id="val-hail">--</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" id="bar-hail" style="width: 0%;"></div></div>
             <div class="description" id="desc-hail">Analyzing updraft & freezing levels...</div>
         </div>
     </div>
-
-    <!-- ================= DYNAMIC CHEATSHEETS GRID ================= -->
-    <div class="grid-2" style="margin-top: 24px;">
-        <!-- CAPE SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">⚡ CAPE Scale (Instability Fuel)</div>
+    <!-- ================= DYNAMIC CHEATSHEETS GRID ================= -->    <div class="grid-2" style="margin-top: 24px;">        <!-- CAPE SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">⚡ CAPE Scale (Instability Fuel)</div>
             <div class="cheat-row" id="cs-cape-0"><span class="cheat-range">0 J/kg</span> <span>Stable</span></div>
             <div class="cheat-row" id="cs-cape-1"><span class="cheat-range">1 – 1,000</span> <span>Slight / Marginally Unstable</span></div>
             <div class="cheat-row" id="cs-cape-2"><span class="cheat-range">1,000 – 2,500</span> <span>Moderately Unstable</span></div>
             <div class="cheat-row" id="cs-cape-3"><span class="cheat-range">2,500 – 3,500</span> <span>Very Unstable</span></div>
             <div class="cheat-row" id="cs-cape-4"><span class="cheat-range">3,500+</span> <span>Extremely Unstable</span></div>
         </div>
-
-        <!-- CIN SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">🔓 CIN Scale (Atmospheric Cap / Lid)</div>
+        <!-- CIN SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">🔓 CIN Scale (Atmospheric Cap / Lid)</div>
             <div class="cheat-row" id="cs-cin-0"><span class="cheat-range">0 J/kg</span> <span>No Cap / Uninhibited (Lid Open)</span></div>
             <div class="cheat-row" id="cs-cin-1"><span class="cheat-range">-1 to -50</span> <span>Weak Cap (Easily broken)</span></div>
             <div class="cheat-row" id="cs-cin-2"><span class="cheat-range">-50 to -200</span> <span>Moderate Cap (Requires lift)</span></div>
             <div class="cheat-row" id="cs-cin-3"><span class="cheat-range">-200+</span> <span>Strong Cap (Locked)</span></div>
         </div>
-
-        <!-- PWAT SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">🌊 PWAT Scale (Moisture Depth)</div>
+        <!-- PWAT SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">🌊 PWAT Scale (Moisture Depth)</div>
             <div class="cheat-row" id="cs-pwat-0"><span class="cheat-range">&lt; 0.75"</span> <span>Dry / Below Normal</span></div>
             <div class="cheat-row" id="cs-pwat-1"><span class="cheat-range">0.75" – 1.25"</span> <span>Normal Baseline Moisture</span></div>
             <div class="cheat-row" id="cs-pwat-2"><span class="cheat-range">1.25" – 1.75"</span> <span>Above Normal / Humid</span></div>
             <div class="cheat-row" id="cs-pwat-3"><span class="cheat-range">1.75" – 2.25"</span> <span>Very Moist / Heavy Rain Risk</span></div>
             <div class="cheat-row" id="cs-pwat-4"><span class="cheat-range">2.25"+</span> <span>Tropical Firehose (Extreme Flood)</span></div>
         </div>
-
-        <!-- DCAPE SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">💨 DCAPE Scale (Downdraft Potential)</div>
+        <!-- DCAPE SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">💨 DCAPE Scale (Downdraft Potential)</div>
             <div class="cheat-row" id="cs-dcape-0"><span class="cheat-range">&lt; 300 J/kg</span> <span>Low Downdraft Potential</span></div>
             <div class="cheat-row" id="cs-dcape-1"><span class="cheat-range">300 – 600</span> <span>Moderate Downdraft Risk</span></div>
             <div class="cheat-row" id="cs-dcape-2"><span class="cheat-range">600 – 1,000</span> <span>High Downdraft / Gust Risk</span></div>
             <div class="cheat-row" id="cs-dcape-3"><span class="cheat-range">1,000+ J/kg</span> <span>Extreme Microburst Fuel</span></div>
         </div>
-
-        <!-- STORM TOPS SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">☁️ Storm Tops Scale (Cloud Top Height)</div>
+        <!-- STORM TOPS SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">☁️ Storm Tops Scale (Cloud Top Height)</div>
             <div class="cheat-row" id="cs-tops-0"><span class="cheat-range">&lt; 20,000 FT</span> <span>Ordinary Shallow Convection</span></div>
             <div class="cheat-row" id="cs-tops-1"><span class="cheat-range">20k – 40k FT</span> <span>Strong Mature Thunderstorms</span></div>
             <div class="cheat-row" id="cs-tops-2"><span class="cheat-range">40k – 50k FT</span> <span>Severe / Supercell Potential</span></div>
             <div class="cheat-row" id="cs-tops-3"><span class="cheat-range">50,000+ FT</span> <span>Extreme Updrafts</span></div>
         </div>
-
-        <!-- HAIL SIZE SCALE -->
-        <div class="cheatsheet-box">
-            <div class="cheatsheet-title">🧊 Hail Size & Vehicle Protection Guide</div>
+        <!-- HAIL SIZE SCALE -->        <div class="cheatsheet-box">            <div class="cheatsheet-title">🧊 Hail Size & Vehicle Protection Guide</div>
             <div class="cheat-row" id="cs-hail-0"><span class="cheat-range">&lt; 0.50"</span> <span>Pea to Marble (No damage)</span></div>
             <div class="cheat-row" id="cs-hail-1"><span class="cheat-range">0.75" – 1.00"</span> <span>Penny to Quarter (Marginal — Move Cars!)</span></div>
             <div class="cheat-row" id="cs-hail-2"><span class="cheat-range">1.25" – 1.75"</span> <span>Half Dollar to Golf Ball (Glass / Dent Risk)</span></div>
             <div class="cheat-row" id="cs-hail-3"><span class="cheat-range">2.00"+</span> <span>Hen Egg to Baseball+ (Destructive)</span></div>
         </div>
-
-        <!-- SWEAT SCALE -->
-        <div class="cheatsheet-box full-width">
-            <div class="cheatsheet-title">📖 SWEAT Operational Reference (AFGWC / SPC Scale)</div>
+        <!-- SWEAT SCALE -->        <div class="cheatsheet-box full-width">            <div class="cheatsheet-title">📖 SWEAT Operational Reference (AFGWC / SPC Scale)</div>
             <div class="cheat-row" id="cs-sweat-0"><span class="cheat-range">&lt; 200</span> <span>Minimal / Garden Variety (Ordinary showers)</span></div>
             <div class="cheat-row" id="cs-sweat-1"><span class="cheat-range">200–299</span> <span>Marginal / Pulse (Severe rare; microburst risk)</span></div>
             <div class="cheat-row" id="cs-sweat-2"><span class="cheat-range">300–399</span> <span>Moderate Severe (Multicells, hail, damaging winds)</span></div>
             <div class="cheat-row" id="cs-sweat-3"><span class="cheat-range">400+</span> <span>High / Tornadic (Supercells favored)</span></div>
-            
-            <div class="shear-rule">
-                <strong>Shear Gate Rule:</strong> The 125-point directional shear bonus forces to 0 unless both 850mb (≥15kt, 130°–250°) and 500mb (≥15kt, 210°–310°) winds veer with height.
+            <div class="shear-rule">                <strong>Shear Gate Rule:</strong> The 125-point directional shear bonus forces to 0 unless both 850mb (≥15kt, 130°–250°) and 500mb (≥15kt, 210°–310°) winds veer with height.            </div>
+        </div>
+
+        <!-- MILLER FORMULA BREAKDOWN -->        <div class="cheatsheet-box full-width" style="background: #ffffff;">            <div class="cheatsheet-title">⚙️ Miller (1972) Formula Breakdown</div>
+            <div style="font-size: 14px; margin-bottom: 8px; color: #4a5568;" id="miller-inputs">                Fetching pressure levels...            </div>
+            <div class="breakdown-grid">                <div class="breakdown-item"><strong>Moisture</strong> 12 × D850: <strong id="m-moist">--</strong></div>
+                <div class="breakdown-item"><strong>Instability</strong> 20 × (TT - 49): <strong id="m-inst">--</strong></div>
+                <div class="breakdown-item"><strong>Wind Speed</strong> (2×f850) + f500: <strong id="m-wind">--</strong></div>
+                <div class="breakdown-item"><strong>Directional Shear</strong> Term: <strong id="m-shear">--</strong></div>
             </div>
         </div>
 
-        <div class="footer">
-            VizcayaWX Fully Dynamic Open-Meteo & Miller Engine • Round Rock, TX (30.5871°N, 97.6410°W)
+        <!-- AI ANALYSIS EXPORT BOX -->        <div class="cheatsheet-box full-width" style="background: #fffaf0; border-color: #fbd38d;">            <div class="cheatsheet-title">
+                <span>🤖 Live Telemetry Export for AI Analysis</span>
+                <button class="copy-btn" onclick="copyAiData()">Copy to Clipboard</button>
+            </div>
+            <div style="font-size: 13px; color: #718096; margin-bottom: 8px;">Copy this live atmospheric summary into your AI chat for custom sounding critique and forecasting discussions:</div>
+            <textarea id="aiExportText" class="ai-textarea" readonly>Loading telemetry payload...</textarea>
         </div>
-    </div>
-</div>
 
+        <div class="footer">            VizcayaWX Fully Dynamic Open-Meteo & Miller Engine • Round Rock, TX (30.5871°N, 97.6410°W)        </div>
+    </div></div>
 <script>
+    let latestTelemetryString = "";
+
     async function fetchFullyDynamicThreats() {
         try {
             const lat = 30.5871;
             const lon = -97.6410;
-            
-            // Expanded API query fetching pressure levels, CAPE, CIN, and total_column_integrated_water_vapour
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_850hPa,dew_point_850hPa,wind_speed_850hPa,wind_direction_850hPa,temperature_500hPa,wind_speed_500hPa,wind_direction_500hPa,cape,convective_inhibition,total_column_integrated_water_vapour&wind_speed_unit=kn`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_1000hPa,temperature_925hPa,temperature_850hPa,temperature_700hPa,temperature_500hPa,temperature_300hPa,dew_point_850hPa,dew_point_700hPa,dew_point_500hPa,wind_speed_850hPa,wind_direction_850hPa,wind_speed_500hPa,wind_direction_500hPa,cape,convective_inhibition,total_column_integrated_water_vapour&wind_speed_unit=kn`;
 
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error("API network error");
-            
+
             const data = await response.json();
             const cur = data.current;
             if (!cur) throw new Error("No current data payload");
 
-            // 1. CAPE & CIN
             const cape = Math.round(cur.cape || 0);
             const cin = Math.round(cur.convective_inhibition || 0);
 
@@ -380,14 +143,12 @@
             document.getElementById('bar-cin').style.width = Math.min(100, (Math.abs(cin) / 200) * 100) + "%";
             document.getElementById('desc-cin').innerText = cin === 0 ? "Zero inhibition; atmospheric lid is completely open." : "Cap in place inhibiting immediate parcel release.";
 
-            // 2. PWAT (Converted from kg/m² / mm to inches: mm / 25.4)
             const pwatMm = cur.total_column_integrated_water_vapour || 35;
             const pwatInches = (pwatMm / 25.4).toFixed(2);
-           document.getElementById('val-pwat').innerText = pwatInches + '"';
+            document.getElementById('val-pwat').innerText = pwatInches + '"';
             document.getElementById('bar-pwat').style.width = Math.min(100, (pwatInches / 2.5) * 100) + "%";
             document.getElementById('desc-pwat').innerText = pwatInches > 2.25 ? "Tropical moisture firehose fueling active Flood Watches." : "Normal to humid column moisture baseline.";
 
-            // 3. Miller Formula Variables & SWEAT Calculation
             const T850 = cur.temperature_850hPa;
             const Td850 = cur.dew_point_850hPa;
             const T500 = cur.temperature_500hPa;
@@ -418,7 +179,6 @@
             document.getElementById('desc-sweat').innerText = `Live Calculated via Miller Formula (TT: ${TT.toFixed(1)}, 850Td: ${Td850}°C)`;
             document.getElementById('overall-status').innerText = `🟠 SEVERE WEATHER THREAT SCORE: ${totalSWEAT} (${totalSWEAT >= 400 ? "HIGH / TORNADIC" : totalSWEAT >= 300 ? "MODERATE / SEVERE POSSIBLE" : "MARGINAL / PULSE"})`;
 
-            // Miller Breakdown Box
             document.getElementById('miller-inputs').innerHTML = `
                 <strong>850 mb Level (~5,000 FT):</strong> Temp: ${T850}°C | Dewpoint: ${Td850}°C | Wind: ${Math.round(f850)} kt @ ${Math.round(dir850)}°<br>
                 <strong>500 mb Level (~18,000 FT):</strong> Temp: ${T500}°C | Wind: ${Math.round(f500)} kt @ ${Math.round(dir500)}°<br>
@@ -429,7 +189,6 @@
             document.getElementById('m-wind').innerText = `+${Math.round(termWindSpeed)} pts`;
             document.getElementById('m-shear').innerText = `+${Math.round(termShear)} pts`;
 
-            // 4. Derived Proxy Variables (DCAPE, Storm Tops, Hail Potential) based on lapse rates & CAPE
             const derivedDCAPE = Math.round(Math.min(1200, Math.max(200, (T850 - T500) * 45 + (cape * 0.1))));
             document.getElementById('val-dcape').innerText = derivedDCAPE + " J/kg";
             document.getElementById('bar-dcape').style.width = Math.min(100, (derivedDCAPE / 1200) * 100) + "%";
@@ -445,7 +204,38 @@
             document.getElementById('bar-hail').style.width = cape > 2000 ? "85%" : "50%";
             document.getElementById('desc-hail').innerText = "Updraft thermodynamic support based on live parcel buoyancy.";
 
-            // 5. Dynamic Table Highlighting (Auto-selects active range rows)
+            // Format export text for AI
+            latestTelemetryString = `=== VIZCAYAWX LIVE ATMOSPHERIC TELEMETRY ===
+Location: Round Rock, TX (30.5871°N, 97.6410°W)
+Timestamp: ${new Date().toUTCString()}
+
+[CRITICAL THREAT METRICS]
+- SWEAT Index: ${totalSWEAT} (${totalSWEAT >= 400 ? "High/Tornadic" : totalSWEAT >= 300 ? "Moderate Severe" : "Marginal/Pulse"})
+- Surface CAPE: ${cape} J/kg
+- Surface CIN: ${cin} J/kg
+- Precipitable Water (PWAT): ${pwatInches}"
+- Derived DCAPE: ${derivedDCAPE} J/kg
+- Storm Tops (EL): ${derivedTops.toLocaleString()} FT (~${(derivedTops/5280).toFixed(1)} mi)
+- Hail Potential: ${hailText}
+
+[VERTICAL PROFILE & MILLER TELEMETRY]
+- Total Totals (TT): ${TT.toFixed(1)}
+- 1000 mb Temp: ${cur.temperature_1000hPa}°C
+- 925 mb Temp: ${cur.temperature_925hPa}°C
+- 850 mb Temp: ${T850}°C | Dewpoint: ${Td850}°C | Wind: ${Math.round(f850)} kt @ ${Math.round(dir850)}°
+- 700 mb Temp: ${cur.temperature_700hPa}°C | Dewpoint: ${cur.dew_point_700hPa}°C
+- 500 mb Temp: ${T500}°C | Wind: ${Math.round(f500)} kt @ ${Math.round(dir500)}°
+- 300 mb Temp: ${cur.temperature_300hPa}°C
+- Shear Gate Rule Met: ${dirCheck850 && dirCheck500 && speedCheck && veeringCheck ? "YES" : "NO"} (+${Math.round(termShear)} pts)`;
+
+            document.getElementById('aiExportText').value = latestTelemetryString;
+
+            drawSoundingChart({
+                pressures: [1000, 925, 850, 700, 500, 300],
+                temps: [cur.temperature_1000hPa, cur.temperature_925hPa, cur.temperature_850hPa, cur.temperature_700hPa, cur.temperature_500hPa, cur.temperature_300hPa],
+                dewpoints: [null, null, cur.dew_point_850hPa, cur.dew_point_700hPa, cur.dew_point_500hPa, null]
+            });
+
             highlightActiveRows('cape', cape, [[0,0,0],[1,1000,1],[1001,2500,2],[2501,3500,3],[3501,99999,4]]);
             highlightActiveRows('cin', cin, [[0,0,0],[-50,-1,1],[-200,-51,2],[-99999,-201,3]]);
             highlightActiveRows('pwat', parseFloat(pwatInches), [[0,0.75,0],[0.76,1.25,1],[1.26,1.75,2],[1.76,2.25,3],[2.26,10,4]]);
@@ -453,10 +243,137 @@
             highlightActiveRows('tops', derivedTops, [[0,20000,0],[20001,40000,1],[40001,50000,2],[50001,99999,3]]);
             highlightActiveRows('sweat', totalSWEAT, [[0,199,0],[200,299,1],[300,399,2],[400,999,3]]);
 
-            console.log("Fully dynamic telemetry synchronization successful.");
+            document.getElementById('sounding-status').innerText = "Telemetry synced successfully";
         } catch (error) {
             console.warn("Dynamic fetch warning:", error);
+            document.getElementById('sounding-status').innerText = "Error loading profile";
         }
+    }
+
+    function copyAiData() {
+        const textarea = document.getElementById('aiExportText');
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            btn.innerText = "Copied!";
+            setTimeout(() => { btn.innerText = "Copy to Clipboard"; }, 2000);
+        });
+    }
+
+    function drawSoundingChart(data) {
+        const canvas = document.getElementById('soundingCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = canvas.parentElement.clientWidth * dpr;
+        canvas.height = 320 * dpr;
+        ctx.scale(dpr, dpr);
+
+        const width = canvas.parentElement.clientWidth;
+        const height = 320;
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.fillStyle = "#fafbfc";
+        ctx.fillRect(0, 0, width, height);
+        
+        const padding = { top: 30, right: 40, bottom: 40, left: 60 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
+
+        const pressures = [1000, 925, 850, 700, 500, 300];
+        const minP = 1000, maxP = 300;
+        const minT = -50, maxT = 40;
+
+        function getX(temp) {
+            return padding.left + ((temp - minT) / (maxT - minT)) * chartWidth;
+        }
+        function getY(press) {
+            const logMin = Math.log(minP);
+            const logMax = Math.log(maxP);
+            const logP = Math.log(press);
+            return padding.top + ((logP - logMin) / (logMax - logMin)) * chartHeight;
+        }
+
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1;
+        pressures.forEach(p => {
+            const y = getY(p);
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+
+            ctx.fillStyle = "#718096";
+            ctx.font = "11px monospace";
+            ctx.textAlign = "right";
+            ctx.fillText(p + " mb", padding.left - 10, y + 4);
+        });
+
+        // Plot Temperature Trace
+        ctx.strokeStyle = "#e53e3e";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        let started = false;
+        data.pressures.forEach((p, i) => {
+            const t = data.temps[i];
+            if (t !== null && t !== undefined) {
+                const x = getX(t);
+                const y = getY(p);
+                if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+            }
+        });
+        ctx.stroke();
+
+        // Plot Dewpoint Trace
+        ctx.strokeStyle = "#3182ce";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        started = false;
+        data.pressures.forEach((p, i) => {
+            const td = data.dewpoints[i];
+            if (td !== null && td !== undefined) {
+                const x = getX(td);
+                const y = getY(p);
+                if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+            }
+        });
+        ctx.stroke();
+
+        // Draw Data Points
+        data.pressures.forEach((p, i) => {
+            const t = data.temps[i];
+            const td = data.dewpoints[i];
+            if (t !== null && t !== undefined) {
+                const x = getX(t);
+                const y = getY(p);
+                ctx.fillStyle = "#e53e3e";
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            if (td !== null && td !== undefined) {
+                const x = getX(td);
+                const y = getY(p);
+                ctx.fillStyle = "#3182ce";
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Legend
+        ctx.fillStyle = "#e53e3e";
+        ctx.fillRect(width - 180, 10, 12, 12);
+        ctx.fillStyle = "#2d3748";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("Temperature (°C)", width - 162, 21);
+
+        ctx.fillStyle = "#3182ce";
+        ctx.fillRect(width - 80, 10, 12, 12);
+        ctx.fillText("Dewpoint", width - 62, 21);
     }
 
     function highlightActiveRows(prefix, val, ranges) {
@@ -474,6 +391,4 @@
 
     fetchFullyDynamicThreats();
     setInterval(fetchFullyDynamicThreats, 600000);
-</script>
-</body>
-</html>
+</script></body></html>
