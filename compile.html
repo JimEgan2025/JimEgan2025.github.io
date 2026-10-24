@@ -76,7 +76,7 @@
         .danger:hover { background: #dc2626; }
         .gray { background: #334155; color: white; }
         .gray:hover { background: #475569; }
-        
+                
         .segment {
             background: var(--card);
             border: 1px solid var(--border);
@@ -122,7 +122,7 @@
 <body>
     <div class="container">
         <h1>Vizcaya AI Data Compiler v2.4</h1>
-        
+                
         <div class="editor">
             <!-- Edit Mode Indicator -->
             <div id="edit-badge" class="edit-badge">
@@ -168,7 +168,7 @@
                 <button class="gray" onclick="clearEditor()">Clear</button>
             </div>
         </div>
-        
+                
         <div class="editor">
             <h3>
                 Saved Segments (<span id="count">0</span>)
@@ -178,6 +178,9 @@
             <div class="toolbar">
                 <button class="primary" onclick="copyAll()">Copy All</button>
                 <button class="success" onclick="download()">Download TXT</button>
+                <button class="gray" onclick="exportJsonBackup()">Export JSON Backup</button>
+                <button class="gray" onclick="triggerJsonImport()">Import JSON Backup</button>
+                <input type="file" id="importJsonFile" style="display: none;" accept=".json" onchange="handleJsonImport(event)">
                 <button class="danger" onclick="wipe()">Wipe</button>
             </div>
         </div>
@@ -306,14 +309,12 @@
         }
 
         function removeItem(index) {
-            // If the item currently being edited is deleted, exit edit mode safely
             if (editIndex === index) {
                 cancelEdit();
             } else if (editIndex !== null && editIndex > index) {
-                // Adjust active edit tracker index if preceding items are pruned
                 editIndex--;
             }
-            
+                        
             data.splice(index, 1);
             render();
         }
@@ -337,6 +338,71 @@
             a.click();
         }
 
+        // --- JSON BACKUP & RESTORE FUNCTIONS ---
+        function exportJsonBackup() {
+            if (data.length === 0) return alert("No segments saved yet");
+            const backupObj = {
+                version: "2.4",
+                sort: currentSort,
+                data: data
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
+            downloadAnchor.setAttribute("download", `vizcaya_compiler_backup_${dateStr}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function triggerJsonImport() {
+            document.getElementById('importJsonFile').click();
+        }
+
+        function handleJsonImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    let importedData = Array.isArray(parsed) ? parsed : parsed.data;
+                    let importedSort = parsed.sort;
+
+                    if (Array.isArray(importedData)) {
+                        if (confirm(`Found ${importedData.length} segments in backup file. Merge with existing compiler stack or replace entirely?\n\nClick OK to Merge, Cancel to Replace.`)) {
+                            const existingKeys = new Set(data.map(d => `${d.label}-${d.time}`));
+                            importedData.forEach(item => {
+                                const key = `${item.label}-${item.time}`;
+                                if (!existingKeys.has(key)) {
+                                    data.push(item);
+                                }
+                            });
+                        } else {
+                            data = importedData;
+                        }
+
+                        if (importedSort) {
+                            currentSort = importedSort;
+                        }
+
+                        save();
+                        render();
+                        alert("JSON backup restored successfully!");
+                    } else {
+                        alert("Invalid backup file format.");
+                    }
+                } catch (err) {
+                    alert("Error parsing backup JSON file: " + err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
         function wipe() {
             if (confirm("Wipe everything?")) {
                 data = [];
@@ -349,7 +415,7 @@
         }
 
         // Initialize display
-        render(); 
+        render();
     </script>
 </body>
 </html>
