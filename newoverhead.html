@@ -33,11 +33,11 @@
 
         .grid-3 { display: grid; grid-template-columns: 1fr; gap: 16px; }
         @media(min-width: 768px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
-        
+
         label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
         input { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px 16px; color: white; font-size: 16px; font-family: monospace; }
         input:focus { outline: none; border-color: var(--accent-red); }
-        
+
         button { background: var(--accent-red); color: white; border: none; font-weight: 800; padding: 14px 24px; border-radius: 12px; cursor: pointer; transition: background 0.2s; font-size: 14px; display: flex; align-items: center; gap: 8px; }
         button:hover { background: #dc2626; }
 
@@ -47,7 +47,7 @@
 
         .main-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
         @media(min-width: 1200px) { .main-grid { grid-template-columns: 2fr 1fr; } }
-        
+
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
         th { background: rgba(15, 23, 42, 0.9); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 1px solid #1e293b; position: sticky; top: 0; }
         td { padding: 10px 12px; border-bottom: 1px solid rgba(30, 41, 59, 0.4); }
@@ -71,9 +71,7 @@
     </style>
 </head>
 <body>
-
     <div class="container">
-        
         <!-- HEADER MODULE -->
         <header class="glass">
             <div>
@@ -109,7 +107,7 @@
             </div>
             <div style="display: flex; flex-direction: column; justify-content: flex-end;">
                 <div id="syncStatus" class="glass-panel" style="text-align: center; font-size: 13px; font-weight: 700; color: var(--text-muted);">
-                    45-Station Macro-Grid Synchronized
+                    Initializing Engine...
                 </div>
             </div>
         </section>
@@ -269,9 +267,7 @@
     </div>
 
     <script>
-        // Expanded 45-Station Macro-Mesonet Grid covering ~36,000 sq miles of Central Texas
         const LOCATIONS = [
-            // Sector: WEST PLATEAU & STOCKTON
             { name: "JUNCTION", lat: 30.49, lon: -99.77, sector: "PLATEAU" },
             { name: "MASON", lat: 30.74, lon: -99.23, sector: "PLATEAU" },
             { name: "BRACKETTVILLE", lat: 29.31, lon: -100.40, sector: "PLATEAU" },
@@ -280,8 +276,6 @@
             { name: "KERRVILLE", lat: 30.04, lon: -99.14, sector: "PLATEAU" },
             { name: "FREDERICKSBURG", lat: 30.27, lon: -98.87, sector: "PLATEAU" },
             { name: "COMFORT", lat: 29.97, lon: -98.90, sector: "PLATEAU" },
-
-            // Sector: WEST INITIATION (EDWARDS ESCARPMENT / HILL COUNTRY)
             { name: "LLANO", lat: 30.76, lon: -98.68, sector: "WEST-INI" },
             { name: "KINGSBURY", lat: 29.61, lon: -97.85, sector: "WEST-INI" },
             { name: "BURNET", lat: 30.75, lon: -98.23, sector: "WEST-INI" },
@@ -290,8 +284,6 @@
             { name: "BLANCO", lat: 30.10, lon: -98.43, sector: "WEST-INI" },
             { name: "DRIPPING SPRINGS", lat: 30.19, lon: -98.08, sector: "WEST-INI" },
             { name: "WIMBERLEY", lat: 29.99, lon: -98.09, sector: "WEST-INI" },
-
-            // Sector: NORTHERN TRANSITION
             { name: "LAMPASAS", lat: 31.06, lon: -98.18, sector: "NORTH" },
             { name: "KILLEEN (GRK)", lat: 31.06, lon: -97.82, sector: "NORTH" },
             { name: "TEMPLE", lat: 31.10, lon: -97.34, sector: "NORTH" },
@@ -299,17 +291,13 @@
             { name: "COPPERAS COVE", lat: 31.12, lon: -97.90, sector: "NORTH" },
             { name: "GATESVILLE", lat: 31.43, lon: -97.74, sector: "NORTH" },
             { name: "WACO", lat: 31.54, lon: -97.14, sector: "NORTH" },
-
-            // Sector: CORRIDOR CORE (I-35 AXIS)
             { name: "GEORGETOWN", lat: 30.63, lon: -97.67, sector: "CORE" },
             { name: "VIZCAYA (LOC)", lat: 30.587, lon: -97.641, sector: "ANCHOR", local: true },
             { name: "ROUND ROCK", lat: 30.50, lon: -97.67, sector: "CORE" },
             { name: "PFLUGERVILLE", lat: 30.43, lon: -97.62, sector: "CORE" },
             { name: "AUSTIN (MABRY)", lat: 30.32, lon: -97.76, sector: "CORE" },
             { name: "AUSTIN (BERGSTROM)", lat: 30.19, lon: -97.66, sector: "CORE" },
-            { name: "BUNA", lat: 30.62, lon: -94.25, sector: "CORE" }, // placeholder regional anchor
-
-            // Sector: EASTERN PLAINS & BLACKLAND PRAIRIE
+            { name: "BUNA", lat: 30.62, lon: -94.25, sector: "CORE" },
             { name: "TAYLOR", lat: 30.57, lon: -97.41, sector: "EAST" },
             { name: "CAMERON", lat: 30.85, lon: -96.97, sector: "EAST" },
             { name: "ROCKDALE", lat: 30.64, lon: -97.00, sector: "EAST" },
@@ -318,8 +306,6 @@
             { name: "BASTROP", lat: 30.11, lon: -97.32, sector: "EAST" },
             { name: "SMITHVILLE", lat: 30.00, lon: -97.15, sector: "EAST" },
             { name: "LA GRANGE", lat: 29.90, lon: -96.87, sector: "EAST" },
-
-            // Sector: SOUTHERN CORRIDOR
             { name: "SAN MARCOS", lat: 29.88, lon: -97.94, sector: "SOUTH" },
             { name: "NEW BRAUNFELS", lat: 29.70, lon: -98.12, sector: "SOUTH" },
             { name: "SEGUIN", lat: 29.56, lon: -97.96, sector: "SOUTH" },
@@ -342,7 +328,7 @@
                         relative_humidity_2m: Array(24).fill(72),
                         relative_humidity_850hPa: Array(24).fill(65),
                         cape: Array(24).fill(2100 + (i * 80)),
-                        convective_inhibition: Array(24).fill(i < 8 ? 16 : 45), // Plateau breach simulation on western nodes
+                        convective_inhibition: Array(24).fill(i < 8 ? 16 : 45),
                         lifted_index: Array(24).fill(-5.5),
                         k_index: Array(24).fill(33),
                         temperature_700hPa: Array(24).fill(50),
@@ -356,6 +342,22 @@
             });
         }
 
+        async function fetchRealTelemetry(lT, lD) {
+            const lats = LOCATIONS.map(l => l.lat).join(",");
+            const lons = LOCATIONS.map(l => l.lon).join(",");
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=pressure_msl,wind_speed_10m&hourly=temperature_2m,dew_point_2m,relative_humidity_2m,relative_humidity_850hPa,cape,convective_inhibition,lifted_index,k_index,temperature_700hPa,temperature_500hPa,wind_speed_850hPa,total_column_integrated_water_vapour,precipitation_probability,wind_gusts_10m&temperature_unit=fahrenheit&wind_speed_unit=kn&forecast_days=1`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("API Network response was not ok");
+                const data = await response.json();
+                return Array.isArray(data) ? data : [data];
+            } catch (err) {
+                console.warn("Open-Meteo API unavailable or blocked; defaulting to synthetic macro-grid modeling.", err);
+                return generateBaselineDataset(lT, lD);
+            }
+        }
+
         function renderTheater(dataArr, localT, localD) {
             const tbodyR = document.getElementById("regionalBody"), tbodyF = document.getElementById("forecastBody");
             if (!tbodyR || !tbodyF) return;
@@ -363,12 +365,19 @@
             let maxC = 0, pPool = [], anchor = null, plateauBreach = false, regionalAIText = "";
 
             LOCATIONS.forEach((loc, idx) => {
-                const data = dataArr[idx]; 
+                const data = dataArr[idx] || dataArr[0]; 
                 if (!data || !data.hourly) return;
                 
-                const h = data.hourly, hIdx = new Date().getHours() % 24;
-                let rT = h.temperature_2m[hIdx], rD = h.dew_point_2m[hIdx], rC = Math.round(h.cape[hIdx] || 0), rCi = Math.round(Math.abs(h.convective_inhibition[hIdx] || 0));
-                pPool.push(data.current.pressure_msl || 1013.2);
+                const h = data.hourly;
+                const hIdx = new Date().getHours() % (h.time ? h.time.length : 24);
+                
+                let rT = (h.temperature_2m && h.temperature_2m[hIdx] !== undefined) ? h.temperature_2m[hIdx] : localT;
+                let rD = (h.dew_point_2m && h.dew_point_2m[hIdx] !== undefined) ? h.dew_point_2m[hIdx] : localD;
+                let rC = Math.round((h.cape && h.cape[hIdx] !== undefined) ? h.cape[hIdx] : 1800);
+                let rCi = Math.round(Math.abs((h.convective_inhibition && h.convective_inhibition[hIdx] !== undefined) ? h.convective_inhibition[hIdx] : 20));
+                
+                let currentPressure = (data.current && data.current.pressure_msl) ? data.current.pressure_msl : 1013.2;
+                pPool.push(currentPressure);
 
                 if (loc.local) {
                     const dDelta = localD - rD;
@@ -393,26 +402,34 @@
 
             if (!anchor) {
                 const defaultIdx = LOCATIONS.findIndex(l => l.local) !== -1 ? LOCATIONS.findIndex(l => l.local) : 0;
-                anchor = { ...dataArr[defaultIdx], adjCape: 2000, adjCin: 45 };
+                anchor = { ...(dataArr[defaultIdx] || {}), adjCape: 2000, adjCin: 45 };
             }
 
-            if (anchor) {
-                const h = anchor.hourly, nowIdx = new Date().getHours() % 24;
-                const t700 = h.temperature_700hPa[nowIdx], t500 = h.temperature_500hPa[nowIdx];
+            if (anchor && anchor.hourly) {
+                const h = anchor.hourly;
+                const nowIdx = new Date().getHours() % (h.time ? h.time.length : 24);
+                
+                const t700 = (h.temperature_700hPa && h.temperature_700hPa[nowIdx] !== undefined) ? h.temperature_700hPa[nowIdx] : 50;
+                const t500 = (h.temperature_500hPa && h.temperature_500hPa[nowIdx] !== undefined) ? h.temperature_500hPa[nowIdx] : 12;
                 const lapse = (((t700-32)*5/9 - (t500-32)*5/9) / 2.6).toFixed(1);
-                const dcape = Math.round(Math.max(0, (localT - t700) * 26)), shear = Math.abs(h.wind_speed_850hPa[nowIdx] - anchor.current.wind_speed_10m);
+                const dcape = Math.round(Math.max(0, (localT - t700) * 26));
+                
+                const wind850 = (h.wind_speed_850hPa && h.wind_speed_850hPa[nowIdx] !== undefined) ? h.wind_speed_850hPa[nowIdx] : 20;
+                const wind10m = (anchor.current && anchor.current.wind_speed_10m !== undefined) ? anchor.current.wind_speed_10m : 12;
+                const shear = Math.abs(wind850 - wind10m);
                 const gust = Math.round((Math.sqrt(2 * dcape) * 2.23) * 0.80);
-                const li_raw = h.lifted_index[nowIdx];
-                const k_index = Math.round(h.k_index[nowIdx]);
-                const rh850 = h.relative_humidity_850hPa[nowIdx];
-                const pwat_in = (h.total_column_integrated_water_vapour[nowIdx] / 25.4).toFixed(2);
-                const pop = h.precipitation_probability[nowIdx];
-                const storm_motion = Math.round(anchor.current.wind_speed_10m);
+                
+                const li_raw = (h.lifted_index && h.lifted_index[nowIdx] !== undefined) ? h.lifted_index[nowIdx] : -4;
+                const k_index = Math.round((h.k_index && h.k_index[nowIdx] !== undefined) ? h.k_index[nowIdx] : 32);
+                const rh850 = (h.relative_humidity_850hPa && h.relative_humidity_850hPa[nowIdx] !== undefined) ? h.relative_humidity_850hPa[nowIdx] : 65;
+                const pwat_in = (((h.total_column_integrated_water_vapour && h.total_column_integrated_water_vapour[nowIdx] !== undefined) ? h.total_column_integrated_water_vapour[nowIdx] : 40) / 25.4).toFixed(2);
+                const pop = (h.precipitation_probability && h.precipitation_probability[nowIdx] !== undefined) ? h.precipitation_probability[nowIdx] : 30;
+                const storm_motion = Math.round(wind10m);
                 
                 let elValue = anchor.adjCape > 100 ? Math.round(35000 + (Math.log10(anchor.adjCape) * 7000)) : 0;
                 if (elValue > 64000) elValue = 64000;
 
-                const init = Math.round(Math.max(0, Math.min(100, (h.precipitation_probability[nowIdx] * 0.8) + (anchor.adjCape/100) - (anchor.adjCin/3))));
+                const init = Math.round(Math.max(0, Math.min(100, (pop * 0.8) + (anchor.adjCape/100) - (anchor.adjCin/3))));
 
                 document.getElementById("t700Val").innerText = Math.round(t700) + "°F";
                 document.getElementById("t500Val").innerText = Math.round(t500) + "°F";
@@ -422,7 +439,7 @@
                 document.getElementById("gust-v").innerText = gust + " MPH";
                 document.getElementById("cape-v").innerText = anchor.adjCape;
                 document.getElementById("cin-v").innerText = anchor.adjCin;
-                document.getElementById("li-v").innerText = (li_raw - ((localD - h.dew_point_2m[nowIdx]) * 0.4)).toFixed(1);
+                document.getElementById("li-v").innerText = (li_raw - ((localD - ((h.dew_point_2m && h.dew_point_2m[nowIdx]) || localD)) * 0.4)).toFixed(1);
                 document.getElementById("dcape-v").innerText = dcape;
                 document.getElementById("k-v").innerText = k_index;
                 document.getElementById("init-v").innerText = init + "%";
@@ -434,12 +451,20 @@
                 document.getElementById("pop-v").innerText = pop + "%";
 
                 let lookAheadText = "";
-                for(let i=0; i<10; i++){
-                    let idx = (nowIdx + i) % 24, fHr = new Date(h.time[idx]).getHours(), fT = h.temperature_2m[idx], fD = h.dew_point_2m[idx];
+                for(let i = 0; i < 10; i++){
+                    let idx = (nowIdx + i) % (h.time ? h.time.length : 24);
+                    let fHr = h.time ? new Date(h.time[idx]).getHours() : (new Date().getHours() + i) % 24;
+                    let fT = (h.temperature_2m && h.temperature_2m[idx] !== undefined) ? h.temperature_2m[idx] : localT;
+                    let fD = (h.dew_point_2m && h.dew_point_2m[idx] !== undefined) ? h.dew_point_2m[idx] : localD;
                     let f_dDelta = localD - fD, f_tDelta = localT - fT;
-                    let fC = Math.round(h.cape[idx] * Math.min(2.0, Math.max(0.5, 1 + (f_dDelta * 0.08))));
+                    
+                    let baseCape = (h.cape && h.cape[idx] !== undefined) ? h.cape[idx] : 1800;
+                    let fC = Math.round(baseCape * Math.min(2.0, Math.max(0.5, 1 + (f_dDelta * 0.08))));
                     if (fC > 5500) fC = 5500;
-                    let fCi = Math.round(Math.max(0, Math.abs(h.convective_inhibition[idx]) - ((f_tDelta * 4) + (f_dDelta * 3))));
+                    
+                    let baseCin = (h.convective_inhibition && h.convective_inhibition[idx] !== undefined) ? h.convective_inhibition[idx] : 20;
+                    let fCi = Math.round(Math.max(0, Math.abs(baseCin) - ((f_tDelta * 4) + (f_dDelta * 3))));
+                    
                     let stat = fC > 500 ? (fCi < 15 ? "BREACH" : "CAPPED") : "STABLE";
                     let rowStyle = stat === 'BREACH' ? 'background: rgba(239, 68, 68, 0.15);' : '';
                     let pillCls = stat === 'BREACH' ? 'pill-breach' : 'pill-stable';
@@ -449,8 +474,7 @@
                 }
 
                 updateTactical(anchor, plateauBreach, lapse, dcape);
-
-                const press_sprd = (Math.max(...pPool) - Math.min(...pPool)).toFixed(1);
+                const press_sprd = pPool.length > 0 ? (Math.max(...pPool) - Math.min(...pPool)).toFixed(1) : "0.0";
                 document.getElementById("pressSpread").innerText = press_sprd + " MB";
                 document.getElementById("maxCape").innerText = maxC + " J/KG";
 
@@ -458,35 +482,55 @@
             }
         }
 
-        function updateTactical(d, plateau, lapse, dcape) {
-            const mB = document.getElementById("mDisp"), mD = document.getElementById("mDesc"), mC = document.getElementById("mCard"), tL = document.getElementById("threatLevel");
-            let mode = "MISSION ACTIVE", desc = "Airmass stable.", lvl = "STABLE", cardClass = "glass tactical-card";
-            if (plateau) { mode = "PLATEAU BREACH"; desc = "Upstream convective initiation detected across western boundary tables."; lvl = "HIGH"; cardClass = "glass tactical-card capped"; }
-            if (d.adjCin < 20 && d.adjCape > 2500) { mode = "CAP BREACH"; desc = "Thermodynamic cap completely broken over local anchor footprint. Convection imminent."; lvl = "EXTREME"; cardClass = "glass tactical-card breach"; }
-            else if (dcape > 1000 && lapse > 7.5) { mode = "SEVERE WIND THREAT"; desc = "Steep low-level lapse rates and deep dry layer support significant macroburst potential."; lvl = "SEVERE"; cardClass = "glass tactical-card capped"; }
-            mB.innerText = mode; mD.innerText = desc; tL.innerText = lvl; mC.className = cardClass;
+        function updateTactical(anchor, plateau, lapse, dcape) {
+            const mCard = document.getElementById("mCard");
+            const mDisp = document.getElementById("mDisp");
+            const mDesc = document.getElementById("mDesc");
+            const threatLevel = document.getElementById("threatLevel");
+
+            mCard.className = "glass tactical-card";
+            
+            if (anchor.adjCape >= 3500 && (plateau || anchor.adjCin < 30)) {
+                mCard.classList.add("breach");
+                mDisp.innerText = "CRITICAL CONVECTIVE BREACH";
+                mDesc.innerText = "Extreme instability detected. Upstream cap erosion along the Edwards Escarpment supporting rapid supercellular development.";
+                threatLevel.innerText = "HIGH / RED";
+                threatLevel.style.color = "var(--accent-red)";
+            } else if (anchor.adjCape >= 2000) {
+                mCard.classList.add("capped");
+                mDisp.innerText = "CONDITIONAL ELEVATED THREAT";
+                mDesc.innerText = "Moderate-to-high instability present with lingering inhibition. Monitoring boundary interactions for potential cap breakthrough.";
+                threatLevel.innerText = "ELEVATED / AMBER";
+                threatLevel.style.color = "var(--accent-amber)";
+            } else {
+                mDisp.innerText = "NOMINAL SOUNDING STATE";
+                mDesc.innerText = "Stable or heavily capped atmospheric column across central core. Minimal convective initiation risk.";
+                threatLevel.innerText = "STANDBY";
+                threatLevel.style.color = "var(--text-muted)";
+            }
         }
 
-        window.runGlobalSync = function() {
+        async function runGlobalSync() {
+            const syncStatus = document.getElementById("syncStatus");
+            syncStatus.innerText = "Synchronizing Telemetry...";
+            syncStatus.style.color = "var(--accent-amber)";
+
             const lT = parseFloat(document.getElementById("localTemp").value) || 84.0;
             const lD = parseFloat(document.getElementById("localDew").value) || 74.0;
-            const status = document.getElementById("syncStatus");
             
-            if(status) status.innerText = "Syncing 45-Station Macro-Grid...";
-            
-            const dataset = generateBaselineDataset(lT, lD);
+            const dataset = await fetchRealTelemetry(lT, lD);
             renderTheater(dataset, lT, lD);
             
-            if(status) status.innerText = "Macro-Theater Updated: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            syncStatus.innerText = "Synced: " + new Date().toLocaleTimeString();
+            syncStatus.style.color = "var(--accent-sky)";
+            setTimeout(() => {
+                syncStatus.style.color = "var(--text-muted)";
+            }, 1500);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
+        window.onload = function() {
             runGlobalSync();
-        });
-        
-        if (document.readyState === "complete" || document.readyState === "interactive") {
-            runGlobalSync();
-        }
+        };
     </script>
 </body>
-</html> 
+</html>
