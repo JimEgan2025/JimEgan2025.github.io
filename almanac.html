@@ -62,9 +62,7 @@
     </style>
 </head>
 <body>
-
     <h1 id="stationTitle">130-Year Weather Almanac</h1>
-    
     <div class="grid-container">
         <!-- Daily Search Card -->
         <div class="card">
@@ -107,7 +105,7 @@
         let almanacMonthlyData = {};
         
         const DAILY_URL = "https://jimegan2025.github.io/almanac.json";
-        const MONTHLY_URL = "https://jimegan2025.github.io/almanac_monthly.json"; 
+        const MONTHLY_URL = "https://jimegan2025.github.io/almanac_monthly.json";
 
         async function initAlmanac() {
             const today = new Date();
@@ -150,6 +148,40 @@
             }
         }
 
+        /**
+         * Calculates cumulative Year-To-Date (YTD) normal rainfall in inches
+         * by summing daily precipitation ('accP') from January 1 (01-01)
+         * up through the provided MM-DD target date.
+         */
+        function calculateYTDNormalRainfall(targetMMDD) {
+            if (!almanacDaily || Object.keys(almanacDaily).length === 0) return null;
+            
+            const parts = targetMMDD.split('-');
+            if (parts.length !== 2) return null;
+            const targetM = parseInt(parts[0], 10);
+            const targetD = parseInt(parts[1], 10);
+
+            if (isNaN(targetM) || isNaN(targetD) || targetM < 1 || targetM > 12) return null;
+
+            let totalYTD = 0;
+            let keysFound = 0;
+
+            // Maximum days per month (non-leap year basis for standard climatology)
+            const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            for (let m = 1; m <= targetM; m++) {
+                const maxDay = (m === targetM) ? targetD : daysInMonth[m - 1];
+                for (let d = 1; d <= maxDay; d++) {
+                    const key = `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    if (almanacDaily[key] && almanacDaily[key].accP !== undefined) {
+                        totalYTD += Number(almanacDaily[key].accP) || 0;
+                        keysFound++;
+                    }
+                }
+            }
+            return keysFound > 0 ? totalYTD.toFixed(2) : null;
+        }
+
         function searchAlmanac() {
             const query = document.getElementById("dateInput").value.trim();
             const resultsDiv = document.getElementById("dailyResults");
@@ -160,6 +192,8 @@
             }
 
             const record = almanacDaily[query];
+            const ytdNormal = calculateYTDNormalRainfall(query);
+
             resultsDiv.innerHTML = `
                 <div class="record-date">Date: ${query}</div>
                 <ul>
@@ -168,7 +202,8 @@
                     ${record.avgM !== undefined ? `<li><strong>Average Mean:</strong> ${record.avgM}°F</li>` : ''}
                     ${record.recH !== undefined ? `<li><strong>Record High:</strong> ${record.recH}°F (${record.recHY})</li>` : ''}
                     ${record.recL !== undefined ? `<li><strong>Record Low:</strong> ${record.recL}°F (${record.recLY})</li>` : ''}
-                    ${record.accP !== undefined ? `<li><strong>Precipitation:</strong> ${record.accP} in</li>` : ''}
+                    ${record.accP !== undefined ? `<li><strong>Daily Normal Precip:</strong> ${record.accP} in</li>` : ''}
+                    ${ytdNormal !== null ? `<li><strong>YTD Normal Rainfall:</strong> ${ytdNormal} in (thru ${query})</li>` : ''}
                 </ul>
             `;
         }
@@ -207,29 +242,38 @@
                 return;
             }
 
-            const combinedText = 
-`=== DAILY HISTORICAL SEARCH (${query}) ===
-- Average High: ${record.avgH !== undefined ? record.avgH + '°F' : 'N/A'}
-- Average Low: ${record.avgL !== undefined ? record.avgL + '°F' : 'N/A'}
-- Average Mean: ${record.avgM !== undefined ? record.avgM + '°F' : 'N/A'}
-- Record High: ${record.recH !== undefined ? record.recH + '°F (' + record.recHY + ')' : 'N/A'}
-- Record Low: ${record.recL !== undefined ? record.recL + '°F (' + record.recLY + ')' : 'N/A'}
-- Precipitation: ${record.accP !== undefined ? record.accP + ' in' : 'N/A'}
+            const ytdNormal = calculateYTDNormalRainfall(query);
+
+            const combinedText = `=== DAILY HISTORICAL SEARCH (${query}) ===
+Average High: ${record.avgH !== undefined ? record.avgH + '°F' : 'N/A'}
+Average Low: ${record.avgL !== undefined ? record.avgL + '°F' : 'N/A'}
+Average Mean: ${record.avgM !== undefined ? record.avgM + '°F' : 'N/A'}
+Record High: ${record.recH !== undefined ? record.recH + '°F (' + record.recHY + ')' : 'N/A'}
+Record Low: ${record.recL !== undefined ? record.recL + '°F (' + record.recLY + ')' : 'N/A'}
+Daily Normal Precip: ${record.accP !== undefined ? record.accP + ' in' : 'N/A'}
+YTD Normal Rainfall: ${ytdNormal !== null ? ytdNormal + ' in (thru ' + query + ')' : 'N/A'}
 
 === MONTHLY CLIMATOLOGY (${monthDisplayName}) ===
-- Avg Temp (Mean): ${m.average_temp.mean}°F (Max Avg: ${m.average_temp.record_max_avg}°F in ${m.average_temp.record_max_year})
-- Avg High: ${m.average_high.mean}°F (Record Max: ${m.average_high.record_max}°F in ${m.average_high.record_max_year})
-- Avg Low: ${m.average_low.mean}°F (Record Min: ${m.average_low.record_min}°F in ${m.average_low.record_min_year})
-- Rainfall Mean: ${m.rainfall.mean} in (Wettest: ${m.rainfall.record_wettest} in in ${m.rainfall.record_wettest_year})`;
+Avg Temp (Mean): ${m.average_temp.mean}°F (Max Avg: ${m.average_temp.record_max_avg}°F in ${m.average_temp.record_max_year})
+Avg High: ${m.average_high.mean}°F (Record Max: ${m.average_high.record_max}°F in ${m.average_high.record_max_year})
+Avg Low: ${m.average_low.mean}°F (Record Min: ${m.average_low.record_min}°F in ${m.average_low.record_min_year})
+Rainfall Mean: ${m.rainfall.mean} in (Wettest: ${m.rainfall.record_wettest} in in ${m.rainfall.record_wettest_year})`;
 
-            navigator.clipboard.writeText(combinedText).then(() => {
+            // Copy to clipboard using legacy execCommand for maximum iframe compatibility
+            const textarea = document.createElement("textarea");
+            textarea.value = combinedText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand("copy");
                 alert("Combined daily and monthly data copied to clipboard!");
-            }).catch(err => {
-                console.error("Failed to copy: ", err);
-            });
+            } catch (err) {
+                console.error("Failed to copy text: ", err);
+            }
+            document.body.removeChild(textarea);
         }
 
         initAlmanac();
     </script>
 </body>
-</html> 
+</html>
